@@ -1,0 +1,8 @@
+[[headers]]
+  for = "/manifest.json"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
+[[redirects]]
+  from = "/*"
+  to = "/"
+  status = 200

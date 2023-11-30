@@ -1,0 +1,18 @@
+./NostrAuthContext
+./nostrs
+./useNostrQuery
+parts of ./SignIn
+
+
+Whole contact handling (serializing and writing)
+Invitation process
+NotificationCenter
+
+# EditRelays.test.tsx
+# ModalForm
+
+
+# Delete in dex ventures
+
+components/FullscreenViews
+
