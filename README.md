@@ -2,11 +2,6 @@
 
 - node v16.14.2
 
-## Environment
-
-A `.env` file needs to be created to run the application. There is an `env.example`
-file which can be copied as a start.
-
 ## Available Scripts
 
 In the project directory, you can run:
