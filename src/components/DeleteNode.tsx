@@ -4,7 +4,11 @@ import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { deleteRelationsFromNode, getRelations } from "../connections";
 import { getNode } from "../knowledge";
-import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
+import {
+  getWorkspaces,
+  useKnowledgeData,
+  useUpdateKnowledge,
+} from "../KnowledgeDataContext";
 import {
   getRepoFromView,
   updateNode,
@@ -47,6 +51,13 @@ export function disconnectNode(
   }, data);
 }
 
+// Finds the next active workspace, in case there are no workspaces
+// it returns undefined and KnowledgeDataContext takes care of it
+function findNewActiveWorkspace(repos: Repos): undefined | string {
+  const newActive = getWorkspaces(repos).first(undefined);
+  return newActive ? newActive.id : undefined;
+}
+
 export function useDeleteNode(): undefined | (() => void) {
   const [repo] = useRepo();
   const navigate = useNavigate();
@@ -61,10 +72,14 @@ export function useDeleteNode(): undefined | (() => void) {
       { repos, views },
       repo.id
     );
+    const finalRepos = updatedRepos.remove(repo.id);
     updateKnowledge({
-      repos: updatedRepos.remove(repo.id),
+      repos: finalRepos,
       views: updatedViews,
-      activeWorkspace: activeWorkspace === repo.id ? "offers" : activeWorkspace,
+      activeWorkspace:
+        activeWorkspace === repo.id
+          ? findNewActiveWorkspace(finalRepos)
+          : activeWorkspace,
     });
   };
 }
