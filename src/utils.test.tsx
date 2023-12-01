@@ -51,8 +51,6 @@ test.skip("skip", () => {});
 export const BOB_PRIVATE_KEY =
   "00000f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e";
 
-export const BOB_LEGACY_PUBLIC_KEY =
-  "0271a20276981b2a5019f634adfe10accd7e188f3eb5f57079da52de40b742a923";
 export const BOB_PUBLIC_KEY =
   "71a20276981b2a5019f634adfe10accd7e188f3eb5f57079da52de40b742a923" as PublicKey;
 
@@ -72,8 +70,7 @@ const ALICE: KeyPair = {
     "04d22f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e",
 };
 
-export const ALICE_BROADCAST_KEY = Buffer.from("aliceBroadcastKey");
-export const BOB_BROADCAST_KEY = Buffer.from("bobsBroadcastKey");
+const ALICE_BROADCAST_KEY = Buffer.from("aliceBroadcastKey");
 
 const UNAUTHENTICATED_BOB: Contact = {
   publicKey: BOB_PUBLIC_KEY,
@@ -95,18 +92,13 @@ export const CAROL: KeyPair = {
 
 export const TEST_WORKSPACE_ID = "my-first-workspace-id";
 
-const RAW_ALICE = {
-  public_key: ALICE.publicKey,
-  user: "alice",
-};
-
 const DEFAULT_TEST_BOOTSTRAP_INTERVAL = 3;
 
-export type MockFileStore = LocalStorage & {
+type MockFileStore = LocalStorage & {
   getLocalStorageData: () => Map<string, string>;
 };
 
-export function mockFileStore(): MockFileStore {
+function mockFileStore(): MockFileStore {
   const localStorage = jest.fn().mockReturnValue(Map());
   return {
     setLocalStorage: (key: string, value: string) => {
@@ -216,25 +208,7 @@ export function waitForLoadingToBeNull(): Promise<void> {
   );
 }
 
-function DeferredPromise(): {
-  getResolve: () => Function;
-  getReject: () => Function;
-  promise: Promise<void>;
-} {
-  const getResolve = jest.fn();
-  const getReject = jest.fn();
-  const promise = new Promise<void>((resolve, reject) => {
-    getResolve.mockReturnValue(resolve);
-    getReject.mockReturnValue(reject);
-  });
-  return {
-    getResolve,
-    getReject,
-    promise,
-  };
-}
-
-export const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
+const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
   contactsOfContacts: Map<PublicKey, ContactOfContact>(),
@@ -254,7 +228,7 @@ export const EMPTY_PLAN = {
   relays: [],
 };
 
-export type TestAppState = DataContextProps & TestApis;
+type TestAppState = DataContextProps & TestApis;
 
 function applyDefaults(props?: Partial<TestAppState>): TestAppState {
   return {
@@ -282,7 +256,7 @@ export async function extractBroadcastKey(
   return decrypted[1] as Buffer;
 }
 
-export async function extractAllBroadcastKeys(
+async function extractAllBroadcastKeys(
   appState: TestAppState
 ): Promise<BroadcastKeys> {
   const events = appState.relayPool.getEvents();
@@ -338,9 +312,7 @@ export async function extractKnowledgeDB(
   );
 }
 
-export async function getPrivateContacts(
-  appState: TestAppState
-): Promise<Contacts> {
+async function getPrivateContacts(appState: TestAppState): Promise<Contacts> {
   const query = createContactsQuery([appState.user.publicKey]);
   const events = List<Event>(appState.relayPool.getEvents()).filter((e) =>
     matchFilter(query, e)
@@ -568,19 +540,4 @@ export function matchSplitText(text: string): MatcherFunction {
   return customTextMatcher;
 }
 
-export async function numberOfNotifications(): Promise<number> {
-  return parseInt(
-    (await screen.findByLabelText("number of notifications")).innerHTML,
-    10
-  );
-}
-
-export {
-  RAW_ALICE,
-  ALICE,
-  UNAUTHENTICATED_ALICE,
-  UNAUTHENTICATED_BOB,
-  UNAUTHENTICATED_CAROL,
-  renderApp,
-  DeferredPromise,
-};
+export { ALICE, UNAUTHENTICATED_BOB, UNAUTHENTICATED_CAROL, renderApp };

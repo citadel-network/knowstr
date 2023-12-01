@@ -1,6 +1,6 @@
 import React from "react";
 
-export type ToggleArrowButtonProps = {
+type ToggleArrowButtonProps = {
   expanded: boolean;
   onToggle: (expand: boolean) => void;
   ariaLabel?: string;

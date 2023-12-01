@@ -61,7 +61,7 @@ function useIsAddSummary(): boolean {
     : isAddSummary(parentRepo, parentView);
 }
 
-export function AddNodeButton({
+function AddNodeButton({
   onClick,
   ariaLabel,
   text,
@@ -236,7 +236,7 @@ type AddNodeProps = {
   isSearchEnabledByShortcut?: boolean;
 };
 
-export function AddNode({
+function AddNode({
   ariaLabel,
   onCreateNewNode,
   onAddExistingNode,

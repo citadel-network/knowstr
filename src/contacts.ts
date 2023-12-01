@@ -5,7 +5,7 @@ import { KIND_REPUTATIONS, getMostRecentReplacableEvent } from "./nostr";
 import { useApis } from "./Apis";
 import { symmetricDecryptPayload } from "./encryption";
 
-export type RawContact = {
+type RawContact = {
   publicKey: PublicKey;
   createdAt: string | undefined;
 };

@@ -61,7 +61,7 @@ function decryptAES(iv: string, cipherText: string, key: string): Serializable {
   return payload;
 }
 
-export type SymmetricDecryptProps = {
+type SymmetricDecryptProps = {
   encryptionKey: Buffer;
   decryptSymmetric: DecryptSymmetric;
 };

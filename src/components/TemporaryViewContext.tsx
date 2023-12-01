@@ -40,7 +40,7 @@ type EditorOpen = EditorOpenState & {
 
 type TemporaryView = MultiSelection & Editing & EditorOpen;
 
-export type SetSelected = (selected: boolean) => void;
+type SetSelected = (selected: boolean) => void;
 type FindSelectedByPostfix = (postfix: string) => Set<string>;
 type DeselectByPostfix = (postfix: string) => void;
 
@@ -60,7 +60,7 @@ export function useTemporaryView(): TemporaryView {
   return getTemporaryViewContextOrThrow();
 }
 
-export function useSetSelected(): SetSelected {
+function useSetSelected(): SetSelected {
   const { selection, setState, multiselectBtns } = useTemporaryView();
   const viewKey = useViewKey();
   return (selected: boolean): void => {
@@ -78,7 +78,7 @@ export function useIsSelected(): boolean {
   return selection.contains(viewKey);
 }
 
-export function getSelectedInView(
+function getSelectedInView(
   selection: OrderedSet<string>,
   viewKey: string
 ): OrderedSet<string> {
@@ -145,7 +145,7 @@ export function switchOffMultiselect(
   };
 }
 
-export function toggleMultiselect(
+function toggleMultiselect(
   multiselectBtns: Set<string>,
   selection: OrderedSet<string>,
   viewKey: string

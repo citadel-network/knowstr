@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Spinner } from "react-bootstrap";
 import { Button } from "./Ui";
 
-export type LoadingSpinnerBtnProps = {
+type LoadingSpinnerBtnProps = {
   children?: React.ReactNode;
   onClick?: () => Promise<void>;
   afterOnClick?: () => void;

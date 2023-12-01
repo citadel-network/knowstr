@@ -15,7 +15,7 @@ import { DraggableNode } from "./Node";
 import { useDeselectAllInView } from "./TemporaryViewContext";
 import { ToggleArrowButton } from "./ToggleArrowButton";
 
-export function ReferencedBy(): JSX.Element | null {
+function ReferencedBy(): JSX.Element | null {
   const { repos, views } = useKnowledgeData();
   const viewPath = useViewPath();
   const [repo, view] = getRepoFromView(repos, views, viewPath);

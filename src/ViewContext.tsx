@@ -81,9 +81,7 @@ export function getViewExactMatch(
   return views.get(viewKey);
 }
 
-export function defaultViewOptions(
-  nodeType: NodeType
-): [RelationType, boolean] {
+function defaultViewOptions(nodeType: NodeType): [RelationType, boolean] {
   if (["TITLE", "URL", "VIEW"].includes(nodeType)) {
     return ["CONTAINS", false];
   }
@@ -273,7 +271,7 @@ export function updateView(views: Views, path: ViewPath, view: View): Views {
   return views.set(viewPathToString(path), view);
 }
 
-export function deleteView(views: Views, path: ViewPath): Views {
+function deleteView(views: Views, path: ViewPath): Views {
   const key = viewPathToString(path);
   return views.filterNot((v, k) => k.startsWith(key));
 }
@@ -441,7 +439,7 @@ function updateRelations(
   });
 }
 
-export function moveChildViews(
+function moveChildViews(
   views: Views,
   parentViewPath: string,
   indices: Array<number>,
@@ -457,7 +455,7 @@ export function moveChildViews(
   });
 }
 
-export function deleteChildren(
+function deleteChildren(
   v: Views,
   parentViewPath: string,
   indices: Set<number>

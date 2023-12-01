@@ -29,7 +29,7 @@ function QRCode({ url }: { url: string }): JSX.Element {
   );
 }
 
-export function UserQRCode({ publicKey }: { publicKey: string }): JSX.Element {
+function UserQRCode({ publicKey }: { publicKey: string }): JSX.Element {
   return (
     <QRCode url={`${window.location.origin}/invite?publicKey=${publicKey}`} />
   );

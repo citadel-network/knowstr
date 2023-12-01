@@ -1,6 +1,6 @@
 import React from "react";
 
-export type Configuration = {
+type Configuration = {
   bootstrapInterval: number;
 };
 

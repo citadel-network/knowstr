@@ -58,7 +58,7 @@ function findNewActiveWorkspace(repos: Repos): undefined | string {
   return newActive ? newActive.id : undefined;
 }
 
-export function useDeleteNode(): undefined | (() => void) {
+function useDeleteNode(): undefined | (() => void) {
   const [repo] = useRepo();
   const navigate = useNavigate();
   const { repos, activeWorkspace, views } = useKnowledgeData();

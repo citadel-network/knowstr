@@ -14,7 +14,7 @@ import {
 import { planKeyDistribution } from "./encryption";
 import { getEventsFromLastBootstrap } from "./knowledgeEvents";
 
-export async function publishEvents(
+async function publishEvents(
   relayPool: SimplePool,
   events: List<Event>,
   writeRelays: Relays

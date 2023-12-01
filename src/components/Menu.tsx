@@ -77,7 +77,7 @@ function useIsActionable(): boolean {
   return relationCount > 0 || showVersions;
 }
 
-export function ReadonlyMenu(): JSX.Element | null {
+function ReadonlyMenu(): JSX.Element | null {
   if (!useIsActionable()) {
     return null;
   }

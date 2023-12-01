@@ -19,7 +19,7 @@ import { DND } from "../dnd";
 import { FullScreenViewWrapper } from "./FullScreenViewWrapper";
 import { useLogout } from "../NostrAuthContext";
 
-export function RelatedNodes(): JSX.Element | null {
+function RelatedNodes(): JSX.Element | null {
   const { views, repos } = useKnowledgeData();
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
@@ -51,7 +51,7 @@ export function RelatedNodes(): JSX.Element | null {
   );
 }
 
-export function DetailView(): JSX.Element | null {
+function DetailView(): JSX.Element | null {
   return (
     <div className="detail-view border-bottom-light">
       <Node />

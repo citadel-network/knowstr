@@ -12,7 +12,7 @@ import {
 } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
-export function useBranchPathFromURLParams(): BranchPath | undefined {
+function useBranchPathFromURLParams(): BranchPath | undefined {
   const { search } = useLocation();
   const params = new URLSearchParams(search);
   const origin = params.get("origin");

@@ -4,8 +4,6 @@ import { Event } from "nostr-tools";
 import { ALICE, setup, renderApp } from "../utils.test";
 import { KIND_RELAY_METADATA_EVENT } from "../nostr";
 
-export const TEST_RELAY_URL = "wss://relay.mock.test";
-
 const filterRelayMetadataEvents = (event: Event): boolean =>
   event.kind === KIND_RELAY_METADATA_EVENT;
 

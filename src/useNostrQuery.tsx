@@ -80,7 +80,7 @@ export function useEventQuery(
   };
 }
 
-export function findAllRelays(event: Event): Relays {
+function findAllRelays(event: Event): Relays {
   const relayTags = findAllTags(event, "r");
   if (!relayTags) {
     return [];
