@@ -425,8 +425,7 @@ export function renderWithTestData(
 }
 
 export async function fillAndSubmitInviteForm(): Promise<void> {
-  await screen.findByText("Invite");
-  fireEvent.click(screen.getByText("Invite"));
+  fireEvent.click(await screen.findByText("Share Now"));
   await waitForLoadingToBeNull();
 }
 

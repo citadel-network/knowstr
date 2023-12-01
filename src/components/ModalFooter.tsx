@@ -24,7 +24,7 @@ function ModalFooter({
   return (
     <Modal.Footer>
       <Button variant="outline-dark" className="mr-auto" onClick={onHide}>
-        Abort
+        Cancel
       </Button>
       {loading ? (
         <div

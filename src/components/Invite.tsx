@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
 import { QRCodeSVG } from "qrcode.react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Modal, Spinner } from "react-bootstrap";
@@ -52,10 +51,12 @@ function ConfirmContactForm({
   onHide,
   title,
   SubmitButton,
+  contact,
 }: {
   handleSubmit: (form: HTMLFormElement) => Promise<void>;
   onHide: () => void;
   title: string;
+  contact: PublicKey;
   SubmitButton: () => JSX.Element;
 }): JSX.Element {
   return (
@@ -67,7 +68,25 @@ function ConfirmContactForm({
       size="xl"
       hideAfterSubmit={false}
     >
-      <div />
+      <ul className="list-unstyled mt-3">
+        <li className="pb-3">
+          <strong>Grant Access:</strong> User with public key{" "}
+          <code className="bg-light p-1 rounded">{contact}</code> will see and
+          suggest changes to notes.
+        </li>
+        <li className="pb-3">
+          <strong>Across Workspaces:</strong> Access extends to all notes in
+          every workspace.
+        </li>
+        <li className="pb-3">
+          <strong>Editable Suggestions:</strong> While the contact can edit, all
+          changes are suggestions for your review.
+        </li>
+        <li>
+          <strong>Full Control:</strong> You retain complete authority to review
+          and apply any suggested edits, ensuring your content remains yours.
+        </li>
+      </ul>
     </ModalForm>
   );
 }
@@ -205,15 +224,19 @@ export function VCard(): JSX.Element {
         </div>
         <div className="mt-3">
           <div className={showScan ? "float-left" : "float-right"}>
-            <Button variant="primary" onClick={() => setShowScan(!showScan)}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setShowScan(!showScan)}
+            >
               {showScan ? "Your Contact" : "Scan Contact"}
-            </Button>
+            </button>
           </div>
           <div className="float-right">
             {showScan && (
               <LoadingSpinnerButton
                 onClick={submit}
-                className="btn btn-outline-success"
+                className="btn btn-primary"
               >
                 Invite
               </LoadingSpinnerButton>
@@ -260,8 +283,8 @@ function Invite(): JSX.Element {
     await executePlan(await planEnsurePrivateContact(createPlan(), publicKey));
   };
   const SubmitButton = (): JSX.Element => (
-    <LoadingSpinnerButton className="btn btn-outline-success" type="submit">
-      Invite
+    <LoadingSpinnerButton className="btn btn-primary" type="submit">
+      Share Now
     </LoadingSpinnerButton>
   );
 
@@ -269,7 +292,8 @@ function Invite(): JSX.Element {
     <ConfirmContactForm
       handleSubmit={handleSubmit}
       onHide={onHide}
-      title={`Invite contact ${publicKey} ?`}
+      title="Activate Full Collaboration?"
+      contact={publicKey}
       SubmitButton={SubmitButton}
     />
   );

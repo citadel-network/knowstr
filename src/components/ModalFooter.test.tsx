@@ -7,7 +7,7 @@ test("test default rendering", () => {
   const onAbort = jest.fn();
   render(<ModalFooter onHide={onAbort} loading={false} />);
   screen.getByText("Save");
-  const abortBtn = screen.getByText("Abort");
+  const abortBtn = screen.getByText("Cancel");
   fireEvent.click(abortBtn);
   expect(onAbort).toHaveBeenCalledTimes(1);
 });
