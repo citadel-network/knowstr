@@ -16,7 +16,7 @@ function ModalFooter({
   const Submit =
     SubmitButton ||
     ((): JSX.Element => (
-      <Button variant="success" type="submit">
+      <Button variant="primary" type="submit">
         Save
       </Button>
     ));
