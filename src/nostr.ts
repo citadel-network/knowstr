@@ -10,7 +10,6 @@ import {
   nip04,
   getPublicKey,
 } from "nostr-tools";
-import { Collection, List } from "immutable";
 
 export const KIND_SETTINGS = 11071;
 export const KIND_REPUTATIONS = 11080;
@@ -26,25 +25,6 @@ export const DEFAULT_RELAYS: Relays = [
   { url: "wss://nos.lol", read: true, write: true },
   { url: "wss://nostr.wine", read: true, write: true },
 ];
-
-export function sortEvents(events: List<Event>): List<Event> {
-  return events.sortBy((event, index) =>
-    parseFloat(`${event.created_at}.${index}`)
-  );
-}
-
-export function sortEventsDescending(events: List<Event>): List<Event> {
-  return events.sortBy((event, index) =>
-    parseFloat(`${-event.created_at}.${index}`)
-  );
-}
-
-export function getMostRecentReplacableEvent(
-  events: Collection<string, Event> | List<Event>
-): Event | undefined {
-  const listOfEvents = List.isList(events) ? events : events.toList();
-  return sortEventsDescending(listOfEvents).first(undefined);
-}
 
 export async function publishEvent(
   relayPool: SimplePool,
@@ -84,22 +64,6 @@ export function finalizeEvent<T extends number>(
     id,
     sig,
   };
-}
-
-export function findAllTags(
-  event: Event,
-  tag: string
-): Array<Array<string>> | undefined {
-  const filtered = event.tags.filter(([tagName]) => tagName === tag);
-  if (filtered.length === 0) {
-    return undefined;
-  }
-  return filtered.map((t) => t.slice(1));
-}
-
-export function findTag(event: Event, tag: string): string | undefined {
-  const allTags = findAllTags(event, tag);
-  return allTags && allTags[0] && allTags[0][0];
 }
 
 export async function publishSettings(

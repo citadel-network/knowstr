@@ -2,6 +2,22 @@
 
 - node v16.14.2
 
+### Init submodules:
+
+```
+git submodule init
+git submodule update
+```
+
+### Build workspaces
+
+Before starting or testing the App, run:
+
+```
+npm install
+npm run build --workspaces --if-present
+```
+
 ## Available Scripts
 
 In the project directory, you can run:

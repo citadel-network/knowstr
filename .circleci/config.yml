@@ -11,8 +11,10 @@ jobs:
       - image: cimg/node:16.14.2
     steps:
       - checkout
+      - run: git submodule init && git submodule update;
       - node/install-packages:
           pkg-manager: npm
+      - run: npm run build --workspaces --if-present
       - run:
           command: npm run test -- --testTimeout 35000 --runInBand
           name: Run tests
@@ -21,8 +23,10 @@ jobs:
       - image: cimg/node:16.14.2
     steps:
       - checkout
+      - run: git submodule init && git submodule update;
       - node/install-packages:
           pkg-manager: npm
+      - run: npm run build --workspaces --if-present
       - run:
           command: npm run lint -- --max-warnings 0
           name: Lint
@@ -31,8 +35,10 @@ jobs:
       - image: cimg/node:16.14.2
     steps:
       - checkout
+      - run: git submodule init && git submodule update;
       - node/install-packages:
           pkg-manager: npm
+      - run: npm run build --workspaces --if-present
       - run:
           command: npm run typescript
           name: Typescript

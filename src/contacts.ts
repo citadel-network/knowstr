@@ -1,7 +1,7 @@
 import { List, Map } from "immutable";
 import { Event, Filter } from "nostr-tools";
-import { useEventQuery } from "./useNostrQuery";
-import { KIND_REPUTATIONS, getMostRecentReplacableEvent } from "./nostr";
+import { useEventQuery, getMostRecentReplacableEvent } from "citadel-commons";
+import { KIND_REPUTATIONS } from "./nostr";
 import { useApis } from "./Apis";
 import { symmetricDecryptPayload } from "./encryption";
 
@@ -49,8 +49,9 @@ export function useContactsQuery(
   enabled: boolean,
   readFromRelays: Relays
 ): [Contacts, boolean] {
-  const { encryption } = useApis();
+  const { encryption, relayPool } = useApis();
   const { events, eose } = useEventQuery(
+    relayPool,
     [createContactsQuery([user.publicKey])],
     {
       enabled,
@@ -115,10 +116,10 @@ export function useContactsOfContactsQuery(
   dependenciesEose: boolean,
   readFromRelays: Relays
 ): [ContactsOfContacts, boolean] {
-  const { encryption } = useApis();
+  const { encryption, relayPool } = useApis();
   const query = createContactsOfContactsQuery(contacts, broadcastKeys);
 
-  const { events, eose } = useEventQuery([query], {
+  const { events, eose } = useEventQuery(relayPool, [query], {
     enabled: dependenciesEose,
     readFromRelays,
   });

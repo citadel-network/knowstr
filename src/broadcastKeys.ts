@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Map } from "immutable";
 import { Event, Filter, UnsignedEvent, getPublicKey, nip04 } from "nostr-tools";
-import { KEY_DISTR_EVENT, sortEventsDescending } from "./nostr";
-import { useEventQuery } from "./useNostrQuery";
+import { useEventQuery, sortEventsDescending } from "citadel-commons";
+import { KEY_DISTR_EVENT } from "./nostr";
+import { useApis } from "./Apis";
 
 export async function tryToDecryptBroadcastKey(
   event: Event,
@@ -43,6 +44,7 @@ export function useBroadcastKeysQuery(
   enabled: boolean,
   readFromRelays: Relays
 ): [BroadcastKeys | undefined, boolean] {
+  const { relayPool } = useApis();
   // TODO: upgrade to react-18 and remove this stuff
   const componentIsMounted = useRef(true);
   useEffect(() => {
@@ -54,6 +56,7 @@ export function useBroadcastKeysQuery(
 
   const myNostrPublicKey = getPublicKey(user.privateKey) as PublicKey;
   const { events, eose } = useEventQuery(
+    relayPool,
     [createBroadcastKeysQuery(myNostrPublicKey, authors)],
     {
       enabled,

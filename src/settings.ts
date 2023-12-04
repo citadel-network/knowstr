@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Event, getPublicKey, nip04 } from "nostr-tools";
+import { useEventQuery } from "citadel-commons";
 import { KIND_SETTINGS } from "./nostr";
-import { useEventQuery } from "./useNostrQuery";
+import { useApis } from "./Apis";
 
 async function settingsFromEvent(
   event: Event,
@@ -36,7 +37,9 @@ export function useSettingsQuery(
   readFromRelays: Relays
 ): [Settings, boolean] {
   const myNostrPubKey = getPublicKey(user.privateKey);
+  const { relayPool } = useApis();
   const { events, eose } = useEventQuery(
+    relayPool,
     [
       {
         kinds: [KIND_SETTINGS],

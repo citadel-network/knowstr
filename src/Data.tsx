@@ -1,13 +1,14 @@
 import React from "react";
 import "./App.css";
 import { Map } from "immutable";
+import { useEventQuery, useRelaysQuery } from "citadel-commons";
 import { DataContextProvider } from "./DataContext";
 import { KnowledgeDataProvider } from "./KnowledgeDataContext";
 import { useBroadcastKeysQuery } from "./broadcastKeys";
-import { useEventQuery, useRelaysQuery } from "./useNostrQuery";
 import { useContactsQuery, useContactsOfContactsQuery } from "./contacts";
 import { useSettingsQuery } from "./settings";
 import { DEFAULT_RELAYS } from "./nostr";
+import { useApis } from "./Apis";
 
 type DataProps = {
   blockstackUser: KeyPair;
@@ -16,7 +17,9 @@ type DataProps = {
 
 function Data({ blockstackUser, children }: DataProps): JSX.Element {
   const myPublicKey = blockstackUser.publicKey;
+  const { relayPool } = useApis();
   const { relays: myRelays, eose: relaysEose } = useRelaysQuery(
+    relayPool,
     [myPublicKey],
     true,
     DEFAULT_RELAYS
@@ -24,6 +27,7 @@ function Data({ blockstackUser, children }: DataProps): JSX.Element {
   const relays = myRelays.length === 0 ? DEFAULT_RELAYS : myRelays;
   const readFromRelays = relays.filter((r) => r.read === true);
   const { events: sentEvents, eose: sentEventsEose } = useEventQuery(
+    relayPool,
     [
       {
         authors: [myPublicKey],

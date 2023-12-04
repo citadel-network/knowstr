@@ -1,5 +1,6 @@
 import { Event, SimplePool } from "nostr-tools";
 import { List } from "immutable";
+import { getMostRecentReplacableEvent } from "citadel-commons";
 import { Plan } from "./planner";
 import {
   KEY_DISTR_EVENT,
@@ -9,7 +10,6 @@ import {
   KIND_SETTINGS,
   finalizeEvent,
   publishEvent,
-  getMostRecentReplacableEvent,
 } from "./nostr";
 import { planKeyDistribution } from "./encryption";
 import { getEventsFromLastBootstrap } from "./knowledgeEvents";

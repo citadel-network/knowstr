@@ -2,11 +2,12 @@ import crypto from "crypto";
 import memoize from "memoizee";
 import { Map } from "immutable";
 import { matchFilter } from "nostr-tools";
+import { findTag } from "citadel-commons";
 import { Serializable } from "./serializer";
 
 import { Plan } from "./planner";
 
-import { finalizeEvent, findTag, KEY_DISTR_EVENT } from "./nostr";
+import { finalizeEvent, KEY_DISTR_EVENT } from "./nostr";
 import { createSendBroadcastKeyEvent } from "./broadcastKeys";
 
 type SignedPayload = {

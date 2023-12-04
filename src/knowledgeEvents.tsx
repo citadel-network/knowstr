@@ -1,10 +1,11 @@
 import { is, List, Map } from "immutable";
 import { Filter, Event } from "nostr-tools";
 import { useEffect, useState } from "react";
+import { useEventQuery, findAllTags, sortEvents } from "citadel-commons";
 import { clone, isBranchEqual, newDB, pull } from "./knowledge";
-import { useEventQuery } from "./useNostrQuery";
-import { findAllTags, KIND_KNOWLEDGE, sortEvents } from "./nostr";
+import { KIND_KNOWLEDGE } from "./nostr";
 import { jsonToDiff } from "./serializer";
+import { useApis } from "./Apis";
 
 export type RepoDiff<T extends BranchWithCommits | BranchWithStaged> = {
   commits?: Map<Hash, Commit>;
@@ -371,11 +372,13 @@ export function useKnowledgeQuery(
   enabled: boolean,
   readFromRelays: Relays
 ): [Map<PublicKey, KnowledgeDataWithCommits>, boolean, number] {
+  const { relayPool } = useApis();
   const [decryptedDiffs, setDecryptedDiffs] = useState<
     DiffsSinceLastBootstrap | undefined
   >();
 
   const { events, eose } = useEventQuery(
+    relayPool,
     [
       createKnowledgeQuery(
         broadcastKeys
