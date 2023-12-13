@@ -190,7 +190,7 @@ test("Send bootstrap diff event", async () => {
     "My first Workspace"
   );
   userEvent.click(screen.getByText("Create Workspace"));
-  userEvent.click(await screen.findByText("Add Note, Topic or Source"));
+  userEvent.click(await screen.findByText("Add Note"));
   userEvent.click(screen.getByText("Add Note"));
   userEvent.click(screen.getByLabelText("Save Knowledge"));
   // two events are sent, one broadcast key event and one diff event
