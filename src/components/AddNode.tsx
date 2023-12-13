@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { Dropdown, ButtonGroup } from "react-bootstrap";
+import React, { useEffect } from "react";
 import ReactQuill from "react-quill";
 import { useMediaQuery } from "react-responsive";
 import { matchPath, useLocation, useParams } from "react-router-dom";
@@ -96,39 +95,15 @@ function AddNodeButton({
   );
 }
 
-type SaveNodeButtonProps = {
+type AddSummaryButtonProps = {
   onClick: (nodeType: NodeType, relationType?: RelationType) => void;
+  buttonText?: string;
 };
-
-function SaveNodeButton({ onClick }: SaveNodeButtonProps): JSX.Element {
-  const [nodeType, setNodeType] = useState<NodeType>("NOTE");
-  const nodeTypeString = `${nodeType.charAt(0)}${nodeType
-    .substring(1)
-    .toLowerCase()}`;
-  return (
-    <Dropdown as={ButtonGroup}>
-      <Button onClick={() => onClick(nodeType)}>Add {nodeTypeString}</Button>
-      <Dropdown.Toggle
-        variant=""
-        split
-        id="dropdown-split-basic"
-        aria-label="toggle"
-      />
-      <Dropdown.Menu popperConfig={{ strategy: "fixed" }}>
-        <Dropdown.Item onSelect={() => setNodeType("NOTE")}>Note</Dropdown.Item>
-        <Dropdown.Item onSelect={() => setNodeType("TOPIC")}>
-          Topic
-        </Dropdown.Item>
-        <Dropdown.Item onSelect={() => setNodeType("URL")}>URL</Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown>
-  );
-}
 
 function AddSummaryButton({
   onClick,
   buttonText,
-}: SaveNodeButtonProps & { buttonText?: string }): JSX.Element {
+}: AddSummaryButtonProps): JSX.Element {
   return (
     <Button
       onClick={() => {
@@ -178,31 +153,58 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
   };
 
   return (
-    <div className="editor">
-      <div className="scrolling-container">
-        <ReactQuill
-          theme="bubble"
-          formats={[]}
-          modules={{ toolbar: false }}
-          placeholder={
-            isSummaryAdded ? "Create a Summary" : "Create a Topic, Note or URL"
-          }
-          scrollingContainer="scrolling-container"
-          ref={ref}
-          onKeyDown={(e: KeyboardEvent) => {
-            if (e.keyCode === ESC) {
-              onClose();
-            }
-          }}
+    <div className="flex-row-reverse-start">
+      <div className="ribbon2-container">
+        <button
+          className="ribbon2-NOTE"
+          type="button"
+          onClick={() => onSave("NOTE")}
+          aria-label="add note"
+        >
+          <span className="simple-icon-plus" />
+        </button>
+        <button
+          className="ribbon2-TOPIC"
+          type="button"
+          onClick={() => onSave("TOPIC")}
+          aria-label="add topic"
         />
+        <button
+          className="ribbon2-URL"
+          type="button"
+          onClick={() => onSave("URL")}
+          aria-label="add URL"
+        />
+        <CloseButton onClose={onClose} underRibbons />
       </div>
-      <div>
-        {isSummaryAdded ? (
-          <AddSummaryButton onClick={onSave} />
-        ) : (
-          <SaveNodeButton onClick={onSave} />
+      {/* <div className="editor flex-grow-1"> */}
+      <div className="editor w-100-minus-ribbon">
+        <div className="scrolling-container">
+          {/* <div className="flex-row-start"> */}
+          <ReactQuill
+            theme="bubble"
+            formats={[]}
+            modules={{ toolbar: false }}
+            placeholder={
+              isSummaryAdded
+                ? "Create a Summary"
+                : "Create a Topic, Note or URL"
+            }
+            scrollingContainer="scrolling-container"
+            ref={ref}
+            onKeyDown={(e: KeyboardEvent) => {
+              if (e.keyCode === ESC) {
+                onClose();
+              }
+            }}
+          />
+        </div>
+        {isSummaryAdded && (
+          <div>
+            <AddSummaryButton onClick={onSave} />
+            <CloseButton onClose={onClose} />
+          </div>
         )}
-        <CloseButton onClose={onClose} />
       </div>
     </div>
   );

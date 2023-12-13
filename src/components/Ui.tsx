@@ -220,9 +220,21 @@ export function ModalNode({
   );
 }
 
-export function CloseButton({ onClose }: { onClose: () => void }): JSX.Element {
+type CloseButtonProps = {
+  onClose: () => void;
+  underRibbons?: boolean;
+};
+
+export function CloseButton({
+  onClose,
+  underRibbons,
+}: CloseButtonProps): JSX.Element {
   return (
-    <button className="btn btn-borderless p-0" type="button" onClick={onClose}>
+    <button
+      className={`btn btn-borderless p-0 ${underRibbons ? "btn-narrower" : ""}`}
+      type="button"
+      onClick={onClose}
+    >
       <span aria-hidden="true" className="btn-close" />
       <span className="sr-only">Close</span>
     </button>

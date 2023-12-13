@@ -83,6 +83,11 @@ body {
   border: none;
 }
 
+.btn-narrower {
+  min-width: 21px;
+  // min-width: 38px;
+}
+
 .deselected {
   opacity: 0.6;
 }
@@ -139,6 +144,14 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
+}
+
+.flex-row-reverse-start {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  // flex-grow: 1;
+  width: 100%;
 }
 
 .flex-row-end {
@@ -795,6 +808,111 @@ $color-map: (
     }
   }
 }
+
+.ribbon2-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-end;
+  margin-left: auto;
+  padding-top: 22px;
+  // margin-right: -10px;
+  // margin-left: 320px; // Adjust this value to position the ribbons to the right of the ReactQuill textbox
+}
+
+$ribbon-2-width: 16px;
+$ribbon-2-height: 12px;
+$ribbon-2-triangle: 5px;
+
+.w-100-minus-ribbon {
+  width: calc(100% - #{$ribbon-2-width});
+}
+
+[class^="ribbon2-"] {
+  position: relative;
+  margin-bottom: 4px;
+  display: flex;  // to center simple-icon-plus inside the ribbon
+  justify-content: center;  // to center simple-icon-plus inside the ribbon
+  align-items: center;  // to center simple-icon-plus inside the ribbon
+  &:before, &:after {
+    content: "";
+    position: absolute;
+  }
+}
+
+@each $name, $current-color in $color-map {
+  .ribbon2-#{$name} {
+    width: $ribbon-2-width;
+    height: $ribbon-2-height;
+    background: $current-color;
+    right: 0px;
+    opacity: 0.6;
+    position:relative;
+    border: none;
+
+    &:before {
+      @include triangle($ribbon-2-height $ribbon-2-triangle, $current-color, left);
+      left: -$ribbon-2-triangle;
+      top: 0;
+      // left: calc(-#{$ribbon-2-triangle} + 10px);
+    }
+  }
+}
+
+// .ribbon-button {
+//   // background: none;
+//   border: none;
+//   padding: 0;
+//   font: inherit;
+//   cursor: pointer;
+//   outline: inherit;
+// }
+
+// @each $name, $current-color in $color-map {
+//   .ribbon-relative-#{$name} {
+//     width: $ribbon-width;
+//     height: $ribbon-height;
+//     background: $current-color;
+//     // right: 1rem;
+//     opacity: 0.6;
+//     // top: 10.5rem;
+//     position: relative;
+
+//     &:before {
+//       @include triangle($ribbon-height $ribbon-triangle, $current-color, left);
+//       left: -$ribbon-triangle;
+//       position: relative;
+//     }
+
+//     &:after {
+//       position: relative;
+//     }
+//   }
+// }
+
+// $ribbon-add-width: 46px;
+// $ribbon-add-height: 22px;
+// $ribbon-add-triangle: 5px;
+
+// // New ribbon-relative class
+// @each $name, $current-color in $color-map {
+//   .ribbon-add-#{$name} {
+//     width: $ribbon-add-width;
+//     height: $ribbon-add-height;
+//     background: $current-color;
+//     right: 0px;
+//     opacity: 0.6;
+//     top: 0.5rem;
+//     position: relative; // This is set to relative
+//     // padding: 1px;
+//     margin: 5px;
+
+//     &:before {
+//       @include triangle($ribbon-add-height $ribbon-add-triangle, $current-color, right);
+//       right: -$ribbon-add-triangle;
+//     }
+//   }
+// }
 
 .underline {
   text-decoration: underline;
