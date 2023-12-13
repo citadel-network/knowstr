@@ -84,7 +84,7 @@ body {
 }
 
 .btn-narrower {
-  min-width: 21px;
+  min-width: 18px;
   // min-width: 38px;
 }
 
@@ -358,6 +358,16 @@ body {
   opacity: 0.3;
   }
 }
+
+.hover-dark-gray {
+
+  &:hover,
+  &:focus,
+  &:active {
+    background: $dark-gray;
+  }
+}
+
 
 .chat-badge {
   background: #525b64;
@@ -831,9 +841,10 @@ $ribbon-2-triangle: 5px;
 [class^="ribbon2-"] {
   position: relative;
   margin-bottom: 4px;
-  display: flex;  // to center simple-icon-plus inside the ribbon
-  justify-content: center;  // to center simple-icon-plus inside the ribbon
-  align-items: center;  // to center simple-icon-plus inside the ribbon
+  // display: flex;  // to center simple-icon-plus inside the ribbon
+  // justify-content: center;  // to center simple-icon-plus inside the ribbon
+  // align-items: center;  // to center simple-icon-plus inside the ribbon
+
   &:before, &:after {
     content: "";
     position: absolute;
@@ -850,13 +861,47 @@ $ribbon-2-triangle: 5px;
     position:relative;
     border: none;
 
+    &:after {
+      content: '+';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    &:hover:after,
+    &:focus:after,
+    &:active:after {
+      opacity: 1;
+    }
+
+    // &:hover,
+    // &:focus,
+    // &:active {
+    //   background: $dark-gray;
+    //   // border-color: darken($current-color, 10%);
+    // }
+
     &:before {
       @include triangle($ribbon-2-height $ribbon-2-triangle, $current-color, left);
       left: -$ribbon-2-triangle;
       top: 0;
       // left: calc(-#{$ribbon-2-triangle} + 10px);
+
+      // &:hover,
+      // &:focus,
+      // &:active {
+      //   background: $dark-gray;
+      //   // border-color: darken($current-color, 10%);
+      // }
     }
   }
+}
+
+.min-width-0 {
+  min-width: 0;
 }
 
 // .ribbon-button {
