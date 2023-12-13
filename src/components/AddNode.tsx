@@ -168,13 +168,17 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
           type="button"
           onClick={() => onSave("TOPIC")}
           aria-label="add topic"
-        />
+        >
+          <span className="simple-icon-plus" />
+        </button>
         <button
           className="ribbon2-URL"
           type="button"
           onClick={() => onSave("URL")}
           aria-label="add URL"
-        />
+        >
+          <span className="simple-icon-plus" />
+        </button>
         <CloseButton onClose={onClose} underRibbons />
       </div>
       {/* <div className="editor flex-grow-1"> */}
