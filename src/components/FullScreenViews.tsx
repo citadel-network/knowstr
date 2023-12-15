@@ -19,7 +19,19 @@ import { DND } from "../dnd";
 import { FullScreenViewWrapper } from "./FullScreenViewWrapper";
 import { useLogout } from "../NostrAuthContext";
 
-function RelatedNodes(): JSX.Element | null {
+function DetailView(): JSX.Element | null {
+  return (
+    <div className="detail-view border-bottom-light">
+      <Node />
+      <div className="border-bottom-light">
+        <DetailViewMenu />
+      </div>
+      <AddNodeToNode />
+    </div>
+  );
+}
+
+function MobileViewNodes(): JSX.Element | null {
   const { views, repos } = useKnowledgeData();
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
@@ -34,6 +46,7 @@ function RelatedNodes(): JSX.Element | null {
 
   return (
     <ReadingStatus nodes={nodes}>
+      <DetailView />
       {nodes.map((path) => {
         return (
           <ViewContextProvider
@@ -41,25 +54,13 @@ function RelatedNodes(): JSX.Element | null {
             indices={path.indexStack}
             key={viewPathToString(path)}
           >
-            <div>
+            <div id={viewPathToString(path)}>
               <Node />
             </div>
           </ViewContextProvider>
         );
       })}
     </ReadingStatus>
-  );
-}
-
-function DetailView(): JSX.Element | null {
-  return (
-    <div className="detail-view border-bottom-light">
-      <Node />
-      <div className="border-bottom-light">
-        <DetailViewMenu />
-      </div>
-      <AddNodeToNode />
-    </div>
   );
 }
 
@@ -73,9 +74,8 @@ export function MobileView(): JSX.Element | null {
       >
         <NavBar logout={logout} />
         <div className="background-white position-relative asset-workspace-height">
-          <div className="position-absolute board scroll ps-2">
-            <DetailView />
-            <RelatedNodes />
+          <div className="position-absolute board ps-2 overflow-auto">
+            <MobileViewNodes />
           </div>
         </div>
       </div>
