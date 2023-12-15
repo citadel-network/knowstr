@@ -1,6 +1,7 @@
 import { List, OrderedMap, Map } from "immutable";
 import React, { useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { useMediaQuery } from "react-responsive";
 import { useApis } from "../Apis";
 import { useKnowledgeData } from "../KnowledgeDataContext";
 import {
@@ -10,6 +11,7 @@ import {
   ViewPath,
   viewPathToString,
 } from "../ViewContext";
+import { IS_MOBILE } from "./responsive";
 
 function isScrolledPastTopOfBorderOfNode(
   elementId: string,
@@ -84,7 +86,7 @@ export function ReadingStatus({
   const knowledgeData = useKnowledgeData();
   const nodesListRef = useRef<HTMLDivElement>(null);
   const scrollableId = useViewKey();
-
+  const isMobile = useMediaQuery(IS_MOBILE);
   const viewPath = useViewPath();
   const view = getRepoFromView(
     knowledgeData.repos,
@@ -118,7 +120,7 @@ export function ReadingStatus({
         return 0;
       }
     );
-    const offset = sortedTopBorderMap.first(0);
+    const offset = !isMobile ? sortedTopBorderMap.first(0) : 0;
     return sortedTopBorderMap.mapEntries<string, number>(([id, topborder]) => [
       id,
       topborder - offset,
@@ -130,7 +132,14 @@ export function ReadingStatus({
       const scrollPos = nodesListRef.current
         ? nodesListRef.current.scrollTop
         : 0;
-      const elementIdToStorage = getScrolledIntoNode(scrollPos, topBorderMap);
+      const mobileScrollPos =
+        nodesListRef.current && nodesListRef.current.offsetParent
+          ? nodesListRef.current.offsetParent.scrollTop
+          : 0;
+      const elementIdToStorage = getScrolledIntoNode(
+        isMobile ? mobileScrollPos : scrollPos,
+        topBorderMap
+      );
       setLocalStorage(scrollableId, JSON.stringify(elementIdToStorage));
     }
   };
@@ -151,22 +160,31 @@ export function ReadingStatus({
         const initialScrollTop = (offsetParent as HTMLElement).scrollTop;
         elementFromStorage.scrollIntoView(
           "scrollBehavior" in document.documentElement.style
-            ? { block: "start", inline: "nearest" }
+            ? { block: "start", inline: "start" }
             : true
         );
-        // eslint-disable-next-line functional/immutable-data
-        (offsetParent as HTMLElement).scrollTop = initialScrollTop;
+        if (!isMobile) {
+          // eslint-disable-next-line functional/immutable-data
+          (offsetParent as HTMLElement).scrollTop = initialScrollTop;
+        }
       }
       const renderedNodeList = nodesListRef.current;
       if (renderedNodeList) {
         const topBorderMap = calculateTopBorderMap(renderedNodeList);
-        nodesListRef.current?.addEventListener("scroll", () =>
-          debounceOnScroll(topBorderMap)
-        );
-        return nodesListRef.current?.removeEventListener<"scroll">(
-          "scroll",
-          () => debounceOnScroll(topBorderMap)
-        );
+        renderedNodeList.addEventListener("touchmove", () => {
+          debounceOnScroll(topBorderMap);
+        });
+        renderedNodeList.addEventListener("scroll", () => {
+          debounceOnScroll(topBorderMap);
+        });
+        return (() => {
+          renderedNodeList.removeEventListener<"touchmove">("touchmove", () =>
+            debounceOnScroll(topBorderMap)
+          );
+          renderedNodeList.removeEventListener<"scroll">("scroll", () =>
+            debounceOnScroll(topBorderMap)
+          );
+        })();
       }
     }
     return undefined;
