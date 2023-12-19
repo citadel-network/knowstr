@@ -72,7 +72,7 @@ function SignInWithSeed({
         <Form.Label>Sign In</Form.Label>
         <ErrorMessage error={error} setError={setError} />
         <Form.Control
-          type="text"
+          type="password"
           placeholder="nsec, private key or mnemonic (12 words)"
           required
         />
