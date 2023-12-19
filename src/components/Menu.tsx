@@ -21,7 +21,7 @@ export function ColumnMenu(): JSX.Element {
     <div className="flex-row-space-between font-size-big">
       <div className="flex-row-start p-1">
         <ToggleMultiselect />
-        <div className="vertical-line ml-2 mr-2" />
+        <div className="vertical-line ms-2 me-2" />
         {!isMultiSelectToggled && (
           <div className="menu-layout">
             <SelectRelations />
@@ -45,7 +45,7 @@ export function DetailViewMenu(): JSX.Element {
     <div className="flex-row-space-between font-size-big">
       <div className="flex-row-start p-1">
         <ToggleMultiselect />
-        <div className="vertical-line ml-2 mr-2" />
+        <div className="vertical-line ms-2 me-2" />
         {!isMultiSelectToggled && (
           <div className="menu-layout">
             <SelectRelations />

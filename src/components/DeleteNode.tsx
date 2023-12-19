@@ -102,7 +102,7 @@ export function DeleteNode({
     return (
       <Dropdown.Item
         className="d-flex workspace-selection dropdown-item-border-bottom"
-        onSelect={deleteNode}
+        onClick={deleteNode}
       >
         <span className="simple-icon-trash d-block dropdown-item-icon" />
         <div className="workspace-selection-text">Delete Workspace</div>
@@ -122,7 +122,7 @@ export function DeleteNode({
       ariaLabel="delete node"
     >
       <span className="simple-icon-trash" />
-      {withCaption && <span className="ml-2">Delete</span>}
+      {withCaption && <span className="ms-2">Delete</span>}
     </Button>
   );
 }

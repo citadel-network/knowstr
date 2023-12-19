@@ -68,7 +68,7 @@ function SignInWithSeed({
 
   return (
     <Form onSubmit={onSubmit}>
-      <Form.Group controlId="inputSeed">
+      <Form.Group controlId="inputSeed" className="mb-2">
         <Form.Label>Sign In</Form.Label>
         <ErrorMessage error={error} setError={setError} />
         <Form.Control
@@ -81,7 +81,7 @@ function SignInWithSeed({
         <Link to="/signup" className="btn btn-borderless underline">
           Create new Account
         </Link>
-        <div className="float-right">
+        <div className="float-end">
           {loading ? (
             <div aria-label="loading" className="spinner-border" />
           ) : (

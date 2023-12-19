@@ -9,25 +9,16 @@ type Children = {
 type BadgeProps = {
   value?: number;
   isLeft?: boolean;
-  isInside?: boolean;
   size?: number;
-  variant?: string;
-  className?: string;
   ariaLabel?: string;
 };
 
 export function Badge({
   value,
   isLeft,
-  isInside,
   size,
-  variant,
-  className,
   ariaLabel,
 }: BadgeProps): JSX.Element {
-  const rightPosition = isInside
-    ? { top: "-15px", right: "-5px", zIndex: 1 }
-    : { top: "-17px", right: "-15px", zIndex: 1 };
   return (
     <>
       {value !== undefined && value > 0 && (
@@ -37,14 +28,14 @@ export function Badge({
             style={
               isLeft
                 ? { top: "-20px", left: "-15px", zIndex: 1 }
-                : rightPosition
+                : { top: "-17px", right: "-15px", zIndex: 1 }
             }
           >
             <BS.Badge
               aria-label={ariaLabel}
               pill
-              variant={variant || "danger"}
-              className={className || "mb-1"}
+              bg="red"
+              className="mb-1"
               style={{ fontSize: `${size || 55}%` }}
             >
               {value}
@@ -149,7 +140,7 @@ export function NodeCard({
       style={style}
     >
       <Badge value={badgeValue} isLeft size={80} />
-      <Card.Body className={cardBodyClassName || "pl-0 pb-2 pt-2"}>
+      <Card.Body className={cardBodyClassName || "ps-0 pb-2 pt-2"}>
         <div className="d-flex align-center">{children}</div>
       </Card.Body>
     </Card>
@@ -224,7 +215,7 @@ export function CloseButton({ onClose }: { onClose: () => void }): JSX.Element {
   return (
     <button className="btn btn-borderless p-0" type="button" onClick={onClose}>
       <span aria-hidden="true" className="btn-close" />
-      <span className="sr-only">Close</span>
+      <span className="visually-hidden">Close</span>
     </button>
   );
 }

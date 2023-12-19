@@ -231,7 +231,7 @@ function Search({
                 <div className="white-space-normal">
                   {summaryText && (
                     <>
-                      <span className="iconsminds-filter-2 mr-2" />
+                      <span className="iconsminds-filter-2 me-2" />
                       <span className="font-italic">{summaryText}</span>
                     </>
                   )}

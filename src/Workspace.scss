@@ -12,6 +12,10 @@ $border-light: 1px solid $light-color;
 
 $font: "Nunito", sans-serif;
 
+.no-underline {
+  text-decoration: none;
+}
+
 body {
   position: relative;
   height: 100%;

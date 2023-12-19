@@ -63,31 +63,25 @@ function useIsAddSummary(): boolean {
 function AddNodeButton({
   onClick,
   ariaLabel,
-  text,
-  className,
 }: {
   onClick: () => void;
   ariaLabel: string;
-  text?: string;
-  className?: string;
 }): JSX.Element {
   const isSummaryAdded = useIsAddSummary();
   const isInline = useIsAddToNode() || useMediaQuery(IS_MOBILE);
-  const defaultClassName = isInline
+  const className = isInline
     ? "workspace-droppable font-italic font-size-medium black-dimmed hover-black-dimmed"
     : "workspace-droppable";
-  const defaultText = isSummaryAdded ? "Add Summary" : "Add Note";
+  const text = isSummaryAdded ? "Add Summary" : "Add Note";
   return (
     <button
       type="button"
-      className={
-        className ? `workspace-droppable ${className}` : defaultClassName
-      }
+      className={className}
       aria-label={ariaLabel}
       onClick={onClick}
     >
-      {!isInline && <span className="simple-icon-plus mr-2" />}
-      <span>{text || defaultText}</span>
+      {!isInline && <span className="simple-icon-plus me-2" />}
+      <span>{text}</span>
       <span>{}</span>
     </button>
   );
@@ -122,7 +116,7 @@ function SearchButton({ onClick }: { onClick: () => void }): JSX.Element {
       aria-label="search"
     >
       <span className="simple-icon-magnifier" />
-      <span className="sr-only">Search</span>
+      <span className="visually-hidden">Search</span>
     </button>
   );
 }

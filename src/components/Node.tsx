@@ -210,7 +210,7 @@ function NodeContent(): JSX.Element {
   const isBionic = node.nodeType === "QUOTE" && settings.bionicReading;
   return (
     <div>
-      <span className={displaySummary ? "iconsminds-filter-2 mr-2" : ""} />
+      <span className={displaySummary ? "iconsminds-filter-2 me-2" : ""} />
       <span
         className={displaySummary ? "font-italic break-word" : "break-word"}
       >
@@ -242,6 +242,7 @@ function NodeAutoLink({
     <>{children}</>
   ) : (
     <Link
+      className="no-underline"
       to={
         node.nodeType === "WORKSPACE"
           ? `/w/${repo.id}`
@@ -431,7 +432,7 @@ export function Node(): JSX.Element | null {
     <NodeCard
       className={!isMobile ? "hover-light-bg" : undefined}
       cardBodyClassName={
-        !isMobile && isOpenInFullScreen ? "pl-2 pt-2 pb-2" : undefined
+        !isMobile && isOpenInFullScreen ? "ps-2 pt-2 pb-2" : undefined
       }
     >
       {!isAddToNode && <Ribbon />}

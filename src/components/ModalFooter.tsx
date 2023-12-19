@@ -23,7 +23,7 @@ function ModalFooter({
 
   return (
     <Modal.Footer>
-      <Button variant="outline-dark" className="mr-auto" onClick={onHide}>
+      <Button variant="outline-dark" className="me-auto" onClick={onHide}>
         Cancel
       </Button>
       {loading ? (

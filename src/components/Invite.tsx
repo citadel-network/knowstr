@@ -133,7 +133,7 @@ function WaitForInvite({ publicKey }: { publicKey: PublicKey }): JSX.Element {
             <UserQRCode publicKey={user.publicKey} />
           </div>
           <div className="mt-3">
-            <div className="float-left ">
+            <div className="float-start ">
               <Spinner animation="border" />
               <span>&nbsp; Waiting for confirmation...</span>
             </div>
@@ -223,7 +223,7 @@ export function VCard(): JSX.Element {
           {showScan && ScanContact}
         </div>
         <div className="mt-3">
-          <div className={showScan ? "float-left" : "float-right"}>
+          <div className={showScan ? "float-start" : "float-end"}>
             <button
               type="button"
               className="btn"
@@ -232,7 +232,7 @@ export function VCard(): JSX.Element {
               {showScan ? "Your Contact" : "Scan Contact"}
             </button>
           </div>
-          <div className="float-right">
+          <div className="float-end">
             {showScan && (
               <LoadingSpinnerButton
                 onClick={submit}

@@ -99,7 +99,7 @@ function DropdownItem({
   const diffDesc = describeDiff(repo, selected, branchPath);
   return (
     <Dropdown.Item
-      onSelect={onSelect}
+      onClick={onSelect}
       active={selected[0] === branchPath[0] && selected[1] === branchPath[1]}
     >
       {branchPath[0] === undefined && branchPath[1] === DEFAULT_BRANCH_NAME && (

@@ -73,7 +73,7 @@ export function MobileView(): JSX.Element | null {
       >
         <NavBar logout={logout} />
         <div className="background-white position-relative asset-workspace-height">
-          <div className="position-absolute board scroll pl-2">
+          <div className="position-absolute board scroll ps-2">
             <DetailView />
             <RelatedNodes />
           </div>

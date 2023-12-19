@@ -57,9 +57,11 @@ export function SignUp(): JSX.Element {
           readOnly
         />
       </div>
-      <div className="float-right mt-4">
+      <div className="float-end mt-4">
         <div className="btn">
-          <Link to="/signin">I created a backup of my key</Link>
+          <Link className="no-underline" to="/signin">
+            I created a backup of my key
+          </Link>
         </div>
       </div>
     </StandaloneCard>

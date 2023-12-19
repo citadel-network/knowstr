@@ -27,7 +27,7 @@ test("Sets error to null on close", () => {
       <ErrorMessage error="my error" setError={setError} />
     </div>
   );
-  const closeButton = screen.getByText("×");
+  const closeButton = screen.getByLabelText("Close alert");
   fireEvent.click(closeButton);
   expect(setError).toBeCalledTimes(1);
   expect(setError).toBeCalledWith(null);

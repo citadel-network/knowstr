@@ -108,7 +108,7 @@ test("notification appears if and only if process is not finished", async () => 
   await waitForLoadingToBeNull();
   await screen.findByText("You are connected");
   // close modal view
-  fireEvent.click(screen.getByText("Close"));
+  fireEvent.click(screen.getByLabelText("Close"));
   expect(screen.queryByLabelText("notification-center")).toBeNull();
 });
 

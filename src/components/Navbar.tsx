@@ -80,7 +80,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               <DeleteNode as="item" />
               <Dropdown.Item
                 className="d-flex workspace-selection"
-                onSelect={() => navigate("/vcard")}
+                onClick={() => navigate("/vcard")}
                 aria-label="invite user"
               >
                 <span className="simple-icon-user-follow d-block dropdown-item-icon" />
@@ -88,7 +88,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               </Dropdown.Item>
               <Dropdown.Item
                 className="d-flex workspace-selection"
-                onSelect={() => navigate("/relays")}
+                onClick={() => navigate("/relays")}
                 aria-label="edit relays"
               >
                 <span className="icon-nostr-logo d-block dropdown-item-icon" />
@@ -96,7 +96,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               </Dropdown.Item>
               <Dropdown.Item
                 className="d-flex workspace-selection"
-                onSelect={onToggleBionic}
+                onClick={onToggleBionic}
                 aria-label={`switch bionic reading ${isBionic ? "off" : "on"}`}
               >
                 <span
@@ -110,7 +110,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               </Dropdown.Item>
               <Dropdown.Item
                 className="d-flex workspace-selection"
-                onSelect={logout}
+                onClick={logout}
                 aria-label="logout"
               >
                 <span className="simple-icon-logout d-block dropdown-item-icon" />

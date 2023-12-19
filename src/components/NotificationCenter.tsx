@@ -41,14 +41,14 @@ export function NotificationCenter(): JSX.Element | null {
                 <Dropdown.Divider />
                 <Dropdown.Item
                   className="d-flex workspace-selection"
-                  onSelect={(): void => {
+                  onClick={(): void => {
                     if (notification.navigateToLink) {
                       navigate(`${notification.navigateToLink}`);
                     }
                   }}
                 >
                   <div>
-                    <div className="mt-0 pr-0">
+                    <div className="mt-0 pe-0">
                       <span className="text-extra-small text-muted">
                         {notification.date
                           ? notification.date.toLocaleString()

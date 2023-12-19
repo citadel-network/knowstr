@@ -64,14 +64,14 @@ export function WizardModalForm({
             <div className="wizard-basic-step">{secondStep}</div>
           )}
           <Modal.Footer>
-            <Button variant="outline-dark" className="mr-auto" onClick={onHide}>
+            <Button variant="outline-dark" className="me-auto" onClick={onHide}>
               Abort
             </Button>
             <div className="wizard-buttons">
               {showSecondStep && (
                 <Button
                   color="primary"
-                  className="mr-1"
+                  className="me-1"
                   onClick={(): void => setShowSecondStep(false)}
                 >
                   Back
@@ -80,7 +80,7 @@ export function WizardModalForm({
               {!showSecondStep && (
                 <Button
                   color="primary"
-                  className="mr-1"
+                  className="me-1"
                   type="button"
                   onClick={(event: React.MouseEvent<HTMLElement>): void => {
                     onValidate({

@@ -73,7 +73,7 @@ function ShowRelationsButton({
     return (
       <div className="flex-start deselected">
         <span className={`${IconLabelsForTypes[type]}`} />
-        <span className="font-size-small pr-1">{relationSize}</span>
+        <span className="font-size-small pe-1">{relationSize}</span>
       </div>
     );
   }
@@ -127,7 +127,7 @@ function ShowRelationsButton({
     >
       <div className="flex-start">
         <span className={`${IconLabelsForTypes[type]}`} />
-        <span className="font-size-small pr-1">{relationSize}</span>
+        <span className="font-size-small pe-1">{relationSize}</span>
       </div>
     </button>
   );

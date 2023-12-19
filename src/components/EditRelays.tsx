@@ -20,7 +20,7 @@ function RelayButton({
   children,
 }: RelayButtonProps): JSX.Element {
   return (
-    <Button className="btn ml-2" ariaLabel={ariaLabel} onClick={onClick}>
+    <Button className="btn ms-2" ariaLabel={ariaLabel} onClick={onClick}>
       {children}
     </Button>
   );
@@ -53,7 +53,7 @@ function EditableFormControl({
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         disabled={!isEdit}
-        className="ml-2"
+        className="ms-2 p-2"
         style={{ flexGrow: 1 }}
       />
       {isEdit && (
@@ -100,7 +100,7 @@ function RelayFormGroup({
   const relayRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <Form.Group className="d-flex align-items-center">
+    <Form.Group className="d-flex align-items-center mb-2">
       <RelayButton
         ariaLabel={`remove ${relay}`}
         onClick={() => {
@@ -144,7 +144,7 @@ function NewRelayFormGroup({
   const relayRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <Form.Group className="d-flex align-items-center">
+    <Form.Group className="d-flex align-items-center mb-2">
       <RelayButton ariaLabel="add new relay" onClick={() => setIsEdit(true)}>
         <span className="simple-icon-plus" />
       </RelayButton>

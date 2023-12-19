@@ -52,9 +52,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
       <Form onSubmit={onSubmit}>
         <Modal.Body>
           <InputGroup>
-            <InputGroup.Prepend>
-              <InputGroup.Text>Title</InputGroup.Text>
-            </InputGroup.Prepend>
+            <InputGroup.Text>Title</InputGroup.Text>
             <FormControl
               aria-label="title of new workspace"
               name="title"
@@ -76,7 +74,7 @@ function ListItem({ id, title }: { id: string; title: string }): JSX.Element {
   return (
     <Dropdown.Item
       className="d-flex workspace-selection"
-      onSelect={() => {
+      onClick={() => {
         updateKnowledge({
           activeWorkspace: id,
         });
@@ -137,7 +135,7 @@ export function SelectWorkspaces(): JSX.Element {
         <Dropdown.Divider />
         <Dropdown.Item
           className="d-flex workspace-selection"
-          onSelect={() => setNewWorkspace(true)}
+          onClick={() => setNewWorkspace(true)}
         >
           <div className="workspace-selection-text">New Workspace</div>
         </Dropdown.Item>
