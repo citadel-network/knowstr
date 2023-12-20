@@ -21,6 +21,7 @@ export function NotificationCenter(): JSX.Element | null {
         key="notification-dropdown"
         className="btn"
         aria-label="notification-center"
+        tabIndex={0}
       >
         <Badge ariaLabel="number of notifications" value={notifications.size} />
         <span className="simple-icon-bell d-block" />
@@ -46,6 +47,7 @@ export function NotificationCenter(): JSX.Element | null {
                       navigate(`${notification.navigateToLink}`);
                     }
                   }}
+                  tabIndex={0}
                 >
                   <div>
                     <div className="mt-0 pe-0">

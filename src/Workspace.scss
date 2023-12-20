@@ -83,6 +83,14 @@ body {
   border: $border-strong;
 }
 
+.close:focus,
+.input-group:focus-within,
+.dropdown-toggle:focus,
+.dropdown-item:focus,
+.btn:focus {
+  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.5) !important;
+}
+
 .btn-borderless {
   border: none;
 }
@@ -438,14 +446,10 @@ body {
   border: 0px;
   background-color: transparent;
   padding: 0px;
-}
-
-.toggle-button {
 
   &:hover,
   &:focus,
   &:active {
-  border: 3px black;
   border-radius: 50%;
   }
 }

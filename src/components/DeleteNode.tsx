@@ -102,7 +102,7 @@ export function DeleteNode({
     return (
       <Dropdown.Item
         className="d-flex workspace-selection dropdown-item-border-bottom"
-        onClick={deleteNode}
+        tabIndex={0}
       >
         <span className="simple-icon-trash d-block dropdown-item-icon" />
         <div className="workspace-selection-text">Delete Workspace</div>

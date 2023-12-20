@@ -73,7 +73,12 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
           <PublishKnowledgeButton />
           <NotificationCenter />
           <Dropdown className="options-dropdown">
-            <Dropdown.Toggle as="button" className="btn" aria-label="open menu">
+            <Dropdown.Toggle
+              as="button"
+              className="btn"
+              aria-label="open menu"
+              tabIndex={0}
+            >
               <span className="simple-icon-options-vertical" />
             </Dropdown.Toggle>
             <Dropdown.Menu>
@@ -82,6 +87,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
                 className="d-flex workspace-selection"
                 onClick={() => navigate("/vcard")}
                 aria-label="invite user"
+                tabIndex={0}
               >
                 <span className="simple-icon-user-follow d-block dropdown-item-icon" />
                 <div className="workspace-selection-text">Invite New User</div>
@@ -90,6 +96,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
                 className="d-flex workspace-selection"
                 onClick={() => navigate("/relays")}
                 aria-label="edit relays"
+                tabIndex={0}
               >
                 <span className="icon-nostr-logo d-block dropdown-item-icon" />
                 <div className="workspace-selection-text">Relays</div>
@@ -98,6 +105,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
                 className="d-flex workspace-selection"
                 onClick={onToggleBionic}
                 aria-label={`switch bionic reading ${isBionic ? "off" : "on"}`}
+                tabIndex={0}
               >
                 <span
                   className={`simple-icon-eyeglass d-block dropdown-item-icon ${
@@ -112,6 +120,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
                 className="d-flex workspace-selection"
                 onClick={logout}
                 aria-label="logout"
+                tabIndex={0}
               >
                 <span className="simple-icon-logout d-block dropdown-item-icon" />
                 <div className="workspace-selection-text">Log Out</div>

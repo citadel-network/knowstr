@@ -170,6 +170,7 @@ export function Button({
       className={className || "btn"}
       onClick={onClick}
       aria-label={ariaLabel}
+      tabIndex={0}
     >
       {children && children}
     </button>

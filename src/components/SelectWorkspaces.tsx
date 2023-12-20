@@ -61,7 +61,9 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
           </InputGroup>
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit">Create Workspace</Button>
+          <Button type="submit" tabIndex={0}>
+            Create Workspace
+          </Button>
         </Modal.Footer>
       </Form>
     </Modal>
@@ -81,6 +83,7 @@ function ListItem({ id, title }: { id: string; title: string }): JSX.Element {
         navigate(`/w/${id}`);
       }}
       key={id}
+      tabIndex={0}
     >
       <div className="workspace-selection-text">{title}</div>
     </Dropdown.Item>
@@ -104,6 +107,7 @@ export function SelectWorkspaces(): JSX.Element {
         as="button"
         className="btn"
         aria-label="switch workspace"
+        tabIndex={0}
       >
         <span className="simple-icon-layers" />
       </Dropdown.Toggle>
@@ -136,6 +140,7 @@ export function SelectWorkspaces(): JSX.Element {
         <Dropdown.Item
           className="d-flex workspace-selection"
           onClick={() => setNewWorkspace(true)}
+          tabIndex={0}
         >
           <div className="workspace-selection-text">New Workspace</div>
         </Dropdown.Item>
