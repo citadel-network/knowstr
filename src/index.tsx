@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { SimplePool } from "nostr-tools";
 import * as serviceWorker from "./serviceWorker";
@@ -29,23 +29,25 @@ function createFileStore(): LocalStorage {
   };
 }
 
-ReactDOM.render(
-  <BrowserRouter>
-    <ConfigurationContextProvider bootstrapInterval={BOOTSTRAP_INTERVAL}>
-      <ApiProvider
-        apis={{
-          encryption: createEncryption(),
-          fileStore: createFileStore(),
-          relayPool: new SimplePool(),
-        }}
-      >
-        <NostrAuthContextProvider>
-          <App />
-        </NostrAuthContextProvider>
-      </ApiProvider>
-    </ConfigurationContextProvider>
-  </BrowserRouter>,
-  document.getElementById("root")
-);
+const root = document.getElementById("root");
+if (root !== null) {
+  createRoot(root).render(
+    <BrowserRouter>
+      <ConfigurationContextProvider bootstrapInterval={BOOTSTRAP_INTERVAL}>
+        <ApiProvider
+          apis={{
+            encryption: createEncryption(),
+            fileStore: createFileStore(),
+            relayPool: new SimplePool(),
+          }}
+        >
+          <NostrAuthContextProvider>
+            <App />
+          </NostrAuthContextProvider>
+        </ApiProvider>
+      </ConfigurationContextProvider>
+    </BrowserRouter>
+  );
+}
 
 serviceWorker.unregister();

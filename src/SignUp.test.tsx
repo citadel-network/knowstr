@@ -12,13 +12,13 @@ test("create nostr login data", () => {
       </Routes>
     </BrowserRouter>
   );
-
+  /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
   const mnemonic = (screen.getByLabelText("Mnemonic") as HTMLFormElement).value;
-
   const publicKey = (screen.getByLabelText("Public Key") as HTMLFormElement)
     .value;
   const privateKey = (screen.getByLabelText("Private Key") as HTMLFormElement)
     .value;
+  /* eslint-enable @typescript-eslint/no-unnecessary-type-assertion */
 
   const privateKeyFromMnemonic = nip06.privateKeyFromSeedWords(mnemonic);
 
