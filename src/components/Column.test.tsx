@@ -64,7 +64,7 @@ test("Scroll position is stored in localStorage", async () => {
   });
   const nodesList = screen.getByLabelText("related to", {
     exact: false,
-  }) as HTMLDivElement;
+  });
   nodes
     .remove(topic.id)
     .toArray()
