@@ -1,5 +1,5 @@
-import { List } from "immutable";
-import React, { useContext, useEffect } from "react";
+import { List, Set } from "immutable";
+import React, { useContext, useEffect, useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import { useMediaQuery } from "react-responsive";
 import { Link, matchPath, useLocation, useParams } from "react-router-dom";
@@ -403,7 +403,43 @@ function Ribbon(): JSX.Element | null {
   if (!nodeType) {
     return null;
   }
-  return <div className={`ribbon-${nodeType}`} />;
+
+  const editableNodeTypes = List(["NOTE", "TOPIC", "URL"]);
+  if (!editableNodeTypes.includes(nodeType)) {
+    return <div className={`ribbon-${nodeType}`} />;
+  }
+
+  const otherNodeTypes = editableNodeTypes.filter((type) => type !== nodeType);
+  const [isClicked, setIsClicked] = useState(false);
+
+  return (
+    <>
+      <button
+        className={`ribbon-${nodeType}`}
+        type="button"
+        onClick={() => setIsClicked(!isClicked)}
+        aria-label={
+          isClicked ? `keep node type ${nodeType}` : "change node type"
+        }
+      />
+      {isClicked &&
+        otherNodeTypes.map((type, index) => (
+          // the numbers come from `Workspace.scss`;
+          // the margin between the ribbons (0.5rem) is from the `top`
+          // property in `.ribbon-#`;
+          // 12px is the `$ribbon-height`;
+          <button
+            className={`ribbon-${type} opacity-low`}
+            type="button"
+            style={{
+              top: `calc(${(index + 2) * 0.5}rem + ${(index + 1) * 12}px)`,
+            }}
+            key={type}
+            aria-label={`change node type to ${type}`}
+          />
+        ))}
+    </>
+  );
 }
 
 export function Node(): JSX.Element | null {

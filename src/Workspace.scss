@@ -758,17 +758,31 @@ to {
   grid-gap: 20px;
 }
 
+
+
+// .ribbon-container {
+//     position: relative;
+//     margin-bottom: 4px;
+//     min-height: 20px;
+//     min-width: 20px;
+// }
+
+// .ribbon-container [class^="ribbon-"] {
+//   position: absolute;
+//   margin-bottom: 4px;
+//   //margin-bottom: 80px;
+//   &:before, &:after {
+//     content: "";
+//     position: absolute;
+//   }
+// }
+
 [class^="ribbon-"] {
   position: absolute;
-  //margin-bottom: 80px;
   &:before, &:after {
     content: "";
     position: absolute;
   }
-}
-
-.ribbon-container {
-    position: relative;
 }
 
 $ribbon-width: 16px;
@@ -796,11 +810,23 @@ $color-map: (
     right: 0px;
     opacity: 0.6;
     top: 0.5rem;
+    border: none;
 
     &:before {
       @include triangle($ribbon-height $ribbon-triangle, $current-color, left);
       left: -$ribbon-triangle;
+      top: 0;
     }
+  }
+}
+
+.opacity-low {
+  opacity: 0.2;
+
+  &:hover,
+  &:active,
+  &:focus {
+    opacity: 0.6;
   }
 }
 
