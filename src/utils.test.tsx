@@ -18,7 +18,6 @@ import {
   parseContactOfContactsEvents,
   parseContactEvent,
 } from "./contacts";
-import { ConfigurationContextProvider } from "./ConfigurationContext";
 import {
   planSetKnowledgeData,
   createPlan,
@@ -88,8 +87,6 @@ export const CAROL: KeyPair = {
 
 export const TEST_WORKSPACE_ID = "my-first-workspace-id";
 
-const DEFAULT_TEST_BOOTSTRAP_INTERVAL = 3;
-
 type MockFileStore = LocalStorage & {
   getLocalStorageData: () => Map<string, string>;
 };
@@ -150,27 +147,21 @@ function renderApis(
   window.history.pushState({}, "", options?.initialRoute || "/");
   render(
     <BrowserRouter>
-      <ConfigurationContextProvider
-        bootstrapInterval={
-          options?.testBootstrapInterval || DEFAULT_TEST_BOOTSTRAP_INTERVAL
-        }
+      <ApiProvider
+        apis={{
+          fileStore,
+          relayPool,
+        }}
       >
-        <ApiProvider
-          apis={{
-            fileStore,
-            relayPool,
+        <NostrAuthContext.Provider
+          value={{
+            user,
+            setBlockstackUser: jest.fn(),
           }}
         >
-          <NostrAuthContext.Provider
-            value={{
-              user,
-              setBlockstackUser: jest.fn(),
-            }}
-          >
-            {children}
-          </NostrAuthContext.Provider>
-        </ApiProvider>
-      </ConfigurationContextProvider>
+          {children}
+        </NostrAuthContext.Provider>
+      </ApiProvider>
     </BrowserRouter>
   );
   return {

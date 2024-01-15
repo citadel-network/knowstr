@@ -1,7 +1,7 @@
-import { is, List, Map } from "immutable";
+import { is, Map } from "immutable";
 import { Filter, Event } from "nostr-tools";
 import { useEffect, useState } from "react";
-import { useEventQuery, findAllTags, sortEvents } from "citadel-commons";
+import { useEventQuery, sortEvents } from "citadel-commons";
 import { clone, isBranchEqual, newDB, pull } from "./knowledge";
 import { KIND_KNOWLEDGE } from "./nostr";
 import { jsonToDiff, Serializable } from "./serializer";
@@ -309,58 +309,18 @@ export function mergeKnowledgeData(
   }, myDB);
 }
 
-export function isBootstrapEvent(event: Event): boolean {
-  return findAllTags(event, "bootstrap") !== undefined;
-}
-
-export function getEventsFromLastBootstrap(events: List<Event>): {
-  eventsFromBootstrap: List<Event>;
-  numberOfEventsSinceLastBootstrap: number;
-} {
-  const sortedEvents = sortEvents(events);
-  const length = sortedEvents.size;
-  const lastBootstrapEventsIndex = sortedEvents.findLastKey(
-    (e) => isBootstrapEvent(e),
-    length
-  );
-  const numberOfEventsSinceLastBootstrap = lastBootstrapEventsIndex
-    ? length - 1 - lastBootstrapEventsIndex
-    : length;
-  const eventsWithoutLastNonBootstrapEvents = lastBootstrapEventsIndex
-    ? sortedEvents.splice(
-        lastBootstrapEventsIndex + 1,
-        numberOfEventsSinceLastBootstrap
-      )
-    : List<Event>();
-  const secondLastNonBootstrapEventsIndex =
-    eventsWithoutLastNonBootstrapEvents.findLastKey(
-      (e) => !isBootstrapEvent(e)
-    );
-
-  return {
-    eventsFromBootstrap:
-      secondLastNonBootstrapEventsIndex !== undefined
-        ? sortedEvents.splice(0, secondLastNonBootstrapEventsIndex + 1)
-        : sortedEvents,
-    numberOfEventsSinceLastBootstrap,
-  };
-}
-
-type DiffsSinceLastBootstrap = {
-  diffs: Map<string, KnowledgeDiffWithCommits>;
-  numberSinceMyLastBootstrap: number;
-};
+type Diffs = Map<string, KnowledgeDiffWithCommits>;
 
 export function useKnowledgeQuery(
   authors: PublicKey[],
   myself: PublicKey,
   enabled: boolean,
   readFromRelays: Relays
-): [Map<PublicKey, KnowledgeDataWithCommits>, boolean, number] {
+): [Map<PublicKey, KnowledgeDataWithCommits>, boolean] {
   const { relayPool } = useApis();
-  const [decryptedDiffs, setDecryptedDiffs] = useState<
-    DiffsSinceLastBootstrap | undefined
-  >();
+  const [decryptedDiffs, setDecryptedDiffs] = useState<Diffs | undefined>(
+    undefined
+  );
 
   const { events, eose } = useEventQuery(
     relayPool,
@@ -370,42 +330,28 @@ export function useKnowledgeQuery(
       readFromRelays,
     }
   );
-  const groupedByPublicKey = events.groupBy(
-    (event) => event.pubkey as PublicKey
-  );
-  const eventsFromLastBootstrapEvents = groupedByPublicKey.map((evts) =>
-    getEventsFromLastBootstrap(evts.valueSeq().toList())
-  );
-
-  const numberSinceMyLastBootstrap =
-    eventsFromLastBootstrapEvents.get(myself)
-      ?.numberOfEventsSinceLastBootstrap || 0;
+  const groupedByPublicKey = events
+    .groupBy((event) => event.pubkey as PublicKey)
+    .map((evts) => sortEvents(evts.toList()));
 
   useEffect(() => {
     setDecryptedDiffs((existingDiffs) => {
       if (!eose) {
         return existingDiffs;
       }
-      const diffsFromAllAuthors = eventsFromLastBootstrapEvents.reduce(
+      const diffsFromAllAuthors = groupedByPublicKey.reduce(
         (rdx, eventsFromAuthor): Map<string, KnowledgeDiffWithCommits> => {
           return rdx.merge(
             parseKnowledgeEvents(
-              Map<string, Event>(
-                eventsFromAuthor.eventsFromBootstrap.map((e) => [e.id, e])
-              ),
-              existingDiffs
-                ? existingDiffs.diffs
-                : Map<string, KnowledgeDiffWithCommits>(),
+              Map<string, Event>(eventsFromAuthor.map((e) => [e.id, e])),
+              existingDiffs || Map<string, KnowledgeDiffWithCommits>(),
               myself
             )
           );
         },
         Map<string, KnowledgeDiffWithCommits>()
       );
-      return {
-        diffs: diffsFromAllAuthors,
-        numberSinceMyLastBootstrap,
-      };
+      return diffsFromAllAuthors;
     });
   }, [
     JSON.stringify(
@@ -417,11 +363,7 @@ export function useKnowledgeQuery(
     eose,
   ]);
   if (decryptedDiffs === undefined) {
-    return [Map<PublicKey, KnowledgeDataWithCommits>(), false, 0];
+    return [Map<PublicKey, KnowledgeDataWithCommits>(), false];
   }
-  return [
-    createKnowledgeDBs(events, decryptedDiffs.diffs),
-    true,
-    numberSinceMyLastBootstrap,
-  ];
+  return [createKnowledgeDBs(events, decryptedDiffs), true];
 }

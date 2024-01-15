@@ -10,7 +10,6 @@ import {
   finalizeEvent,
   publishEvent,
 } from "./nostr";
-import { getEventsFromLastBootstrap } from "./knowledgeEvents";
 
 async function publishEvents(
   relayPool: SimplePool,
@@ -67,11 +66,9 @@ export async function republishEvents(
   const allMyKnowledgeEvents = events.filter(
     (e: Event) => e.kind === KIND_KNOWLEDGE
   );
-  const allKnowledgeEventsSinceLastBootstrap =
-    getEventsFromLastBootstrap(allMyKnowledgeEvents).eventsFromBootstrap;
 
   const eventsToRepublish = signEventsWithNewDate(
-    lastReplacableEvents.concat(allKnowledgeEventsSinceLastBootstrap),
+    lastReplacableEvents.concat(allMyKnowledgeEvents),
     user
   );
   await publishEvents(relayPool, eventsToRepublish, writeRelays);

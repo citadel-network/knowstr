@@ -18,7 +18,6 @@ import {
 } from "./knowledge";
 
 import { ViewContextProvider } from "./ViewContext";
-import { useConfiguration } from "./ConfigurationContext";
 import { newNode } from "./connections";
 
 type Context = {
@@ -166,22 +165,20 @@ export function KnowledgeDataProvider({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  const { bootstrapInterval } = useConfiguration();
   const { user, relays, contacts, contactsOfContacts } = useData();
   const { createPlan, executePlan } = usePlanner();
   const readFromRelays = relays.filter((r) => r.read === true);
 
-  const [knowledgeDBs, dbsReady, numberOfEventsSinceLastBootstrap] =
-    useKnowledgeQuery(
-      contacts
-        .merge(contactsOfContacts)
-        .set(user.publicKey, user)
-        .keySeq()
-        .toArray(),
-      user.publicKey,
-      true,
-      readFromRelays
-    );
+  const [knowledgeDBs, dbsReady] = useKnowledgeQuery(
+    contacts
+      .merge(contactsOfContacts)
+      .set(user.publicKey, user)
+      .keySeq()
+      .toArray(),
+    user.publicKey,
+    true,
+    readFromRelays
+  );
 
   const knowledge = mergeKnowledgeData(knowledgeDBs, user.publicKey);
   const [knowledgeStatus, setKnowledgeStatus] = useState<{
@@ -210,18 +207,15 @@ export function KnowledgeDataProvider({
       repos: committedRepos,
     };
 
-    const isBootstrapDiff =
-      numberOfEventsSinceLastBootstrap >= bootstrapInterval;
     const myDB = knowledgeDBs.get(user.publicKey, newDB());
     // Compare the full database incl. my changes and commits from all others
     // with only myDB and store that diff for max. data availability
-    const diffWithCommits = isBootstrapDiff
-      ? compareKnowledgeDB<BranchWithCommits>(newDB(), dataWithCommittedRepos)
-      : compareKnowledgeDB<BranchWithCommits>(myDB, dataWithCommittedRepos);
-
-    await executePlan(
-      planSetKnowledgeData(createPlan(), diffWithCommits, isBootstrapDiff)
+    const diffWithCommits = compareKnowledgeDB<BranchWithCommits>(
+      myDB,
+      dataWithCommittedRepos
     );
+
+    await executePlan(planSetKnowledgeData(createPlan(), diffWithCommits));
     setKnowledgeStatus({ diff: diffWithCommits, unsaved: false });
   };
 

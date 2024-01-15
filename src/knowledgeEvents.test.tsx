@@ -1,5 +1,4 @@
-import { List, Map } from "immutable";
-import { Event } from "nostr-tools";
+import { Map } from "immutable";
 import { newNode } from "./connections";
 import {
   DEFAULT_BRANCH_NAME,
@@ -12,13 +11,11 @@ import {
 import {
   applyDiff,
   compareKnowledgeDB,
-  getEventsFromLastBootstrap,
   KnowledgeDiffWithCommits,
   RepoDiff,
 } from "./knowledgeEvents";
 import { ALICE, commitAll } from "./utils.test";
 import { splitDiff } from "./planner";
-import { KIND_KNOWLEDGE, finalizeEvent } from "./nostr";
 
 test("Diff of unstaged Commit", () => {
   const node = newNode("Hello World", "NOTE");
@@ -211,66 +208,4 @@ test("Repo exceeds chunk size", () => {
   const diff = compareKnowledgeDB(commitAll(baseDB), commitAll(db));
   const split = splitDiff(diff, ALICE.publicKey, 0);
   expect(split.size).toBe(1);
-});
-
-function createDiffEvents(
-  length: number,
-  startingAt: number,
-  isBootstrap?: boolean
-): List<Event> {
-  const ids = List(Array(length).keys());
-  return ids.reduce((events, id) => {
-    const diffEvent = finalizeEvent(
-      {
-        kind: KIND_KNOWLEDGE,
-        pubkey: ALICE.publicKey,
-        created_at: startingAt + id,
-        tags: isBootstrap ? [["bootstrap"]] : [],
-        content: `${(startingAt + id).toString(10)} ${
-          isBootstrap ? "bootstrap" : ""
-        }`,
-      },
-      ALICE.privateKey
-    );
-    return events.push(diffEvent);
-  }, List<Event>());
-}
-
-function createBootstrapDiffEvents(
-  length: number,
-  startingAt: number
-): List<Event> {
-  return createDiffEvents(length, startingAt, true);
-}
-
-test("Get events from last bootstrap", () => {
-  // first: three diff events
-  const events = createDiffEvents(3, 100);
-  const result = getEventsFromLastBootstrap(events);
-  expect(result.eventsFromBootstrap.size).toBe(3);
-  expect(result.numberOfEventsSinceLastBootstrap).toBe(3);
-
-  // second: two bootstrap and three diff events
-  const secondEvents = createBootstrapDiffEvents(2, 90).merge(events);
-  const secondResult = getEventsFromLastBootstrap(secondEvents);
-  expect(secondResult.eventsFromBootstrap.size).toBe(5);
-  expect(secondResult.numberOfEventsSinceLastBootstrap).toBe(3);
-
-  // third: one diff, then two bootstrap and three diff events
-  const thirdEvents = createDiffEvents(1, 80).merge(secondEvents);
-  const thirdResult = getEventsFromLastBootstrap(thirdEvents);
-  expect(thirdResult.eventsFromBootstrap.size).toBe(5);
-  expect(thirdResult.numberOfEventsSinceLastBootstrap).toBe(3);
-
-  // fourth: three bootstrap, then one diff, two bootstrap and three diff events
-  const fourthEvents = createBootstrapDiffEvents(3, 70).merge(thirdEvents);
-  const fourthResult = getEventsFromLastBootstrap(fourthEvents);
-  expect(fourthResult.eventsFromBootstrap.size).toBe(5);
-  expect(fourthResult.numberOfEventsSinceLastBootstrap).toBe(3);
-
-  // fifth: four diff, three bootstrap, then one diff, two bootstrap and three diff events
-  const fifthEvents = createDiffEvents(4, 60).merge(fourthEvents);
-  const fifthResult = getEventsFromLastBootstrap(fifthEvents);
-  expect(fifthResult.eventsFromBootstrap.size).toBe(5);
-  expect(fifthResult.numberOfEventsSinceLastBootstrap).toBe(3);
 });

@@ -12,12 +12,9 @@ import "./editor.css";
 import "./Workspace.scss";
 import "./App.css";
 import "react-quill/dist/quill.bubble.css";
-import { ConfigurationContextProvider } from "./ConfigurationContext";
 import { ApiProvider } from "./Apis";
 import { App } from "./App";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
-
-const BOOTSTRAP_INTERVAL = 10;
 
 function createFileStore(): LocalStorage {
   return {
@@ -32,18 +29,16 @@ const root = document.getElementById("root");
 if (root !== null) {
   createRoot(root).render(
     <BrowserRouter>
-      <ConfigurationContextProvider bootstrapInterval={BOOTSTRAP_INTERVAL}>
-        <ApiProvider
-          apis={{
-            fileStore: createFileStore(),
-            relayPool: new SimplePool(),
-          }}
-        >
-          <NostrAuthContextProvider>
-            <App />
-          </NostrAuthContextProvider>
-        </ApiProvider>
-      </ConfigurationContextProvider>
+      <ApiProvider
+        apis={{
+          fileStore: createFileStore(),
+          relayPool: new SimplePool(),
+        }}
+      >
+        <NostrAuthContextProvider>
+          <App />
+        </NostrAuthContextProvider>
+      </ApiProvider>
     </BrowserRouter>
   );
 }

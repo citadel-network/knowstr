@@ -96,8 +96,7 @@ export function splitDiff(
 
 export function planSetKnowledgeData(
   plan: Plan,
-  knowledgeDiff: KnowledgeDiff<BranchWithCommits>,
-  isBootstrapDiff?: boolean | undefined
+  knowledgeDiff: KnowledgeDiff<BranchWithCommits>
 ): Plan {
   const events = splitDiff(knowledgeDiff, plan.user.publicKey).map((diff) => {
     return finalizeEvent(
@@ -105,7 +104,7 @@ export function planSetKnowledgeData(
         kind: KIND_KNOWLEDGE,
         pubkey: getPublicKey(plan.user.privateKey),
         created_at: Math.floor(Date.now() / 1000),
-        tags: isBootstrapDiff ? [["bootstrap"]] : [],
+        tags: [],
         content: JSON.stringify(diffToJSON(diff, plan.user.publicKey)),
       },
       plan.user.privateKey
