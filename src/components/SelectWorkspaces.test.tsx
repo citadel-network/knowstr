@@ -20,9 +20,9 @@ test("Distinguish between local and remote dashboards", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
   await connectContacts(alice, bob);
   await execute({
-    ...(await bob()),
+    ...bob(),
     plan: planSetKnowledgeData(
-      createPlan(await bob()),
+      createPlan(bob()),
       compareKnowledgeDB(
         newDB(),
         commitAll(createDefaultKnowledgeTestData("bobs-ws", "Bobs Workspace"))
@@ -31,9 +31,9 @@ test("Distinguish between local and remote dashboards", async () => {
   });
 
   await execute({
-    ...(await alice()),
+    ...alice(),
     plan: planSetKnowledgeData(
-      createPlan(await alice()),
+      createPlan(alice()),
       compareKnowledgeDB(
         newDB(),
         commitAll(createDefaultKnowledgeTestData("alice-ws", "Alice Workspace"))
@@ -41,7 +41,7 @@ test("Distinguish between local and remote dashboards", async () => {
     ),
   });
 
-  renderWithTestData(<SelectWorkspaces />, await alice());
+  renderWithTestData(<SelectWorkspaces />, alice());
 
   fireEvent.click(await screen.findByLabelText("switch workspace"));
   const selection = await screen.findByLabelText("workspace selection");

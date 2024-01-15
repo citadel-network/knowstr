@@ -1,17 +1,14 @@
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { Map } from "immutable";
 import { Badge } from "./Ui";
-import { useInviteNotifications } from "./notifications";
 
 /* eslint-disable react/no-array-index-key */
 export function NotificationCenter(): JSX.Element | null {
   const navigate = useNavigate();
-  const notifications = useInviteNotifications();
-
-  if (notifications.size === 0) {
-    return null;
-  }
+  // TODO: add notifications for new followers
+  const notifications = Map<string, NotificationMessage>();
 
   return (
     <Dropdown>

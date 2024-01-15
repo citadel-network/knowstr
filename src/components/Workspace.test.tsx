@@ -23,7 +23,7 @@ import {
 
 test("Create a new Workspace", async () => {
   const [alice] = setup([ALICE]);
-  const { relayPool } = renderApp(await alice());
+  const { relayPool } = renderApp(alice());
   const switchWsBtn = await screen.findByLabelText("switch workspace");
   userEvent.click(switchWsBtn);
   const newWsBtn = screen.getByText("New Workspace");
@@ -35,15 +35,15 @@ test("Create a new Workspace", async () => {
   userEvent.click(screen.getByText("Create Workspace"));
   userEvent.click(screen.getByLabelText("Save Knowledge"));
   await waitFor(() => {
-    expect(relayPool.getEvents()).toHaveLength(2);
+    expect(relayPool.getEvents()).toHaveLength(1);
   });
-  const utils = await alice();
-  const events = await extractKnowledgeEvents(utils);
+  const utils = alice();
+  const events = extractKnowledgeEvents(utils);
 
-  const db = await extractKnowledgeDB(await alice());
+  const db = extractKnowledgeDB(alice());
   const wsId = db.activeWorkspace;
 
-  const diffs = await extractKnowledgeDiffs(utils, events);
+  const diffs = extractKnowledgeDiffs(utils, events);
   expect(diffs.size).toBe(1);
 
   const diff = diffs.first();
@@ -90,7 +90,7 @@ test("Active Workspace is set to Workspace id", async () => {
   const [alice] = setup([ALICE]);
   await renderKnowledgeApp(knowledgeDB, alice);
   expect(await screen.findAllByText("My Workspace")).toHaveLength(1);
-  const knowledgeData = await extractKnowledgeDB(await alice());
+  const knowledgeData = extractKnowledgeDB(alice());
   expect(knowledgeData.repos.get(TEST_WORKSPACE_ID)).toBeDefined();
   expect(knowledgeData.activeWorkspace).toEqual(TEST_WORKSPACE_ID);
   const switchWsBtn = await screen.findByLabelText("switch workspace");
@@ -128,7 +128,7 @@ test("Column width is saved and column width changes", async () => {
   await waitFor(async () =>
     userEvent.click((await screen.findAllByLabelText("Save Knowledge"))[0])
   );
-  const knowledgeData = await extractKnowledgeDB(await alice());
+  const knowledgeData = extractKnowledgeDB(alice());
   expect(
     getRelations(
       getNode(knowledgeData.repos.get(TEST_WORKSPACE_ID) as Repo),
@@ -150,7 +150,7 @@ test("Column width is saved and column width changes", async () => {
   await waitFor(async () =>
     userEvent.click((await screen.findAllByLabelText("Save Knowledge"))[0])
   );
-  const updatedKnowledgeData = await extractKnowledgeDB(await alice());
+  const updatedKnowledgeData = extractKnowledgeDB(alice());
   expect(
     getRelations(
       getNode(updatedKnowledgeData.repos.get(TEST_WORKSPACE_ID) as Repo),
@@ -176,7 +176,7 @@ test("Column width is saved and column width changes", async () => {
 
 test("Send bootstrap diff event", async () => {
   const [alice] = setup([ALICE]);
-  const aliceUtils = await alice();
+  const aliceUtils = alice();
   const { relayPool } = renderApp({
     ...aliceUtils,
     testBootstrapInterval: 3,
@@ -193,9 +193,8 @@ test("Send bootstrap diff event", async () => {
   userEvent.click(await screen.findByText("Add Note"));
   userEvent.click(screen.getByText("Add Note"));
   userEvent.click(screen.getByLabelText("Save Knowledge"));
-  // two events are sent, one broadcast key event and one diff event
   await waitFor(() => {
-    expect(relayPool.getEvents()).toHaveLength(2);
+    expect(relayPool.getEvents()).toHaveLength(1);
   });
 
   // send second diff event
@@ -203,29 +202,29 @@ test("Send bootstrap diff event", async () => {
   userEvent.click(screen.getByLabelText("increase width"));
   userEvent.click(screen.getByLabelText("Save Knowledge"));
   await waitFor(() => {
-    expect(relayPool.getEvents()).toHaveLength(3);
+    expect(relayPool.getEvents()).toHaveLength(2);
   });
 
   // send third diff event
   userEvent.click(screen.getByLabelText("increase width"));
   userEvent.click(screen.getByLabelText("Save Knowledge"));
   await waitFor(() => {
-    expect(relayPool.getEvents()).toHaveLength(4);
+    expect(relayPool.getEvents()).toHaveLength(3);
   });
 
   // send fourth diff event
   userEvent.click(screen.getByLabelText("increase width"));
   userEvent.click(screen.getByLabelText("Save Knowledge"));
   await waitFor(() => {
-    expect(relayPool.getEvents()).toHaveLength(5);
+    expect(relayPool.getEvents()).toHaveLength(4);
   });
 
   // instead of the 4th diff event a bootstrap diff is sent instead
-  const db = await extractKnowledgeDB(aliceUtils);
+  const db = extractKnowledgeDB(aliceUtils);
   const wsId = db.activeWorkspace;
 
-  const events = await extractKnowledgeEvents(aliceUtils);
-  const bootstrapDiff = await extractKnowledgeDiffs(
+  const events = extractKnowledgeEvents(aliceUtils);
+  const bootstrapDiff = extractKnowledgeDiffs(
     aliceUtils,
     events.filter((e) => isBootstrapEvent(e))
   );

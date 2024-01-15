@@ -9,13 +9,13 @@ import {
 } from "@testing-library/react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 } from "uuid";
-import { Event, getPublicKey, matchFilter } from "nostr-tools";
-import { DEFAULT_RELAYS, KEY_DISTR_EVENT } from "./nostr";
+import { Event, matchFilter } from "nostr-tools";
+import { DEFAULT_RELAYS } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
   createContactsOfContactsQuery,
   createContactsQuery,
-  decryptContactOfContactsEvents,
+  parseContactOfContactsEvents,
   parseContactEvent,
 } from "./contacts";
 import { ConfigurationContextProvider } from "./ConfigurationContext";
@@ -31,18 +31,16 @@ import { DataContextProps } from "./DataContext";
 import { commitAllBranches, newDB, newRepo } from "./knowledge";
 import { newNode } from "./connections";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
-import { tryToDecryptBroadcastKey } from "./broadcastKeys";
 import { DEFAULT_SETTINGS } from "./settings";
 import {
   KnowledgeDiff,
   compareKnowledgeDB,
   createKnowledgeQuery,
   createKnowledgeDBs,
-  decryptKnowledgeEvents,
+  parseKnowledgeEvents,
   KnowledgeDiffWithCommits,
   mergeKnowledgeData,
 } from "./knowledgeEvents";
-import { createEncryption } from "./encryption";
 import { NostrAuthContext } from "./NostrAuthContext";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -69,8 +67,6 @@ const ALICE: KeyPair = {
   privateKey:
     "04d22f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e",
 };
-
-const ALICE_BROADCAST_KEY = Buffer.from("aliceBroadcastKey");
 
 const UNAUTHENTICATED_BOB: Contact = {
   publicKey: BOB_PUBLIC_KEY,
@@ -123,7 +119,6 @@ type TestApis = Omit<Apis, "fileStore" | "relayPool"> & {
 
 function applyApis(props?: Partial<TestApis>): TestApis {
   return {
-    encryption: createEncryption(),
     fileStore: mockFileStore(),
     relayPool: mockRelayPool(),
     ...props,
@@ -140,7 +135,7 @@ function renderApis(
   children: React.ReactElement,
   options?: RenderApis
 ): TestApis {
-  const { encryption, fileStore, relayPool } = applyApis(options);
+  const { fileStore, relayPool } = applyApis(options);
   // If user is explicity undefined it will be overwritten, if not set default Alice is used
   const optionsWithDefaultUser = {
     user: ALICE,
@@ -162,7 +157,6 @@ function renderApis(
       >
         <ApiProvider
           apis={{
-            encryption,
             fileStore,
             relayPool,
           }}
@@ -180,7 +174,6 @@ function renderApis(
     </BrowserRouter>
   );
   return {
-    encryption,
     fileStore,
     relayPool,
   };
@@ -212,7 +205,6 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
   contactsOfContacts: Map<PublicKey, ContactOfContact>(),
-  broadcastKeys: Map<PublicKey, Buffer>(),
   sentEvents: List<Event>(),
   settings: DEFAULT_SETTINGS,
   relays: DEFAULT_RELAYS,
@@ -220,11 +212,9 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
 
 export const EMPTY_PLAN = {
   ...DEFAULT_DATA_CONTEXT_PROPS,
-  encryption: createEncryption(),
   setData: false,
   publishEvents: List<Event>(),
   user: ALICE,
-  broadcastKey: ALICE_BROADCAST_KEY,
   relays: [],
 };
 
@@ -238,49 +228,37 @@ function applyDefaults(props?: Partial<TestAppState>): TestAppState {
   };
 }
 
-export async function extractBroadcastKey(
-  events: Array<Event>,
-  from: PublicKey,
-  to: string
-): Promise<Buffer> {
-  const filter = {
-    tags: ["#p", getPublicKey(to)],
-    authors: [from],
-    kinds: [KEY_DISTR_EVENT],
-  };
-  const event = events.filter((e) => matchFilter(filter, e))[0];
-  if (!event) {
-    throw new Error("Key distribution event not found");
+function getPrivateContacts(appState: TestAppState): Contacts {
+  const query = createContactsQuery([appState.user.publicKey]);
+  const events = List<Event>(appState.relayPool.getEvents()).filter((e) =>
+    matchFilter(query, e)
+  );
+  const newestContactsEvent = events.last(undefined);
+  if (!newestContactsEvent) {
+    return Map<PublicKey, Contact>();
   }
-  const decrypted = await tryToDecryptBroadcastKey(event, to);
-  return decrypted[1] as Buffer;
+  return parseContactEvent(newestContactsEvent);
 }
 
-async function extractAllBroadcastKeys(
-  appState: TestAppState
-): Promise<BroadcastKeys> {
-  const events = appState.relayPool.getEvents();
-  const filter = {
-    kinds: [KEY_DISTR_EVENT],
-    "#p": [getPublicKey(appState.user.privateKey)],
-  };
-  const keyEvents = events.filter((e) => matchFilter(filter, e));
-  const keys = (
-    await Promise.all(
-      keyEvents.map(
-        async (event): Promise<[PublicKey, Buffer | undefined]> =>
-          tryToDecryptBroadcastKey(event, appState.user.privateKey)
-      )
-    )
-  ).filter((key) => key !== undefined) as Array<[PublicKey, Buffer]>;
-  return Map<PublicKey, Buffer>(keys);
+function getContactsOfContacts(appState: TestAppState): ContactsOfContacts {
+  const contacts = getPrivateContacts(appState);
+  const query = createContactsOfContactsQuery(contacts);
+  const events = List<Event>(appState.relayPool.getEvents()).filter((e) =>
+    matchFilter(query, e)
+  );
+  return parseContactOfContactsEvents(events);
 }
-
-export async function extractKnowledgeEvents(
+export function extractKnowledgeEvents(
   appState: TestAppState
-): Promise<Map<string, Event>> {
-  const broadcastKeys = await extractAllBroadcastKeys(appState);
-  const query = createKnowledgeQuery(broadcastKeys.keySeq().toArray());
+): Map<string, Event> {
+  const contacts = getPrivateContacts(appState);
+  const contactsOfContacts = getContactsOfContacts(appState);
+  const authors = contacts
+    .merge(contactsOfContacts)
+    .set(appState.user.publicKey, appState.user)
+    .keySeq()
+    .toArray();
+  const query = createKnowledgeQuery(authors);
   return Map<string, Event>(
     List<Event>(appState.relayPool.getEvents())
       .filter((e) => matchFilter(query, e))
@@ -288,66 +266,27 @@ export async function extractKnowledgeEvents(
   );
 }
 
-export async function extractKnowledgeDiffs(
+export function extractKnowledgeDiffs(
   appState: TestAppState,
   events: Map<string, Event>
-): Promise<Map<string, KnowledgeDiffWithCommits>> {
-  return decryptKnowledgeEvents(
+): Map<string, KnowledgeDiffWithCommits> {
+  return parseKnowledgeEvents(
     events,
     Map<string, KnowledgeDiff<BranchWithCommits>>(),
-    await extractAllBroadcastKeys(appState),
-    appState.encryption.decryptSymmetric,
     appState.user.publicKey
   );
 }
 
-export async function extractKnowledgeDB(
-  appState: TestAppState
-): Promise<KnowledgeData> {
-  const events = await extractKnowledgeEvents(appState);
-  const decryptedDiffs = await extractKnowledgeDiffs(appState, events);
+export function extractKnowledgeDB(appState: TestAppState): KnowledgeData {
+  const events = extractKnowledgeEvents(appState);
+  const decryptedDiffs = extractKnowledgeDiffs(appState, events);
   return mergeKnowledgeData(
     createKnowledgeDBs(events, decryptedDiffs),
     appState.user.publicKey
   );
 }
 
-async function getPrivateContacts(appState: TestAppState): Promise<Contacts> {
-  const query = createContactsQuery([appState.user.publicKey]);
-  const events = List<Event>(appState.relayPool.getEvents()).filter((e) =>
-    matchFilter(query, e)
-  );
-  const broadcastKeys = await extractAllBroadcastKeys(appState);
-  const myBroadcastKey = broadcastKeys.get(appState.user.publicKey);
-  const encryptedContactsEvent = events.last(undefined);
-  if (!myBroadcastKey || !encryptedContactsEvent) {
-    return Map<PublicKey, Contact>();
-  }
-  return parseContactEvent(
-    encryptedContactsEvent,
-    myBroadcastKey,
-    appState.encryption.decryptSymmetric
-  );
-}
-
-async function getContactsOfContacts(
-  appState: TestAppState
-): Promise<ContactsOfContacts> {
-  const contacts = await getPrivateContacts(appState);
-  const broadcastKeys = await extractAllBroadcastKeys(appState);
-  const query = createContactsOfContactsQuery(contacts, broadcastKeys);
-  const events = List<Event>(appState.relayPool.getEvents()).filter((e) =>
-    matchFilter(query, e)
-  );
-  return decryptContactOfContactsEvents(
-    events,
-    contacts,
-    broadcastKeys,
-    appState.encryption.decryptSymmetric
-  );
-}
-
-type UpdateState = () => Promise<TestAppState>;
+type UpdateState = () => TestAppState;
 
 export function setup(
   users: KeyPair[],
@@ -355,21 +294,18 @@ export function setup(
 ): UpdateState[] {
   const appState = applyDefaults(options);
   return users.map((user): UpdateState => {
-    return async (): Promise<TestAppState> => {
+    return (): TestAppState => {
       const updatedState = {
         ...appState,
         user,
       };
       const contacts = appState.contacts.merge(
-        await getPrivateContacts(updatedState)
+        getPrivateContacts(updatedState)
       );
-      // TODO: don't use all broadcast keys, but filter for contacts and contacts of contacts to make tests more realistic
-      const broadcastKeys = await extractAllBroadcastKeys(updatedState);
-      const contactsOfContacts = await getContactsOfContacts(updatedState);
+      const contactsOfContacts = getContactsOfContacts(updatedState);
       return {
         ...updatedState,
         contacts,
-        broadcastKeys: updatedState.broadcastKeys.merge(broadcastKeys),
         contactsOfContacts,
       };
     };
@@ -380,12 +316,14 @@ export async function addContact(
   cU: UpdateState,
   publicKey: PublicKey
 ): Promise<void> {
-  const utils = await cU();
-  const plan = await planEnsurePrivateContact(createPlan(utils), publicKey);
+  const utils = cU();
+  const plan = planEnsurePrivateContact(createPlan(utils), publicKey);
   await execute({
     ...utils,
     plan,
   });
+  // TODO: remove if tests are not flaky
+  /*
   const filter = {
     kinds: [KEY_DISTR_EVENT],
     authors: [utils.user.publicKey],
@@ -396,14 +334,15 @@ export async function addContact(
       utils.relayPool.getEvents().filter((e) => matchFilter(filter, e)).length
     ).toBeGreaterThanOrEqual(1);
   });
+   */
 }
 
 export async function connectContacts(
   a: UpdateState,
   b: UpdateState
 ): Promise<void> {
-  const aUser = (await a()).user;
-  const bUser = (await b()).user;
+  const aUser = a().user;
+  const bUser = b().user;
   await addContact(a, bUser.publicKey);
   await addContact(b, aUser.publicKey);
 }
@@ -425,7 +364,7 @@ export function renderWithTestData(
 }
 
 export async function fillAndSubmitInviteForm(): Promise<void> {
-  fireEvent.click(await screen.findByText("Share Now"));
+  fireEvent.click(await screen.findByText("Follow"));
   await waitForLoadingToBeNull();
 }
 
@@ -471,7 +410,7 @@ export async function renderKnowledgeApp(
   appState?: UpdateState
 ): Promise<RenderViewResult> {
   const update = appState || setup([ALICE])[0];
-  const utils = await update();
+  const utils = update();
   const plan = createPlan(utils);
   const diff = compareKnowledgeDB<BranchWithCommits>(
     newDB(),
@@ -481,7 +420,7 @@ export async function renderKnowledgeApp(
     ...utils,
     plan: planSetKnowledgeData(plan, diff),
   });
-  const view = renderApp(await update());
+  const view = renderApp(update());
   await screen.findByText("My Workspace");
   return view;
 }

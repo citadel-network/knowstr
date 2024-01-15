@@ -18,7 +18,6 @@ export function DataContextProvider({
   children,
   contacts,
   contactsOfContacts,
-  broadcastKeys,
   user,
   sentEvents,
   settings,
@@ -31,7 +30,6 @@ export function DataContextProvider({
       value={{
         contacts,
         contactsOfContacts,
-        broadcastKeys,
         user,
         sentEvents,
         settings,

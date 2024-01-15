@@ -3,7 +3,6 @@ import { List } from "immutable";
 import { getMostRecentReplacableEvent } from "citadel-commons";
 import { Plan } from "./planner";
 import {
-  KEY_DISTR_EVENT,
   KIND_KNOWLEDGE,
   KIND_RELAY_METADATA_EVENT,
   KIND_REPUTATIONS,
@@ -11,7 +10,6 @@ import {
   finalizeEvent,
   publishEvent,
 } from "./nostr";
-import { planKeyDistribution } from "./encryption";
 import { getEventsFromLastBootstrap } from "./knowledgeEvents";
 
 async function publishEvents(
@@ -66,9 +64,6 @@ export async function republishEvents(
     getLastEventByKind(events, KIND_REPUTATIONS),
     getLastEventByKind(events, KIND_RELAY_METADATA_EVENT),
   ]);
-  const allKeyDistributionEvents = events.filter(
-    (e: Event) => e.kind === KEY_DISTR_EVENT
-  );
   const allMyKnowledgeEvents = events.filter(
     (e: Event) => e.kind === KIND_KNOWLEDGE
   );
@@ -76,9 +71,7 @@ export async function republishEvents(
     getEventsFromLastBootstrap(allMyKnowledgeEvents).eventsFromBootstrap;
 
   const eventsToRepublish = signEventsWithNewDate(
-    lastReplacableEvents
-      .concat(allKeyDistributionEvents)
-      .concat(allKnowledgeEventsSinceLastBootstrap),
+    lastReplacableEvents.concat(allKnowledgeEventsSinceLastBootstrap),
     user
   );
   await publishEvents(relayPool, eventsToRepublish, writeRelays);
@@ -93,11 +86,10 @@ export async function execute({
   relayPool: SimplePool;
   relays: Relays;
 }): Promise<void> {
-  const planWithKeyDistribution = await planKeyDistribution(plan);
-  if (planWithKeyDistribution.publishEvents.size === 0) {
+  if (plan.publishEvents.size === 0) {
     // eslint-disable-next-line no-console
     console.warn("Won't execute Noop plan");
     return;
   }
-  await publishEvents(relayPool, planWithKeyDistribution.publishEvents, relays);
+  await publishEvents(relayPool, plan.publishEvents, relays);
 }

@@ -2,7 +2,6 @@ import React from "react";
 import { SimplePool } from "nostr-tools";
 
 export type Apis = {
-  encryption: Encryption;
   fileStore: LocalStorage;
   relayPool: SimplePool;
 };

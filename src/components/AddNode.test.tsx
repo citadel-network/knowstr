@@ -82,9 +82,9 @@ test("Copy of linked Nodes", async () => {
     }),
   });
   await execute({
-    ...(await bob()),
+    ...bob(),
     plan: planSetKnowledgeData(
-      createPlan(await bob()),
+      createPlan(bob()),
       compareKnowledgeDB(newDB(), bobsData)
     ),
   });
@@ -100,9 +100,9 @@ test("Copy of linked Nodes", async () => {
   );
   const pl = newRepo(newNode("Programming Languages", "TOPIC"), "pl");
   await execute({
-    ...(await alice()),
+    ...alice(),
     plan: planSetKnowledgeData(
-      createPlan(await alice()),
+      createPlan(alice()),
       compareKnowledgeDB(
         newDB(),
         commitAll({
@@ -125,7 +125,7 @@ test("Copy of linked Nodes", async () => {
         </ViewContextProvider>
       </DND>
     </TemporaryViewProvider>,
-    await alice()
+    alice()
   );
   // connect Programming Languages with Bobs Object Oriented Languages
   await screen.findByText("Programming Languages");
@@ -152,8 +152,8 @@ test("Copy of linked Nodes", async () => {
   // Let Bob delete all his nodes
   const diff = compareKnowledgeDB(commitAll(bobsData), newDB());
   await execute({
-    ...(await bob()),
-    plan: planSetKnowledgeData(createPlan(await bob()), diff),
+    ...bob(),
+    plan: planSetKnowledgeData(createPlan(bob()), diff),
   });
 
   // Alice still can see the `Object Oriented Languages` Node, but not it's children (java)
@@ -165,7 +165,7 @@ test("Copy of linked Nodes", async () => {
         </ViewContextProvider>
       </DND>
     </TemporaryViewProvider>,
-    await alice()
+    alice()
   );
   await screen.findByText("Programming Languages");
   await screen.findByText("Object Oriented Languages");

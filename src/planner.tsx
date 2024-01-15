@@ -3,20 +3,13 @@ import { Event, getPublicKey } from "nostr-tools";
 import { useData } from "./DataContext";
 import { execute } from "./executor";
 
-import {
-  planKeyDistribution,
-  createRefereeKeyDistributionPlan,
-  createPayloadEncryptionKey,
-} from "./encryption";
 import { useApis } from "./Apis";
 import { Serializable, diffToJSON } from "./serializer";
 import { KIND_KNOWLEDGE, KIND_REPUTATIONS, finalizeEvent } from "./nostr";
 import { KnowledgeDiff, RepoDiff } from "./knowledgeEvents";
 
 export type Plan = Data & {
-  broadcastKey: Buffer;
   publishEvents: List<Event>;
-  encryption: Encryption;
 };
 
 type Planner = {
@@ -26,29 +19,21 @@ type Planner = {
 
 export function createPlan(
   props: Data & {
-    broadcastKey?: Buffer;
-    encryption: Encryption;
     publishEvents?: List<Event>;
   }
 ): Plan {
-  const myBroadcastKey = props.broadcastKeys.get(props.user.publicKey);
-  const encryptionKey =
-    myBroadcastKey || props.broadcastKey || createPayloadEncryptionKey();
   return {
     ...props,
-    broadcastKey: encryptionKey,
     publishEvents: props.publishEvents || List<Event>([]),
   };
 }
 
 export function usePlanner(): Planner {
   const data = useData();
-  const { encryption, relayPool } = useApis();
+  const { relayPool } = useApis();
   const createPlanningContext = (): Plan => {
     return createPlan({
       ...data,
-      encryption,
-      broadcastKey: data.broadcastKeys.get(data.user.publicKey),
     });
   };
   const writeRelays = data.relays.filter((r) => r.write === true);
@@ -115,17 +100,13 @@ export function planSetKnowledgeData(
   isBootstrapDiff?: boolean | undefined
 ): Plan {
   const events = splitDiff(knowledgeDiff, plan.user.publicKey).map((diff) => {
-    const encryptedData = plan.encryption.encryptSymmetric(
-      diffToJSON(diff, plan.user.publicKey),
-      plan.broadcastKey
-    );
     return finalizeEvent(
       {
         kind: KIND_KNOWLEDGE,
         pubkey: getPublicKey(plan.user.privateKey),
         created_at: Math.floor(Date.now() / 1000),
         tags: isBootstrapDiff ? [["bootstrap"]] : [],
-        content: JSON.stringify(encryptedData),
+        content: JSON.stringify(diffToJSON(diff, plan.user.publicKey)),
       },
       plan.user.privateKey
     );
@@ -154,17 +135,13 @@ function planSetContact(context: Plan, privateContact: Contact): Plan {
       };
     }
   );
-  const encryptedContacts = plan.encryption.encryptSymmetric(
-    contactsMap.toJSON(),
-    plan.broadcastKey
-  );
   const event = finalizeEvent(
     {
       kind: KIND_REPUTATIONS,
       pubkey: getPublicKey(context.user.privateKey),
       created_at: Math.floor(Date.now() / 1000),
       tags: [],
-      content: JSON.stringify(encryptedContacts),
+      content: JSON.stringify(contactsMap.toJSON()),
     },
     plan.user.privateKey
   );
@@ -174,25 +151,13 @@ function planSetContact(context: Plan, privateContact: Contact): Plan {
   };
 }
 
-async function planUpsertContact(
-  context: Plan,
-  privateContact: Contact
-): Promise<Plan> {
-  const planWithContact = planSetContact(context, privateContact);
-  return createRefereeKeyDistributionPlan(
-    // Distribute Key again, in case there are new contacts
-    await planKeyDistribution(planWithContact),
-    privateContact
-  );
-}
-
 export function planEnsurePrivateContact(
   context: Plan,
   publicKey: PublicKey
-): Promise<Plan> {
+): Plan {
   return context.contacts.has(publicKey)
-    ? Promise.resolve(context)
-    : planUpsertContact(context, {
+    ? context
+    : planSetContact(context, {
         publicKey,
         createdAt: new Date(),
       });

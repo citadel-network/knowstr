@@ -14,9 +14,8 @@ import {
 export const KIND_SETTINGS = 11071;
 export const KIND_REPUTATIONS = 11080;
 
-export const KIND_KNOWLEDGE = 7870;
+export const KIND_KNOWLEDGE = 7871;
 
-export const KEY_DISTR_EVENT = 5805;
 export const KIND_RELAY_METADATA_EVENT = 10002;
 
 export const DEFAULT_RELAYS: Relays = [

@@ -50,9 +50,9 @@ test("Move View Settings on Delete", async () => {
     views: Map<string, View>(),
   };
   await execute({
-    ...(await alice()),
+    ...alice(),
     plan: planSetKnowledgeData(
-      createPlan(await alice()),
+      createPlan(alice()),
       compareKnowledgeDB(newDB(), commitAll(knowledgeData))
     ),
   });
@@ -65,7 +65,7 @@ test("Move View Settings on Delete", async () => {
         </DND>
       </TemporaryViewProvider>
     </ViewContextProvider>,
-    await alice()
+    alice()
   );
   fireEvent.click(await screen.findByLabelText("show relevant relations of C"));
   await screen.findByText("C++");

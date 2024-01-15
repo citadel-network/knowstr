@@ -1,9 +1,9 @@
 import { screen } from "@testing-library/react";
 import { ALICE, renderApp, setup } from "./utils.test";
 
-test("show login screen if user is logged out", async () => {
+test("show login screen if user is logged out", () => {
   const [alice] = setup([ALICE]);
-  const utils = await alice();
+  const utils = alice();
   renderApp({
     ...utils,
     user: undefined,

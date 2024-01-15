@@ -9,7 +9,7 @@ const filterRelayMetadataEvents = (event: Event): boolean =>
 
 test("Remove a Nostr Relay", async () => {
   const [alice] = setup([ALICE]);
-  const { relayPool } = renderApp(await alice());
+  const { relayPool } = renderApp(alice());
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {
@@ -46,7 +46,7 @@ test("Remove a Nostr Relay", async () => {
 
 test("Edit an existing Nostr Relay", async () => {
   const [alice] = setup([ALICE]);
-  const { relayPool } = renderApp(await alice());
+  const { relayPool } = renderApp(alice());
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {

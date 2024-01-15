@@ -70,21 +70,19 @@ function ConfirmContactForm({
     >
       <ul className="list-unstyled mt-3">
         <li className="pb-3">
-          <strong>Grant Access:</strong> User with public key{" "}
-          <code className="bg-light p-1 rounded">{contact}</code> will see and
-          suggest changes to notes.
+          <strong>Follow User:</strong> You can follow user{" "}
+          <code className="bg-light p-1 rounded">{contact}</code> to see their
+          Notes and updates.
         </li>
         <li className="pb-3">
-          <strong>Across Workspaces:</strong> Access extends to all notes in
-          every workspace.
+          <strong>Public Profile:</strong> Your profile and posts are visible to
+          all users in the network.
         </li>
         <li className="pb-3">
-          <strong>Editable Suggestions:</strong> While the contact can edit, all
-          changes are suggestions for your review.
-        </li>
-        <li>
-          <strong>Full Control:</strong> You retain complete authority to review
-          and apply any suggested edits, ensuring your content remains yours.
+          <strong>Network Expansion:</strong> Gain insights into a broader
+          community by viewing the public profiles and posts of users connected
+          to those you follow, enhancing your understanding of the wider
+          network.
         </li>
       </ul>
     </ModalForm>
@@ -93,20 +91,18 @@ function ConfirmContactForm({
 
 function WaitForInvite({ publicKey }: { publicKey: PublicKey }): JSX.Element {
   const navigate = useNavigate();
-  const { user, contacts, broadcastKeys } = useData();
+  const { user, contacts } = useData();
   const privateContact = contacts.get(publicKey);
   const isMobile = useMediaQuery(IS_MOBILE);
 
-  const haveBroadcastKey =
-    privateContact && broadcastKeys.has(privateContact.publicKey);
+  // TODO: does this make any sense?
+  const isFollowing = privateContact !== undefined;
 
-  const isInvited = haveBroadcastKey;
-
-  if (isInvited) {
+  if (isFollowing) {
     return (
       <Modal show onHide={() => navigate("/")} size="xl">
         <Modal.Header closeButton>
-          <Modal.Title>You are connected</Modal.Title>
+          <Modal.Title>You follow {publicKey}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="container-fluid">
@@ -280,11 +276,11 @@ function Invite(): JSX.Element {
   }
   const onHide = (): void => navigate(`/`);
   const handleSubmit = async (): Promise<void> => {
-    await executePlan(await planEnsurePrivateContact(createPlan(), publicKey));
+    await executePlan(planEnsurePrivateContact(createPlan(), publicKey));
   };
   const SubmitButton = (): JSX.Element => (
     <LoadingSpinnerButton className="btn btn-primary" type="submit">
-      Share Now
+      Follow
     </LoadingSpinnerButton>
   );
 
@@ -292,7 +288,7 @@ function Invite(): JSX.Element {
     <ConfirmContactForm
       handleSubmit={handleSubmit}
       onHide={onHide}
-      title="Activate Full Collaboration?"
+      title="Follow User?"
       contact={publicKey}
       SubmitButton={SubmitButton}
     />

@@ -3,7 +3,6 @@ import { Event, Filter } from "nostr-tools";
 import { useEventQuery, getMostRecentReplacableEvent } from "citadel-commons";
 import { KIND_REPUTATIONS } from "./nostr";
 import { useApis } from "./Apis";
-import { symmetricDecryptPayload } from "./encryption";
 
 type RawContact = {
   publicKey: PublicKey;
@@ -17,107 +16,80 @@ export function createContactsQuery(authors: PublicKey[]): Filter<number> {
   };
 }
 
-export function parseContactEvent(
-  event: Event,
-  broadcastKey: Buffer,
-  decryptSymmetric: DecryptSymmetric
-): Contacts {
-  const rawContacts = symmetricDecryptPayload<{
+export function parseContactEvent(event: Event): Contacts {
+  const rawContacts = JSON.parse(event.content) as {
     [publicKey: PublicKey]: RawContact;
-  }>({
-    payload: event.content,
-    encryptionKey: broadcastKey,
-    decryptSymmetric,
-  });
+  };
   if (!rawContacts) {
     return Map<PublicKey, Contact>();
   }
-  return Map<PublicKey, RawContact>(rawContacts).mapEntries(([, contact]) => {
-    return [
-      contact.publicKey,
-      {
-        ...contact,
-        createdAt: contact.createdAt ? new Date(contact.createdAt) : undefined,
-      },
-    ];
-  });
+  return Map<PublicKey, RawContact>(rawContacts)
+    .mapEntries(([, contact]) => {
+      return [
+        contact.publicKey,
+        {
+          ...contact,
+          createdAt: contact.createdAt
+            ? new Date(contact.createdAt)
+            : undefined,
+        },
+      ];
+    })
+    .filter((pubKey, contact) => pubKey !== undefined && contact !== undefined);
 }
 
 export function useContactsQuery(
   user: KeyPair,
-  myBroadcastKey: Buffer | undefined,
-  enabled: boolean,
   readFromRelays: Relays
 ): [Contacts, boolean] {
-  const { encryption, relayPool } = useApis();
+  const { relayPool } = useApis();
   const { events, eose } = useEventQuery(
     relayPool,
     [createContactsQuery([user.publicKey])],
     {
-      enabled,
       readFromRelays,
     }
   );
-  if (!eose || !myBroadcastKey) {
+  if (!eose) {
     return [Map<PublicKey, Contact>(), eose];
   }
   const encryptedContactsEvent = getMostRecentReplacableEvent(events);
   if (!encryptedContactsEvent) {
     return [Map<PublicKey, Contact>(), eose];
   }
-  return [
-    parseContactEvent(
-      encryptedContactsEvent,
-      myBroadcastKey,
-      encryption.decryptSymmetric
-    ),
-    eose,
-  ];
+  return [parseContactEvent(encryptedContactsEvent), eose];
 }
 
 export function createContactsOfContactsQuery(
-  contacts: Contacts,
-  broadcastKeys: BroadcastKeys
+  contacts: Contacts
 ): Filter<number> {
-  const contactsWithBroadcastKeys = contacts
-    .filter((contact) => broadcastKeys.has(contact.publicKey))
+  const contactsPublicKeys = contacts
     .keySeq()
     .sortBy((k) => k)
     .toArray();
-  return createContactsQuery(contactsWithBroadcastKeys);
+  return createContactsQuery(contactsPublicKeys);
 }
 
-export function decryptContactOfContactsEvents(
-  events: List<Event<number>>,
-  contacts: Contacts,
-  broadcastKeys: BroadcastKeys,
-  decryptSymmetric: DecryptSymmetric
+export function parseContactOfContactsEvents(
+  events: List<Event<number>>
 ): ContactsOfContacts {
   return events.reduce((rdx, event) => {
-    const broadcastKey = broadcastKeys.get(event.pubkey as PublicKey);
-    const commonContact = contacts.get(event.pubkey as PublicKey);
-    if (!broadcastKey || !commonContact) {
-      return rdx;
-    }
     return rdx.merge(
-      parseContactEvent(event, broadcastKey, decryptSymmetric).map(
-        (contact) => ({
-          ...contact,
-          commonContact: commonContact.publicKey,
-        })
-      )
+      parseContactEvent(event).map((contact) => ({
+        ...contact,
+        commonContact: event.pubkey as PublicKey,
+      }))
     );
   }, Map<PublicKey, ContactOfContact>());
 }
 
 export function useContactsOfContactsQuery(
   contacts: Contacts,
-  broadcastKeys: BroadcastKeys,
   dependenciesEose: boolean,
   readFromRelays: Relays
 ): [ContactsOfContacts, boolean] {
-  const { encryption, relayPool } = useApis();
-  const query = createContactsOfContactsQuery(contacts, broadcastKeys);
+  const { relayPool } = useApis();
+  const query = createContactsOfContactsQuery(contacts);
 
   const { events, eose } = useEventQuery(relayPool, [query], {
     enabled: dependenciesEose,
@@ -127,13 +99,5 @@ export function useContactsOfContactsQuery(
     return [Map<PublicKey, ContactOfContact>(), eose];
   }
 
-  return [
-    decryptContactOfContactsEvents(
-      events.valueSeq().toList(),
-      contacts,
-      broadcastKeys,
-      encryption.decryptSymmetric
-    ),
-    eose,
-  ];
+  return [parseContactOfContactsEvents(events.valueSeq().toList()), eose];
 }

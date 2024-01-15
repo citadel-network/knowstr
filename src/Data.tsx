@@ -1,10 +1,8 @@
 import React from "react";
 import "./App.css";
-import { Map } from "immutable";
 import { useEventQuery, useRelaysQuery } from "citadel-commons";
 import { DataContextProvider } from "./DataContext";
 import { KnowledgeDataProvider } from "./KnowledgeDataContext";
-import { useBroadcastKeysQuery } from "./broadcastKeys";
 import { useContactsQuery, useContactsOfContactsQuery } from "./contacts";
 import { useSettingsQuery } from "./settings";
 import { DEFAULT_RELAYS } from "./nostr";
@@ -41,71 +39,19 @@ function Data({ blockstackUser, children }: DataProps): JSX.Element {
     relaysEose,
     readFromRelays
   );
-  const [myBroadcastKeyQueryResult, myBroadcastKeyEose] = useBroadcastKeysQuery(
-    blockstackUser,
-    [myPublicKey],
-    relaysEose,
-    readFromRelays
-  );
-  const myBroadcastKey =
-    myBroadcastKeyQueryResult && myBroadcastKeyQueryResult.get(myPublicKey);
-
-  const [pec, contactsEose] = useContactsQuery(
-    blockstackUser,
-    myBroadcastKey,
-    myBroadcastKeyEose,
-    readFromRelays
-  );
+  const [pec, contactsEose] = useContactsQuery(blockstackUser, readFromRelays);
   const contacts = pec.filter((_, k) => k !== myPublicKey);
-
-  const [bks, eoseBroadcastKeys] = useBroadcastKeysQuery(
-    blockstackUser,
-    contacts
-      .toList()
-      .map((c) => c.publicKey)
-      .toArray(),
-    contactsEose,
-    readFromRelays
-  );
 
   const [coc, contactsOfContactsEose] = useContactsOfContactsQuery(
     contacts,
-    bks || Map<PublicKey, Buffer>(),
-    eoseBroadcastKeys,
+    contactsEose,
     readFromRelays
   );
   const contactsOfContacts = coc.filter(
     (_, key) => key !== myPublicKey && !contacts.has(key)
   );
 
-  const [contactsOfContactsBks, contactsOfContactsBksEose] =
-    useBroadcastKeysQuery(
-      blockstackUser,
-      contactsOfContacts
-        .toList()
-        .map((c) => c.publicKey)
-        .toArray(),
-      contactsOfContactsEose,
-      readFromRelays
-    );
-
-  const otherUsersBroadcastKeys = (bks || Map<PublicKey, Buffer>()).merge(
-    contactsOfContactsBks || Map<PublicKey, Buffer>()
-  );
-
-  const broadcastKeys = myBroadcastKey
-    ? otherUsersBroadcastKeys.set(myPublicKey, myBroadcastKey)
-    : otherUsersBroadcastKeys;
-
-  if (
-    !sentEventsEose ||
-    !myBroadcastKeyEose ||
-    !bks ||
-    !contactsOfContactsBks ||
-    !contactsOfContactsEose ||
-    !contactsOfContactsBksEose ||
-    !settingsEose
-  ) {
+  if (!sentEventsEose || !contactsOfContactsEose || !settingsEose) {
     return <div className="loading" aria-label="loading" />;
   }
 
@@ -115,7 +61,6 @@ function Data({ blockstackUser, children }: DataProps): JSX.Element {
     <DataContextProvider
       contacts={contacts}
       contactsOfContacts={contactsOfContacts}
-      broadcastKeys={broadcastKeys}
       user={user}
       sentEvents={sentEvents.toList()}
       settings={settings}

@@ -151,9 +151,9 @@ test("Multiple connections to same node", async () => {
     c: newRepo(newNode("C", "TOPIC"), "c"),
   });
   await execute({
-    ...(await alice()),
+    ...alice(),
     plan: planSetKnowledgeData(
-      createPlan(await alice()),
+      createPlan(alice()),
       compareKnowledgeDB(
         newDB(),
         commitAll({
@@ -172,7 +172,7 @@ test("Multiple connections to same node", async () => {
         </DragDropContext>
       </TemporaryViewProvider>
     </ViewContextProvider>,
-    await alice()
+    alice()
   );
   expectTextContent(
     await screen.findByLabelText("related to Programming Languages [main]"),

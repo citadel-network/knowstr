@@ -12,7 +12,6 @@ import "./editor.css";
 import "./Workspace.scss";
 import "./App.css";
 import "react-quill/dist/quill.bubble.css";
-import { createEncryption } from "./encryption";
 import { ConfigurationContextProvider } from "./ConfigurationContext";
 import { ApiProvider } from "./Apis";
 import { App } from "./App";
@@ -36,7 +35,6 @@ if (root !== null) {
       <ConfigurationContextProvider bootstrapInterval={BOOTSTRAP_INTERVAL}>
         <ApiProvider
           apis={{
-            encryption: createEncryption(),
             fileStore: createFileStore(),
             relayPool: new SimplePool(),
           }}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useEventQuery, findAllTags, sortEvents } from "citadel-commons";
 import { clone, isBranchEqual, newDB, pull } from "./knowledge";
 import { KIND_KNOWLEDGE } from "./nostr";
-import { jsonToDiff } from "./serializer";
+import { jsonToDiff, Serializable } from "./serializer";
 import { useApis } from "./Apis";
 
 export type RepoDiff<T extends BranchWithCommits | BranchWithStaged> = {
@@ -243,31 +243,17 @@ export function createKnowledgeQuery(authors: string[]): Filter<number> {
   };
 }
 
-export function decryptKnowledgeEvents(
+export function parseKnowledgeEvents(
   events: Map<string, Event>,
   existingDiffs: Map<string, KnowledgeDiffWithCommits>,
-  broadcastKeys: BroadcastKeys,
-  decryptSymmetric: DecryptSymmetric,
   myself: PublicKey
 ): Map<string, KnowledgeDiffWithCommits> {
   return events.reduce((rdx, event) => {
     if (rdx.has(event.id)) {
       return rdx;
     }
-    const broadcastKey = broadcastKeys.get(event.pubkey as PublicKey);
-    if (!broadcastKey) {
-      return rdx;
-    }
-    // Decrypt
     try {
-      const encryptedKnowledgeData = JSON.parse(
-        event.content
-      ) as SymmetricEncryptedText;
-      const compressedDiff = decryptSymmetric(
-        Buffer.from(encryptedKnowledgeData.iv).toString("hex"),
-        encryptedKnowledgeData.cipherText,
-        broadcastKey.toString("hex")
-      );
+      const compressedDiff = JSON.parse(event.content) as Serializable;
       return rdx.set(event.id, jsonToDiff(compressedDiff, myself));
     } catch (e) {
       // TODO: Store failures as null to avoid retrying the same blob over and over again?
@@ -366,9 +352,8 @@ type DiffsSinceLastBootstrap = {
 };
 
 export function useKnowledgeQuery(
-  broadcastKeys: BroadcastKeys,
+  authors: PublicKey[],
   myself: PublicKey,
-  decryptSymmetric: DecryptSymmetric,
   enabled: boolean,
   readFromRelays: Relays
 ): [Map<PublicKey, KnowledgeDataWithCommits>, boolean, number] {
@@ -379,14 +364,7 @@ export function useKnowledgeQuery(
 
   const { events, eose } = useEventQuery(
     relayPool,
-    [
-      createKnowledgeQuery(
-        broadcastKeys
-          .keySeq()
-          .sortBy((k) => k)
-          .toArray()
-      ),
-    ],
+    [createKnowledgeQuery(authors)],
     {
       enabled,
       readFromRelays,
@@ -411,15 +389,13 @@ export function useKnowledgeQuery(
       const diffsFromAllAuthors = eventsFromLastBootstrapEvents.reduce(
         (rdx, eventsFromAuthor): Map<string, KnowledgeDiffWithCommits> => {
           return rdx.merge(
-            decryptKnowledgeEvents(
+            parseKnowledgeEvents(
               Map<string, Event>(
                 eventsFromAuthor.eventsFromBootstrap.map((e) => [e.id, e])
               ),
               existingDiffs
                 ? existingDiffs.diffs
                 : Map<string, KnowledgeDiffWithCommits>(),
-              broadcastKeys,
-              decryptSymmetric,
               myself
             )
           );

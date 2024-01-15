@@ -55,9 +55,9 @@ test("Show relevant Remote Branches", async () => {
     repos: defaultData.repos.set("id-1", repo),
   };
   await execute({
-    ...(await alice()),
+    ...alice(),
     plan: planSetKnowledgeData(
-      createPlan(await alice()),
+      createPlan(alice()),
       compareKnowledgeDB(newDB(), commitAll(knowledgeWithNode))
     ),
   });
@@ -72,9 +72,9 @@ test("Show relevant Remote Branches", async () => {
     "main"
   );
   await execute({
-    ...(await bob()),
+    ...bob(),
     plan: planSetKnowledgeData(
-      createPlan(await bob()),
+      createPlan(bob()),
       compareKnowledgeDB(
         newDB(),
         commitAll({
@@ -91,7 +91,7 @@ test("Show relevant Remote Branches", async () => {
         <SelectVersions />
       </ViewContextProvider>
     </TemporaryViewProvider>,
-    await alice()
+    alice()
   );
   userEvent.click(await screen.findByLabelText("select version"));
   // Alice sees Bobs Version
@@ -142,9 +142,9 @@ test("Compare Versions and choose ff", async () => {
   );
 
   await execute({
-    ...(await bob()),
+    ...bob(),
     plan: planSetKnowledgeData(
-      createPlan(await bob()),
+      createPlan(bob()),
       compareKnowledgeDB(
         newDB(),
         commitAll({
@@ -174,9 +174,9 @@ test("Compare Versions and choose ff", async () => {
       )
   );
   await execute({
-    ...(await alice()),
+    ...alice(),
     plan: planSetKnowledgeData(
-      createPlan(await alice()),
+      createPlan(alice()),
       compareKnowledgeDB(
         newDB(),
         commitAll({
@@ -186,7 +186,7 @@ test("Compare Versions and choose ff", async () => {
       )
     ),
   });
-  renderWithTestData(<WorkspaceView />, await alice());
+  renderWithTestData(<WorkspaceView />, alice());
   // Add C++ to bobs version
   await screen.findByText("Javascript");
   const searchButtons = screen.getAllByLabelText("search");
@@ -251,9 +251,9 @@ test("Delete View Settings on Branch Change", async () => {
   };
 
   await execute({
-    ...(await alice()),
+    ...alice(),
     plan: planSetKnowledgeData(
-      createPlan(await alice()),
+      createPlan(alice()),
       compareKnowledgeDB(newDB(), commitAll(knowledgeData))
     ),
   });
@@ -281,9 +281,9 @@ test("Delete View Settings on Branch Change", async () => {
       )
   );
   await execute({
-    ...(await carol()),
+    ...carol(),
     plan: planSetKnowledgeData(
-      createPlan(await carol()),
+      createPlan(carol()),
       compareKnowledgeDB(
         newDB(),
         commitAll({
@@ -302,7 +302,7 @@ test("Delete View Settings on Branch Change", async () => {
         </DND>
       </TemporaryViewProvider>
     </ViewContextProvider>,
-    await alice()
+    alice()
   );
   await screen.findByText("Businesses");
   userEvent.click(

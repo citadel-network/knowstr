@@ -1,6 +1,5 @@
 import { Map, OrderedMap, Set, List } from "immutable";
 import { Event } from "nostr-tools";
-import { Serializable } from "./serializer";
 
 declare global {
   export type KeyPair = {
@@ -32,8 +31,6 @@ declare global {
   type Contacts = Map<PublicKey, Contact>;
   type ContactsOfContacts = Map<PublicKey, ContactOfContact>;
 
-  type BroadcastKeys = Map<PublicKey, Buffer>;
-
   type Relay = {
     url: string;
     read: boolean;
@@ -46,31 +43,9 @@ declare global {
     contacts: Contacts;
     contactsOfContacts: ContactsOfContacts;
     user: KeyPair;
-    broadcastKeys: BroadcastKeys;
     sentEvents: List<Event>;
     settings: Settings;
     relays: Relays;
-  };
-
-  type SymmetricEncryptedText = {
-    iv: Buffer;
-    cipherText: string;
-  };
-
-  type EncryptSymmetric = (
-    payload: Serializable,
-    encryptionKey: Buffer
-  ) => SymmetricEncryptedText;
-
-  type DecryptSymmetric = (
-    iv: string,
-    cipherText: string,
-    key: string
-  ) => Serializable;
-
-  type Encryption = {
-    encryptSymmetric: EncryptSymmetric;
-    decryptSymmetric: DecryptSymmetric;
   };
 
   type LocalStorage = {
@@ -78,8 +53,6 @@ declare global {
     getLocalStorage: (key: string) => string | null;
     deleteLocalStorage: (key: string) => void;
   };
-
-  type Blobs = Map<string, string>;
 
   type NotificationMessage = {
     title: string;

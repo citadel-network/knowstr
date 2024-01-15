@@ -17,7 +17,6 @@ import {
   newRepo,
 } from "./knowledge";
 
-import { useApis } from "./Apis";
 import { ViewContextProvider } from "./ViewContext";
 import { useConfiguration } from "./ConfigurationContext";
 import { newNode } from "./connections";
@@ -168,16 +167,18 @@ export function KnowledgeDataProvider({
   children: React.ReactNode;
 }): JSX.Element {
   const { bootstrapInterval } = useConfiguration();
-  const { user, broadcastKeys, relays } = useData();
-  const { encryption } = useApis();
+  const { user, relays, contacts, contactsOfContacts } = useData();
   const { createPlan, executePlan } = usePlanner();
   const readFromRelays = relays.filter((r) => r.read === true);
 
   const [knowledgeDBs, dbsReady, numberOfEventsSinceLastBootstrap] =
     useKnowledgeQuery(
-      broadcastKeys,
+      contacts
+        .merge(contactsOfContacts)
+        .set(user.publicKey, user)
+        .keySeq()
+        .toArray(),
       user.publicKey,
-      encryption.decryptSymmetric,
       true,
       readFromRelays
     );
