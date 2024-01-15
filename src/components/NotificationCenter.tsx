@@ -9,6 +9,9 @@ export function NotificationCenter(): JSX.Element | null {
   const navigate = useNavigate();
   // TODO: add notifications for new followers
   const notifications = Map<string, NotificationMessage>();
+  if (notifications.size === 0) {
+    return null;
+  }
 
   return (
     <Dropdown>
