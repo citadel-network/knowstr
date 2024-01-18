@@ -2,14 +2,7 @@ import { bytesToHex } from "@noble/hashes/utils";
 import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import crypto from "crypto";
-import {
-  Event,
-  UnsignedEvent,
-  SimplePool,
-  serializeEvent,
-  nip04,
-  getPublicKey,
-} from "nostr-tools";
+import { Event, UnsignedEvent, SimplePool, serializeEvent } from "nostr-tools";
 
 export const KIND_SETTINGS = 11071;
 export const KIND_REPUTATIONS = 11080;
@@ -25,6 +18,9 @@ export const DEFAULT_RELAYS: Relays = [
   { url: "wss://nostr.wine", read: true, write: true },
 ];
 
+// eslint-disable-next-line functional/no-let
+let lastPublished = 0;
+
 export async function publishEvent(
   relayPool: SimplePool,
   event: Event,
@@ -35,8 +31,19 @@ export async function publishEvent(
   if (writeRelayUrls.length === 0) {
     throw new Error(`No relays to publish on`);
   }
+  const modifiedDateEvent =
+    event.created_at <= lastPublished
+      ? {
+          ...event,
+          // Increase timestamp by one to make sure it's newer
+          created_at: lastPublished + 1,
+        }
+      : event;
+  if (modifiedDateEvent.created_at > lastPublished) {
+    lastPublished = modifiedDateEvent.created_at;
+  }
   const results = await Promise.allSettled(
-    relayPool.publish(writeRelayUrls, event)
+    relayPool.publish(writeRelayUrls, modifiedDateEvent)
   );
   // If one message can be sent publish is a success,
   // otherwise it's a failure
@@ -65,7 +72,7 @@ export function finalizeEvent<T extends number>(
   };
 }
 
-export async function publishSettings(
+export function publishSettings(
   relayPool: SimplePool,
   user: KeyPair,
   settings: Settings,
@@ -76,11 +83,7 @@ export async function publishSettings(
     v: "v1",
     n: crypto.randomBytes(8),
   };
-  const content = await nip04.encrypt(
-    user.privateKey,
-    getPublicKey(user.privateKey),
-    JSON.stringify(compressedSettings)
-  );
+  const content = JSON.stringify(compressedSettings);
   const unsingedEvent = {
     kind: KIND_SETTINGS,
     pubkey: user.publicKey,

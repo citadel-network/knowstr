@@ -202,14 +202,6 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   knowledgeDBs: Map<PublicKey, KnowledgeDataWithCommits>(),
 };
 
-export const EMPTY_PLAN = {
-  ...DEFAULT_DATA_CONTEXT_PROPS,
-  setData: false,
-  publishEvents: List<Event>(),
-  user: ALICE,
-  relays: [],
-};
-
 type TestAppState = DataContextProps & TestApis;
 
 function applyDefaults(props?: Partial<TestAppState>): TestAppState {

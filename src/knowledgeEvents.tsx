@@ -1,11 +1,9 @@
-import { is, Map } from "immutable";
+import { is, List, Map } from "immutable";
 import { Filter, Event } from "nostr-tools";
-import { useEffect, useState } from "react";
-import { useEventQuery, sortEvents } from "citadel-commons";
+import { sortEvents } from "citadel-commons";
 import { clone, isBranchEqual, newDB, pull } from "./knowledge";
 import { KIND_KNOWLEDGE } from "./nostr";
 import { jsonToDiff, Serializable } from "./serializer";
-import { useApis } from "./Apis";
 
 export type RepoDiff<T extends BranchWithCommits | BranchWithStaged> = {
   commits?: Map<Hash, Commit>;
@@ -309,61 +307,27 @@ export function mergeKnowledgeData(
   }, myDB);
 }
 
-type Diffs = Map<string, KnowledgeDiffWithCommits>;
-
-export function useKnowledgeQuery(
-  authors: PublicKey[],
-  myself: PublicKey,
-  enabled: boolean,
-  readFromRelays: Relays
-): [Map<PublicKey, KnowledgeDataWithCommits>, boolean] {
-  const { relayPool } = useApis();
-  const [decryptedDiffs, setDecryptedDiffs] = useState<Diffs | undefined>(
-    undefined
-  );
-
-  const { events, eose } = useEventQuery(
-    relayPool,
-    [createKnowledgeQuery(authors)],
-    {
-      enabled,
-      readFromRelays,
+function parseEvents(
+  events: List<Event>,
+  myself: PublicKey
+): Map<string, KnowledgeDiffWithCommits> {
+  return events.reduce((rdx, event) => {
+    try {
+      const compressedDiff = JSON.parse(event.content) as Serializable;
+      return rdx.set(event.id, jsonToDiff(compressedDiff, myself));
+    } catch (e) {
+      return rdx;
     }
-  );
-  const groupedByPublicKey = events
-    .groupBy((event) => event.pubkey as PublicKey)
-    .map((evts) => sortEvents(evts.toList()));
+  }, Map<string, KnowledgeDiffWithCommits>());
+}
 
-  useEffect(() => {
-    setDecryptedDiffs((existingDiffs) => {
-      if (!eose) {
-        return existingDiffs;
-      }
-      const diffsFromAllAuthors = groupedByPublicKey.reduce(
-        (rdx, eventsFromAuthor): Map<string, KnowledgeDiffWithCommits> => {
-          return rdx.merge(
-            parseKnowledgeEvents(
-              Map<string, Event>(eventsFromAuthor.map((e) => [e.id, e])),
-              existingDiffs || Map<string, KnowledgeDiffWithCommits>(),
-              myself
-            )
-          );
-        },
-        Map<string, KnowledgeDiffWithCommits>()
-      );
-      return diffsFromAllAuthors;
-    });
-  }, [
-    JSON.stringify(
-      events
-        .keySeq()
-        .sortBy((k) => k)
-        .toJSON()
-    ),
-    eose,
-  ]);
-  if (decryptedDiffs === undefined) {
-    return [Map<PublicKey, KnowledgeDataWithCommits>(), false];
-  }
-  return [createKnowledgeDBs(events, decryptedDiffs), true];
+export function findKnowledgeDB(
+  events: List<Event>,
+  myself: PublicKey
+): KnowledgeDataWithCommits {
+  const filtered = events.filter((event) => event.kind === KIND_KNOWLEDGE);
+  const sorted = sortEvents(filtered);
+  const diffs = parseEvents(sorted, myself);
+
+  return diffs.reduce((rdx, diff) => applyDiff(rdx, diff), newDB());
 }

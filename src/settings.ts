@@ -1,21 +1,12 @@
-import { useEffect, useState } from "react";
-import { Event, getPublicKey, nip04 } from "nostr-tools";
-import { useEventQuery } from "citadel-commons";
+import { Event } from "nostr-tools";
+import { getMostRecentReplacableEvent } from "citadel-commons";
+import { List } from "immutable";
 import { KIND_SETTINGS } from "./nostr";
-import { useApis } from "./Apis";
 
-async function settingsFromEvent(
-  event: Event,
-  myself: KeyPair
-): Promise<Settings> {
+function settingsFromEvent(event: Event): Settings {
   try {
-    const decryptedSettings = await nip04.decrypt(
-      myself.privateKey,
-      event.pubkey as PublicKey,
-      event.content
-    );
     const compressedSettings = JSON.parse(
-      decryptedSettings.toString()
+      event.content
     ) as CompressedSettingsFromStore;
     return {
       bionicReading: compressedSettings.b,
@@ -31,6 +22,17 @@ export const DEFAULT_SETTINGS = {
   bionicReading: false,
 };
 
+export function findSettings(events: List<Event>): Settings {
+  const settingsEvent = getMostRecentReplacableEvent(
+    events.filter((e) => e.kind === KIND_SETTINGS)
+  );
+  if (!settingsEvent) {
+    return DEFAULT_SETTINGS;
+  }
+  return settingsFromEvent(settingsEvent);
+}
+
+/*
 export function useSettingsQuery(
   user: KeyPair,
   dependenciesEose: boolean,
@@ -74,3 +76,4 @@ export function useSettingsQuery(
   }, [events, eose]);
   return [settings.settings, settings.finished];
 }
+*/
