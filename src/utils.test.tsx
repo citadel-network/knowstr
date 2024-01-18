@@ -199,6 +199,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   sentEvents: List<Event>(),
   settings: DEFAULT_SETTINGS,
   relays: DEFAULT_RELAYS,
+  knowledgeDBs: Map<PublicKey, KnowledgeDataWithCommits>(),
 };
 
 export const EMPTY_PLAN = {

@@ -7,14 +7,15 @@ import { useContactsQuery, useContactsOfContactsQuery } from "./contacts";
 import { useSettingsQuery } from "./settings";
 import { DEFAULT_RELAYS } from "./nostr";
 import { useApis } from "./Apis";
+import { useKnowledgeQuery } from "./knowledgeEvents";
 
 type DataProps = {
-  blockstackUser: KeyPair;
+  user: KeyPair;
   children: React.ReactNode;
 };
 
-function Data({ blockstackUser, children }: DataProps): JSX.Element {
-  const myPublicKey = blockstackUser.publicKey;
+function Data({ user, children }: DataProps): JSX.Element {
+  const myPublicKey = user.publicKey;
   const { relayPool } = useApis();
   const { relays: myRelays, eose: relaysEose } = useRelaysQuery(
     relayPool,
@@ -35,11 +36,11 @@ function Data({ blockstackUser, children }: DataProps): JSX.Element {
   );
 
   const [settings, settingsEose] = useSettingsQuery(
-    blockstackUser,
+    user,
     relaysEose,
     readFromRelays
   );
-  const [pec, contactsEose] = useContactsQuery(blockstackUser, readFromRelays);
+  const [pec, contactsEose] = useContactsQuery(user, readFromRelays);
   const contacts = pec.filter((_, k) => k !== myPublicKey);
 
   const [coc, contactsOfContactsEose] = useContactsOfContactsQuery(
@@ -51,11 +52,25 @@ function Data({ blockstackUser, children }: DataProps): JSX.Element {
     (_, key) => key !== myPublicKey && !contacts.has(key)
   );
 
-  if (!sentEventsEose || !contactsOfContactsEose || !settingsEose) {
+  const [knowledgeDBs, knowledgeDBsEose] = useKnowledgeQuery(
+    contacts
+      .merge(contactsOfContacts)
+      .set(user.publicKey, user)
+      .keySeq()
+      .toArray(),
+    user.publicKey,
+    sentEventsEose && contactsEose && contactsOfContactsEose,
+    readFromRelays
+  );
+
+  if (
+    !sentEventsEose ||
+    !contactsOfContactsEose ||
+    !settingsEose ||
+    !knowledgeDBsEose
+  ) {
     return <div className="loading" aria-label="loading" />;
   }
-
-  const user = blockstackUser;
 
   return (
     <DataContextProvider
@@ -65,6 +80,7 @@ function Data({ blockstackUser, children }: DataProps): JSX.Element {
       sentEvents={sentEvents.toList()}
       settings={settings}
       relays={relays}
+      knowledgeDBs={knowledgeDBs}
     >
       <KnowledgeDataProvider>{children}</KnowledgeDataProvider>
     </DataContextProvider>

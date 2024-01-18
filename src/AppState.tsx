@@ -12,7 +12,7 @@ export function RequireLogin(): JSX.Element {
   }
   // TODO: not ideal that we automatically start fetching in Require login
   return (
-    <Data blockstackUser={user}>
+    <Data user={user}>
       <Outlet />
     </Data>
   );

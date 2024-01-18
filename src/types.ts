@@ -46,6 +46,7 @@ declare global {
     sentEvents: List<Event>;
     settings: Settings;
     relays: Relays;
+    knowledgeDBs: Map<PublicKey, KnowledgeDataWithCommits>;
   };
 
   type LocalStorage = {

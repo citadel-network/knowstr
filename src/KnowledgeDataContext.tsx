@@ -7,7 +7,6 @@ import {
   applyDiff,
   compareKnowledgeDB,
   mergeKnowledgeData,
-  useKnowledgeQuery,
 } from "./knowledgeEvents";
 import {
   getNode,
@@ -165,30 +164,14 @@ export function KnowledgeDataProvider({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  const { user, relays, contacts, contactsOfContacts } = useData();
+  const { user, knowledgeDBs } = useData();
   const { createPlan, executePlan } = usePlanner();
-  const readFromRelays = relays.filter((r) => r.read === true);
-
-  const [knowledgeDBs, dbsReady] = useKnowledgeQuery(
-    contacts
-      .merge(contactsOfContacts)
-      .set(user.publicKey, user)
-      .keySeq()
-      .toArray(),
-    user.publicKey,
-    true,
-    readFromRelays
-  );
 
   const knowledge = mergeKnowledgeData(knowledgeDBs, user.publicKey);
   const [knowledgeStatus, setKnowledgeStatus] = useState<{
     diff: KnowledgeDiff<BranchWithCommits | BranchWithStaged>;
     unsaved: boolean;
   }>({ diff: {}, unsaved: false });
-
-  if (!dbsReady) {
-    return <div className="loading" aria-label="loading" />;
-  }
 
   const setKnowledgeData = (data: KnowledgeData): void => {
     const diff = compareKnowledgeDB(knowledge, data);
