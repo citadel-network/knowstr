@@ -68,7 +68,7 @@ function useEventProcessor(
 function Data({ user, children }: DataProps): JSX.Element {
   const myPublicKey = user.publicKey;
   const { relayPool } = useApis();
-  const { relays: myRelays, eose: relaysEose } = useRelaysQuery(
+  const { relays: myRelays } = useRelaysQuery(
     relayPool,
     [myPublicKey],
     true,
@@ -83,7 +83,7 @@ function Data({ user, children }: DataProps): JSX.Element {
         authors: [myPublicKey],
       },
     ],
-    { enabled: relaysEose, readFromRelays }
+    { readFromRelays }
   );
   const processedEvents = useEventProcessor(sentEvents, user);
   const myProcessedEvents = processedEvents.get(myPublicKey, {
