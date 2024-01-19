@@ -8,7 +8,7 @@ import {
   updateView,
   getViewExactMatch,
   ViewContextProvider,
-  useRepo,
+  useNode,
 } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
@@ -34,7 +34,7 @@ export function FullScreenViewWrapper({
   const { openNodeID: id } = useParams<{
     openNodeID: string;
   }>() as { openNodeID: string };
-  const [workspace] = useRepo();
+  const [workspace] = useNode();
   const workspaceID = workspace ? workspace.id : undefined;
   const root = id || workspaceID;
   if (!root) {

@@ -5,7 +5,7 @@ import { useMediaQuery } from "react-responsive";
 import { useApis } from "../Apis";
 import { useKnowledgeData } from "../KnowledgeDataContext";
 import {
-  getRepoFromView,
+  getNodeFromView,
   useViewKey,
   useViewPath,
   ViewPath,
@@ -88,7 +88,7 @@ export function ReadingStatus({
   const scrollableId = useViewKey();
   const isMobile = useMediaQuery(IS_MOBILE);
   const viewPath = useViewPath();
-  const view = getRepoFromView(
+  const view = getNodeFromView(
     knowledgeData.repos,
     knowledgeData.views,
     viewPath

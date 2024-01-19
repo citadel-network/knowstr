@@ -1,14 +1,8 @@
 import React from "react";
 import { List, Set, Map } from "immutable";
-import { useKnowledgeData } from "./KnowledgeDataContext";
-import {
-  addToBranch,
-  ensureLocalBranch,
-  getDefaultBranch,
-  getNode,
-  isBranchEqual,
-} from "./knowledge";
-import { getRelations, getSubjects } from "./connections";
+import { getRelations, getSubjects, splitID } from "./connections";
+import { newDB } from "./knowledge";
+import { useData } from "./DataContext";
 
 export type ViewPath = {
   root: string;
@@ -81,44 +75,79 @@ export function getViewExactMatch(
   return views.get(viewKey);
 }
 
-function defaultViewOptions(nodeType: NodeType): [RelationType, boolean] {
-  if (["TITLE", "URL", "VIEW"].includes(nodeType)) {
-    return ["CONTAINS", false];
+function getDefaultRelationForNode(
+  id: ID,
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey
+): ID | undefined {
+  // Do I have relations in my database?
+  const myRelations = knowledgeDBs.get(myself, newDB()).relations;
+  const [remote, knowID] = splitID(id);
+  const relations = myRelations.filter((r) => r.head === knowID);
+  // TODO: sort relations
+  if (relations.size > 0) {
+    return relations.keySeq().first("");
   }
-  return ["RELEVANCE", false];
+  if (remote) {
+    const remoteRelations = knowledgeDBs
+      .get(remote, newDB())
+      .relations.filter((r) => r.head === knowID);
+    if (remoteRelations.size > 0) {
+      const relationID = remoteRelations.keySeq().first("");
+      return `${remote}/${relationID}`;
+    }
+  }
+  // TODO: Find any other relation
+  // see if there are any relations in any of the databases
+  // if not, return undefined
+  // const withRelations = knowledgeDBs.map((db, publicKey) => db.relations.filter(r => r.head === knowID));
+  //  withRelations.filter(r => r.size > 0).map(relations => relations.first());
+  return undefined;
 }
 
-export function getDefaultView(repo: Repo): View {
-  const defaultBranch = getDefaultBranch(repo);
-  if (!defaultBranch) {
-    throw new Error(`Repo ${repo.id} does not have any branches`);
-  }
-  const node = getNode(repo, defaultBranch);
-  const [relationType, displaySubjects] = defaultViewOptions(node.nodeType);
+export function getDefaultView(
+  id: ID,
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey
+): View {
   return {
-    relationType,
-    displaySubjects,
+    relations: getDefaultRelationForNode(id, knowledgeDBs, myself),
+    displaySubjects: false,
     width: 1,
-    branch: defaultBranch,
     expanded: false,
   };
 }
 
-function getRepo(
-  repos: Repos,
+function getNodeFromID(
+  knowledgeDBs: KnowledgeDBs,
+  id: ID,
+  myself: PublicKey
+): KnowNode | undefined {
+  const [remote, knowID] = splitID(id);
+  const db = knowledgeDBs.get(remote || myself, newDB());
+  return db.nodes.get(knowID);
+}
+
+function getKnowNode(
+  knowledgeDBs: KnowledgeDBs,
   views: Views,
-  root: Repo,
+  myself: PublicKey,
+  rootID: ID,
+  root: KnowNode,
   indices: List<number>,
   startPath: ViewPath
-): [Repo, View] {
-  const view = getViewExactMatch(views, startPath) || getDefaultView(root);
+): [KnowNode, View] {
+  const view =
+    getViewExactMatch(views, startPath) ||
+    getDefaultView(rootID, knowledgeDBs, myself);
   const index = indices.get(0);
   if (index === undefined) {
     return [root, view];
   }
-  const node = getNode(root, view.branch);
-  const relations = getRelations(node, view.relationType);
-  if (index === relations.size) {
+
+  const relations = getRelations(knowledgeDBs, view.relations, myself);
+  const items = relations?.items || List<ID>();
+  if (index === items.size) {
     throw new Error(
       `View path index reserved for AddNodeButton. No repo found ${viewPathToString(
         {
@@ -128,12 +157,12 @@ function getRepo(
       )}`
     );
   }
-  if (index > relations.size) {
-    const subjectEntries = getSubjects(repos, root.id).toArray();
-    const subjectEntry = subjectEntries[index - relations.size - 1];
+  if (index > items.size) {
+    const subjectEntries = getSubjects(knowledgeDBs, root.id, myself).toArray();
+    const subjectEntry = subjectEntries[index - items.size - 1];
     if (!subjectEntry) {
       throw new Error(
-        `No repo for view path found ${viewPathToString({
+        `No Node for view path found ${viewPathToString({
           root: startPath.root,
           indexStack: indices,
         })}`
@@ -143,27 +172,41 @@ function getRepo(
     if (!subject) {
       throw new Error("Subject does not exist");
     }
-    const subjectBranch = getDefaultBranch(subject);
-    if (!subjectBranch) {
-      throw new Error("Subject does not have branches");
-    }
-    return getRepo(repos, views, subject, indices.remove(0), {
-      root: startPath.root,
-      indexStack: startPath.indexStack.push(index),
-    });
+    // TODO: so far subject is only local there fore I can use subject.id here
+    return getKnowNode(
+      knowledgeDBs,
+      views,
+      myself,
+      subject.id,
+      subject,
+      indices.remove(0),
+      {
+        root: startPath.root,
+        indexStack: startPath.indexStack.push(index),
+      }
+    );
   }
-  const relationToObject = relations.get(index);
-  if (!relationToObject) {
+  const objectID = items.get(index);
+  if (!objectID) {
     throw new Error("Wrong path");
   }
-  const obj = repos.get(relationToObject.id);
+  // TODO: we need to check if the relation is local or remote
+  const obj = getNodeFromID(knowledgeDBs, objectID, myself);
   if (!obj) {
-    throw new Error(`Object ${relationToObject.id} does not exist`);
+    throw new Error(`Object ${objectID} does not exist`);
   }
-  return getRepo(repos, views, obj, indices.remove(0), {
-    root: startPath.root,
-    indexStack: startPath.indexStack.push(index),
-  });
+  return getKnowNode(
+    knowledgeDBs,
+    views,
+    myself,
+    objectID,
+    obj,
+    indices.remove(0),
+    {
+      root: startPath.root,
+      indexStack: startPath.indexStack.push(index),
+    }
+  );
 }
 
 export function useRelationIndex(): number | undefined {
@@ -171,60 +214,92 @@ export function useRelationIndex(): number | undefined {
   return viewContext.indexStack.last();
 }
 
-export function getRepoFromView(
-  repos: Repos,
+export function getNodeFromView(
+  knowledgeDBs: KnowledgeDBs,
   views: Views,
+  myself: PublicKey,
   viewContext: ViewPath
-): [Repo, View] | [undefined, undefined] {
-  const root = repos.get(viewContext.root);
+): [KnowNode, View] | [undefined, undefined] {
+  const root = getNodeFromID(knowledgeDBs, viewContext.root, myself);
   if (!root) {
     return [undefined, undefined];
   }
   const rootViewPath = { root: root.id, indexStack: List<number>() };
   try {
-    return getRepo(repos, views, root, viewContext.indexStack, rootViewPath);
+    return getKnowNode(
+      knowledgeDBs,
+      views,
+      myself,
+      viewContext.root,
+      root,
+      viewContext.indexStack,
+      rootViewPath
+    );
   } catch {
     return [undefined, undefined];
   }
 }
 
-export function useRepo(): [Repo, View] | [undefined, undefined] {
+export function useNode(): [KnowNode, View] | [undefined, undefined] {
   const viewContext = useViewPath();
-  const { repos, views } = useKnowledgeData();
-  return getRepoFromView(repos, views, viewContext);
+  const { knowledgeDBs, user } = useData();
+  const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  return getNodeFromView(knowledgeDBs, views, user.publicKey, viewContext);
 }
 
 export function getParentRepo(
-  repos: Repos,
+  knowledgeDBs: KnowledgeDBs,
   views: Views,
+  myself: PublicKey,
   viewContext: ViewPath
-): [Repo, View] | [undefined, undefined] {
+): [KnowNode, View] | [undefined, undefined] {
   const lastIndex = viewContext.indexStack.last();
-  const root = repos.get(viewContext.root);
+  const rootID = viewContext.root;
+  const root = getNodeFromID(knowledgeDBs, rootID, myself);
   if (lastIndex === undefined || !root) {
     return [undefined, undefined];
   }
-  return getRepo(repos, views, root, viewContext.indexStack.pop(), {
-    root: root.id,
-    indexStack: List<number>(),
-  });
+  return getKnowNode(
+    knowledgeDBs,
+    views,
+    myself,
+    rootID,
+    root,
+    viewContext.indexStack.pop(),
+    {
+      root: root.id,
+      indexStack: List<number>(),
+    }
+  );
 }
 
-export function useParentRepo(): [Repo, View] | [undefined, undefined] {
+export function useParentRepo(): [KnowNode, View] | [undefined, undefined] {
   const viewContext = useViewPath();
-  const { repos, views } = useKnowledgeData();
-  return getParentRepo(repos, views, viewContext);
+  const { knowledgeDBs, user } = useData();
+  const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  return getParentRepo(knowledgeDBs, views, user.publicKey, viewContext);
 }
 
 export function useIsAddToNode(): boolean {
-  const [parentRepo, parentView] = useParentRepo();
+  const [, parentView] = useParentRepo();
+  const { user, knowledgeDBs } = useData();
   const lastIndex = useRelationIndex();
-  if (!parentRepo || lastIndex === undefined) {
+  if (!parentView || lastIndex === undefined) {
     return false;
   }
-  const parentNode = getNode(parentRepo, parentView.branch);
-  const parentRelations = getRelations(parentNode, parentView.relationType);
-  if (lastIndex === parentRelations.size) {
+  const parentRelations = getRelations(
+    knowledgeDBs,
+    parentView.relations,
+    user.publicKey
+  );
+  // If I don't have any relations yet
+  if (!parentRelations && lastIndex === 0) {
+    return true;
+  }
+  if (!parentRelations) {
+    return false;
+  }
+  if (lastIndex === parentRelations.items.size) {
     return true;
   }
   return false;
@@ -281,6 +356,7 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
   return views.filter((v, k) => !k.startsWith(key) || k === key);
 }
 
+/*
 function createUpdatableRepo(
   repos: Repos,
   views: Views,
@@ -292,7 +368,7 @@ function createUpdatableRepo(
   if (!root) {
     return [repos, views, undefined, undefined, undefined];
   }
-  const [repo, view] = getRepoFromView(repos, views, viewContext);
+  const [repo, view] = getNodeFromView(repos, views, viewContext);
   if (!repo) {
     return [repos, views, undefined, undefined, undefined];
   }
@@ -347,6 +423,7 @@ export function updateNode(
     views,
   };
 }
+   */
 
 /*
  * input for example
@@ -366,11 +443,11 @@ function getAllSubpaths(path: string): Set<string> {
 }
 
 export function findViewsForRepo(
-  repos: Repos,
+  knowledgeDBs: KnowledgeDBs,
   views: Views,
+  myself: PublicKey,
   id: string,
-  relationType: RelationType,
-  branch: BranchPath
+  relationsID: ID
 ): Set<string> {
   // include partial, non existing views
   const paths = views.reduce((acc, _, path) => {
@@ -378,13 +455,13 @@ export function findViewsForRepo(
   }, Set<string>());
   return paths.filter((path) => {
     try {
-      const [repo, view] = getRepoFromView(repos, views, parseViewPath(path));
-      return (
-        repo &&
-        repo.id === id &&
-        isBranchEqual(branch, view.branch) &&
-        view.relationType === relationType
+      const [node, view] = getNodeFromView(
+        knowledgeDBs,
+        views,
+        myself,
+        parseViewPath(path)
       );
+      return node && node.id === id && view.relations === relationsID;
     } catch {
       // Some view paths lead to nowhere
       return false;
@@ -474,26 +551,27 @@ function deleteChildren(
 }
 
 export function updateViewPathsAfterMoveRelations(
-  repos: Repos,
-  views: Views,
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
   repoPath: ViewPath,
   indices: Array<number>,
   startPosition?: number
 ): Views {
   // nothing to do
+  const { views } = knowledgeDBs.get(myself, newDB());
   if (startPosition === undefined) {
     return views;
   }
-  const [repo, view] = getRepoFromView(repos, views, repoPath);
-  if (!repo) {
+  const [node, view] = getNodeFromView(knowledgeDBs, views, myself, repoPath);
+  if (!node || !view.relations) {
     return views;
   }
   const viewKeys = findViewsForRepo(
-    repos,
+    knowledgeDBs,
     views,
-    repo.id,
-    view.relationType,
-    view.branch
+    myself,
+    node.id,
+    view.relations
   );
   const sortedViewKeys = viewKeys.sort(
     (a, b) => b.split(":").length - a.split(":").length
@@ -504,8 +582,9 @@ export function updateViewPathsAfterMoveRelations(
 }
 
 export function updateViewPathsAfterAddRelation(
-  repos: Repos,
+  knowledgeDBs: KnowledgeDBs,
   views: Views,
+  myself: PublicKey,
   repoPath: ViewPath,
   ord?: number
 ): Views {
@@ -513,16 +592,16 @@ export function updateViewPathsAfterAddRelation(
   if (ord === undefined) {
     return views;
   }
-  const [repo, view] = getRepoFromView(repos, views, repoPath);
-  if (!repo) {
+  const [node, view] = getNodeFromView(knowledgeDBs, views, myself, repoPath);
+  if (!node || !view.relations) {
     return views;
   }
   const viewKeys = findViewsForRepo(
-    repos,
+    knowledgeDBs,
     views,
-    repo.id,
-    view.relationType,
-    view.branch
+    myself,
+    node.id,
+    view.relations
   );
 
   const sortedViewKeys = viewKeys.sort(
@@ -548,21 +627,22 @@ export function updateViewPathsAfterAddRelation(
 }
 
 export function updateViewPathsAfterDeletion(
-  repos: Repos,
+  knowledgeDBs: KnowledgeDBs,
   views: Views,
+  myself: PublicKey,
   repoPath: ViewPath,
   deletes: Set<number>
 ): Views {
-  const [repo, view] = getRepoFromView(repos, views, repoPath);
-  if (!repo) {
+  const [node, view] = getNodeFromView(knowledgeDBs, views, myself, repoPath);
+  if (!node || !view.relations) {
     return views;
   }
   const viewKeys = findViewsForRepo(
-    repos,
+    knowledgeDBs,
     views,
-    repo.id,
-    view.relationType,
-    view.branch
+    myself,
+    node.id,
+    view.relations
   );
   const sortedViewKeys = viewKeys.sort(
     (a, b) => b.split(":").length - a.split(":").length
@@ -574,18 +654,20 @@ export function updateViewPathsAfterDeletion(
 }
 
 export function bulkUpdateViewPathsAfterAddRelation(
-  repos: Repos,
-  views: Views,
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
   repoPath: ViewPath,
   nAdds: number,
   startPos?: number
 ): Views {
+  const { views } = knowledgeDBs.get(myself, newDB());
   return List<undefined>([])
     .set(nAdds - 1, undefined)
     .reduce((rdx, i, currentIndex) => {
       return updateViewPathsAfterAddRelation(
-        repos,
+        knowledgeDBs,
         views,
+        myself,
         repoPath,
         startPos !== undefined ? startPos + currentIndex : undefined
       );

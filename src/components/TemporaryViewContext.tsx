@@ -5,7 +5,7 @@ import {
   parseViewPath,
   useViewKey,
   getParentKey,
-  useRepo,
+  useNode,
   useParentRepo,
   useRelationIndex,
 } from "../ViewContext";
@@ -159,7 +159,7 @@ function toggleMultiselect(
 }
 
 export function ToggleMultiselect(): JSX.Element {
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   const getNodeText = useGetNodeText();
   const ariaLabel = repo
     ? `toggle multiselect ${getNodeText(getNode(repo, view.branch))}`
@@ -203,7 +203,7 @@ export function toggleEditing(
 }
 
 export function ToggleEditing(): JSX.Element {
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   const getNodeText = useGetNodeText();
   const ariaLabel = repo
     ? `edit ${getNodeText(getNode(repo, view.branch))}`
@@ -292,7 +292,7 @@ export function TemporaryViewProvider({
 }
 
 export function NodeSelectbox(): JSX.Element | null {
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   const getNodeText = useGetNodeText();
   const [parentRepo, parentView] = useParentRepo();
   const relationIndex = useRelationIndex();

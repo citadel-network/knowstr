@@ -25,7 +25,7 @@ type DataProps = {
 
 type ProcessedEvents = {
   settings: Settings;
-  knowledgeDB: KnowledgeDataWithCommits;
+  knowledgeDB: KnowledgeData;
   contacts: Contacts;
 };
 

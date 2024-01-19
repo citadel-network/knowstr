@@ -4,7 +4,7 @@ import { Droppable } from "react-beautiful-dnd";
 import { branchPathToString, getNode } from "../knowledge";
 import { useGetNodeText, useKnowledgeData } from "../KnowledgeDataContext";
 import {
-  useRepo,
+  useNode,
   useViewKey,
   useViewPath,
   ViewPath,
@@ -30,7 +30,7 @@ export function TreeView(): JSX.Element | null {
     List<ViewPath>(),
     isOpenInFullScreen
   );
-  const [r, v] = useRepo();
+  const [r, v] = useNode();
   const ariaLabel = r
     ? `related to ${getNodeText(getNode(r, v.branch))} [${branchPathToString(
         v.branch

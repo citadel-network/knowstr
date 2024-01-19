@@ -324,7 +324,7 @@ function parseEvents(
 export function findKnowledgeDB(
   events: List<Event>,
   myself: PublicKey
-): KnowledgeDataWithCommits {
+): KnowledgeData {
   const filtered = events.filter((event) => event.kind === KIND_KNOWLEDGE);
   const sorted = sortEvents(filtered);
   const diffs = parseEvents(sorted, myself);

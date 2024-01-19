@@ -9,7 +9,7 @@ import {
 import { DisconnectBtn } from "./DisconnectBtn";
 import { SelectRelations } from "./SelectRelations";
 import { ChangeColumnWidth } from "./ChangeColumnWidth";
-import { useRepo, useViewKey } from "../ViewContext";
+import { useNode, useViewKey } from "../ViewContext";
 import { getNode } from "../knowledge";
 import { IS_MOBILE } from "./responsive";
 
@@ -64,7 +64,7 @@ export function DetailViewMenu(): JSX.Element {
 }
 
 function useIsActionable(): boolean {
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   if (!repo) {
     return false;
   }

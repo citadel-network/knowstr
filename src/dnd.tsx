@@ -16,7 +16,7 @@ import { getNode, isBranchEqual } from "./knowledge";
 import { useKnowledgeData, useUpdateKnowledge } from "./KnowledgeDataContext";
 import {
   parseViewPath,
-  getRepoFromView,
+  getNodeFromView,
   updateNode,
   getParentRepo,
   popPrefix,
@@ -34,7 +34,7 @@ function getDropDestinationEndOfRoot(
   views: Views,
   root: ViewPath
 ): [ViewPath, number] {
-  const [rootRepo, rootView] = getRepoFromView(repos, views, root);
+  const [rootRepo, rootView] = getNodeFromView(repos, views, root);
   if (!rootRepo) {
     // eslint-disable-next-line no-console
     console.error(
@@ -89,14 +89,14 @@ export function dnd(
   // remove the prefix
   const [prefix, toKey] = popPrefix(to);
   const rootView = parseViewPath(toKey);
-  const [rootRepo] = getRepoFromView(repos, views, rootView);
+  const [rootRepo] = getNodeFromView(repos, views, rootView);
   if (!rootRepo) {
     return { repos, views };
   }
 
   const sourceViewPath = parseViewPath(source);
   const sourceIndex = sourceViewPath.indexStack.last() || 0;
-  const sourceView = getRepoFromView(repos, views, sourceViewPath)[1];
+  const sourceView = getNodeFromView(repos, views, sourceViewPath)[1];
   if (!sourceView) {
     return { repos, views };
   }
@@ -111,7 +111,7 @@ export function dnd(
   const sourceRepos = sourceIndices
     .toList()
     .map((index) => {
-      const [r] = getRepoFromView(repos, views, {
+      const [r] = getNodeFromView(repos, views, {
         root: sourceViewPath.root,
         indexStack: sourceViewPath.indexStack.pop().push(index),
       });
@@ -138,7 +138,7 @@ export function dnd(
           indexTo
         );
 
-  const [toRepo, toV] = getRepoFromView(repos, views, toView);
+  const [toRepo, toV] = getNodeFromView(repos, views, toView);
   if (!toRepo) {
     return { repos, views };
   }

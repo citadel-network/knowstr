@@ -10,10 +10,10 @@ import {
   useUpdateKnowledge,
 } from "../KnowledgeDataContext";
 import {
-  getRepoFromView,
+  getNodeFromView,
   updateNode,
   updateViewPathsAfterDeletion,
-  useRepo,
+  useNode,
 } from "../ViewContext";
 import { Button } from "./Ui";
 
@@ -26,7 +26,7 @@ export function disconnectNode(
       root: id,
       indexStack: List<number>([]),
     };
-    const [repo, view] = getRepoFromView(rdx.repos, rdx.views, path);
+    const [repo, view] = getNodeFromView(rdx.repos, rdx.views, path);
     if (!repo) {
       return rdx;
     }
@@ -59,7 +59,7 @@ function findNewActiveWorkspace(repos: Repos): undefined | string {
 }
 
 function useDeleteNode(): undefined | (() => void) {
-  const [repo] = useRepo();
+  const [repo] = useNode();
   const navigate = useNavigate();
   const { repos, activeWorkspace, views } = useKnowledgeData();
   const updateKnowledge = useUpdateKnowledge();

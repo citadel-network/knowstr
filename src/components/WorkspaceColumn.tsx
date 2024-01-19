@@ -8,14 +8,14 @@ import { Column } from "./Column";
 import { IS_MOBILE } from "./responsive";
 import { WorkspaceColumn } from "./Ui";
 import { bulkAddRelations } from "../connections";
-import { updateNode, useViewPath, useViewKey, useRepo } from "../ViewContext";
+import { updateNode, useViewPath, useViewKey, useNode } from "../ViewContext";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable react/no-array-index-key */
 export function WorkspaceColumnView(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const view = useRepo()[1];
+  const view = useNode()[1];
   if (!view) {
     return null;
   }

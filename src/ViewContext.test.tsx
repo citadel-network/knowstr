@@ -9,7 +9,7 @@ import { createPlan, planSetKnowledgeData } from "./planner";
 import { renderWithTestData, ALICE, setup, commitAll } from "./utils.test";
 import {
   findViewsForRepo,
-  getRepoFromView,
+  getNodeFromView,
   parseViewPath,
   updateViewPathsAfterAddRelation,
   ViewContextProvider,
@@ -211,7 +211,7 @@ test("Move Views after insert", () => {
 test("get repo from view for non exisitng path", () => {
   const repo = newRepo(newNode("C", "TOPIC"), "c");
   expect(
-    getRepoFromView(Map<Repo>({ c: repo }), Map<string, View>(), {
+    getNodeFromView(Map<Repo>({ c: repo }), Map<string, View>(), {
       root: "c",
       indexStack: List<number>([1, 0, 0, 0, 0]),
     })

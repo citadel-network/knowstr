@@ -7,11 +7,11 @@ import { TemporaryViewProvider } from "./TemporaryViewContext";
 
 import { getRelations } from "../connections";
 import { getNode } from "../knowledge";
-import { PushViewIndex, useRepo } from "../ViewContext";
+import { PushViewIndex, useNode } from "../ViewContext";
 import { DND } from "../dnd";
 
 export function WorkspaceView(): JSX.Element | null {
-  const [workspace, view] = useRepo();
+  const [workspace, view] = useNode();
   if (!workspace) {
     return null;
   }

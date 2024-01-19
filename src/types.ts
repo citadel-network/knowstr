@@ -1,4 +1,4 @@
-import { Map, OrderedMap, Set, List } from "immutable";
+import { Map, OrderedMap, List } from "immutable";
 import { Event } from "nostr-tools";
 
 declare global {
@@ -39,6 +39,8 @@ declare global {
 
   type Relays = Array<Relay>;
 
+  type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
+
   type Data = {
     contacts: Contacts;
     contactsOfContacts: ContactsOfContacts;
@@ -46,7 +48,7 @@ declare global {
     sentEvents: List<Event>;
     settings: Settings;
     relays: Relays;
-    knowledgeDBs: Map<PublicKey, KnowledgeDataWithCommits>;
+    knowledgeDBs: KnowledgeDBs;
   };
 
   type LocalStorage = {
@@ -82,78 +84,38 @@ declare global {
 
   type NodeType = "NOTE" | "TOPIC" | "URL" | "TITLE" | "QUOTE" | "WORKSPACE";
 
-  type RelationType = "RELEVANCE" | "CONTAINS" | "SUMMARY";
-
-  type Repos = Map<string, Repo>;
-  type SortedRepos = OrderedMap<string, Repo>;
+  type RelationType = string & { readonly "": unique symbol };
 
   type Hash = string;
   type ID = string;
 
   type View = {
     displaySubjects: boolean;
-    relationType: RelationType;
+    relations?: ID;
     width: number;
-    branch: BranchPath;
     // Show children, only relevant for inner nodes
     expanded?: boolean;
   };
 
-  type Relation = {
-    id: string;
+  type Relations = {
+    items: List<ID>;
+    head: ID;
+    id: ID;
+    type: RelationType;
   };
-
-  type Relations = List<Relation>;
 
   type KnowNode = {
-    text: string;
-    nodeType: NodeType;
-    relations: Map<RelationType, Relations>;
-  };
-
-  type Commit = {
-    hash: Hash;
-    date: Date;
-    parents: Set<ID>;
-  };
-
-  type BranchPath = [PublicKey | undefined, string];
-
-  type BasicBranch = {
-    origin?: BranchPath;
-  };
-
-  type BranchWithStaged = BasicBranch & {
-    staged: KnowNode;
-    head?: Hash;
-  };
-
-  type BranchWithCommits = BasicBranch & {
-    head: Hash;
-    staged?: KnowNode;
-  };
-
-  type Branch = BranchWithCommits | BranchWithStaged;
-
-  type Repo<T extends BranchWithCommits | BranchWithStaged = Branch> = {
     id: ID;
-    commits: Map<Hash, Commit>;
-    objects: Map<Hash, KnowNode>;
-    branches: Map<string, T>;
-    remotes: Map<PublicKey, Map<string, BranchWithCommits>>;
+    text: string;
   };
-
-  type RepoWithCommits = Repo<BranchWithCommits>;
-
-  type RemoteRepo = Omit<RepoWithCommits, "remotes">;
 
   type Views = Map<string, View>;
 
-  type KnowledgeData<T extends BranchWithCommits | BranchWithStaged = Branch> =
-    {
-      repos: Map<string, Repo<T>>;
-      activeWorkspace: string;
-      views: Views;
-    };
-  type KnowledgeDataWithCommits = KnowledgeData<BranchWithCommits>;
+  type Nodes = Map<ID, KnowNode>;
+
+  type KnowledgeData = {
+    nodes: Map<ID, KnowNode>;
+    relations: Map<ID, Relations>;
+    views: Views;
+  };
 }

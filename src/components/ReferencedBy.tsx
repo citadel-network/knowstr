@@ -4,7 +4,7 @@ import { getRelations, getSubjects } from "../connections";
 import { getNode } from "../knowledge";
 import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
 import {
-  getRepoFromView,
+  getNodeFromView,
   updateView,
   useViewKey,
   useViewPath,
@@ -18,7 +18,7 @@ import { ToggleArrowButton } from "./ToggleArrowButton";
 function ReferencedBy(): JSX.Element | null {
   const { repos, views } = useKnowledgeData();
   const viewPath = useViewPath();
-  const [repo, view] = getRepoFromView(repos, views, viewPath);
+  const [repo, view] = getNodeFromView(repos, views, viewPath);
   if (!repo) {
     return null;
   }
@@ -66,7 +66,7 @@ export function ReferencedByCollapsable(): JSX.Element | null {
   const viewKey = useViewKey();
   const updateKnowledge = useUpdateKnowledge();
   const deselectByPostfix = useDeselectAllInView();
-  const [repo, view] = getRepoFromView(repos, views, viewPath);
+  const [repo, view] = getNodeFromView(repos, views, viewPath);
   if (!repo) {
     return null;
   }

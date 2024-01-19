@@ -22,7 +22,7 @@ import {
 } from "../knowledge";
 import {
   deleteChildViews,
-  getRepoFromView,
+  getNodeFromView,
   updateView,
   useViewKey,
   useViewPath,
@@ -42,7 +42,7 @@ function AcceptVersion(): JSX.Element | null {
   const upsertRepos = useUpdateKnowledge();
   const viewContext = useViewPath();
   const { views, repos } = useKnowledgeData();
-  const [repo, view] = getRepoFromView(repos, views, viewContext);
+  const [repo, view] = getNodeFromView(repos, views, viewContext);
   if (!repo) {
     return null;
   }
@@ -176,7 +176,7 @@ export function SelectVersions({
   const viewKey = useViewKey();
   const updateKnowledge = useUpdateKnowledge();
   const deselectAllInView = useDeselectAllInView();
-  const [repo, view] = getRepoFromView(repos, views, viewPath);
+  const [repo, view] = getNodeFromView(repos, views, viewPath);
   if (!repo) {
     return null;
   }

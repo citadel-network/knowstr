@@ -16,11 +16,11 @@ import {
   useUpdateKnowledge,
 } from "../KnowledgeDataContext";
 import {
-  getRepoFromView,
+  getNodeFromView,
   getParentKey,
   popPrefix,
   updateView,
-  useRepo,
+  useNode,
   useViewKey,
   useViewPath,
   ViewPath,
@@ -104,7 +104,7 @@ function InlineEditor({
   onCreateNode,
   onStopEditing,
 }: InlineEditorProps): JSX.Element {
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   const getNodeText = useGetNodeText();
   const ref = React.createRef<ReactQuill>();
   if (!repo) {
@@ -160,7 +160,7 @@ function useDisplaySummary(): {
 } {
   const { repos } = useKnowledgeData();
   const levels = getLevels(useViewPath(), useIsOpenInFullScreen());
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   if (!repo) {
     return {
       displaySummary: false,
@@ -199,7 +199,7 @@ function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
 function NodeContent(): JSX.Element {
   const getNodeText = useGetNodeText();
   const { settings } = useData();
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   if (!repo) {
     return <ErrorContent />;
   }
@@ -232,7 +232,7 @@ function NodeAutoLink({
   const { openNodeID: id } = useParams<{
     openNodeID: string;
   }>();
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   if (!repo) {
     return <ErrorContent />;
   }
@@ -314,7 +314,7 @@ export function getNodesInTree(
   isOpenInFullScreen?: boolean,
   noExpansion?: boolean
 ): List<ViewPath> {
-  const [parentRepo, parentView] = getRepoFromView(repos, views, parentPath);
+  const [parentRepo, parentView] = getNodeFromView(repos, views, parentPath);
   if (!parentRepo) {
     return ctx;
   }
@@ -331,7 +331,7 @@ export function getNodesInTree(
   };
   const nodesInTree = childPaths.reduce(
     (nodesList: List<ViewPath>, childPath: ViewPath) => {
-      const [childRepo, childView] = getRepoFromView(repos, views, childPath);
+      const [childRepo, childView] = getNodeFromView(repos, views, childPath);
       if (!childRepo || noExpansion) {
         return nodesList.push(childPath);
       }
@@ -362,7 +362,7 @@ function DraggingNode(): JSX.Element {
   const dragUpdateState = useContext(DragUpdateStateContext);
   const viewPath = useViewPath();
   const { repos, views } = useKnowledgeData();
-  const view = getRepoFromView(repos, views, viewPath)[1];
+  const view = getNodeFromView(repos, views, viewPath)[1];
   const isOpenInFullScreen = useIsOpenInFullScreen();
 
   const dropDestination =
@@ -398,7 +398,7 @@ function DraggingNode(): JSX.Element {
 }
 
 function Ribbon(): JSX.Element | null {
-  const repo = useRepo()[0];
+  const repo = useNode()[0];
   const nodeType = repo !== undefined ? getNode(repo).nodeType : undefined;
   if (!nodeType) {
     return null;

@@ -4,7 +4,7 @@ import { getDefaultBranch, getNode } from "../knowledge";
 import { useGetNodeText, useKnowledgeData } from "../KnowledgeDataContext";
 import { ModalNode, ModalNodeBody, ModalNodeTitle } from "./Ui";
 import { getRelations, getSubjects } from "../connections";
-import { useRepo } from "../ViewContext";
+import { useNode } from "../ViewContext";
 
 const KEY_DOWN = 40;
 const KEY_UP = 38;
@@ -39,7 +39,7 @@ function getSummaryText(
 
 function useGetSummaryTextsForRepos(): Map<string, string | undefined> {
   const getNodeText = useGetNodeText();
-  const view = useRepo()[1];
+  const view = useNode()[1];
   const { repos } = useKnowledgeData();
   return repos
     .map((repo) => getSummaryText(repo, repos, getNodeText, view?.branch))

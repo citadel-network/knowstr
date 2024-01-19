@@ -20,18 +20,18 @@ import {
   updateNode,
   useIsAddToNode,
   useParentRepo,
-  useRepo,
+  useNode,
   useViewPath,
   getParentView,
   getParentRepo,
   useViewKey,
-  getRepoFromView,
+  getNodeFromView,
 } from "../ViewContext";
 import { Button, CloseButton } from "./Ui";
 import useModal from "./useModal";
 import { ESC, SearchModal } from "./SearchModal";
 import { IS_MOBILE } from "./responsive";
-import { getLevels, useIsOpenInFullScreen } from "./Node";
+import { useIsOpenInFullScreen } from "./Node";
 import { FULL_SCREEN_PATH } from "../App";
 import {
   openEditor,
@@ -40,26 +40,6 @@ import {
   useIsEditorOpen,
 } from "./TemporaryViewContext";
 
-function isAddSummary(repo: Repo | undefined, view: View | undefined): boolean {
-  const nodeType = repo !== undefined ? getNode(repo).nodeType : undefined;
-  return (
-    (nodeType === "NOTE" || nodeType === "QUOTE") &&
-    view?.relationType === "SUMMARY"
-  );
-}
-
-function useIsAddSummary(): boolean {
-  const { repos, views } = useKnowledgeData();
-  const viewPath = useViewPath();
-  const isOpenInFullScreen = useIsOpenInFullScreen();
-  const [repo, view] = getRepoFromView(repos, views, viewPath);
-  const [parentRepo, parentView] = getParentRepo(repos, views, viewPath);
-  const level = getLevels(viewPath, isOpenInFullScreen);
-  return level === 0
-    ? isAddSummary(repo, view)
-    : isAddSummary(parentRepo, parentView);
-}
-
 function AddNodeButton({
   onClick,
   ariaLabel,
@@ -67,12 +47,10 @@ function AddNodeButton({
   onClick: () => void;
   ariaLabel: string;
 }): JSX.Element {
-  const isSummaryAdded = useIsAddSummary();
   const isInline = useIsAddToNode() || useMediaQuery(IS_MOBILE);
   const className = isInline
     ? "workspace-droppable font-italic font-size-medium black-dimmed hover-black-dimmed"
     : "workspace-droppable";
-  const text = isSummaryAdded ? "Add Summary" : "Add Note";
   return (
     <button
       type="button"
@@ -81,29 +59,9 @@ function AddNodeButton({
       onClick={onClick}
     >
       {!isInline && <span className="simple-icon-plus me-2" />}
-      <span>{text}</span>
+      <span>Add Note</span>
       <span>{}</span>
     </button>
-  );
-}
-
-type AddSummaryButtonProps = {
-  onClick: (nodeType: NodeType, relationType?: RelationType) => void;
-  buttonText?: string;
-};
-
-function AddSummaryButton({
-  onClick,
-  buttonText,
-}: AddSummaryButtonProps): JSX.Element {
-  return (
-    <Button
-      onClick={() => {
-        return onClick("NOTE", "SUMMARY");
-      }}
-    >
-      <div>{buttonText || "Add Summary"}</div>
-    </Button>
   );
 }
 
@@ -120,6 +78,7 @@ function SearchButton({ onClick }: { onClick: () => void }): JSX.Element {
     </button>
   );
 }
+
 type EditorProps = {
   onCreateNode: (
     text: string,
@@ -130,7 +89,6 @@ type EditorProps = {
 };
 
 function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
-  const isSummaryAdded = useIsAddSummary();
   const ref = React.createRef<ReactQuill>();
 
   useEffect(() => {
@@ -151,7 +109,7 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
           theme="bubble"
           formats={[]}
           modules={{ toolbar: false }}
-          placeholder={isSummaryAdded ? "Create a Summary" : "Create a Note"}
+          placeholder="Create a Note"
           scrollingContainer="scrolling-container"
           ref={ref}
           onKeyDown={(e: KeyboardEvent) => {
@@ -162,11 +120,7 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
         />
       </div>
       <div>
-        {isSummaryAdded ? (
-          <AddSummaryButton onClick={onSave} />
-        ) : (
-          <Button onClick={() => onSave("NOTE")}>Add Note</Button>
-        )}
+        <Button onClick={() => onSave("NOTE")}>Add Note</Button>
         <CloseButton onClose={onClose} />
       </div>
     </div>
@@ -182,7 +136,7 @@ function useGetFullScreenViewRepo(): string | undefined {
   const { openNodeID: id } = useParams<{
     openNodeID: string;
   }>();
-  const repo = useRepo()[0];
+  const repo = useNode()[0];
   return repo && id !== undefined && id === repo.id ? id : undefined;
 }
 
@@ -296,7 +250,7 @@ function AddNode({
 
 export function AddColumn(): JSX.Element {
   const isOpenInFullScreen = useIsOpenInFullScreen();
-  const [workspace, workspaceBranch] = useRepo();
+  const [workspace, workspaceBranch] = useNode();
   const viewPath = useViewPath();
   const upsertRepos = useUpdateKnowledge();
   const { repos, views } = useKnowledgeData();
@@ -337,7 +291,7 @@ export function AddNodeToNode(): JSX.Element | null {
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const vContext = useViewPath();
   const viewContext = isAddToNode ? getParentView(vContext) : vContext;
-  const [repo, view] = isAddToNode ? useParentRepo() : useRepo();
+  const [repo, view] = isAddToNode ? useParentRepo() : useNode();
   if (!repo || !viewContext) {
     return null;
   }

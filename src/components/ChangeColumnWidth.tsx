@@ -1,7 +1,7 @@
 import React from "react";
 import { useMediaQuery } from "react-responsive";
 import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
-import { getRepoFromView, updateView, useViewPath } from "../ViewContext";
+import { getNodeFromView, updateView, useViewPath } from "../ViewContext";
 import { IS_MOBILE } from "./responsive";
 
 export function ChangeColumnWidth(): JSX.Element | null {
@@ -9,7 +9,7 @@ export function ChangeColumnWidth(): JSX.Element | null {
   const { repos, views } = useKnowledgeData();
   const viewContext = useViewPath();
   const upsertRepos = useUpdateKnowledge();
-  const view = getRepoFromView(repos, views, viewContext)[1];
+  const view = getNodeFromView(repos, views, viewContext)[1];
   if (!view) {
     return null;
   }

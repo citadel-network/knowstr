@@ -1,30 +1,41 @@
 import { Map, List, Set } from "immutable";
-import { getNode } from "./knowledge";
+import { Link } from "react-router-dom";
+import { getNode, newDB } from "./knowledge";
+import { relationsMapToJSON } from "./serializer";
 
-function hasRelationToObject(node: KnowNode, objectID: string): boolean {
-  return (
-    node.relations.filter((m) => m.filter((r) => r.id === objectID).size > 0)
-      .size > 0
-  );
+export function splitID(id: ID): [PublicKey | undefined, string] {
+  const split = id.split(":");
+  if (split.length === 1) {
+    return [undefined, split[0]];
+  }
+  return [split[0] as PublicKey, split.slice(1).join(":")];
 }
 
 export function getRelations(
-  node: KnowNode,
-  relationType: RelationType
-): List<Relation> {
-  return node.relations.get(relationType, List<Relation>());
+  knowledgeDBs: KnowledgeDBs,
+  relationID: ID | undefined,
+  myself: PublicKey
+): Relations | undefined {
+  if (!relationID) {
+    return undefined;
+  }
+  const [remote, id] = splitID(relationID);
+  if (remote) {
+    return knowledgeDBs.get(remote)?.relations.get(id);
+  }
+  return knowledgeDBs.get(myself)?.relations.get(relationID);
 }
 
+// TODO: So far we only support local subjects
 export function getSubjects(
-  repos: Repos,
-  repoID: string,
-  filter?: Array<NodeType>
-): Repos {
-  return repos.filter(
-    (r) =>
-      hasRelationToObject(getNode(r), repoID) &&
-      (filter === undefined ? true : filter.includes(getNode(r).nodeType))
-  );
+  knowledgeDBs: KnowledgeDBs,
+  nodeID: string,
+  myself: PublicKey
+): Nodes {
+  const db = knowledgeDBs.get(myself, newDB());
+  const relations = db.relations.filter((r) => r.items.includes(nodeID));
+  const nodes = relations.map((r) => db.nodes.get(r.head));
+  return nodes;
 }
 
 export function deleteRelationsFromNode(

@@ -6,7 +6,7 @@ import {
 } from "../KnowledgeDataContext";
 import {
   updateView,
-  useRepo,
+  useNode,
   useViewKey,
   useViewPath,
   viewPathToString,
@@ -41,7 +41,7 @@ function ShowRelationsButton({
   type,
   readonly: ro,
 }: ShowRelationsButtonProps): JSX.Element {
-  const [repo, view] = useRepo();
+  const [repo, view] = useNode();
   const readonly = ro === true;
   const { views } = useKnowledgeData();
   const getNodeText = useGetNodeText();
