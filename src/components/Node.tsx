@@ -176,8 +176,7 @@ function NodeAutoLink({
   return isMainNodeInFullscreenView ? (
     <>{children}</>
   ) : (
-    // TODO: link to correct origin
-    <Link className="no-underline" to={`/d/${node.id}}`}>
+    <Link className="no-underline" to={`/d/${node.id}`}>
       {children}
     </Link>
   );

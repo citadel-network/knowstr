@@ -4,6 +4,7 @@ import { List } from "immutable";
 import {
   ViewContextProvider,
   ViewPath,
+  useNode,
   useViewPath,
   viewPathToString,
 } from "../ViewContext";
@@ -20,6 +21,8 @@ import { FullScreenViewWrapper } from "./FullScreenViewWrapper";
 import { useLogout } from "../NostrAuthContext";
 
 function DetailView(): JSX.Element | null {
+  const viewPath = useViewPath();
+  const [node, view] = useNode();
   return (
     <div className="detail-view border-bottom-light">
       <Node />

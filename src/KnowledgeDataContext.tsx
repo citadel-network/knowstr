@@ -224,23 +224,3 @@ export function KnowledgeDataProvider({
     </RelationContext.Provider>
   );
 }
-
-export function OverwriteKnowledgeDataContext({
-  children,
-  updateData,
-}: {
-  children: React.ReactNode;
-  updateData: (knowledgeData: KnowledgeData) => KnowledgeData;
-}): JSX.Element {
-  const existingContext = getDataContextOrThrow();
-  return (
-    <RelationContext.Provider
-      value={{
-        ...existingContext,
-        data: updateData(existingContext.data),
-      }}
-    >
-      {children}
-    </RelationContext.Provider>
-  );
-}
