@@ -1,14 +1,18 @@
 import { Map, Set } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
-import { relationsMapToJSON } from "./serializer";
+import { relationsMapToJSON, relationsToJSON } from "./serializer";
 
 export function splitID(id: ID): [PublicKey | undefined, string] {
-  const split = id.split(":");
+  const split = id.split("_");
   if (split.length === 1) {
     return [undefined, split[0]];
   }
   return [split[0] as PublicKey, split.slice(1).join(":")];
+}
+
+export function joinID(remote: PublicKey | string, id: string): LongID {
+  return `${remote}_${id}` as LongID;
 }
 
 export function shortID(id: ID): string {
@@ -27,7 +31,8 @@ export function getRelations(
   if (remote) {
     return knowledgeDBs.get(remote)?.relations.get(id);
   }
-  return knowledgeDBs.get(myself)?.relations.get(relationID);
+  const res = knowledgeDBs.get(myself)?.relations.get(relationID);
+  return res;
 }
 
 // TODO: So far we only support local subjects
@@ -83,24 +88,23 @@ export function moveRelations(
 
 export function addRelationToRelations(
   relations: Relations,
-  objectID: string,
+  objectID: LongID,
   ord?: number
 ): Relations {
   const defaultOrder = relations.items.size;
   const items = relations.items.push(objectID);
-  const itemsWithOrder =
-    ord !== undefined
-      ? moveRelations(relations, [defaultOrder], ord).items
-      : items;
-  return {
+  const relationsWithItems = {
     ...relations,
-    items: itemsWithOrder,
+    items,
   };
+  return ord !== undefined
+    ? moveRelations(relationsWithItems, [defaultOrder], ord)
+    : relationsWithItems;
 }
 
 export function bulkAddRelations(
   relations: Relations,
-  objectIDs: Array<string>,
+  objectIDs: Array<LongID>,
   startPos?: number
 ): Relations {
   return objectIDs.reduce((rdx, id, currentIndex) => {
@@ -115,6 +119,6 @@ export function bulkAddRelations(
 export function newNode(text: string, myself: PublicKey): KnowNode {
   return {
     text,
-    id: `${myself}:${v4()}` as LongID,
+    id: joinID(myself, v4()),
   };
 }

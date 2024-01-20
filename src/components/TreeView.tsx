@@ -31,13 +31,15 @@ export function TreeView(): JSX.Element | null {
   );
   const [node, view] = useNode();
   const ariaLabel = node ? `related to ${node.text}` : undefined;
+  /*
   console.log(
     ">> relations",
     knowledgeDBs.get(user.publicKey)?.relations.toArray()
   );
+   */
   const views = knowledgeDBs.get(user.publicKey)?.views;
-  console.log(">>> views", viewsToJSON(views));
-  console.log(">>> nodes in tree view", nodes, view);
+  // console.log(">>> views", viewsToJSON(views));
+  // console.log(">>> nodes in tree view", nodes, view);
 
   return (
     <ReadingStatus nodes={nodes} ariaLabel={ariaLabel}>

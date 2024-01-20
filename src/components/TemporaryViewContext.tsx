@@ -11,6 +11,7 @@ import {
 } from "../ViewContext";
 import { useGetNodeText } from "../KnowledgeDataContext";
 import { getRelations } from "../connections";
+import { useData } from "../DataContext";
 
 type MultiSelectionState = {
   selection: OrderedSet<string>;
@@ -286,25 +287,32 @@ export function TemporaryViewProvider({
 }
 
 export function NodeSelectbox(): JSX.Element | null {
-  const [repo, view] = useNode();
-  const getNodeText = useGetNodeText();
-  const [parentRepo, parentView] = useParentNode();
+  const [node] = useNode();
+  const { knowledgeDBs, user } = useData();
+  const [parentNode, parentView] = useParentNode();
   const relationIndex = useRelationIndex();
   const checked = useIsSelected();
   const setSelected = useSetSelected();
-  const isSubjectNode =
-    parentRepo &&
-    relationIndex !== undefined &&
-    relationIndex >=
-      getRelations(
-        getNode(parentRepo, parentView.branch),
-        parentView.relationType
-      ).size;
+  if (!parentView) {
+    return null;
+  }
 
-  const ariaLabel = repo
-    ? `${checked ? "deselect" : "select"} ${getNodeText(
-        getNode(repo, view.branch)
-      )}`
+  const relations = getRelations(
+    knowledgeDBs,
+    parentView.relations,
+    user.publicKey
+  );
+  if (!relations) {
+    return null;
+  }
+
+  const isSubjectNode =
+    parentNode &&
+    relationIndex !== undefined &&
+    relationIndex >= relations.items.size;
+
+  const ariaLabel = node
+    ? `${checked ? "deselect" : "select"} ${node.text}`
     : undefined;
 
   if (isSubjectNode) {

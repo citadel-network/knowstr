@@ -19,6 +19,7 @@ import {
   jsonToViews,
 } from "./serializer";
 import { newDB } from "./knowledge";
+import { joinID } from "./connections";
 
 export type RepoDiff<T extends BranchWithCommits | BranchWithStaged> = {
   commits?: Map<Hash, Commit>;
@@ -358,7 +359,7 @@ export function findNodes(events: List<Event>): Map<string, KnowNode> {
       return rdx;
     }
     return rdx.set(id, {
-      id: `${event.pubkey}:${id}`,
+      id: joinID(event.pubkey, id),
       text: event.content,
     });
   }, Map<string, KnowNode>());
@@ -381,7 +382,7 @@ export function findRelations(events: List<Event>): Map<string, Relations> {
     }
     return rdx.set(id, {
       ...relations,
-      id: `${event.pubkey}:${id}`,
+      id: joinID(event.pubkey, id),
     });
   }, Map<string, Relations>());
 }

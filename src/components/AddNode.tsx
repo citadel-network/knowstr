@@ -184,14 +184,11 @@ function AddNode({
     reset();
   };
 
-  const onAddExistingRepo = (node: Repo, relationType?: RelationType): void => {
+  const onAddExistingRepo = (id: LongID): void => {
     if (isOpen) {
       closeModal();
     }
-    const branch = getDefaultBranch(node);
-    if (branch) {
-      onAddExistingNode(node, branch, relationType);
-    }
+    onAddExistingNode(id);
   };
 
   return (

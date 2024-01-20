@@ -2,7 +2,13 @@ import React from "react";
 import { List, Set, Map } from "immutable";
 import { v4 } from "uuid";
 import { Listener } from "@remix-run/router/dist/history";
-import { getRelations, getSubjects, isRemote, splitID } from "./connections";
+import {
+  getRelations,
+  getSubjects,
+  isRemote,
+  joinID,
+  splitID,
+} from "./connections";
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
 import { Plan, planUpsertRelations, planUpdateViews } from "./planner";
@@ -389,11 +395,16 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
   return views.filter((v, k) => !k.startsWith(key) || k === key);
 }
 
-function newRelations(head: ID, type: RelationType): Relations {
+function newRelations(
+  head: LongID,
+  type: RelationType,
+  myself: PublicKey
+): Relations {
+  console.log(">>> creating new relations for", head);
   return {
     head,
-    items: List<ID>(),
-    id: v4(),
+    items: List<LongID>(),
+    id: joinID(myself, v4()),
     type,
   };
 }
@@ -403,7 +414,7 @@ function createUpdatableRelations(
   viewContext: ViewPath,
   myself: PublicKey,
   relationsID: ID,
-  head: ID,
+  head: LongID,
   type: RelationType
 ): Relations {
   const [remote, id] = splitID(relationsID);
@@ -412,17 +423,17 @@ function createUpdatableRelations(
     const remoteRelations = knowledgeDBs.get(remote, newDB()).relations.get(id);
     if (!remoteRelations) {
       // This should not happen
-      return newRelations(head, type);
+      return newRelations(head, type, myself);
     }
     // Make a copy
     return {
       ...remoteRelations,
-      id: `${myself}:${v4()}` as LongID,
+      id: joinID(myself, v4()),
     };
   }
   return knowledgeDBs
     .get(myself, newDB())
-    .relations.get(id, newRelations(head, type));
+    .relations.get(id, newRelations(head, type, myself));
 }
 
 export function upsertRelations(
@@ -454,13 +465,13 @@ export function upsertRelations(
   );
 
   // TODO: check if this is different than the default
-  const didViewChange = nodeView.relations !== relationsID;
+  const didViewChange = nodeView.relations !== relations.id;
   const planWithUpdatedView = didViewChange
     ? planUpdateViews(
         plan,
         views.set(viewPathToString(viewContext), {
           ...nodeView,
-          relations: relationsID,
+          relations: relations.id,
         })
       )
     : plan;

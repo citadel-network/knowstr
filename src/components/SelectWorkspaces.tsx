@@ -8,12 +8,7 @@ import {
   Button,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import {
-  getWorkspaceInfo,
-  getWorkspaces,
-  useKnowledgeData,
-  useUpdateKnowledge,
-} from "../KnowledgeDataContext";
+import { getWorkspaces } from "../KnowledgeDataContext";
 import { isIDRemote, newNode, splitID } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";

@@ -125,14 +125,14 @@ export function dnd(
 
   const sourceRepos = sourceIndices
     .toList()
-    .map((index) => {
+    .map((index): LongID | undefined => {
       const [r] = getNodeFromView(knowledgeDBs, views, myself, {
         root: sourceViewPath.root,
         indexStack: sourceViewPath.indexStack.pop().push(index),
       });
       return r ? r.id : undefined;
     })
-    .filter((id) => id) as List<string>;
+    .filter((id) => id) as List<LongID>;
 
   const [fromRepo, fromView] = getParentNode(
     knowledgeDBs,
@@ -170,7 +170,6 @@ export function dnd(
     toRepo.id === fromRepo.id &&
     fromView.relations === toV.relations;
 
-  // HERE I STOPPED
   const updatedRelationsPlan = upsertRelations(
     plan,
     toView,
