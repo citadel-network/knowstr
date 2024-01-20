@@ -1,10 +1,9 @@
 import React from "react";
 import { Droppable } from "react-beautiful-dnd";
 import { getRelations, getSubjects } from "../connections";
-import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
 import {
-  getNodeFromView,
   updateView,
+  useNode,
   useViewKey,
   useViewPath,
   ViewContextProvider,
@@ -13,17 +12,20 @@ import {
 import { DraggableNode } from "./Node";
 import { useDeselectAllInView } from "./TemporaryViewContext";
 import { ToggleArrowButton } from "./ToggleArrowButton";
+import { useData } from "../DataContext";
+import { planUpdateViews, usePlanner } from "../planner";
+import { newDB } from "../knowledge";
 
 function ReferencedBy(): JSX.Element | null {
-  const { repos, views } = useKnowledgeData();
+  const [node, view] = useNode();
+  const { knowledgeDBs, user } = useData();
   const viewPath = useViewPath();
-  const [repo, view] = getNodeFromView(repos, views, viewPath);
-  if (!repo) {
+  if (!node) {
     return null;
   }
-  const node = getNode(repo, view.branch);
-  const nRelations = getRelations(node, view.relationType).size;
-  const subjects = getSubjects(repos, repo.id);
+  const nRelations =
+    getRelations(knowledgeDBs, view.relations, user.publicKey)?.items.size || 0;
+  const subjects = getSubjects(knowledgeDBs, node.id, user.publicKey);
   /* eslint-disable react/jsx-props-no-spreading */
   return (
     <div className="referenced overflow-y-auto">
@@ -60,24 +62,31 @@ function ReferencedBy(): JSX.Element | null {
 }
 
 export function ReferencedByCollapsable(): JSX.Element | null {
-  const { repos, views } = useKnowledgeData();
+  const [node, view] = useNode();
+  const { createPlan, executePlan } = usePlanner();
+  const { knowledgeDBs, user } = useData();
+  const { views } = knowledgeDBs.get(user.publicKey, newDB());
   const viewPath = useViewPath();
   const viewKey = useViewKey();
-  const updateKnowledge = useUpdateKnowledge();
   const deselectByPostfix = useDeselectAllInView();
-  const [repo, view] = getNodeFromView(repos, views, viewPath);
-  if (!repo) {
+  if (!node) {
     return null;
   }
 
   const onChangeDisplayMode = (displaySubjects: boolean): void => {
-    updateKnowledge({
-      views: updateView(views, viewPath, { ...view, displaySubjects }),
-    });
+    if (!views) {
+      return;
+    }
+    executePlan(
+      planUpdateViews(
+        createPlan(),
+        updateView(views, viewPath, { ...view, displaySubjects })
+      )
+    );
     deselectByPostfix(viewKey);
   };
 
-  const nRelations = getSubjects(repos, repo.id).size;
+  const nRelations = getSubjects(knowledgeDBs, node.id, user.publicKey).size;
   if (nRelations === 0) {
     return null;
   }

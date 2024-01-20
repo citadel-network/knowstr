@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import { List } from "immutable";
 import { Droppable } from "react-beautiful-dnd";
-import { useGetNodeText, useKnowledgeData } from "../KnowledgeDataContext";
 import {
   useNode,
   useViewKey,
@@ -13,28 +12,32 @@ import {
 import { DraggableNode, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { ReadingStatus } from "./ReadingStatus";
 import { ReferencedByCollapsable } from "./ReferencedBy";
+import { useData } from "../DataContext";
+import { viewsToJSON } from "../serializer";
 
 /* eslint-disable react/jsx-props-no-spreading */
 export function TreeView(): JSX.Element | null {
-  const { repos, views } = useKnowledgeData();
+  const { knowledgeDBs, user } = useData();
   const scrollContainer = useRef<HTMLDivElement | null>(null);
   const viewKey = useViewKey();
   const viewPath = useViewPath();
-  const getNodeText = useGetNodeText();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const nodes = getNodesInTree(
-    repos,
-    views,
+    knowledgeDBs,
+    user.publicKey,
     viewPath,
     List<ViewPath>(),
     isOpenInFullScreen
   );
-  const [r, v] = useNode();
-  const ariaLabel = r
-    ? `related to ${getNodeText(getNode(r, v.branch))} [${branchPathToString(
-        v.branch
-      )}]`
-    : undefined;
+  const [node, view] = useNode();
+  const ariaLabel = node ? `related to ${node.text}` : undefined;
+  console.log(
+    ">> relations",
+    knowledgeDBs.get(user.publicKey)?.relations.toArray()
+  );
+  const views = knowledgeDBs.get(user.publicKey)?.views;
+  console.log(">>> views", viewsToJSON(views));
+  console.log(">>> nodes in tree view", nodes, view);
 
   return (
     <ReadingStatus nodes={nodes} ariaLabel={ariaLabel}>

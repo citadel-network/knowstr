@@ -1,7 +1,7 @@
 import { Set } from "immutable";
 import React from "react";
 import { useApis } from "../Apis";
-import { deleteRelationsFromNode } from "../connections";
+import { deleteRelations } from "../connections";
 import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
 import {
   getParentView,
@@ -10,17 +10,19 @@ import {
   useViewPath,
   useViewKey,
   updateViewPathsAfterDeletion,
+  upsertRelations,
 } from "../ViewContext";
 import { switchOffMultiselect, useTemporaryView } from "./TemporaryViewContext";
+import { planUpdateViews, usePlanner } from "../planner";
+import { newDB } from "../knowledge";
 
 export function RemoveColumnButton(): JSX.Element | null {
   const { deleteLocalStorage } = useApis().fileStore;
+  const { createPlan, executePlan } = usePlanner();
   const index = useRelationIndex();
   const { multiselectBtns, selection, setState } = useTemporaryView();
   const viewKey = useViewKey();
   const viewPath = useViewPath();
-  const upsertRepos = useUpdateKnowledge();
-  const { repos, views } = useKnowledgeData();
   const parentView = getParentView(viewPath);
   if (index === undefined || !parentView) {
     return null;
@@ -28,27 +30,24 @@ export function RemoveColumnButton(): JSX.Element | null {
 
   const onClick = (): void => {
     deleteLocalStorage(viewKey);
-    const updatedData = updateNode(
-      repos,
-      views,
-      parentView,
-      (workspace, { view }) =>
-        deleteRelationsFromNode(
-          workspace,
-          Set<number>([index]),
-          view.relationType
-        )
+    const updateRelationsPlan = upsertRelations(
+      createPlan(),
+      viewPath,
+      (relations) => deleteRelations(relations, Set<number>([index]))
     );
+
     const updatedViews = updateViewPathsAfterDeletion(
-      updatedData.repos,
-      updatedData.views,
+      updateRelationsPlan.knowledgeDBs,
+      updateRelationsPlan.knowledgeDBs.get(
+        updateRelationsPlan.user.publicKey,
+        newDB()
+      ).views,
+      updateRelationsPlan.user.publicKey,
       parentView,
       Set<number>([index])
     );
-    upsertRepos({
-      ...updatedData,
-      views: updatedViews,
-    });
+    const plan = planUpdateViews(updateRelationsPlan, updatedViews);
+    executePlan(plan);
     setState(switchOffMultiselect(multiselectBtns, selection, viewKey));
   };
 

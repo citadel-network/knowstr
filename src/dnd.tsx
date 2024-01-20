@@ -17,7 +17,7 @@ import {
   parseViewPath,
   getNodeFromView,
   upsertRelations,
-  getParentRepo,
+  getParentNode,
   popPrefix,
   getParentKey,
   ViewPath,
@@ -134,7 +134,7 @@ export function dnd(
     })
     .filter((id) => id) as List<string>;
 
-  const [fromRepo, fromView] = getParentRepo(
+  const [fromRepo, fromView] = getParentNode(
     knowledgeDBs,
     views,
     myself,

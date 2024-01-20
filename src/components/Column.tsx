@@ -16,18 +16,19 @@ import { AddNodeToNode } from "./AddNode";
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
 export function Column(): JSX.Element | null {
-  const { repos, views } = useKnowledgeData();
+  // const { repos, views } = useKnowledgeData();
   const viewContext = useViewPath();
   const deselectByPostfix = useDeselectAllInView();
   const viewKey = useViewKey();
-  const upsertRepos = useUpdateKnowledge();
   const onDropFiles = (topNodes: Array<string>, nodes: Repos): void => {
+    /*
     upsertRepos(
       updateNode(repos.merge(nodes), views, viewContext, (n, ctx) =>
         bulkAddRelations(n, topNodes, ctx.view.relationType)
       )
     );
     deselectByPostfix(viewKey);
+     */
   };
 
   return (

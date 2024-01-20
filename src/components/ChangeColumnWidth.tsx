@@ -1,33 +1,47 @@
 import React from "react";
 import { useMediaQuery } from "react-responsive";
-import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
-import { getNodeFromView, updateView, useViewPath } from "../ViewContext";
+import { updateView, useNode, useViewPath } from "../ViewContext";
 import { IS_MOBILE } from "./responsive";
+import { newDB } from "../knowledge";
+import { useData } from "../DataContext";
+import { planUpdateViews, usePlanner } from "../planner";
 
 export function ChangeColumnWidth(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const { repos, views } = useKnowledgeData();
+  const { knowledgeDBs, user } = useData();
+  const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  const { createPlan, executePlan } = usePlanner();
   const viewContext = useViewPath();
-  const upsertRepos = useUpdateKnowledge();
-  const view = getNodeFromView(repos, views, viewContext)[1];
-  if (!view) {
+  const view = useNode()[1];
+  // TODO: check why this was implemented like that
+  // const view = getNodeFromView(knowledgeDBs, views, viewContext)[1];
+  if (!view || !views) {
     return null;
   }
   if (isMobile) {
     return null;
   }
   const onIncreaseColumnWidth = (): void => {
-    upsertRepos({
-      views: updateView(views, viewContext, { ...view, width: view.width + 1 }),
-    });
+    executePlan(
+      planUpdateViews(
+        createPlan(),
+        updateView(views, viewContext, {
+          ...view,
+          width: view.width + 1,
+        })
+      )
+    );
   };
   const onDecreaseColumnWidth = (): void => {
-    upsertRepos({
-      views: updateView(views, viewContext, {
-        ...view,
-        width: Math.max(view.width - 1, 1),
-      }),
-    });
+    executePlan(
+      planUpdateViews(
+        createPlan(),
+        updateView(views, viewContext, {
+          ...view,
+          width: Math.max(view.width - 1, 1),
+        })
+      )
+    );
   };
   return (
     <>

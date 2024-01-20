@@ -33,7 +33,7 @@ export function getRelations(
 // TODO: So far we only support local subjects
 export function getSubjects(
   knowledgeDBs: KnowledgeDBs,
-  nodeID: string,
+  nodeID: LongID,
   myself: PublicKey
 ): Nodes {
   const db = knowledgeDBs.get(myself, newDB());
@@ -42,20 +42,16 @@ export function getSubjects(
   return nodes.filter((n) => n !== undefined) as Nodes;
 }
 
-export function deleteRelationsFromNode(
-  node: KnowNode,
-  indices: Set<number>,
-  relationType: RelationType
-): KnowNode {
-  const relations = indices
+export function deleteRelations(
+  relations: Relations,
+  indices: Set<number>
+): Relations {
+  const items = indices
     .sortBy((index) => -index)
-    .reduce(
-      (r, deleteIndex) => r.delete(deleteIndex),
-      getRelations(node, relationType)
-    );
+    .reduce((r, deleteIndex) => r.delete(deleteIndex), relations.items);
   return {
-    ...node,
-    relations: node.relations.set(relationType, relations),
+    ...relations,
+    items,
   };
 }
 

@@ -10,11 +10,6 @@ import { FULL_SCREEN_PATH } from "../App";
 import { DragUpdateStateContext, getDropDestinationFromTreeView } from "../dnd";
 import { getRelations } from "../connections";
 import {
-  useGetNodeText,
-  useKnowledgeData,
-  useUpdateKnowledge,
-} from "../KnowledgeDataContext";
-import {
   getNodeFromView,
   getParentKey,
   popPrefix,
@@ -24,8 +19,7 @@ import {
   useViewPath,
   ViewPath,
   parseViewPath,
-  updateNode,
-  useParentRepo,
+  useParentNode,
   useIsAddToNode,
 } from "../ViewContext";
 import {
@@ -44,20 +38,6 @@ import { NodeCard, CloseButton, Button } from "./Ui";
 import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
-
-function createSearchParams(branch?: BranchPath): string {
-  if (!branch) {
-    return "";
-  }
-  const [origin, name] = branch;
-  if (origin && name) {
-    return `?origin=${origin}&branch=${name}`;
-  }
-  if (!origin && name && name !== DEFAULT_BRANCH_NAME) {
-    return `?branch=${name}`;
-  }
-  return "";
-}
 
 export function getLevels(
   viewPath: ViewPath,
@@ -104,18 +84,16 @@ function InlineEditor({
   onCreateNode,
   onStopEditing,
 }: InlineEditorProps): JSX.Element {
-  const [repo, view] = useNode();
-  const getNodeText = useGetNodeText();
+  const [node] = useNode();
   const ref = React.createRef<ReactQuill>();
-  if (!repo) {
+  if (!node) {
     return <ErrorContent />;
   }
-  const nodeText = getNodeText(getNode(repo, view.branch));
   useEffect(() => {
     if (ref.current) {
       ref.current.focus();
       ref.current.getEditor().deleteText(0, 1000000);
-      ref.current.getEditor().insertText(0, nodeText);
+      ref.current.getEditor().insertText(0, node.text);
     }
   }, []);
   const onSave = (): void => {
@@ -154,36 +132,6 @@ function InlineEditor({
   );
 }
 
-function useDisplaySummary(): {
-  displaySummary: boolean;
-  summaryToDisplay: Repo | undefined;
-} {
-  const { repos } = useKnowledgeData();
-  const levels = getLevels(useViewPath(), useIsOpenInFullScreen());
-  const [repo, view] = useNode();
-  if (!repo) {
-    return {
-      displaySummary: false,
-      summaryToDisplay: undefined,
-    };
-  }
-  const node = getNode(repo, view.branch);
-  const summaryRelations = getRelations(node, "SUMMARY");
-  const summaryId = summaryRelations.first()?.id || undefined;
-  const summaryExists = summaryId !== undefined;
-  const summaryNotShownInTreeView =
-    view.relationType !== "SUMMARY" || !view?.expanded;
-  const summaryToDisplay =
-    summaryExists && summaryNotShownInTreeView && levels >= 1
-      ? repos.get(summaryId)
-      : undefined;
-  const displaySummary = summaryToDisplay !== undefined;
-  return {
-    displaySummary,
-    summaryToDisplay,
-  };
-}
-
 function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
   // need sanitizing, i.e. removing <script>-tags or onClick handles
   // otherwise dangerouslySetInnerHTML allows Cross-Site Scripting (XSS) attacks
@@ -197,28 +145,16 @@ function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
 }
 
 function NodeContent(): JSX.Element {
-  const getNodeText = useGetNodeText();
   const { settings } = useData();
-  const [repo, view] = useNode();
-  if (!repo) {
+  const [node] = useNode();
+  if (!node) {
     return <ErrorContent />;
   }
-  const node = getNode(repo, view.branch);
-  const { displaySummary, summaryToDisplay } = useDisplaySummary();
-  const nodeToDisplay =
-    summaryToDisplay !== undefined ? getNode(summaryToDisplay) : node;
-  const isBionic = node.nodeType === "QUOTE" && settings.bionicReading;
+  const isBionic = settings.bionicReading;
   return (
     <div>
-      <span className={displaySummary ? "iconsminds-filter-2 me-2" : ""} />
-      <span
-        className={displaySummary ? "font-italic break-word" : "break-word"}
-      >
-        {isBionic ? (
-          <BionicText nodeText={getNodeText(nodeToDisplay)} />
-        ) : (
-          getNodeText(nodeToDisplay)
-        )}
+      <span className="break-word">
+        {isBionic ? <BionicText nodeText={node.text} /> : node.text}
       </span>
     </div>
   );
@@ -232,7 +168,7 @@ function NodeAutoLink({
   const { openNodeID: id } = useParams<{
     openNodeID: string;
   }>();
-  const [node, view] = useNode();
+  const [node] = useNode();
   if (!node) {
     return <ErrorContent />;
   }
@@ -249,7 +185,6 @@ function NodeAutoLink({
 
 function EditingNodeContent(): JSX.Element {
   // const { repos, views } = useKnowledgeData();
-  const updateKnowledge = useUpdateKnowledge();
   const viewContext = useViewPath();
   const viewKey = useViewKey();
   const { editingViews, setEditingState } = useTemporaryView();
@@ -395,7 +330,8 @@ function DraggingNode(): JSX.Element {
   const levels =
     dropDestination && viewsWithCollapsedSource
       ? getDropDestinationFromTreeView(
-          repos,
+          knowledgeDBs,
+          user.publicKey,
           viewsWithCollapsedSource,
           parseViewPath(popPrefix(dropDestination.droppableId)[1]),
           dropDestination.index
@@ -411,6 +347,7 @@ function DraggingNode(): JSX.Element {
   );
 }
 
+/*
 function Ribbon(): JSX.Element | null {
   const repo = useNode()[0];
   const nodeType = repo !== undefined ? getNode(repo).nodeType : undefined;
@@ -419,24 +356,24 @@ function Ribbon(): JSX.Element | null {
   }
   return <div className={`ribbon-${nodeType}`} />;
 }
+   */
 
 export function Node(): JSX.Element | null {
+  const { knowledgeDBs, user } = useData();
   const isMobile = useMediaQuery(IS_MOBILE);
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const levels = getLevels(viewPath, isOpenInFullScreen);
   const isAddToNode = useIsAddToNode();
-  const [parentRepo, parentView] = useParentRepo();
+  const [parentNode, parentView] = useParentNode();
   const isNodeBeingEdited = useIsEditingOn();
   const isMultiselect = useIsParentMultiselectBtnOn();
-  const parentNode =
-    parentRepo !== undefined
-      ? getNode(parentRepo, parentView.branch)
-      : undefined;
+
   const nRelations =
     parentNode &&
     parentView &&
-    getRelations(parentNode, parentView.relationType).size;
+    getRelations(knowledgeDBs, parentView.relations, user.publicKey)?.items
+      .size;
   const index = viewPath.indexStack.last();
   const isReferencedNode =
     index !== undefined && nRelations !== undefined && index >= nRelations;
@@ -449,7 +386,6 @@ export function Node(): JSX.Element | null {
         !isMobile && isOpenInFullScreen ? "ps-2 pt-2 pb-2" : undefined
       }
     >
-      {!isAddToNode && <Ribbon />}
       {levels > 0 && <Indent levels={levels} />}
       {isAddToNode && levels !== 1 && <AddNodeToNode />}
       {!isAddToNode && (

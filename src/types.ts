@@ -92,7 +92,7 @@ declare global {
 
   type View = {
     displaySubjects: boolean;
-    relations?: ID;
+    relations?: LongID;
     width: number;
     // Show children, only relevant for inner nodes
     expanded?: boolean;

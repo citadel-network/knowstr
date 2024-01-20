@@ -2,7 +2,7 @@ import { Set, List } from "immutable";
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { deleteRelationsFromNode, getRelations } from "../connections";
+import { deleteRelations, getRelations } from "../connections";
 import {
   getWorkspaces,
   useKnowledgeData,
@@ -41,7 +41,7 @@ export function disconnectNode(
       return rdx;
     }
     const d = updateNode(rdx.repos, rdx.views, path, (n) =>
-      deleteRelationsFromNode(n, toDelete, view.relationType)
+      deleteRelations(n, toDelete, view.relationType)
     );
     return {
       repos: d.repos,

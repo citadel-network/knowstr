@@ -3,11 +3,9 @@ import React, { useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { useMediaQuery } from "react-responsive";
 import { useApis } from "../Apis";
-import { useKnowledgeData } from "../KnowledgeDataContext";
 import {
-  getNodeFromView,
+  useNode,
   useViewKey,
-  useViewPath,
   ViewPath,
   viewPathToString,
 } from "../ViewContext";
@@ -83,16 +81,10 @@ export function ReadingStatus({
 }): JSX.Element {
   const { fileStore } = useApis();
   const { getLocalStorage, setLocalStorage } = fileStore;
-  const knowledgeData = useKnowledgeData();
   const nodesListRef = useRef<HTMLDivElement>(null);
   const scrollableId = useViewKey();
   const isMobile = useMediaQuery(IS_MOBILE);
-  const viewPath = useViewPath();
-  const view = getNodeFromView(
-    knowledgeData.repos,
-    knowledgeData.views,
-    viewPath
-  )[1];
+  const view = useNode()[1];
 
   const calculateTopBorderMap = (
     renderedNodeList: HTMLDivElement

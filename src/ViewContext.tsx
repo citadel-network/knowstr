@@ -1,6 +1,7 @@
 import React from "react";
 import { List, Set, Map } from "immutable";
 import { v4 } from "uuid";
+import { Listener } from "@remix-run/router/dist/history";
 import { getRelations, getSubjects, isRemote, splitID } from "./connections";
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
@@ -77,21 +78,44 @@ export function getViewExactMatch(
   return views.get(viewKey);
 }
 
+export function getAvailableRelationsForNode(
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
+  id: LongID
+): List<Relations> {
+  const myRelations = knowledgeDBs.get(myself, newDB()).relations;
+  const [remote] = splitID(id);
+  const relations: List<Relations> = myRelations
+    .filter((r) => r.head === id)
+    .toList();
+
+  const preferredRemoterelations: List<Relations> = remote
+    ? knowledgeDBs
+        .get(remote, newDB())
+        .relations.filter((r) => r.head === id)
+        .toList()
+    : List<Relations>();
+  const otherRelations: List<Relations> = knowledgeDBs
+    .filter((_, k) => k !== myself && k !== remote)
+    .map((db) => db.relations.filter((r) => r.head === id).toList())
+    .toList()
+    .flatten(1) as List<Relations>;
+  return relations;
+  // return relations.concat(preferredRemoterelations).concat(otherRelations);
+}
+
 function getDefaultRelationForNode(
-  id: ID,
+  id: LongID,
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey
 ): ID | undefined {
+  return getAvailableRelationsForNode(knowledgeDBs, myself, id).first()?.id;
+
+  /*
   // Do I have relations in my database?
   const myRelations = knowledgeDBs.get(myself, newDB()).relations;
   const [remote, knowID] = splitID(id);
   const relations = myRelations.filter((r) => r.head === id);
-  console.log(
-    ">>> get default relations for",
-    id,
-    myRelations.toArray(),
-    relations.toArray()
-  );
   // TODO: sort relations
   if (relations.size > 0) {
     return relations.keySeq().first("");
@@ -111,6 +135,7 @@ function getDefaultRelationForNode(
   // const withRelations = knowledgeDBs.map((db, publicKey) => db.relations.filter(r => r.head === knowID));
   //  withRelations.filter(r => r.size > 0).map(relations => relations.first());
   return undefined;
+   */
 }
 
 export function getDefaultView(
@@ -255,7 +280,7 @@ export function useNode(): [KnowNode, View] | [undefined, undefined] {
   return getNodeFromView(knowledgeDBs, views, user.publicKey, viewContext);
 }
 
-export function getParentRepo(
+export function getParentNode(
   knowledgeDBs: KnowledgeDBs,
   views: Views,
   myself: PublicKey,
@@ -281,15 +306,15 @@ export function getParentRepo(
   );
 }
 
-export function useParentRepo(): [KnowNode, View] | [undefined, undefined] {
+export function useParentNode(): [KnowNode, View] | [undefined, undefined] {
   const viewContext = useViewPath();
   const { knowledgeDBs, user } = useData();
   const { views } = knowledgeDBs.get(user.publicKey, newDB());
-  return getParentRepo(knowledgeDBs, views, user.publicKey, viewContext);
+  return getParentNode(knowledgeDBs, views, user.publicKey, viewContext);
 }
 
 export function useIsAddToNode(): boolean {
-  const [, parentView] = useParentRepo();
+  const [, parentView] = useParentNode();
   const { user, knowledgeDBs } = useData();
   const lastIndex = useRelationIndex();
   if (!parentView || lastIndex === undefined) {
@@ -392,7 +417,7 @@ function createUpdatableRelations(
     // Make a copy
     return {
       ...remoteRelations,
-      id: v4(),
+      id: `${myself}:${v4()}` as LongID,
     };
   }
   return knowledgeDBs

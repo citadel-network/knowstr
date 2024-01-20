@@ -5,7 +5,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import {
   addRelationToRelations,
   bulkAddRelations,
-  deleteRelationsFromNode,
+  deleteRelations,
   newNode,
 } from "../connections";
 import { execute } from "../executor";
@@ -135,7 +135,7 @@ test("Compare Versions and choose ff", async () => {
     { root: "pl", indexStack: List<number>() },
     (pl, { view }) =>
       addRelationToRelations(
-        deleteRelationsFromNode(pl, Set<number>([0, 1]), view.relationType),
+        deleteRelations(pl, Set<number>([0, 1]), view.relationType),
         "js",
         "RELEVANCE"
       )
@@ -275,7 +275,7 @@ test("Delete View Settings on Branch Change", async () => {
     { root: "b", indexStack: List<number>() },
     (b, { view }) =>
       addRelationToRelations(
-        deleteRelationsFromNode(b, Set<number>([0]), view.relationType),
+        deleteRelations(b, Set<number>([0]), view.relationType),
         "r",
         "RELEVANCE"
       )

@@ -1,5 +1,5 @@
 import React from "react";
-import { deleteRelationsFromNode } from "../connections";
+import { deleteRelations } from "../connections";
 import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
 import {
   updateNode,
@@ -24,7 +24,7 @@ export function DisconnectBtn(): JSX.Element | null {
   }
   const onDisconnect = (): void => {
     const d = updateNode(repos, views, viewContext, (node, { view }) =>
-      deleteRelationsFromNode(node, selectedIndices, view.relationType)
+      deleteRelations(node, selectedIndices, view.relationType)
     );
     upsertRepos({
       repos: d.repos,

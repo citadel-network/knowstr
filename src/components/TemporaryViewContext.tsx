@@ -6,7 +6,7 @@ import {
   useViewKey,
   getParentKey,
   useNode,
-  useParentRepo,
+  useParentNode,
   useRelationIndex,
 } from "../ViewContext";
 import { useGetNodeText } from "../KnowledgeDataContext";
@@ -158,11 +158,8 @@ function toggleMultiselect(
 }
 
 export function ToggleMultiselect(): JSX.Element {
-  const [repo, view] = useNode();
-  const getNodeText = useGetNodeText();
-  const ariaLabel = repo
-    ? `toggle multiselect ${getNodeText(getNode(repo, view.branch))}`
-    : undefined;
+  const [node] = useNode();
+  const ariaLabel = node ? `toggle multiselect ${node.text}` : undefined;
   const { selection, setState, multiselectBtns } = useTemporaryView();
   const viewKey = useViewKey();
   const onClick = (): void =>
@@ -202,11 +199,9 @@ export function toggleEditing(
 }
 
 export function ToggleEditing(): JSX.Element {
-  const [repo, view] = useNode();
+  const [node] = useNode();
   const getNodeText = useGetNodeText();
-  const ariaLabel = repo
-    ? `edit ${getNodeText(getNode(repo, view.branch))}`
-    : undefined;
+  const ariaLabel = node ? `edit ${node.text}` : undefined;
   const { editingViews, setEditingState } = useTemporaryView();
   const viewKey = useViewKey();
   const onClick = (): void =>
@@ -293,7 +288,7 @@ export function TemporaryViewProvider({
 export function NodeSelectbox(): JSX.Element | null {
   const [repo, view] = useNode();
   const getNodeText = useGetNodeText();
-  const [parentRepo, parentView] = useParentRepo();
+  const [parentRepo, parentView] = useParentNode();
   const relationIndex = useRelationIndex();
   const checked = useIsSelected();
   const setSelected = useSetSelected();

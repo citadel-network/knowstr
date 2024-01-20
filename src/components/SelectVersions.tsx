@@ -157,6 +157,7 @@ export function SelectVersions({
 }: {
   readonly?: boolean;
 }): JSX.Element | null {
+  return null;
   const { views, repos } = useKnowledgeData();
   const viewPath = useViewPath();
   const viewKey = useViewKey();

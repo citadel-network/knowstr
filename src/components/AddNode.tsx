@@ -11,7 +11,7 @@ import {
 import { addRelationToRelations, newNode } from "../connections";
 import {
   useIsAddToNode,
-  useParentRepo,
+  useParentNode,
   useNode,
   useViewPath,
   getParentView,
@@ -134,7 +134,7 @@ function useGetFullScreenViewRepo(): string | undefined {
 
 type AddNodeProps = {
   onCreateNewNode: (text: string) => void;
-  onAddExistingNode: (nodeID: ID) => void;
+  onAddExistingNode: (nodeID: LongID) => void;
   ariaLabel: string;
   isSearchEnabledByShortcut?: boolean;
 };
@@ -237,7 +237,7 @@ export function AddColumn(): JSX.Element {
     return <div />;
   }
 
-  const onAddNode = (plan: Plan, nodeID: ID): void => {
+  const onAddNode = (plan: Plan, nodeID: LongID): void => {
     const updateRelationsPlan = upsertRelations(
       plan,
       viewPath,
@@ -247,24 +247,12 @@ export function AddColumn(): JSX.Element {
       })
     );
     executePlan(updateRelationsPlan);
-
-    /*
-    upsertRepos(
-      updateNode(
-        repos.set(repo.id, repo),
-        views,
-        viewPath,
-        (dashboard, { view }) =>
-          addRelationToRelations(dashboard, repo.id, view.relationType)
-      )
-    );
-     */
   };
 
   const onCreateNewNode = (text: string): void => {
-    const node = newNode(text);
-    const plan = planUpsertNode(createPlan(), node);
-    onAddNode(plan, node.id);
+    const plan = createPlan();
+    const node = newNode(text, plan.user.publicKey);
+    onAddNode(planUpsertNode(plan, node), node.id);
   };
 
   return (
@@ -278,18 +266,37 @@ export function AddColumn(): JSX.Element {
 }
 
 export function AddNodeToNode(): JSX.Element | null {
-  const { repos, views } = useKnowledgeData();
-  const upsertRepos = useUpdateKnowledge();
-  const getNodeText = useGetNodeText();
   const isAddToNode = useIsAddToNode();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const vContext = useViewPath();
+  const { createPlan, executePlan } = usePlanner();
   const viewContext = isAddToNode ? getParentView(vContext) : vContext;
-  const [repo, view] = isAddToNode ? useParentRepo() : useNode();
-  if (!repo || !viewContext) {
+  const [node, view] = isAddToNode ? useParentNode() : useNode();
+  if (!node || !viewContext) {
     return null;
   }
 
+  const onAddNode = (plan: Plan, nodeID: LongID): void => {
+    console.log(">> adding that node", isAddToNode);
+    const updateRelationsPlan = upsertRelations(
+      plan,
+      viewContext,
+      (relations) => ({
+        ...relations,
+        items: relations.items.push(nodeID),
+      })
+    );
+    executePlan(updateRelationsPlan);
+  };
+
+  const onCreateNewNode = (text: string): void => {
+    console.log("creating new node");
+    const plan = createPlan();
+    const n = newNode(text, plan.user.publicKey);
+    onAddNode(planUpsertNode(plan, n), n.id);
+  };
+
+  /*
   const onCreateNewNode = (
     text: string,
     nodeType: NodeType,
@@ -336,14 +343,13 @@ export function AddNodeToNode(): JSX.Element | null {
       )
     );
   };
+   */
 
   return (
     <AddNode
       onCreateNewNode={onCreateNewNode}
-      onAddExistingNode={onAddExistingNode}
-      ariaLabel={`add to ${shorten(
-        getNodeText(getNode(repo, view.branch))
-      )} [${branchPathToString(view.branch)}]`}
+      onAddExistingNode={(id) => onAddNode(createPlan(), id)}
+      ariaLabel={`add to ${shorten(node.text)}`}
       isSearchEnabledByShortcut={isOpenInFullScreen && !isAddToNode}
     />
   );
