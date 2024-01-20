@@ -1,8 +1,10 @@
 import React from "react";
 import { List, Set, Map } from "immutable";
-import { getRelations, getSubjects, splitID } from "./connections";
+import { v4 } from "uuid";
+import { getRelations, getSubjects, isRemote, splitID } from "./connections";
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
+import { Plan, planUpdateRelations, planUpdateViews } from "./planner";
 
 export type ViewPath = {
   root: string;
@@ -356,6 +358,82 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
   return views.filter((v, k) => !k.startsWith(key) || k === key);
 }
 
+function newRelations(head: ID, type: RelationType): Relations {
+  return {
+    head,
+    items: List<ID>(),
+    id: v4(),
+    type,
+  };
+}
+
+function createUpdatableRelations(
+  knowledgeDBs: KnowledgeDBs,
+  viewContext: ViewPath,
+  myself: PublicKey,
+  relationsID: ID,
+  head: ID,
+  type: RelationType
+): Relations {
+  const [remote, id] = splitID(relationsID);
+  if (remote && isRemote(remote, myself)) {
+    // copy remote relations
+    const remoteRelations = knowledgeDBs.get(remote, newDB()).relations.get(id);
+    if (!remoteRelations) {
+      // This should not happen
+      return newRelations(head, type);
+    }
+    // Make a copy
+    return {
+      ...remoteRelations,
+      id: v4(),
+    };
+  }
+  return knowledgeDBs
+    .get(myself, newDB())
+    .relations.get(id, newRelations(head, type));
+}
+
+export function updateRelations(
+  plan: Plan,
+  viewContext: ViewPath,
+  modify: (relations: Relations, ctx: { view: View }) => Relations
+): Plan {
+  const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const [node, nodeView] = getNodeFromView(
+    plan.knowledgeDBs,
+    views,
+    plan.user.publicKey,
+    viewContext
+  );
+  if (!node || !nodeView || !nodeView.relations) {
+    throw new Error("Nothing to update");
+  }
+  const relations = createUpdatableRelations(
+    plan.knowledgeDBs,
+    viewContext,
+    plan.user.publicKey,
+    nodeView.relations,
+    node.id,
+    "" as RelationType // TODO: relation type?
+  );
+
+  // TODO: check if this is different than the default
+  const didViewChange = nodeView.relations !== relations.id;
+  const planWithUpdatedView = didViewChange
+    ? planUpdateViews(
+        plan,
+        views.set(viewPathToString(viewContext), {
+          ...nodeView,
+          relations: relations.id,
+        })
+      )
+    : plan;
+
+  const updatedRelations = modify(relations, { view: nodeView });
+  return planUpdateRelations(planWithUpdatedView, updatedRelations);
+}
+
 /*
 function createUpdatableRepo(
   repos: Repos,
@@ -469,7 +547,7 @@ export function findViewsForRepo(
   });
 }
 
-function updateRelations(
+function updateRelationViews(
   views: Views,
   parentViewPath: string,
   update: (relations: List<string | undefined>) => List<string | undefined>
@@ -522,7 +600,7 @@ function moveChildViews(
   indices: Array<number>,
   startPosition: number
 ): Views {
-  return updateRelations(views, parentViewPath, (relations) => {
+  return updateRelationViews(views, parentViewPath, (relations) => {
     const viewsToMove = List<string | undefined>(
       indices.map((i) => relations.get(i))
     );
@@ -543,7 +621,7 @@ function deleteChildren(
     return deleteView(acc, parseViewPath(path));
   }, v);
 
-  return updateRelations(views, parentViewPath, (relations) => {
+  return updateRelationViews(views, parentViewPath, (relations) => {
     return indices
       .sortBy((index) => -index)
       .reduce((r, deleteIndex) => r.delete(deleteIndex), relations);

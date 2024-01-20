@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { List, Map, OrderedMap } from "immutable";
 import userEvent from "@testing-library/user-event";
-import { addRelationToNode, getRelations, newNode } from "../connections";
+import { addRelationToRelations, getRelations, newNode } from "../connections";
 import {
   ALICE,
   renderApp,
@@ -113,7 +113,7 @@ test("Column width is saved and column width changes", async () => {
       }),
       { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
       (workspace, { view }) =>
-        addRelationToNode(workspace, note.id, view.relationType)
+        addRelationToRelations(workspace, note.id, view.relationType)
     ),
   };
 

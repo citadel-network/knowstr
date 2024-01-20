@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "./App.css";
 import {
   GroupedByAuthorFilter,
@@ -17,6 +17,7 @@ import { useApis } from "./Apis";
 import { findKnowledgeDB } from "./knowledgeEvents";
 import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
+import { PlanningContextProvider } from "./planner";
 
 type DataProps = {
   user: KeyPair;
@@ -67,6 +68,7 @@ function useEventProcessor(
 
 function Data({ user, children }: DataProps): JSX.Element {
   const myPublicKey = user.publicKey;
+  const [newEvents, setNewEvents] = useState<Map<string, Event>>(Map());
   const { relayPool } = useApis();
   const { relays: myRelays } = useRelaysQuery(
     relayPool,
@@ -76,7 +78,7 @@ function Data({ user, children }: DataProps): JSX.Element {
   );
   const relays = myRelays.length === 0 ? DEFAULT_RELAYS : myRelays;
   const readFromRelays = relays.filter((r) => r.read === true);
-  const { events: sentEvents, eose: sentEventsEose } = useEventQuery(
+  const { events: sentEventsFromQuery, eose: sentEventsEose } = useEventQuery(
     relayPool,
     [
       {
@@ -85,6 +87,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     ],
     { readFromRelays }
   );
+  const sentEvents = sentEventsFromQuery.merge(newEvents);
   const processedEvents = useEventProcessor(sentEvents, user);
   const myProcessedEvents = processedEvents.get(myPublicKey, {
     contacts: Map<PublicKey, Contact>(),
@@ -147,11 +150,15 @@ function Data({ user, children }: DataProps): JSX.Element {
     return <div className="loading" aria-label="loading" />;
   }
 
-  const knowledgeDBs = Map<PublicKey, KnowledgeDataWithCommits>({
+  const knowledgeDBs = Map<PublicKey, KnowledgeData>({
     [myPublicKey]: processedEvents.get(myPublicKey)?.knowledgeDB || newDB(),
   })
     .merge(contactsOfContactsKnowledgeDBs)
     .merge(contactsKnowledgeDBs);
+
+  const addNewEvents = (events: Map<string, Event>) => {
+    setNewEvents((prev) => prev.merge(events));
+  };
 
   return (
     <DataContextProvider
@@ -163,7 +170,9 @@ function Data({ user, children }: DataProps): JSX.Element {
       relays={relays}
       knowledgeDBs={knowledgeDBs}
     >
-      <KnowledgeDataProvider>{children}</KnowledgeDataProvider>
+      <PlanningContextProvider addNewEvents={addNewEvents}>
+        <KnowledgeDataProvider>{children}</KnowledgeDataProvider>
+      </PlanningContextProvider>
     </DataContextProvider>
   );
 }

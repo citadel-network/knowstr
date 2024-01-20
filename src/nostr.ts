@@ -9,6 +9,10 @@ export const KIND_REPUTATIONS = 11080;
 
 export const KIND_KNOWLEDGE = 7871;
 
+export const KIND_VIEWS = 11090;
+
+export const KIND_KNOWLEDGE_LIST = 34750;
+
 export const KIND_RELAY_METADATA_EVENT = 10002;
 
 export const DEFAULT_RELAYS: Relays = [

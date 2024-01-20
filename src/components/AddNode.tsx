@@ -15,7 +15,7 @@ import {
   useKnowledgeData,
   useGetNodeText,
 } from "../KnowledgeDataContext";
-import { addRelationToNode, newNode } from "../connections";
+import { addRelationToRelations, newNode } from "../connections";
 import {
   updateNode,
   useIsAddToNode,
@@ -265,7 +265,7 @@ export function AddColumn(): JSX.Element {
         views,
         viewPath,
         (dashboard, { view }) =>
-          addRelationToNode(dashboard, repo.id, view.relationType)
+          addRelationToRelations(dashboard, repo.id, view.relationType)
       )
     );
   };
@@ -305,7 +305,11 @@ export function AddNodeToNode(): JSX.Element | null {
     const toAdd = newRepo(node);
     upsertRepos(
       updateNode(repos.set(toAdd.id, toAdd), views, viewContext, (n, ctx) =>
-        addRelationToNode(n, toAdd.id, relationType || ctx.view.relationType)
+        addRelationToRelations(
+          n,
+          toAdd.id,
+          relationType || ctx.view.relationType
+        )
       )
     );
   };
@@ -330,7 +334,7 @@ export function AddNodeToNode(): JSX.Element | null {
         views,
         viewContext,
         (n, ctx) =>
-          addRelationToNode(
+          addRelationToRelations(
             n,
             addRepo.id,
             relationType || ctx.view.relationType

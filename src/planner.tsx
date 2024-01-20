@@ -1,16 +1,58 @@
+import React from "react";
 import { Map, List } from "immutable";
 import { Event, getPublicKey } from "nostr-tools";
 import { useData } from "./DataContext";
 import { execute } from "./executor";
 
 import { useApis } from "./Apis";
-import { Serializable, diffToJSON } from "./serializer";
-import { KIND_KNOWLEDGE, KIND_REPUTATIONS, finalizeEvent } from "./nostr";
+import { Serializable, diffToJSON, viewsToJSON } from "./serializer";
+import {
+  KIND_KNOWLEDGE,
+  KIND_KNOWLEDGE_LIST,
+  KIND_REPUTATIONS,
+  KIND_VIEWS,
+  finalizeEvent,
+} from "./nostr";
 import { KnowledgeDiff, RepoDiff } from "./knowledgeEvents";
+import { newDB } from "./knowledge";
+
+type Context = (plan: Plan) => Promise<void>;
+
+export const PlanningContext = React.createContext<Context | undefined>(
+  undefined
+);
 
 export type Plan = Data & {
   publishEvents: List<Event>;
 };
+
+export function PlanningContextProvider({
+  children,
+  addNewEvents,
+}: {
+  children: React.ReactNode;
+  addNewEvents: (events: Map<string, Event>) => void;
+}): JSX.Element {
+  const data = useData();
+  const { relayPool } = useApis();
+  const writeRelays = data.relays.filter((r) => r.write === true);
+
+  const executePlan = async (plan: Plan): Promise<void> => {
+    // TODO: this needs a lot of error handling etc...
+    addNewEvents(Map(plan.publishEvents.map((e) => [e.id, e])));
+    return execute({
+      plan,
+      relayPool,
+      relays: writeRelays,
+    });
+  };
+
+  return (
+    <PlanningContext.Provider value={executePlan}>
+      {children}
+    </PlanningContext.Provider>
+  );
+}
 
 type Planner = {
   createPlan: () => Plan;
@@ -30,20 +72,16 @@ export function createPlan(
 
 export function usePlanner(): Planner {
   const data = useData();
-  const { relayPool } = useApis();
   const createPlanningContext = (): Plan => {
     return createPlan({
       ...data,
     });
   };
-  const writeRelays = data.relays.filter((r) => r.write === true);
-  const executePlan = async (plan: Plan): Promise<void> => {
-    return execute({
-      plan,
-      relayPool,
-      relays: writeRelays,
-    });
-  };
+  const executePlan = React.useContext(PlanningContext);
+  if (executePlan === undefined) {
+    throw new Error("PlanningContext not provided");
+  }
+
   return {
     createPlan: createPlanningContext,
     executePlan,
@@ -160,4 +198,54 @@ export function planEnsurePrivateContact(
         publicKey,
         createdAt: new Date(),
       });
+}
+
+export function planUpdateRelations(plan: Plan, relations: Relations): Plan {
+  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const updatedRelations = userDB.relations.set(relations.id, relations);
+  const updatedDB = {
+    ...userDB,
+    relations: updatedRelations,
+  };
+  const updateRelationsEvent = finalizeEvent(
+    {
+      kind: KIND_KNOWLEDGE_LIST,
+      pubkey: plan.user.publicKey,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [["d", relations.id]],
+      content: JSON.stringify(relations),
+    },
+    plan.user.privateKey
+  );
+  return {
+    ...plan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, updatedDB),
+    publishEvents: plan.publishEvents.push(updateRelationsEvent),
+  };
+}
+
+export function planUpdateViews(plan: Plan, views: Views): Plan {
+  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  // filter previous events for views
+  const publishEvents = plan.publishEvents.filterNot(
+    (event) => event.kind === KIND_VIEWS
+  );
+  const writeViewEvent = finalizeEvent(
+    {
+      kind: KIND_VIEWS,
+      pubkey: plan.user.publicKey,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: JSON.stringify(viewsToJSON(views, plan.user.publicKey)),
+    },
+    plan.user.privateKey
+  );
+  return {
+    ...plan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, {
+      ...userDB,
+      views,
+    }),
+    publishEvents: publishEvents.push(writeViewEvent),
+  };
 }

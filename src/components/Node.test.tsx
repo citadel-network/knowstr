@@ -2,7 +2,11 @@ import React from "react";
 import { fireEvent, screen } from "@testing-library/react";
 import { Map, List } from "immutable";
 import userEvent from "@testing-library/user-event";
-import { addRelationToNode, bulkAddRelations, newNode } from "../connections";
+import {
+  addRelationToRelations,
+  bulkAddRelations,
+  newNode,
+} from "../connections";
 import { DND } from "../dnd";
 import { getNode, newRepo } from "../knowledge";
 import { RelationContext } from "../KnowledgeDataContext";
@@ -18,7 +22,7 @@ import { TemporaryViewProvider } from "./TemporaryViewContext";
 
 test("Render non existing Repo", async () => {
   const pl = newRepo(
-    addRelationToNode(
+    addRelationToRelations(
       newNode("Programming Languages", "TOPIC"),
       "not-existing-id",
       "RELEVANCE"
@@ -27,7 +31,7 @@ test("Render non existing Repo", async () => {
   const repos = Map<Repo>({
     [pl.id]: pl,
     ws: newRepo(
-      addRelationToNode(
+      addRelationToRelations(
         newNode("Workspace:#FF", "WORKSPACE"),
         pl.id,
         "RELEVANCE"
@@ -73,7 +77,7 @@ test("Edit node via Column Menu", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, source.id, ctx.view.relationType)
+      addRelationToRelations(workspace, source.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({
@@ -100,7 +104,7 @@ test("Edit node inline", async () => {
 
   const nodes = Map<Repo>({
     [source.id]: newRepo(
-      addRelationToNode(getNode(source), firstQuote.id, "CONTAINS"),
+      addRelationToRelations(getNode(source), firstQuote.id, "CONTAINS"),
       source.id
     ),
     [firstQuote.id]: firstQuote,
@@ -111,7 +115,7 @@ test("Edit node inline", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, source.id, ctx.view.relationType)
+      addRelationToRelations(workspace, source.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({
@@ -150,7 +154,7 @@ test("Edited node is shown in Tree View", async () => {
     ),
     [firstQuote.id]: firstQuote,
     [secondQuoteId]: newRepo(
-      addRelationToNode(
+      addRelationToRelations(
         newNode("My second quote", "QUOTE"),
         firstQuote.id,
         "RELEVANCE"
@@ -164,8 +168,8 @@ test("Edited node is shown in Tree View", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(
-        addRelationToNode(workspace, source.id, ctx.view.relationType),
+      addRelationToRelations(
+        addRelationToRelations(workspace, source.id, ctx.view.relationType),
         firstQuote.id,
         ctx.view.relationType
       )
@@ -199,7 +203,7 @@ test("Delete node", async () => {
 
   const nodes = Map<Repo>({
     [source.id]: newRepo(
-      addRelationToNode(getNode(source), firstNote.id, "CONTAINS"),
+      addRelationToRelations(getNode(source), firstNote.id, "CONTAINS"),
       source.id
     ),
     [firstNote.id]: firstNote,
@@ -210,7 +214,7 @@ test("Delete node", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, source.id, ctx.view.relationType)
+      addRelationToRelations(workspace, source.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({

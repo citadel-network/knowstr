@@ -9,7 +9,6 @@ import DOMPurify from "dompurify";
 import { FULL_SCREEN_PATH } from "../App";
 import { DragUpdateStateContext, getDropDestinationFromTreeView } from "../dnd";
 import { getRelations } from "../connections";
-import { DEFAULT_BRANCH_NAME, getNode } from "../knowledge";
 import {
   useGetNodeText,
   useKnowledgeData,
@@ -44,6 +43,7 @@ import { NodeMenu } from "./Menu";
 import { NodeCard, CloseButton, Button } from "./Ui";
 import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
+import { newDB } from "../knowledge";
 
 function createSearchParams(branch?: BranchPath): string {
   if (!branch) {
@@ -232,35 +232,30 @@ function NodeAutoLink({
   const { openNodeID: id } = useParams<{
     openNodeID: string;
   }>();
-  const [repo, view] = useNode();
-  if (!repo) {
+  const [node, view] = useNode();
+  if (!node) {
     return <ErrorContent />;
   }
-  const isMainNodeInFullscreenView = id !== undefined && id === repo.id;
-  const node = getNode(repo, view.branch);
+  const isMainNodeInFullscreenView = id !== undefined && id === node.id;
   return isMainNodeInFullscreenView ? (
     <>{children}</>
   ) : (
-    <Link
-      className="no-underline"
-      to={
-        node.nodeType === "WORKSPACE"
-          ? `/w/${repo.id}`
-          : `/d/${repo.id}${createSearchParams(view.branch)}`
-      }
-    >
+    // TODO: link to correct origin
+    <Link className="no-underline" to={`/d/${node.id}}`}>
       {children}
     </Link>
   );
 }
 
 function EditingNodeContent(): JSX.Element {
-  const { repos, views } = useKnowledgeData();
+  // const { repos, views } = useKnowledgeData();
   const updateKnowledge = useUpdateKnowledge();
   const viewContext = useViewPath();
   const viewKey = useViewKey();
   const { editingViews, setEditingState } = useTemporaryView();
   const editNodeText = (text: string): void => {
+    // TODO: implement
+    /*
     updateKnowledge(
       updateNode(repos, views, viewContext, (n) => {
         return {
@@ -269,6 +264,7 @@ function EditingNodeContent(): JSX.Element {
         };
       })
     );
+     */
   };
   const closeEditor = (): void => {
     setEditingState(toggleEditing(editingViews, viewKey));
@@ -307,38 +303,50 @@ function Indent({ levels }: { levels: number }): JSX.Element {
 }
 
 export function getNodesInTree(
-  repos: Repos,
-  views: Views,
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
   parentPath: ViewPath,
   ctx: List<ViewPath>,
   isOpenInFullScreen?: boolean,
   noExpansion?: boolean
 ): List<ViewPath> {
-  const [parentRepo, parentView] = getNodeFromView(repos, views, parentPath);
-  if (!parentRepo) {
+  const { views } = knowledgeDBs.get(myself, newDB());
+  const [parentNode, parentView] = getNodeFromView(
+    knowledgeDBs,
+    views,
+    myself,
+    parentPath
+  );
+  if (!parentNode) {
     return ctx;
   }
-  const parentNode = getNode(parentRepo, parentView.branch);
-  const childPaths = getRelations(parentNode, parentView.relationType).map(
-    (rel, i) => ({
-      ...parentPath,
-      indexStack: parentPath.indexStack.push(i),
-    })
-  );
+  const relations = getRelations(knowledgeDBs, parentView.relations, myself);
+  if (!relations) {
+    return ctx;
+  }
+  const childPaths = relations.items.map((rel, i) => ({
+    ...parentPath,
+    indexStack: parentPath.indexStack.push(i),
+  }));
   const addNodePath = {
     ...parentPath,
     indexStack: parentPath.indexStack.push(childPaths.size),
   };
   const nodesInTree = childPaths.reduce(
     (nodesList: List<ViewPath>, childPath: ViewPath) => {
-      const [childRepo, childView] = getNodeFromView(repos, views, childPath);
+      const [childRepo, childView] = getNodeFromView(
+        knowledgeDBs,
+        views,
+        myself,
+        childPath
+      );
       if (!childRepo || noExpansion) {
         return nodesList.push(childPath);
       }
       if (childView.expanded) {
         return getNodesInTree(
-          repos,
-          views,
+          knowledgeDBs,
+          myself,
           childPath,
           nodesList.push(childPath),
           isOpenInFullScreen
@@ -361,8 +369,14 @@ function DraggingNode(): JSX.Element {
   const badgeCounter = checked ? findSelected(parentViewKey).size : undefined;
   const dragUpdateState = useContext(DragUpdateStateContext);
   const viewPath = useViewPath();
-  const { repos, views } = useKnowledgeData();
-  const view = getNodeFromView(repos, views, viewPath)[1];
+  const { knowledgeDBs, user } = useData();
+  const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  const view = getNodeFromView(
+    knowledgeDBs,
+    views,
+    user.publicKey,
+    viewPath
+  )[1];
   const isOpenInFullScreen = useIsOpenInFullScreen();
 
   const dropDestination =

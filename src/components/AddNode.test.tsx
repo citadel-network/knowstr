@@ -2,7 +2,7 @@ import React from "react";
 import { screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { List, Map } from "immutable";
 import userEvent from "@testing-library/user-event";
-import { addRelationToNode, newNode } from "../connections";
+import { addRelationToRelations, newNode } from "../connections";
 import {
   createDefaultKnowledgeTestData,
   renderKnowledgeApp,
@@ -30,7 +30,11 @@ test("Add Summary", async () => {
   const quote = newRepo(newNode("My first quote", "QUOTE"), "quote-id");
   const nodes = Map<Repo>({
     "source-id": newRepo(
-      addRelationToNode(newNode("My source", "TITLE"), "quote-id", "CONTAINS"),
+      addRelationToRelations(
+        newNode("My source", "TITLE"),
+        "quote-id",
+        "CONTAINS"
+      ),
       "source-id"
     ),
     [quote.id]: quote,
@@ -41,7 +45,7 @@ test("Add Summary", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, "source-id", ctx.view.relationType)
+      addRelationToRelations(workspace, "source-id", ctx.view.relationType)
   );
 
   await renderKnowledgeApp({
@@ -66,7 +70,7 @@ test("Copy of linked Nodes", async () => {
 
   // Create some nodes for bob
   const oop = newRepo(
-    addRelationToNode(
+    addRelationToRelations(
       newNode("Object Oriented Languages", "TOPIC"),
       "java",
       "RELEVANCE"
@@ -91,7 +95,7 @@ test("Copy of linked Nodes", async () => {
 
   // Create Alice Data
   const ws = newRepo(
-    addRelationToNode(
+    addRelationToRelations(
       newNode("Workspace:#FF00FF", "WORKSPACE"),
       "pl",
       "RELEVANCE"

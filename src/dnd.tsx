@@ -12,12 +12,11 @@ import {
   useTemporaryView,
 } from "./components/TemporaryViewContext";
 import { bulkAddRelations, getRelations, moveRelations } from "./connections";
-import { getNode, isBranchEqual } from "./knowledge";
-import { useKnowledgeData, useUpdateKnowledge } from "./KnowledgeDataContext";
+import { newDB } from "./knowledge";
 import {
   parseViewPath,
   getNodeFromView,
-  updateNode,
+  updateRelations,
   getParentRepo,
   popPrefix,
   getParentKey,
@@ -28,42 +27,50 @@ import {
   updateViewPathsAfterMoveRelations,
 } from "./ViewContext";
 import { getNodesInTree } from "./components/Node";
+import { Plan, planUpdateViews, usePlanner } from "./planner";
 
 function getDropDestinationEndOfRoot(
-  repos: Repos,
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
   views: Views,
   root: ViewPath
 ): [ViewPath, number] {
-  const [rootRepo, rootView] = getNodeFromView(repos, views, root);
-  if (!rootRepo) {
+  const rootView = getNodeFromView(knowledgeDBs, views, myself, root)[1];
+  if (!rootView || !rootView.relations) {
     // eslint-disable-next-line no-console
     console.error(
-      "root repo does not exist",
+      "root node does not exist",
       root,
-      repos.toJSON(),
+      knowledgeDBs.toJSON(),
       views.toJSON()
     );
     throw new Error("Root repo doesn't exist");
   }
-  const rootNode = getNode(rootRepo, rootView.branch);
-  const relations = getRelations(rootNode, rootView.relationType);
-  return [root, relations.size];
+  const relations = getRelations(knowledgeDBs, rootView.relations, myself);
+  if (!relations) {
+    // TODO: need to handle this case by creating a new list
+    // eslint-disable-next-line no-console
+    console.error("No relations at destination", root);
+    throw new Error("No relations at path");
+  }
+  return [root, relations.items.size];
 }
 
 export function getDropDestinationFromTreeView(
-  repos: Repos,
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
   views: Views,
   root: ViewPath,
   destinationIndex: number
 ): [ViewPath, number] {
-  const nodes = getNodesInTree(repos, views, root, List<ViewPath>());
+  const nodes = getNodesInTree(knowledgeDBs, myself, root, List<ViewPath>());
   const dropBefore = nodes.get(destinationIndex);
   if (!dropBefore) {
-    return getDropDestinationEndOfRoot(repos, views, root);
+    return getDropDestinationEndOfRoot(knowledgeDBs, myself, views, root);
   }
   const parentView = getParentView(dropBefore);
   if (!parentView) {
-    return getDropDestinationEndOfRoot(repos, views, root);
+    return getDropDestinationEndOfRoot(knowledgeDBs, myself, views, root);
   }
   // index is last path element of the sibling
   return [parentView, dropBefore.indexStack.last(0)];
@@ -79,26 +86,34 @@ export function getDropDestinationFromTreeView(
 // drag 18fbe5b5-6516-4cdb-adde-860bf47c9eb0:0 to 18fbe5b5-6516-4cdb-adde-860bf47c9eb0:1 [bottom] [0]
 
 export function dnd(
-  repos: Repos,
-  views: Views,
+  plan: Plan,
   selection: OrderedSet<string>,
   source: string,
   to: string,
   toIndex: number
-): { repos: Repos; views: Views } {
+): Plan {
+  const { knowledgeDBs } = plan;
+  const myself = plan.user.publicKey;
+  const myDB = knowledgeDBs.get(myself, newDB());
+  const { views } = myDB;
   // remove the prefix
   const [prefix, toKey] = popPrefix(to);
   const rootView = parseViewPath(toKey);
-  const [rootRepo] = getNodeFromView(repos, views, rootView);
-  if (!rootRepo) {
-    return { repos, views };
+  const [knowNode] = getNodeFromView(knowledgeDBs, views, myself, rootView);
+  if (!knowNode) {
+    return plan;
   }
 
   const sourceViewPath = parseViewPath(source);
   const sourceIndex = sourceViewPath.indexStack.last() || 0;
-  const sourceView = getNodeFromView(repos, views, sourceViewPath)[1];
+  const sourceView = getNodeFromView(
+    knowledgeDBs,
+    views,
+    myself,
+    sourceViewPath
+  )[1];
   if (!sourceView) {
-    return { repos, views };
+    return plan;
   }
   const sourceIndices = selection.contains(source)
     ? // eslint-disable-next-line functional/immutable-data
@@ -111,7 +126,7 @@ export function dnd(
   const sourceRepos = sourceIndices
     .toList()
     .map((index) => {
-      const [r] = getNodeFromView(repos, views, {
+      const [r] = getNodeFromView(knowledgeDBs, views, myself, {
         root: sourceViewPath.root,
         indexStack: sourceViewPath.indexStack.pop().push(index),
       });
@@ -119,7 +134,12 @@ export function dnd(
     })
     .filter((id) => id) as List<string>;
 
-  const [fromRepo, fromView] = getParentRepo(repos, views, sourceViewPath);
+  const [fromRepo, fromView] = getParentRepo(
+    knowledgeDBs,
+    views,
+    myself,
+    sourceViewPath
+  );
 
   // While we are dragging the source will always be collapsed, therefore
   // we need to calculate the new destination with the view collapsed
@@ -132,67 +152,51 @@ export function dnd(
     indexTo === undefined
       ? [rootView, undefined]
       : getDropDestinationFromTreeView(
-          repos,
+          knowledgeDBs,
+          myself,
           viewsWithCollapsedSource,
           rootView,
           indexTo
         );
 
-  const [toRepo, toV] = getNodeFromView(repos, views, toView);
+  const [toRepo, toV] = getNodeFromView(knowledgeDBs, views, myself, toView);
   if (!toRepo) {
-    return { repos, views };
+    return plan;
   }
 
   const move =
     dropIndex !== undefined &&
     fromRepo !== undefined &&
     toRepo.id === fromRepo.id &&
-    isBranchEqual(fromView.branch, toV.branch) &&
-    fromView.relationType === toV.relationType;
+    fromView.relations === toV.relations;
 
-  const updatedKnowledge = updateNode(
-    repos,
-    views,
+  // HERE I STOPPED
+  const updatedRelationsPlan = updateRelations(
+    plan,
     toView,
-    (node, { view }) => {
+    (relations: Relations) => {
       if (move) {
-        // move
-        return moveRelations(
-          node,
-          sourceIndices.toArray(),
-          dropIndex,
-          view.relationType
-        );
+        return moveRelations(relations, sourceIndices.toArray(), dropIndex);
       }
-      // add
-      return bulkAddRelations(
-        node,
-        sourceRepos.toArray(),
-        view.relationType,
-        dropIndex
-      );
+      return bulkAddRelations(relations, sourceRepos.toArray(), dropIndex);
     }
   );
-
   const updatedViews = move
     ? updateViewPathsAfterMoveRelations(
-        updatedKnowledge.repos,
-        updatedKnowledge.views,
+        updatedRelationsPlan.knowledgeDBs,
+        updatedRelationsPlan.user.publicKey,
         toView,
         sourceIndices.toArray(),
         dropIndex
       )
     : bulkUpdateViewPathsAfterAddRelation(
-        updatedKnowledge.repos,
-        updatedKnowledge.views,
+        updatedRelationsPlan.knowledgeDBs,
+        updatedRelationsPlan.user.publicKey,
         toView,
         sourceRepos.size,
         dropIndex
       );
-  return {
-    ...updatedKnowledge,
-    views: updatedViews,
-  };
+  return planUpdateViews(updatedRelationsPlan, updatedViews);
 }
 
 type DragUpdateState = {
@@ -205,8 +209,7 @@ export const DragUpdateStateContext = createContext<
 >(undefined);
 
 export function DND({ children }: { children: React.ReactNode }): JSX.Element {
-  const { repos, views } = useKnowledgeData();
-  const upsertRepos = useUpdateKnowledge();
+  const { createPlan, executePlan } = usePlanner();
   const { setState, selection, multiselectBtns } = useTemporaryView();
   const [dragUpdateState, setDragUpdateState] = useState<DragUpdateState>({
     initial: undefined,
@@ -215,10 +218,9 @@ export function DND({ children }: { children: React.ReactNode }): JSX.Element {
 
   const onDragEnd = (result: DropResult): void => {
     if (result.destination) {
-      upsertRepos(
+      executePlan(
         dnd(
-          repos,
-          views,
+          createPlan(),
           selection,
           result.draggableId,
           result.destination.droppableId,

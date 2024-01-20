@@ -1,6 +1,6 @@
-import { Map, List, Set } from "immutable";
-import { Link } from "react-router-dom";
-import { getNode, newDB } from "./knowledge";
+import { Map, Set } from "immutable";
+import { v4 } from "uuid";
+import { newDB } from "./knowledge";
 import { relationsMapToJSON } from "./serializer";
 
 export function splitID(id: ID): [PublicKey | undefined, string] {
@@ -35,7 +35,7 @@ export function getSubjects(
   const db = knowledgeDBs.get(myself, newDB());
   const relations = db.relations.filter((r) => r.items.includes(nodeID));
   const nodes = relations.map((r) => db.nodes.get(r.head));
-  return nodes;
+  return nodes.filter((n) => n !== undefined) as Nodes;
 }
 
 export function deleteRelationsFromNode(
@@ -55,65 +55,62 @@ export function deleteRelationsFromNode(
   };
 }
 
+export function isRemote(
+  remote: PublicKey | undefined,
+  myself: PublicKey
+): boolean {
+  return remote !== undefined && remote !== myself;
+}
+
 export function moveRelations(
-  node: KnowNode,
+  relations: Relations,
   indices: Array<number>,
-  startPosition: number,
-  relationType: RelationType
-): KnowNode {
-  const relations = getRelations(node, relationType);
-  const relationsToMove = relations.filter((_, i) => indices.includes(i));
-  const updatedRelations = relations
+  startPosition: number
+): Relations {
+  const itemsToMove = relations.items.filter((_, i) => indices.includes(i));
+  const updatedItems = relations.items
     .filterNot((_, i) => indices.includes(i))
-    .splice(startPosition, 0, ...relationsToMove.toArray());
+    .splice(startPosition, 0, ...itemsToMove.toArray());
   return {
-    ...node,
-    relations: node.relations.set(relationType, updatedRelations),
+    ...relations,
+    items: updatedItems,
   };
 }
 
-export function addRelationToNode(
-  node: KnowNode,
+export function addRelationToRelations(
+  relations: Relations,
   objectID: string,
-  relationType: RelationType,
   ord?: number
-): KnowNode {
-  const defaultOrder = getRelations(node, relationType).size;
-  const relation = {
-    id: objectID,
+): Relations {
+  const defaultOrder = relations.items.size;
+  const items = relations.items.push(objectID);
+  const itemsWithOrder =
+    ord !== undefined
+      ? moveRelations(relations, [defaultOrder], ord).items
+      : items;
+  return {
+    ...relations,
+    items: itemsWithOrder,
   };
-  const subjectWithRelation = {
-    ...node,
-    relations: node.relations.set(
-      relationType,
-      getRelations(node, relationType).push(relation)
-    ),
-  };
-  return ord !== undefined
-    ? moveRelations(subjectWithRelation, [defaultOrder], ord, relationType)
-    : subjectWithRelation;
 }
 
 export function bulkAddRelations(
-  node: KnowNode,
+  relations: Relations,
   objectIDs: Array<string>,
-  relationType: RelationType,
   startPos?: number
-): KnowNode {
+): Relations {
   return objectIDs.reduce((rdx, id, currentIndex) => {
-    return addRelationToNode(
+    return addRelationToRelations(
       rdx,
       id,
-      relationType,
       startPos !== undefined ? startPos + currentIndex : undefined
     );
-  }, node);
+  }, relations);
 }
 
-export function newNode(text: string, nodeType: NodeType): KnowNode {
+export function newNode(text: string): KnowNode {
   return {
     text,
-    nodeType,
-    relations: Map<RelationType, Relations>(),
+    id: v4(),
   };
 }

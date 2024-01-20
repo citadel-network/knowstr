@@ -304,7 +304,7 @@ function jsonToViews(
   return Map(asObject(s)).map((v) => jsonToView(v, myself));
 }
 
-function viewsToJSON(
+export function viewsToJSON(
   views: Map<string, View | null>,
   myself: string
 ): Serializable {

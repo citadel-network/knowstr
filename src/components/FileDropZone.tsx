@@ -3,7 +3,7 @@ import { useDropzone } from "react-dropzone";
 import MarkdownIt from "markdown-it";
 import Immutable from "immutable";
 
-import { newNode, addRelationToNode } from "../connections";
+import { newNode, addRelationToRelations } from "../connections";
 import {
   addToBranch,
   DEFAULT_BRANCH_NAME,
@@ -36,7 +36,7 @@ function createSourceFromParagraphs(paragraphs: Array<string>): {
         source.id,
         addToBranch(
           s,
-          addRelationToNode(getNode(s), quote.id, "CONTAINS"),
+          addRelationToRelations(getNode(s), quote.id, "CONTAINS"),
           DEFAULT_BRANCH_NAME
         )
       );

@@ -1,6 +1,10 @@
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { List, Map } from "immutable";
-import { addRelationToNode, bulkAddRelations, newNode } from "../connections";
+import {
+  addRelationToRelations,
+  bulkAddRelations,
+  newNode,
+} from "../connections";
 import {
   TEST_WORKSPACE_ID,
   createDefaultKnowledgeTestData,
@@ -33,7 +37,7 @@ test("Bionic Reading", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, source.id, ctx.view.relationType)
+      addRelationToRelations(workspace, source.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({

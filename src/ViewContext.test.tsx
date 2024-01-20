@@ -2,7 +2,11 @@ import React from "react";
 import { Map, List, OrderedSet } from "immutable";
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { newNode, addRelationToNode, bulkAddRelations } from "./connections";
+import {
+  newNode,
+  addRelationToRelations,
+  bulkAddRelations,
+} from "./connections";
 import { execute } from "./executor";
 import { DEFAULT_BRANCH_NAME, newDB, newRepo } from "./knowledge";
 import { createPlan, planSetKnowledgeData } from "./planner";
@@ -20,7 +24,7 @@ import { dnd, DND } from "./dnd";
 import { compareKnowledgeDB } from "./knowledgeEvents";
 
 test("Move View Settings on Delete", async () => {
-  const c = addRelationToNode(newNode("C", "TOPIC"), "cpp", "RELEVANCE");
+  const c = addRelationToRelations(newNode("C", "TOPIC"), "cpp", "RELEVANCE");
   const cpp = newNode("C++", "TOPIC");
   const java = newNode("Java", "TOPIC");
 
@@ -29,7 +33,7 @@ test("Move View Settings on Delete", async () => {
     ["j", "c"],
     "RELEVANCE"
   );
-  const ws = addRelationToNode(
+  const ws = addRelationToRelations(
     newNode("WS:#00FF00", "WORKSPACE"),
     "pl",
     "RELEVANCE"
@@ -102,10 +106,10 @@ test("Move Views after insert", () => {
   //    c
   //      cpp
 
-  const c = addRelationToNode(newNode("C", "TOPIC"), "cpp", "RELEVANCE");
+  const c = addRelationToRelations(newNode("C", "TOPIC"), "cpp", "RELEVANCE");
   const cpp = newNode("C++", "TOPIC");
   const java = newNode("Java", "TOPIC");
-  const fortran = addRelationToNode(
+  const fortran = addRelationToRelations(
     newNode("Fortran", "TOPIC"),
     "c",
     "RELEVANCE"

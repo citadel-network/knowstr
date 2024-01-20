@@ -4,7 +4,7 @@ import {
   newNode,
   getSubjects,
   moveRelations,
-  addRelationToNode,
+  addRelationToRelations,
   bulkAddRelations,
   getRelations,
 } from "./connections";
@@ -53,7 +53,7 @@ test("Position of new connection can be specified", () => {
   const b0 = newRepo(newNode("b0", "TOPIC"));
   expect(
     getRelations(
-      addRelationToNode(getNode(a), b0.id, "RELEVANCE", 0),
+      addRelationToRelations(getNode(a), b0.id, "RELEVANCE", 0),
       "RELEVANCE"
     )
   ).toEqual(
@@ -70,8 +70,8 @@ test("Position of new connection can be specified", () => {
 test("Relevance and contains order can be different", () => {
   const { a, b, c, d, e } = sampleNodes();
   const d0 = newRepo(newNode("d0", "TOPIC"));
-  const node = addRelationToNode(
-    addRelationToNode(getNode(a), d0.id, "RELEVANCE", 2),
+  const node = addRelationToRelations(
+    addRelationToRelations(getNode(a), d0.id, "RELEVANCE", 2),
     d0.id,
     "CONTAINS",
     0

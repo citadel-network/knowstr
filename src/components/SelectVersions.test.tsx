@@ -3,7 +3,7 @@ import { List, Map, Set } from "immutable";
 import userEvent from "@testing-library/user-event";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import {
-  addRelationToNode,
+  addRelationToRelations,
   bulkAddRelations,
   deleteRelationsFromNode,
   newNode,
@@ -134,7 +134,7 @@ test("Compare Versions and choose ff", async () => {
     Map<string, View>(),
     { root: "pl", indexStack: List<number>() },
     (pl, { view }) =>
-      addRelationToNode(
+      addRelationToRelations(
         deleteRelationsFromNode(pl, Set<number>([0, 1]), view.relationType),
         "js",
         "RELEVANCE"
@@ -167,8 +167,8 @@ test("Compare Versions and choose ff", async () => {
     ),
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace) =>
-      addRelationToNode(
-        addRelationToNode(workspace, "pl", "RELEVANCE"),
+      addRelationToRelations(
+        addRelationToRelations(workspace, "pl", "RELEVANCE"),
         "pl",
         "RELEVANCE"
       )
@@ -222,17 +222,17 @@ test("Delete View Settings on Branch Change", async () => {
   // Businesses -> Supermarkets -> Alice Supermarket
   const businesses = commitAllBranches(
     newRepo(
-      addRelationToNode(newNode("Businesses", "TOPIC"), "s", "RELEVANCE"),
+      addRelationToRelations(newNode("Businesses", "TOPIC"), "s", "RELEVANCE"),
       "b"
     )
   );
   const supermarkets = newRepo(
-    addRelationToNode(newNode("Supermarkets", "TOPIC"), "a", "RELEVANCE"),
+    addRelationToRelations(newNode("Supermarkets", "TOPIC"), "a", "RELEVANCE"),
     "s"
   );
   const aliceSuperMarket = newRepo(newNode("Alice Supermarket", "TOPIC"), "a");
 
-  const ws = addRelationToNode(
+  const ws = addRelationToRelations(
     newNode("WS:#00FF00", "WORKSPACE"),
     "b",
     "RELEVANCE"
@@ -261,7 +261,7 @@ test("Delete View Settings on Branch Change", async () => {
   // Carol Deletes Supermarkets and Adds Restaurants instead
   // Businesses -> Restaurants -> Carols Restaurant
   const restaurants = newRepo(
-    addRelationToNode(newNode("Restaurants", "TOPIC"), "c", "RELEVANCE"),
+    addRelationToRelations(newNode("Restaurants", "TOPIC"), "c", "RELEVANCE"),
     "r"
   );
   const carolsRestaurant = newRepo(newNode("Carols Restaurant", "NOTE"), "c");
@@ -274,7 +274,7 @@ test("Delete View Settings on Branch Change", async () => {
     Map<string, View>(),
     { root: "b", indexStack: List<number>() },
     (b, { view }) =>
-      addRelationToNode(
+      addRelationToRelations(
         deleteRelationsFromNode(b, Set<number>([0]), view.relationType),
         "r",
         "RELEVANCE"

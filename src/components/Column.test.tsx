@@ -13,7 +13,11 @@ import {
   expectTextContent,
   commitAll,
 } from "../utils.test";
-import { newNode, bulkAddRelations, addRelationToNode } from "../connections";
+import {
+  newNode,
+  bulkAddRelations,
+  addRelationToRelations,
+} from "../connections";
 import { getNode, newDB, newRepo } from "../knowledge";
 import { execute } from "../executor";
 import { createPlan, planSetKnowledgeData } from "../planner";
@@ -56,7 +60,7 @@ test("Scroll position is stored in localStorage", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, topic.id, ctx.view.relationType)
+      addRelationToRelations(workspace, topic.id, ctx.view.relationType)
   );
   const { fileStore } = await renderKnowledgeApp({
     ...knowledgeDB,
@@ -133,7 +137,7 @@ test("Multiple connections to same node", async () => {
   // w => [pl] => [c, c]
   const repos = Map<string, Repo>({
     w: newRepo(
-      addRelationToNode(
+      addRelationToRelations(
         newNode("Workspace:#FF0000", "WORKSPACE"),
         "pl",
         "RELEVANCE"
@@ -187,12 +191,12 @@ test("Summary is shown in innerNodes if there is a summary relation", async () =
   const topic = newRepo(newNode("My first topic", "TOPIC"), "topic-id");
   const nodes = Map<Repo>({
     [note.id]: newRepo(
-      addRelationToNode(getNode(note), summary.id, "SUMMARY"),
+      addRelationToRelations(getNode(note), summary.id, "SUMMARY"),
       note.id
     ),
     [summary.id]: summary,
     [topic.id]: newRepo(
-      addRelationToNode(getNode(topic), note.id, "RELEVANCE"),
+      addRelationToRelations(getNode(topic), note.id, "RELEVANCE"),
       topic.id
     ),
   });
@@ -201,7 +205,7 @@ test("Summary is shown in innerNodes if there is a summary relation", async () =
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, topic.id, ctx.view.relationType)
+      addRelationToRelations(workspace, topic.id, ctx.view.relationType)
   );
   await renderKnowledgeApp({
     ...knowledgeDB,
@@ -218,7 +222,7 @@ test("Summarized note is shown in Column when summary is opened", async () => {
 
   const nodes = Map<Repo>({
     [note.id]: newRepo(
-      addRelationToNode(getNode(note), summary.id, "SUMMARY"),
+      addRelationToRelations(getNode(note), summary.id, "SUMMARY"),
       note.id
     ),
     [summary.id]: summary,
@@ -248,7 +252,7 @@ test("Can't show or add Summaries on Titles", async () => {
   const note = newRepo(newNode("My first note", "NOTE"), "note-id");
   const nodes = Map<Repo>({
     [title.id]: newRepo(
-      addRelationToNode(getNode(title), note.id, "RELEVANCE"),
+      addRelationToRelations(getNode(title), note.id, "RELEVANCE"),
       title.id
     ),
     [note.id]: note,
@@ -258,7 +262,7 @@ test("Can't show or add Summaries on Titles", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, title.id, ctx.view.relationType)
+      addRelationToRelations(workspace, title.id, ctx.view.relationType)
   );
   await renderKnowledgeApp({
     ...knowledgeDB,

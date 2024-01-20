@@ -1,7 +1,11 @@
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { List, Map } from "immutable";
 import userEvent from "@testing-library/user-event";
-import { addRelationToNode, bulkAddRelations, newNode } from "../connections";
+import {
+  addRelationToRelations,
+  bulkAddRelations,
+  newNode,
+} from "../connections";
 import {
   ALICE,
   TEST_WORKSPACE_ID,
@@ -113,7 +117,7 @@ test("Search shows summary, but its related note is added", async () => {
       source.id
     ),
     [quote.id]: newRepo(
-      addRelationToNode(getNode(quote), summary.id, "SUMMARY"),
+      addRelationToRelations(getNode(quote), summary.id, "SUMMARY"),
       quote.id
     ),
     [secondQuote.id]: secondQuote,
@@ -125,7 +129,7 @@ test("Search shows summary, but its related note is added", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, secondQuote.id, ctx.view.relationType)
+      addRelationToRelations(workspace, secondQuote.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({
@@ -173,7 +177,7 @@ test("Search adds existing Summary with non-default branch", async () => {
       source.id
     ),
     [quote.id]: newRepo(
-      addRelationToNode(getNode(quote), summary.id, "SUMMARY"),
+      addRelationToRelations(getNode(quote), summary.id, "SUMMARY"),
       quote.id
     ),
     [secondQuote.id]: secondQuote,
@@ -185,7 +189,7 @@ test("Search adds existing Summary with non-default branch", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, secondQuote.id, ctx.view.relationType)
+      addRelationToRelations(workspace, secondQuote.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({
@@ -226,7 +230,7 @@ test("Search also shows source", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, secondQuote.id, ctx.view.relationType)
+      addRelationToRelations(workspace, secondQuote.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({
@@ -264,7 +268,7 @@ test("On Fullscreen, search also starts with press on slash key", async () => {
     knowledgeDB.views,
     { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
     (workspace, ctx) =>
-      addRelationToNode(workspace, source.id, ctx.view.relationType)
+      addRelationToRelations(workspace, source.id, ctx.view.relationType)
   );
 
   await renderKnowledgeApp({
