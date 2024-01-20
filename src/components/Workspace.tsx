@@ -18,12 +18,24 @@ export function WorkspaceView(): JSX.Element | null {
   }
 
   /* eslint-disable react/no-array-index-key */
-  const columns = getRelations(knowledgeDBs, view.relations, user.publicKey);
+  const relations = getRelations(knowledgeDBs, view.relations, user.publicKey);
+  const columns = relations ? relations.items.toArray() : [];
   return (
     <TemporaryViewProvider>
       <div className="position-relative asset-workspace-height">
         <div className="position-absolute board overflow-y-hidden">
-          <div className="workspace-columns overflow-y-hidden h-100" />
+          <div className="workspace-columns overflow-y-hidden h-100">
+            <DND>
+              {columns.map((column, index) => {
+                return (
+                  <PushViewIndex push={List([index])} key={index}>
+                    <WorkspaceColumnView />
+                  </PushViewIndex>
+                );
+              })}
+              <EmptyColumn />
+            </DND>
+          </div>
         </div>
       </div>
     </TemporaryViewProvider>

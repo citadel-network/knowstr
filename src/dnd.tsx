@@ -16,7 +16,7 @@ import { newDB } from "./knowledge";
 import {
   parseViewPath,
   getNodeFromView,
-  updateRelations,
+  upsertRelations,
   getParentRepo,
   popPrefix,
   getParentKey,
@@ -171,7 +171,7 @@ export function dnd(
     fromView.relations === toV.relations;
 
   // HERE I STOPPED
-  const updatedRelationsPlan = updateRelations(
+  const updatedRelationsPlan = upsertRelations(
     plan,
     toView,
     (relations: Relations) => {

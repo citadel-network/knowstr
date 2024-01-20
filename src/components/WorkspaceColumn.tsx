@@ -27,15 +27,15 @@ export function WorkspaceColumnView(): JSX.Element | null {
 }
 
 export function EmptyColumn(): JSX.Element {
-  const upsertRepos = useUpdateKnowledge();
-  const { repos, views } = useKnowledgeData();
   const viewContext = useViewPath();
   const onDropFiles = (topNodes: Array<string>, nodes: Repos): void => {
+    /*
     upsertRepos(
       updateNode(repos.merge(nodes), views, viewContext, (node, ctx) =>
         bulkAddRelations(node, topNodes, ctx.view.relationType)
       )
     );
+     */
   };
   return (
     <WorkspaceColumn>

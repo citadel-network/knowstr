@@ -85,7 +85,13 @@ function getDefaultRelationForNode(
   // Do I have relations in my database?
   const myRelations = knowledgeDBs.get(myself, newDB()).relations;
   const [remote, knowID] = splitID(id);
-  const relations = myRelations.filter((r) => r.head === knowID);
+  const relations = myRelations.filter((r) => r.head === id);
+  console.log(
+    ">>> get default relations for",
+    id,
+    myRelations.toArray(),
+    relations.toArray()
+  );
   // TODO: sort relations
   if (relations.size > 0) {
     return relations.keySeq().first("");
@@ -93,7 +99,7 @@ function getDefaultRelationForNode(
   if (remote) {
     const remoteRelations = knowledgeDBs
       .get(remote, newDB())
-      .relations.filter((r) => r.head === knowID);
+      .relations.filter((r) => r.head === id);
     if (remoteRelations.size > 0) {
       const relationID = remoteRelations.keySeq().first("");
       return `${remote}/${relationID}`;
@@ -394,7 +400,7 @@ function createUpdatableRelations(
     .relations.get(id, newRelations(head, type));
 }
 
-export function updateRelations(
+export function upsertRelations(
   plan: Plan,
   viewContext: ViewPath,
   modify: (relations: Relations, ctx: { view: View }) => Relations
@@ -406,26 +412,30 @@ export function updateRelations(
     plan.user.publicKey,
     viewContext
   );
-  if (!node || !nodeView || !nodeView.relations) {
+  if (!node || !nodeView) {
+    // eslint-disable-next-line no-console
+    console.error("Node or View not found", node, nodeView);
     throw new Error("Nothing to update");
   }
+  // create new relations if this node doesn't have any
+  const relationsID = nodeView.relations || v4();
   const relations = createUpdatableRelations(
     plan.knowledgeDBs,
     viewContext,
     plan.user.publicKey,
-    nodeView.relations,
+    relationsID,
     node.id,
     "" as RelationType // TODO: relation type?
   );
 
   // TODO: check if this is different than the default
-  const didViewChange = nodeView.relations !== relations.id;
+  const didViewChange = nodeView.relations !== relationsID;
   const planWithUpdatedView = didViewChange
     ? planUpdateViews(
         plan,
         views.set(viewPathToString(viewContext), {
           ...nodeView,
-          relations: relations.id,
+          relations: relationsID,
         })
       )
     : plan;

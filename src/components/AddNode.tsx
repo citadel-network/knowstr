@@ -15,9 +15,8 @@ import {
   useNode,
   useViewPath,
   getParentView,
-  getParentRepo,
   useViewKey,
-  getNodeFromView,
+  upsertRelations,
 } from "../ViewContext";
 import { Button, CloseButton } from "./Ui";
 import useModal from "./useModal";
@@ -31,6 +30,7 @@ import {
   useTemporaryView,
   useIsEditorOpen,
 } from "./TemporaryViewContext";
+import { Plan, planUpsertNode, usePlanner } from "../planner";
 
 function AddNodeButton({
   onClick,
@@ -133,16 +133,8 @@ function useGetFullScreenViewRepo(): string | undefined {
 }
 
 type AddNodeProps = {
-  onCreateNewNode: (
-    text: string,
-    nodeType: NodeType,
-    relationType?: RelationType
-  ) => void;
-  onAddExistingNode: (
-    node: Repo,
-    branch: BranchPath,
-    relationType?: RelationType
-  ) => void;
+  onCreateNewNode: (text: string) => void;
+  onAddExistingNode: (nodeID: ID) => void;
   ariaLabel: string;
   isSearchEnabledByShortcut?: boolean;
 };
@@ -187,12 +179,8 @@ function AddNode({
     return undefined;
   }, [disableSearchModal]);
 
-  const createNewNode = (
-    text: string,
-    nodeType: NodeType,
-    relationType?: RelationType
-  ): void => {
-    onCreateNewNode(text, nodeType, relationType);
+  const createNewNode = (text: string): void => {
+    onCreateNewNode(text);
     reset();
   };
 
@@ -210,7 +198,7 @@ function AddNode({
     <>
       {isOpen && (
         <SearchModal
-          onAddExistingRepo={onAddExistingRepo}
+          onAddExistingNode={onAddExistingRepo}
           onHide={closeModal}
         />
       )}
@@ -244,13 +232,23 @@ export function AddColumn(): JSX.Element {
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const [workspace, workspaceBranch] = useNode();
   const viewPath = useViewPath();
-  const upsertRepos = useUpdateKnowledge();
-  const { repos, views } = useKnowledgeData();
+  const { createPlan, executePlan } = usePlanner();
   if (!workspace || !workspaceBranch) {
     return <div />;
   }
 
-  const onAddRepo = (repo: Repo): void => {
+  const onAddNode = (plan: Plan, nodeID: ID): void => {
+    const updateRelationsPlan = upsertRelations(
+      plan,
+      viewPath,
+      (relations) => ({
+        ...relations,
+        items: relations.items.push(nodeID),
+      })
+    );
+    executePlan(updateRelationsPlan);
+
+    /*
     upsertRepos(
       updateNode(
         repos.set(repo.id, repo),
@@ -260,15 +258,19 @@ export function AddColumn(): JSX.Element {
           addRelationToRelations(dashboard, repo.id, view.relationType)
       )
     );
+     */
   };
 
-  const onCreateNewNode = (text: string, nodeType: NodeType): void =>
-    onAddRepo(newRepo(newNode(text, nodeType)));
+  const onCreateNewNode = (text: string): void => {
+    const node = newNode(text);
+    const plan = planUpsertNode(createPlan(), node);
+    onAddNode(plan, node.id);
+  };
 
   return (
     <AddNode
       onCreateNewNode={onCreateNewNode}
-      onAddExistingNode={onAddRepo}
+      onAddExistingNode={(id) => onAddNode(createPlan(), id)}
       ariaLabel="add node"
       isSearchEnabledByShortcut={!isOpenInFullScreen}
     />

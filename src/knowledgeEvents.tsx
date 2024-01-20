@@ -401,7 +401,6 @@ export function findWorkspaces(events: List<Event>): Workspaces | undefined {
   const parsed = JSON.parse(workspaceEvent.content);
   const workspaces = List<ID>(parsed.w);
   const activeWorkspace = parsed.a;
-  console.log(">> ws event", workspaceEvent.content);
   return {
     workspaces,
     activeWorkspace,

@@ -25,6 +25,7 @@ type NewWorkspaceProps = {
 function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
+  const { user } = useData();
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -34,7 +35,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
       return;
     }
     const title = (form.elements.namedItem("title") as HTMLInputElement).value;
-    const node = newNode(title);
+    const node = newNode(title, user.publicKey);
     const newNodePlan = planUpsertNode(createPlan(), node);
     // set node as active
     const myDB = newNodePlan.knowledgeDBs.get(newNodePlan.user.publicKey);

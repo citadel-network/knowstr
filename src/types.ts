@@ -88,6 +88,7 @@ declare global {
 
   type Hash = string;
   type ID = string;
+  type LongID = string & { readonly "": unique symbol };
 
   type View = {
     displaySubjects: boolean;
@@ -98,14 +99,14 @@ declare global {
   };
 
   type Relations = {
-    items: List<ID>;
-    head: ID;
-    id: ID;
+    items: List<LongID>;
+    head: LongID;
+    id: LongID;
     type: RelationType;
   };
 
   type KnowNode = {
-    id: ID;
+    id: LongID;
     text: string;
   };
 
@@ -118,6 +119,6 @@ declare global {
     relations: Map<ID, Relations>;
     views: Views;
     workspaces: List<ID>;
-    activeWorkspace: ID;
+    activeWorkspace: LongID;
   };
 }

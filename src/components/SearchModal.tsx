@@ -1,9 +1,9 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Map } from "immutable";
-import { useGetNodeText, useKnowledgeData } from "../KnowledgeDataContext";
+import { useGetNodeText } from "../KnowledgeDataContext";
 import { ModalNode, ModalNodeBody, ModalNodeTitle } from "./Ui";
-import { getRelations, getSubjects } from "../connections";
-import { useNode } from "../ViewContext";
+import { useData } from "../DataContext";
+import { newDB } from "../knowledge";
 
 const KEY_DOWN = 40;
 const KEY_UP = 38;
@@ -14,69 +14,6 @@ function isMatch(input: string, test: string): boolean {
   const searchStr = input.toLowerCase().replace(/\n/g, "");
   const str = test.toLowerCase().replace(/\n/g, "");
   return str.indexOf(searchStr) !== -1;
-}
-
-function getSummaryText(
-  repo: Repo,
-  repos: Repos,
-  getNodeText: (node: KnowNode) => string,
-  branch?: BranchPath
-): string | undefined {
-  const node = getNode(repo, branch);
-  const summaryRelations = getRelations(node, "SUMMARY");
-  const summaryId = summaryRelations.first()?.id || undefined;
-  if (!summaryId) {
-    return undefined;
-  }
-  const summaryRepo = repos.get(summaryId);
-  if (!summaryRepo) {
-    return undefined;
-  }
-  const summaryDefaultBranch = getDefaultBranch(summaryRepo);
-  return getNodeText(getNode(summaryRepo, summaryDefaultBranch));
-}
-
-function useGetSummaryTextsForRepos(): Map<string, string | undefined> {
-  const getNodeText = useGetNodeText();
-  const view = useNode()[1];
-  const { repos } = useKnowledgeData();
-  return repos
-    .map((repo) => getSummaryText(repo, repos, getNodeText, view?.branch))
-    .filter((text) => text !== undefined);
-}
-
-function getSourcesForQuotes(
-  repo: Repo,
-  repos: Repos,
-  getNodeText: (node: KnowNode) => string,
-  branch?: BranchPath
-): string | undefined {
-  const { nodeType } = getNode(repo, branch);
-  if (nodeType !== "QUOTE") {
-    return undefined;
-  }
-  const subjects = getSubjects(repos, repo.id, ["TITLE", "URL"]);
-  const sourceRepo = subjects.first();
-  if (!sourceRepo) {
-    return undefined;
-  }
-  const sourceDefaultBranch = getDefaultBranch(sourceRepo);
-  return getNodeText(getNode(sourceRepo, sourceDefaultBranch));
-}
-
-function filterSuggestions(suggestions: Repos): Repos {
-  const idsOfSummaries = suggestions.reduce(
-    (rdx: Array<string>, repo: Repo) => {
-      const summaries = getRelations(getNode(repo), "SUMMARY");
-      return summaries
-        ? summaries.reduce((red: Array<string>, sum: Relation) => {
-            return red.concat([sum.id]);
-          }, rdx)
-        : rdx;
-    },
-    []
-  );
-  return suggestions.filter((repo) => !idsOfSummaries.includes(repo.id));
 }
 
 function HighlightedText({
@@ -102,18 +39,16 @@ function HighlightedText({
 }
 
 type SearchModalProps = {
-  onAddExistingRepo: (repo: Repo) => void;
+  onAddExistingNode: (id: ID) => void;
   onHide: () => void;
 };
 
 function Search({
-  onAddExistingRepo,
+  onAddExistingNode,
   onHide,
-  repos,
-  summaryTextMap,
+  nodes,
 }: SearchModalProps & {
-  repos: Repos;
-  summaryTextMap: Map<string, string | undefined>;
+  nodes: Nodes;
 }): JSX.Element {
   const [filter, setFilter] = useState<string>("");
   const [selectedSuggestion, setSelectedSuggestion] = useState<number>(0);
@@ -123,14 +58,10 @@ function Search({
 
   const filteredSuggestions =
     filter === ""
-      ? Map<string, Repo>()
-      : repos
-          .filter((r) => {
-            const summaryText = summaryTextMap.get(r.id);
-            const matchingText = summaryText
-              ? `${summaryText} ${getNodeText(getNode(r))}`
-              : getNodeText(getNode(r));
-            return isMatch(filter, matchingText);
+      ? Map<string, KnowNode>()
+      : nodes
+          .filter((node) => {
+            return isMatch(filter, node.text);
           })
           .slice(0, 25);
 
@@ -183,8 +114,9 @@ function Search({
             }
             if (e.keyCode === ENTER && suggestionIndex >= 0) {
               e.preventDefault();
-              onAddExistingRepo(
-                filteredSuggestions.toList().get(suggestionIndex) as Repo
+              onAddExistingNode(
+                (filteredSuggestions.toList().get(suggestionIndex) as KnowNode)
+                  .id
               );
               onHide();
             }
@@ -202,47 +134,31 @@ function Search({
       {suggestionIndex >= 0 && (
         <ModalNodeBody>
           <div className="border-top-strong mb-2" />
-          {filteredSuggestions.toList().map((r, i) => {
-            const summaryText = summaryTextMap?.get(r.id);
-            const sourceText = getSourcesForQuotes(r, repos, getNodeText);
+          {filteredSuggestions.toList().map((node, i) => {
             return (
               <div
-                key={r.id}
+                key={node.id}
                 ref={i === suggestionIndex ? searchResultRef : undefined}
                 className={`${
                   i === suggestionIndex ? "active" : ""
                 } dropdown-item w-100 search-dropdown`}
                 role="button"
                 onClick={() => {
-                  onAddExistingRepo(r);
+                  onAddExistingNode(node.id);
                   onHide();
                 }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
-                    onAddExistingRepo(r);
+                    onAddExistingNode(node.id);
                     onHide();
                   }
                 }}
                 tabIndex={0}
-                aria-label={`select ${getNodeText(getNode(r))}`}
+                aria-label={`select ${node.text}`}
               >
                 {" "}
                 <div className="white-space-normal">
-                  {summaryText && (
-                    <>
-                      <span className="iconsminds-filter-2 me-2" />
-                      <span className="font-italic">{summaryText}</span>
-                    </>
-                  )}
-                  <HighlightedText
-                    nodeText={getNodeText(getNode(r))}
-                    searchInput={filter}
-                  />
-                  {sourceText && (
-                    <div className="text-right">
-                      <span className="font-italic pt-1">{sourceText}</span>
-                    </div>
-                  )}
+                  <HighlightedText nodeText={node.text} searchInput={filter} />
                 </div>
               </div>
             );
@@ -254,22 +170,23 @@ function Search({
 }
 
 export function SearchModal({
-  onAddExistingRepo,
+  onAddExistingNode,
   onHide,
 }: SearchModalProps): JSX.Element | null {
-  const { repos } = useKnowledgeData();
-  const summaryTextMap = useGetSummaryTextsForRepos();
-  const sortedSuggestions: SortedRepos = repos.sortBy((repo) =>
-    getNode(repo).nodeType === "TOPIC" ? 0 : 1
-  );
+  const { knowledgeDBs, user } = useData();
+  const myDB = knowledgeDBs.get(user.publicKey, newDB());
 
-  const suggestionsWithoutSummaries = filterSuggestions(sortedSuggestions);
+  // TODO: right now we don't find other versions of the same node written by other users in the search
+  const nodes = knowledgeDBs
+    .filter((_, publicKey) => publicKey !== user.publicKey)
+    .reduce((acc, db) => acc.merge(db.nodes), Map<ID, KnowNode>())
+    .merge(myDB.nodes);
+
   return (
     <Search
-      onAddExistingRepo={onAddExistingRepo}
+      onAddExistingNode={onAddExistingNode}
       onHide={onHide}
-      repos={suggestionsWithoutSummaries}
-      summaryTextMap={summaryTextMap}
+      nodes={nodes}
     />
   );
 }
