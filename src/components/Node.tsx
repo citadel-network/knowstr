@@ -38,6 +38,7 @@ import { NodeCard, CloseButton, Button } from "./Ui";
 import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
+import { planUpsertNode, usePlanner } from "../planner";
 
 export function getLevels(
   viewPath: ViewPath,
@@ -182,23 +183,21 @@ function NodeAutoLink({
   );
 }
 
-function EditingNodeContent(): JSX.Element {
-  // const { repos, views } = useKnowledgeData();
-  const viewContext = useViewPath();
+function EditingNodeContent(): JSX.Element | null {
+  const [node] = useNode();
+  const { createPlan, executePlan } = usePlanner();
   const viewKey = useViewKey();
   const { editingViews, setEditingState } = useTemporaryView();
+  if (!node) {
+    return null;
+  }
   const editNodeText = (text: string): void => {
-    // TODO: implement
-    /*
-    updateKnowledge(
-      updateNode(repos, views, viewContext, (n) => {
-        return {
-          ...n,
-          text,
-        };
+    executePlan(
+      planUpsertNode(createPlan(), {
+        ...node,
+        text,
       })
     );
-     */
   };
   const closeEditor = (): void => {
     setEditingState(toggleEditing(editingViews, viewKey));
