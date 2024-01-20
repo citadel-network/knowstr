@@ -1,9 +1,24 @@
 import { is, List, Map } from "immutable";
 import { Filter, Event } from "nostr-tools";
-import { sortEvents } from "citadel-commons";
-import { clone, isBranchEqual, newDB, pull } from "./knowledge";
-import { KIND_KNOWLEDGE } from "./nostr";
-import { jsonToDiff, Serializable } from "./serializer";
+import {
+  findTag,
+  getMostRecentReplacableEvent,
+  sortEvents,
+} from "citadel-commons";
+import {
+  KIND_KNOWLEDGE,
+  KIND_KNOWLEDGE_LIST,
+  KIND_KNOWLEDGE_NODE,
+  KIND_VIEWS,
+  KIND_WORKSPACES,
+} from "./nostr";
+import {
+  jsonToDiff,
+  jsonToRelations,
+  Serializable,
+  jsonToViews,
+} from "./serializer";
+import { newDB } from "./knowledge";
 
 export type RepoDiff<T extends BranchWithCommits | BranchWithStaged> = {
   commits?: Map<Hash, Commit>;
@@ -330,4 +345,75 @@ export function findKnowledgeDB(
   const diffs = parseEvents(sorted, myself);
 
   return diffs.reduce((rdx, diff) => applyDiff(rdx, diff), newDB());
+}
+
+export function findNodes(events: List<Event>): Map<string, KnowNode> {
+  const sorted = sortEvents(
+    events.filter((event) => event.kind === KIND_KNOWLEDGE_NODE)
+  );
+  // use reduce in case of duplicate nodes, the newer version wins
+  return sorted.reduce((rdx, event) => {
+    const id = findTag(event, "d");
+    if (!id) {
+      return rdx;
+    }
+    return rdx.set(id, {
+      id: `${event.pubkey}:${id}`,
+      text: event.content,
+    });
+  }, Map<string, KnowNode>());
+}
+
+export function findRelations(events: List<Event>): Map<string, Relations> {
+  const sorted = sortEvents(
+    events.filter((event) => event.kind === KIND_KNOWLEDGE_LIST)
+  );
+  return sorted.reduce((rdx, event) => {
+    const id = findTag(event, "d");
+    if (!id) {
+      return rdx;
+    }
+    const relations = jsonToRelations(
+      JSON.parse(event.content) as Serializable
+    );
+    if (!relations) {
+      return rdx;
+    }
+    return rdx.set(id, {
+      ...relations,
+      id: `${event.pubkey}:${id}`,
+    });
+  }, Map<string, Relations>());
+}
+
+type Workspaces = {
+  workspaces: List<ID>;
+  activeWorkspace: ID;
+};
+
+export function findWorkspaces(events: List<Event>): Workspaces | undefined {
+  const workspaceEvent = getMostRecentReplacableEvent(
+    events.filter((event) => event.kind === KIND_WORKSPACES)
+  );
+  if (workspaceEvent === undefined) {
+    return undefined;
+  }
+  const parsed = JSON.parse(workspaceEvent.content);
+  const workspaces = List<ID>(parsed.w);
+  const activeWorkspace = parsed.a;
+  console.log(">> ws event", workspaceEvent.content);
+  return {
+    workspaces,
+    activeWorkspace,
+  };
+}
+
+export function findViews(events: List<Event>): Views {
+  const viewEvent = getMostRecentReplacableEvent(
+    events.filter((event) => event.kind === KIND_VIEWS)
+  );
+  if (viewEvent === undefined) {
+    return Map<string, View>();
+  }
+  return jsonToViews(JSON.parse(viewEvent.content) as Serializable);
 }

@@ -4,12 +4,6 @@ import MarkdownIt from "markdown-it";
 import Immutable from "immutable";
 
 import { newNode, addRelationToRelations } from "../connections";
-import {
-  addToBranch,
-  DEFAULT_BRANCH_NAME,
-  getNode,
-  newRepo,
-} from "../knowledge";
 
 /* eslint-disable functional/immutable-data */
 function convertToPlainText(html: string): string {

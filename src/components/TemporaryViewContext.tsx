@@ -10,7 +10,6 @@ import {
   useRelationIndex,
 } from "../ViewContext";
 import { useGetNodeText } from "../KnowledgeDataContext";
-import { getNode } from "../knowledge";
 import { getRelations } from "../connections";
 
 type MultiSelectionState = {

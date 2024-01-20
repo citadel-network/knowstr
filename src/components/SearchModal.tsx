@@ -1,6 +1,5 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Map } from "immutable";
-import { getDefaultBranch, getNode } from "../knowledge";
 import { useGetNodeText, useKnowledgeData } from "../KnowledgeDataContext";
 import { ModalNode, ModalNodeBody, ModalNodeTitle } from "./Ui";
 import { getRelations, getSubjects } from "../connections";

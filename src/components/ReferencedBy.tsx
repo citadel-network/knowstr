@@ -1,7 +1,6 @@
 import React from "react";
 import { Droppable } from "react-beautiful-dnd";
 import { getRelations, getSubjects } from "../connections";
-import { getNode } from "../knowledge";
 import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
 import {
   getNodeFromView,

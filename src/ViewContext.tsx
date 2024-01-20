@@ -4,7 +4,7 @@ import { v4 } from "uuid";
 import { getRelations, getSubjects, isRemote, splitID } from "./connections";
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
-import { Plan, planUpdateRelations, planUpdateViews } from "./planner";
+import { Plan, planUpsertRelations, planUpdateViews } from "./planner";
 
 export type ViewPath = {
   root: string;
@@ -120,7 +120,7 @@ export function getDefaultView(
   };
 }
 
-function getNodeFromID(
+export function getNodeFromID(
   knowledgeDBs: KnowledgeDBs,
   id: ID,
   myself: PublicKey
@@ -431,7 +431,7 @@ export function updateRelations(
     : plan;
 
   const updatedRelations = modify(relations, { view: nodeView });
-  return planUpdateRelations(planWithUpdatedView, updatedRelations);
+  return planUpsertRelations(planWithUpdatedView, updatedRelations);
 }
 
 /*
@@ -479,6 +479,7 @@ function createUpdatableRepo(
     view,
   ];
 }
+ */
 
 export function updateNode(
   r: Repos,
@@ -501,7 +502,6 @@ export function updateNode(
     views,
   };
 }
-   */
 
 /*
  * input for example

@@ -16,7 +16,6 @@ import {
   useDeselectAllInView,
   useTemporaryView,
 } from "./TemporaryViewContext";
-import { getNode } from "../knowledge";
 import { getRelations } from "../connections";
 import { getLevels, useIsOpenInFullScreen } from "./Node";
 

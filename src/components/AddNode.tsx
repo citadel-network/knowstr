@@ -3,13 +3,6 @@ import ReactQuill from "react-quill";
 import { useMediaQuery } from "react-responsive";
 import { matchPath, useLocation, useParams } from "react-router-dom";
 import {
-  branchPathToString,
-  ensureLocalBranch,
-  getDefaultBranch,
-  getNode,
-  newRepo,
-} from "../knowledge";
-import {
   shorten,
   useUpdateKnowledge,
   useKnowledgeData,
@@ -17,7 +10,6 @@ import {
 } from "../KnowledgeDataContext";
 import { addRelationToRelations, newNode } from "../connections";
 import {
-  updateNode,
   useIsAddToNode,
   useParentRepo,
   useNode,

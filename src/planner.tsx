@@ -1,20 +1,29 @@
 import React from "react";
 import { Map, List } from "immutable";
 import { Event, getPublicKey } from "nostr-tools";
+import { nodeModuleNameResolver } from "typescript";
 import { useData } from "./DataContext";
 import { execute } from "./executor";
 
 import { useApis } from "./Apis";
-import { Serializable, diffToJSON, viewsToJSON } from "./serializer";
+import {
+  Serializable,
+  diffToJSON,
+  relationsToJSON,
+  viewsToJSON,
+} from "./serializer";
 import {
   KIND_KNOWLEDGE,
   KIND_KNOWLEDGE_LIST,
+  KIND_KNOWLEDGE_NODE,
   KIND_REPUTATIONS,
   KIND_VIEWS,
+  KIND_WORKSPACES,
   finalizeEvent,
 } from "./nostr";
 import { KnowledgeDiff, RepoDiff } from "./knowledgeEvents";
 import { newDB } from "./knowledge";
+import { shortID } from "./connections";
 
 type Context = (plan: Plan) => Promise<void>;
 
@@ -200,7 +209,7 @@ export function planEnsurePrivateContact(
       });
 }
 
-export function planUpdateRelations(plan: Plan, relations: Relations): Plan {
+export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
   const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   const updatedRelations = userDB.relations.set(relations.id, relations);
   const updatedDB = {
@@ -212,8 +221,8 @@ export function planUpdateRelations(plan: Plan, relations: Relations): Plan {
       kind: KIND_KNOWLEDGE_LIST,
       pubkey: plan.user.publicKey,
       created_at: Math.floor(Date.now() / 1000),
-      tags: [["d", relations.id]],
-      content: JSON.stringify(relations),
+      tags: [["d", shortID(relations.id)]],
+      content: JSON.stringify(relationsToJSON(relations)),
     },
     plan.user.privateKey
   );
@@ -221,6 +230,30 @@ export function planUpdateRelations(plan: Plan, relations: Relations): Plan {
     ...plan,
     knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, updatedDB),
     publishEvents: plan.publishEvents.push(updateRelationsEvent),
+  };
+}
+
+export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
+  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const updatedNodes = userDB.nodes.set(shortID(node.id), node);
+  const updatedDB = {
+    ...userDB,
+    nodes: updatedNodes,
+  };
+  const updateNodeEvent = finalizeEvent(
+    {
+      kind: KIND_KNOWLEDGE_NODE,
+      pubkey: plan.user.publicKey,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [["d", shortID(node.id)]],
+      content: node.text,
+    },
+    plan.user.privateKey
+  );
+  return {
+    ...plan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, updatedDB),
+    publishEvents: plan.publishEvents.push(updateNodeEvent),
   };
 }
 
@@ -236,7 +269,7 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
       pubkey: plan.user.publicKey,
       created_at: Math.floor(Date.now() / 1000),
       tags: [],
-      content: JSON.stringify(viewsToJSON(views, plan.user.publicKey)),
+      content: JSON.stringify(viewsToJSON(views)),
     },
     plan.user.privateKey
   );
@@ -247,5 +280,36 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
       views,
     }),
     publishEvents: publishEvents.push(writeViewEvent),
+  };
+}
+
+export function planUpdateWorkspaces(
+  plan: Plan,
+  workspaces: List<ID>,
+  activeWorkspace: ID
+): Plan {
+  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const serialized = {
+    w: workspaces.toArray(),
+    a: activeWorkspace,
+  };
+  const writeWorkspacesEvent = finalizeEvent(
+    {
+      kind: KIND_WORKSPACES,
+      pubkey: getPublicKey(plan.user.privateKey),
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: JSON.stringify(serialized),
+    },
+    plan.user.privateKey
+  );
+  return {
+    ...plan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, {
+      ...userDB,
+      workspaces,
+      activeWorkspace,
+    }),
+    publishEvents: plan.publishEvents.push(writeWorkspacesEvent),
   };
 }

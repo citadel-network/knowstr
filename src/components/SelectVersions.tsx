@@ -7,20 +7,6 @@ import {
   useUpdateKnowledge,
 } from "../KnowledgeDataContext";
 import {
-  describeDiff,
-  hasCommits,
-  branchPathToString,
-  getCommitHash,
-  DEFAULT_BRANCH_NAME,
-  NO_CHANGES,
-  isBranchEqual,
-  mergeIntoDefault,
-  changesSince,
-  getCommitHashFromBranchPath,
-  getBranch,
-  getNode,
-} from "../knowledge";
-import {
   deleteChildViews,
   getNodeFromView,
   updateView,

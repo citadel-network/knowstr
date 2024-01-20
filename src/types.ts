@@ -117,5 +117,7 @@ declare global {
     nodes: Map<ID, KnowNode>;
     relations: Map<ID, Relations>;
     views: Views;
+    workspaces: List<ID>;
+    activeWorkspace: ID;
   };
 }

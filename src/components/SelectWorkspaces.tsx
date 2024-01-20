@@ -14,8 +14,9 @@ import {
   useKnowledgeData,
   useUpdateKnowledge,
 } from "../KnowledgeDataContext";
-import { getNode, newRepo } from "../knowledge";
-import { newNode } from "../connections";
+import { isIDRemote, newNode, splitID } from "../connections";
+import { useData } from "../DataContext";
+import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
 
 type NewWorkspaceProps = {
   onHide: () => void;
@@ -23,8 +24,7 @@ type NewWorkspaceProps = {
 
 function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   const navigate = useNavigate();
-  const { repos, views } = useKnowledgeData();
-  const updateKnowledge = useUpdateKnowledge();
+  const { createPlan, executePlan } = usePlanner();
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -34,13 +34,21 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
       return;
     }
     const title = (form.elements.namedItem("title") as HTMLInputElement).value;
-    const repo = newRepo(newNode(`${title}`, "WORKSPACE"));
-    updateKnowledge({
-      repos: repos.set(repo.id, repo),
-      activeWorkspace: repo.id,
-      views,
-    });
-    navigate(`/w/${repo.id}`);
+    const node = newNode(title);
+    const newNodePlan = planUpsertNode(createPlan(), node);
+    // set node as active
+    const myDB = newNodePlan.knowledgeDBs.get(newNodePlan.user.publicKey);
+    if (!myDB) {
+      executePlan(newNodePlan);
+      return;
+    }
+    const setActivePlan = planUpdateWorkspaces(
+      newNodePlan,
+      myDB.workspaces.push(node.id),
+      node.id
+    );
+    executePlan(setActivePlan);
+    navigate(`/w/${node.id}`);
     onHide();
   };
 
@@ -71,17 +79,24 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
 }
 
 function ListItem({ id, title }: { id: string; title: string }): JSX.Element {
+  const { user, knowledgeDBs } = useData();
+  const myDB = knowledgeDBs.get(user.publicKey);
+  const { createPlan, executePlan } = usePlanner();
   const navigate = useNavigate();
-  const updateKnowledge = useUpdateKnowledge();
+
+  const onClick = (): void => {
+    if (!myDB) {
+      return;
+    }
+    const { workspaces } = myDB;
+    executePlan(planUpdateWorkspaces(createPlan(), workspaces, id));
+    navigate(`/w/${id}`);
+  };
+
   return (
     <Dropdown.Item
       className="d-flex workspace-selection"
-      onClick={() => {
-        updateKnowledge({
-          activeWorkspace: id,
-        });
-        navigate(`/w/${id}`);
-      }}
+      onClick={onClick}
       key={id}
       tabIndex={0}
     >
@@ -93,11 +108,14 @@ function ListItem({ id, title }: { id: string; title: string }): JSX.Element {
 /* eslint-disable react/no-array-index-key */
 export function SelectWorkspaces(): JSX.Element {
   const [newWorkspace, setNewWorkspace] = useState<boolean>(false);
-  const workspaces = getWorkspaces(useKnowledgeData().repos);
+  const { knowledgeDBs, user } = useData();
+  const workspaces = getWorkspaces(knowledgeDBs, user.publicKey);
 
-  const localWorkspaces = workspaces.filter((repo) => repo.branches.size > 0);
-  const remoteOnlyWorkspaces = workspaces.filterNot((repo) =>
-    localWorkspaces.has(repo.id)
+  const localWorkspaces = workspaces.filter(
+    (node) => !isIDRemote(node.id, user.publicKey)
+  );
+  const remoteOnlyWorkspaces = workspaces.filter((node) =>
+    isIDRemote(node.id, user.publicKey)
   );
 
   return (
@@ -115,11 +133,11 @@ export function SelectWorkspaces(): JSX.Element {
         <Dropdown.Item className="project-selection">
           <div>Your Workspaces</div>
         </Dropdown.Item>
-        {localWorkspaces.toArray().map(([id, workspace]) => (
+        {localWorkspaces.toArray().map((workspace) => (
           <ListItem
-            key={id}
-            id={id}
-            title={getWorkspaceInfo(getNode(workspace)).title}
+            key={workspace.id}
+            id={workspace.id}
+            title={workspace.text}
           />
         ))}
         {remoteOnlyWorkspaces.size > 0 && (
@@ -127,11 +145,11 @@ export function SelectWorkspaces(): JSX.Element {
             <Dropdown.Item className="project-selection">
               <div>Your Contacts Workspaces</div>
             </Dropdown.Item>
-            {remoteOnlyWorkspaces.toArray().map(([id, workspace]) => (
+            {remoteOnlyWorkspaces.toArray().map((workspace) => (
               <ListItem
-                key={id}
-                id={id}
-                title={getWorkspaceInfo(getNode(workspace)).title}
+                key={workspace.id}
+                id={workspace.id}
+                title={workspace.text}
               />
             ))}
           </>

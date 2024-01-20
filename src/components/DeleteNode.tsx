@@ -3,7 +3,6 @@ import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { deleteRelationsFromNode, getRelations } from "../connections";
-import { getNode } from "../knowledge";
 import {
   getWorkspaces,
   useKnowledgeData,
@@ -93,6 +92,8 @@ export function DeleteNode({
   withCaption?: boolean;
   afterOnClick?: () => void;
 }): JSX.Element | null {
+  return null;
+  /*
   const deleteNode = useDeleteNode();
   if (!deleteNode) {
     return null;
@@ -125,4 +126,5 @@ export function DeleteNode({
       {withCaption && <span className="ms-2">Delete</span>}
     </Button>
   );
+   */
 }

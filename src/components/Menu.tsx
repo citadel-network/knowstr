@@ -10,7 +10,6 @@ import { DisconnectBtn } from "./DisconnectBtn";
 import { SelectRelations } from "./SelectRelations";
 import { ChangeColumnWidth } from "./ChangeColumnWidth";
 import { useNode, useViewKey } from "../ViewContext";
-import { getNode } from "../knowledge";
 import { IS_MOBILE } from "./responsive";
 
 export function ColumnMenu(): JSX.Element {

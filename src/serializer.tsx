@@ -74,16 +74,12 @@ function serializeBranch(
   };
 }
 
-function viewToJSON(attributes: View | null, myself: string): Serializable {
-  if (attributes === null) {
-    return null;
-  }
+function viewToJSON(attributes: View): Serializable {
   return {
     s: attributes.displaySubjects,
-    o: attributes.relationType,
+    o: attributes.relations,
     w: attributes.width,
     e: attributes.expanded !== undefined ? attributes.expanded : undefined,
-    ...serializeBranch(attributes.branch, myself),
   };
 }
 
@@ -98,16 +94,15 @@ function parseBranch(
   return [toString(remote) as PublicKey, toString(branch)];
 }
 
-function jsonToView(view: Serializable, myself: string): View | null {
-  if (view === null) {
-    return null;
+function jsonToView(view: Serializable): View | undefined {
+  if (view === null || view === undefined) {
+    return undefined;
   }
   const a = asObject(view);
   return {
     displaySubjects: asBoolean(a.s),
-    relationType: asString(a.o) as RelationType,
+    relations: asString(a.o),
     width: asNumber(a.w),
-    branch: parseBranch(a.b0, a.b1, myself),
     expanded: a.e !== undefined ? asBoolean(a.e) : undefined,
   };
 }
@@ -125,9 +120,11 @@ function jsonToRelation(relation: Serializable): Relation {
   };
 }
 
+/*
 function relationsToJSON(relations: Relations): Serializable {
   return relations.map((r) => relationToJSON(r)).toJSON();
 }
+   */
 
 export function relationsMapToJSON(
   relationsMap: Map<RelationType, Relations>
@@ -135,9 +132,11 @@ export function relationsMapToJSON(
   return relationsMap.map((r) => relationsToJSON(r)).toJSON();
 }
 
+/*
 function jsonToRelations(relations: Serializable): Relations {
   return List(asArray(relations)).map((r) => jsonToRelation(r));
 }
+   */
 
 function jsonToRelationsMap(
   relationsMap: Serializable
@@ -297,18 +296,14 @@ function jsonToRepoDiff(repoDiff: Serializable): RepoDiffWithCommits | null {
   };
 }
 
-function jsonToViews(
-  s: Serializable,
-  myself: string
-): Map<string, View | null> {
-  return Map(asObject(s)).map((v) => jsonToView(v, myself));
+export function jsonToViews(s: Serializable): Map<string, View> {
+  return Map(asObject(s))
+    .map((v) => jsonToView(v))
+    .filter((v) => v !== undefined) as Map<string, View>;
 }
 
-export function viewsToJSON(
-  views: Map<string, View | null>,
-  myself: string
-): Serializable {
-  return views.map((v) => viewToJSON(v, myself)).toJSON();
+export function viewsToJSON(views: Map<string, View>): Serializable {
+  return views.map((v) => viewToJSON(v)).toJSON();
 }
 
 function repoDiffsToJSON(
@@ -318,6 +313,29 @@ function repoDiffsToJSON(
     .map((r) => repoDiffToJSON(r))
     .filter((r) => r !== undefined)
     .toJSON();
+}
+
+export function relationsToJSON(relations: Relations): Serializable {
+  return {
+    l: relations.items.toArray(),
+    h: relations.head,
+    t: relations.type,
+  };
+}
+
+export function jsonToRelations(
+  s: Serializable | undefined
+): Omit<Relations, "id"> | undefined {
+  if (!s) {
+    return undefined;
+  }
+  const r = asObject(s);
+  const items = List(asArray(r.l)).map((i) => asString(i));
+  return {
+    items,
+    head: asString(r.h),
+    type: asString(r.t) as RelationType,
+  };
 }
 
 function jsonToRepoDiffs(

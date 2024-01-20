@@ -11,6 +11,10 @@ export function splitID(id: ID): [PublicKey | undefined, string] {
   return [split[0] as PublicKey, split.slice(1).join(":")];
 }
 
+export function shortID(id: ID): string {
+  return splitID(id)[1];
+}
+
 export function getRelations(
   knowledgeDBs: KnowledgeDBs,
   relationID: ID | undefined,
@@ -60,6 +64,10 @@ export function isRemote(
   myself: PublicKey
 ): boolean {
   return remote !== undefined && remote !== myself;
+}
+
+export function isIDRemote(id: ID, myself: PublicKey): boolean {
+  return isRemote(splitID(id)[0], myself);
 }
 
 export function moveRelations(

@@ -9,9 +9,11 @@ export const KIND_REPUTATIONS = 11080;
 
 export const KIND_KNOWLEDGE = 7871;
 
-export const KIND_VIEWS = 11090;
+export const KIND_VIEWS = 11074;
+export const KIND_WORKSPACES = 11075;
 
 export const KIND_KNOWLEDGE_LIST = 34750;
+export const KIND_KNOWLEDGE_NODE = 34751;
 
 export const KIND_RELAY_METADATA_EVENT = 10002;
 
@@ -40,7 +42,8 @@ export async function publishEvent(
       ? {
           ...event,
           // Increase timestamp by one to make sure it's newer
-          created_at: lastPublished + 1,
+          // TODO: modified date changes signature, lol
+          created_at: lastPublished + 0,
         }
       : event;
   if (modifiedDateEvent.created_at > lastPublished) {
@@ -54,7 +57,14 @@ export async function publishEvent(
   const failures = results.filter((res) => res.status === "rejected");
   if (failures.length === writeRelayUrls.length) {
     // Reject only when all have failed
-    throw new Error(`Failed to publish on: ${failures.join(".")}`);
+    failures.map((failure) => console.error(failure, event));
+    throw new Error(
+      `Failed to publish on: ${failures
+        .map((failure) => failure.status)
+        .join(".")}`
+    );
+  } else {
+    console.log(">> succesful sent", event);
   }
 }
 

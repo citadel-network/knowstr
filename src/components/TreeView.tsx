@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import { List } from "immutable";
 import { Droppable } from "react-beautiful-dnd";
-import { branchPathToString, getNode } from "../knowledge";
 import { useGetNodeText, useKnowledgeData } from "../KnowledgeDataContext";
 import {
   useNode,

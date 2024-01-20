@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import { List } from "immutable";
 import { useData } from "./DataContext";
 import { usePlanner, planSetKnowledgeData } from "./planner";
 import {
@@ -8,16 +9,14 @@ import {
   compareKnowledgeDB,
   mergeKnowledgeData,
 } from "./knowledgeEvents";
-import {
-  getNode,
-  newDB,
-  commitAllBranches,
-  getDefaultBranch,
-  newRepo,
-} from "./knowledge";
+import { newDB } from "./knowledge";
 
-import { ViewContextProvider } from "./ViewContext";
-import { newNode } from "./connections";
+import {
+  ViewContextProvider,
+  getNodeFromView,
+  getNodeFromID,
+} from "./ViewContext";
+import { newNode, shortID } from "./connections";
 
 type Context = {
   data: KnowledgeData;
@@ -46,8 +45,19 @@ export function useKnowledgeData(): KnowledgeData {
   return getDataContextOrThrow().data;
 }
 
-export function getWorkspaces(repos: Repos): Repos {
-  return repos.filter((repo) => getNode(repo).nodeType === "WORKSPACE");
+export function getWorkspaces(
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey
+): List<KnowNode> {
+  const myDB = knowledgeDBs.get(myself, newDB());
+  const myWorkspaces = myDB.workspaces.map((id) => myDB.nodes.get(shortID(id)));
+  return knowledgeDBs
+    .filter((db, key) => key !== myself)
+    .reduce((rdx, db) => {
+      const workspaces = db.workspaces.map((id) => db.nodes.get(shortID(id)));
+      return rdx.merge(workspaces);
+    }, myWorkspaces)
+    .filter((n) => n !== undefined) as List<KnowNode>;
 }
 
 function getWorkspaceRepo(knowledgeData: KnowledgeData): Repo | undefined {
@@ -142,20 +152,17 @@ type WorkspaceData = {
 
 // TODO: what if this is new?
 export function useWorkspace(): WorkspaceData {
-  const knowledgeData = useKnowledgeData();
-  const workspaceRepo = getWorkspaceRepo(knowledgeData);
-  const workspaceBranch = selectedWorkspaceBranch(workspaceRepo);
-  if (!workspaceRepo || !workspaceBranch) {
+  const { knowledgeDBs, user } = useData();
+  const myDB = knowledgeDBs.get(user.publicKey, newDB());
+  const { activeWorkspace } = myDB;
+  const node = getNodeFromID(knowledgeDBs, activeWorkspace, user.publicKey);
+  if (!node) {
     return {
       title: "New Workspace",
     };
   }
-
-  const workspaceNode = getNode(workspaceRepo, workspaceBranch);
-
-  const { title } = getWorkspaceInfo(workspaceNode);
   return {
-    title,
+    title: node.text,
   };
 }
 

@@ -1,7 +1,6 @@
 import React from "react";
 import { List } from "immutable";
 import { useLocation, useParams } from "react-router-dom";
-import { getBranch } from "../knowledge";
 import { OverwriteKnowledgeDataContext } from "../KnowledgeDataContext";
 import {
   getDefaultView,

@@ -12,12 +12,24 @@ import { Event } from "nostr-tools";
 import { DataContextProvider } from "./DataContext";
 import { KnowledgeDataProvider } from "./KnowledgeDataContext";
 import { findContacts } from "./contacts";
-import { DEFAULT_RELAYS, KIND_KNOWLEDGE, KIND_REPUTATIONS } from "./nostr";
+import {
+  DEFAULT_RELAYS,
+  KIND_KNOWLEDGE,
+  KIND_KNOWLEDGE_NODE,
+  KIND_REPUTATIONS,
+  KIND_WORKSPACES,
+} from "./nostr";
 import { useApis } from "./Apis";
-import { findKnowledgeDB } from "./knowledgeEvents";
+import {
+  findNodes,
+  findRelations,
+  findViews,
+  findWorkspaces,
+} from "./knowledgeEvents";
 import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
-import { PlanningContextProvider } from "./planner";
+import { PlanningContextProvider, planUpdateWorkspaces } from "./planner";
+import { ViewContextProvider } from "./ViewContext";
 
 type DataProps = {
   user: KeyPair;
@@ -36,14 +48,22 @@ function createContactsEventsQueries(): GroupedByAuthorFilter {
   };
 }
 
-function processEventsByAuthor(
-  authorEvents: List<Event>,
-  author: PublicKey,
-  user: KeyPair
-): ProcessedEvents {
+function processEventsByAuthor(authorEvents: List<Event>): ProcessedEvents {
   const settings = findSettings(authorEvents);
   const contacts = findContacts(authorEvents);
-  const knowledgeDB = findKnowledgeDB(authorEvents, user.publicKey);
+  const nodes = findNodes(authorEvents);
+  const relations = findRelations(authorEvents);
+  const workspaces = findWorkspaces(authorEvents);
+  const views = findViews(authorEvents);
+  const knowledgeDB = {
+    nodes,
+    relations,
+    workspaces: workspaces ? workspaces.workspaces : List<ID>(),
+    activeWorkspace: workspaces
+      ? workspaces.activeWorkspace
+      : "my-first-workspace",
+    views,
+  };
   return {
     settings,
     contacts,
@@ -52,8 +72,7 @@ function processEventsByAuthor(
 }
 
 function useEventProcessor(
-  events: Map<string, Event>,
-  user: KeyPair
+  events: Map<string, Event>
 ): Map<PublicKey, ProcessedEvents> {
   const groupedByAuthor = events.groupBy((e) => e.pubkey as PublicKey);
   const sorted = groupedByAuthor.map((authorEvents) =>
@@ -61,9 +80,39 @@ function useEventProcessor(
   );
   return Map<PublicKey, ProcessedEvents>(
     sorted.toArray().map(([author, authorEvents]) => {
-      return [author, processEventsByAuthor(authorEvents, author, user)];
+      return [author, processEventsByAuthor(authorEvents)];
     })
   );
+}
+
+function createDefaultEvents(user: KeyPair): Map<string, Event> {
+  const serialized = {
+    w: ["my-first-workspace"],
+    a: "my-first-workspace",
+  };
+  const createWorkspaceNodeEvent = {
+    id: "createworkspace",
+    kind: KIND_KNOWLEDGE_NODE,
+    pubkey: user.publicKey,
+    created_at: 0,
+    tags: [["d", "my-first-workspace"]],
+    content: "Satoshis Workspace",
+    sig: "",
+  };
+
+  const writeWorkspacesEvent = {
+    id: "writeworkspaces",
+    kind: KIND_WORKSPACES,
+    pubkey: user.publicKey,
+    created_at: 0,
+    tags: [],
+    content: JSON.stringify(serialized),
+    sig: "",
+  };
+  return Map<Event<number>>({
+    [createWorkspaceNodeEvent.id]: createWorkspaceNodeEvent,
+    [writeWorkspacesEvent.id]: writeWorkspacesEvent,
+  });
 }
 
 function Data({ user, children }: DataProps): JSX.Element {
@@ -87,8 +136,10 @@ function Data({ user, children }: DataProps): JSX.Element {
     ],
     { readFromRelays }
   );
-  const sentEvents = sentEventsFromQuery.merge(newEvents);
-  const processedEvents = useEventProcessor(sentEvents, user);
+  const sentEvents = createDefaultEvents(user).merge(
+    sentEventsFromQuery.merge(newEvents)
+  );
+  const processedEvents = useEventProcessor(sentEvents);
   const myProcessedEvents = processedEvents.get(myPublicKey, {
     contacts: Map<PublicKey, Contact>(),
     settings: DEFAULT_SETTINGS,
@@ -107,7 +158,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     (rdx, result) => rdx.merge(result.events),
     Map<string, Event>()
   );
-  const contactsData = useEventProcessor(contactsEvents, user);
+  const contactsData = useEventProcessor(contactsEvents);
   const contactsOfContacts = contactsData.reduce((coc, data, contact) => {
     return data.contacts.reduce(
       (rdx, contactOfContact, contactOfContactKey) => {
@@ -136,10 +187,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     (rdx, result) => rdx.merge(result.events),
     Map<string, Event>()
   );
-  const contactsOfContactsData = useEventProcessor(
-    contactsOfContactsEvents,
-    user
-  );
+  const contactsOfContactsData = useEventProcessor(contactsOfContactsEvents);
 
   const contactsKnowledgeDBs = contactsData.map((data) => data.knowledgeDB);
   const contactsOfContactsKnowledgeDBs = contactsOfContactsData.map(
@@ -149,9 +197,10 @@ function Data({ user, children }: DataProps): JSX.Element {
   if (!sentEventsEose) {
     return <div className="loading" aria-label="loading" />;
   }
+  const myDB = processedEvents.get(myPublicKey)?.knowledgeDB || newDB();
 
   const knowledgeDBs = Map<PublicKey, KnowledgeData>({
-    [myPublicKey]: processedEvents.get(myPublicKey)?.knowledgeDB || newDB(),
+    [myPublicKey]: myDB,
   })
     .merge(contactsOfContactsKnowledgeDBs)
     .merge(contactsKnowledgeDBs);
@@ -171,7 +220,9 @@ function Data({ user, children }: DataProps): JSX.Element {
       knowledgeDBs={knowledgeDBs}
     >
       <PlanningContextProvider addNewEvents={addNewEvents}>
-        <KnowledgeDataProvider>{children}</KnowledgeDataProvider>
+        <ViewContextProvider root={myDB.activeWorkspace}>
+          {children}
+        </ViewContextProvider>
       </PlanningContextProvider>
     </DataContextProvider>
   );
