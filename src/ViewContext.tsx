@@ -95,19 +95,19 @@ export function getAvailableRelationsForNode(
     .filter((r) => r.head === id)
     .toList();
 
-  const preferredRemoterelations: List<Relations> = remote
-    ? knowledgeDBs
-        .get(remote, newDB())
-        .relations.filter((r) => r.head === id)
-        .toList()
-    : List<Relations>();
+  const preferredRemoterelations: List<Relations> =
+    remote && isRemote(remote, myself)
+      ? knowledgeDBs
+          .get(remote, newDB())
+          .relations.filter((r) => r.head === id)
+          .toList()
+      : List<Relations>();
   const otherRelations: List<Relations> = knowledgeDBs
     .filter((_, k) => k !== myself && k !== remote)
     .map((db) => db.relations.filter((r) => r.head === id).toList())
     .toList()
     .flatten(1) as List<Relations>;
-  return relations;
-  // return relations.concat(preferredRemoterelations).concat(otherRelations);
+  return relations.concat(preferredRemoterelations).concat(otherRelations);
 }
 
 function getDefaultRelationForNode(
@@ -145,7 +145,7 @@ function getDefaultRelationForNode(
 }
 
 export function getDefaultView(
-  id: ID,
+  id: LongID,
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey
 ): View {

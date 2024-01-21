@@ -15,8 +15,10 @@ import { findContacts } from "./contacts";
 import {
   DEFAULT_RELAYS,
   KIND_KNOWLEDGE,
+  KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_REPUTATIONS,
+  KIND_VIEWS,
   KIND_WORKSPACES,
 } from "./nostr";
 import { useApis } from "./Apis";
@@ -44,7 +46,12 @@ type ProcessedEvents = {
 
 function createContactsEventsQueries(): GroupedByAuthorFilter {
   return {
-    kinds: [KIND_REPUTATIONS, KIND_KNOWLEDGE],
+    kinds: [
+      KIND_REPUTATIONS,
+      KIND_WORKSPACES,
+      KIND_KNOWLEDGE_LIST,
+      KIND_KNOWLEDGE_NODE,
+    ],
   };
 }
 
@@ -58,7 +65,7 @@ function processEventsByAuthor(authorEvents: List<Event>): ProcessedEvents {
   const knowledgeDB = {
     nodes,
     relations,
-    workspaces: workspaces ? workspaces.workspaces : List<ID>(),
+    workspaces: workspaces ? workspaces.workspaces : List<LongID>(),
     activeWorkspace: workspaces
       ? workspaces.activeWorkspace
       : "my-first-workspace",
@@ -205,7 +212,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     .merge(contactsOfContactsKnowledgeDBs)
     .merge(contactsKnowledgeDBs);
 
-  const addNewEvents = (events: Map<string, Event>) => {
+  const addNewEvents = (events: Map<string, Event>): void => {
     setNewEvents((prev) => prev.merge(events));
   };
 
