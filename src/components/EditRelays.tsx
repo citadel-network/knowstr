@@ -216,7 +216,7 @@ export function EditRelays(): JSX.Element {
       (newrel) => !relays.some((r) => r.url === newrel.url)
     );
     if (newRelays.length > 0) {
-      await republishEvents(relayPool, sentEvents, newRelays, user);
+      await republishEvents(relayPool, sentEvents, newRelays);
     }
     navigate("/");
   };

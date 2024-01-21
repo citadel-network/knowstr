@@ -2,13 +2,8 @@ import React, { useEffect } from "react";
 import ReactQuill from "react-quill";
 import { useMediaQuery } from "react-responsive";
 import { matchPath, useLocation, useParams } from "react-router-dom";
-import {
-  shorten,
-  useUpdateKnowledge,
-  useKnowledgeData,
-  useGetNodeText,
-} from "../KnowledgeDataContext";
-import { addRelationToRelations, newNode } from "../connections";
+import { shorten } from "../KnowledgeDataContext";
+import { newNode } from "../connections";
 import {
   useIsAddToNode,
   useParentNode,
@@ -58,12 +53,14 @@ function AddNodeButton({
 }
 
 function SearchButton({ onClick }: { onClick: () => void }): JSX.Element {
+  const [node] = useNode();
+  const ariaLabel = node ? `search and attach to ${node.text}` : "search";
   return (
     <button
       className="btn btn-borderless p-0"
       type="button"
       onClick={onClick}
-      aria-label="search"
+      aria-label={ariaLabel}
     >
       <span className="simple-icon-magnifier" />
       <span className="visually-hidden">Search</span>
@@ -268,13 +265,12 @@ export function AddNodeToNode(): JSX.Element | null {
   const vContext = useViewPath();
   const { createPlan, executePlan } = usePlanner();
   const viewContext = isAddToNode ? getParentView(vContext) : vContext;
-  const [node, view] = isAddToNode ? useParentNode() : useNode();
+  const [node] = isAddToNode ? useParentNode() : useNode();
   if (!node || !viewContext) {
     return null;
   }
 
   const onAddNode = (plan: Plan, nodeID: LongID): void => {
-    console.log(">> adding that node", isAddToNode);
     const updateRelationsPlan = upsertRelations(
       plan,
       viewContext,
@@ -287,60 +283,10 @@ export function AddNodeToNode(): JSX.Element | null {
   };
 
   const onCreateNewNode = (text: string): void => {
-    console.log("creating new node");
     const plan = createPlan();
     const n = newNode(text, plan.user.publicKey);
     onAddNode(planUpsertNode(plan, n), n.id);
   };
-
-  /*
-  const onCreateNewNode = (
-    text: string,
-    nodeType: NodeType,
-    relationType?: RelationType
-  ): void => {
-    const node = newNode(text, nodeType);
-    const toAdd = newRepo(node);
-    upsertRepos(
-      updateNode(repos.set(toAdd.id, toAdd), views, viewContext, (n, ctx) =>
-        addRelationToRelations(
-          n,
-          toAdd.id,
-          relationType || ctx.view.relationType
-        )
-      )
-    );
-  };
-
-  const onAddExistingNode = (
-    addRepo: Repo,
-    branch: BranchPath,
-    relationType?: RelationType
-  ): void => {
-    const defaultBranch = getDefaultBranch(addRepo);
-    // repo doesn't have any branches
-    if (!defaultBranch) {
-      return;
-    }
-    upsertRepos(
-      updateNode(
-        repos.set(
-          addRepo.id,
-          // ensure that there is a local copy of this branch
-          ensureLocalBranch(addRepo, defaultBranch)[0]
-        ),
-        views,
-        viewContext,
-        (n, ctx) =>
-          addRelationToRelations(
-            n,
-            addRepo.id,
-            relationType || ctx.view.relationType
-          )
-      )
-    );
-  };
-   */
 
   return (
     <AddNode

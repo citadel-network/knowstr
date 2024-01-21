@@ -4,7 +4,6 @@ import { List } from "immutable";
 import {
   ViewContextProvider,
   ViewPath,
-  useNode,
   useViewPath,
   viewPathToString,
 } from "../ViewContext";
@@ -12,17 +11,15 @@ import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { NavBar } from "./Navbar";
 import { DetailViewMenu } from "./Menu";
 import { AddNodeToNode } from "./AddNode";
-import { useKnowledgeData } from "../KnowledgeDataContext";
 import { ReadingStatus } from "./ReadingStatus";
 import { ModalNode, ModalNodeBody } from "./Ui";
 import { TreeView } from "./TreeView";
 import { DND } from "../dnd";
 import { FullScreenViewWrapper } from "./FullScreenViewWrapper";
 import { useLogout } from "../NostrAuthContext";
+import { useData } from "../DataContext";
 
 function DetailView(): JSX.Element | null {
-  const viewPath = useViewPath();
-  const [node, view] = useNode();
   return (
     <div className="detail-view border-bottom-light">
       <Node />
@@ -35,12 +32,12 @@ function DetailView(): JSX.Element | null {
 }
 
 function MobileViewNodes(): JSX.Element | null {
-  const { views, repos } = useKnowledgeData();
+  const { knowledgeDBs, user } = useData();
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const nodes = getNodesInTree(
-    repos,
-    views,
+    knowledgeDBs,
+    user.publicKey,
     viewPath,
     List<ViewPath>(),
     isOpenInFullScreen,

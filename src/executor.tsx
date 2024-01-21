@@ -3,7 +3,6 @@ import { List } from "immutable";
 import { getMostRecentReplacableEvent } from "citadel-commons";
 import { Plan } from "./planner";
 import {
-  KIND_KNOWLEDGE,
   KIND_RELAY_METADATA_EVENT,
   KIND_REPUTATIONS,
   KIND_SETTINGS,
@@ -55,23 +54,9 @@ function signEventsWithNewDate(
 export async function republishEvents(
   relayPool: SimplePool,
   events: List<Event>,
-  writeRelays: Relays,
-  user: KeyPair
+  writeRelays: Relays
 ): Promise<void> {
-  const lastReplacableEvents = List([
-    getLastEventByKind(events, KIND_SETTINGS),
-    getLastEventByKind(events, KIND_REPUTATIONS),
-    getLastEventByKind(events, KIND_RELAY_METADATA_EVENT),
-  ]);
-  const allMyKnowledgeEvents = events.filter(
-    (e: Event) => e.kind === KIND_KNOWLEDGE
-  );
-
-  const eventsToRepublish = signEventsWithNewDate(
-    lastReplacableEvents.concat(allMyKnowledgeEvents),
-    user
-  );
-  await publishEvents(relayPool, eventsToRepublish, writeRelays);
+  await publishEvents(relayPool, events, writeRelays);
 }
 
 export async function execute({

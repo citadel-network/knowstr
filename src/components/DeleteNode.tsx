@@ -2,20 +2,9 @@ import { Set, List } from "immutable";
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { deleteRelations, isRemote, joinID, splitID } from "../connections";
+import { getWorkspaces } from "../KnowledgeDataContext";
 import {
-  deleteRelations,
-  getRelations,
-  isRemote,
-  splitID,
-} from "../connections";
-import {
-  getWorkspaces,
-  useKnowledgeData,
-  useUpdateKnowledge,
-} from "../KnowledgeDataContext";
-import {
-  getNodeFromView,
-  updateNode,
   updateViewPathsAfterDeletion,
   upsertRelations,
   useNode,
@@ -115,20 +104,12 @@ export function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
    */
 }
 
-// Finds the next active workspace, in case there are no workspaces
-// it returns undefined and KnowledgeDataContext takes care of it
-function findNewActiveWorkspace(repos: Repos): undefined | string {
-  const newActive = getWorkspaces(repos).first(undefined);
-  return newActive ? newActive.id : undefined;
-}
-
 function useDeleteNode(): undefined | (() => void) {
   const [node] = useNode();
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const { knowledgeDBs, user } = useData();
   const myDB = knowledgeDBs.get(user.publicKey, newDB());
-  const { views } = myDB;
 
   // Can only delete my own nodes
   if (!node || isRemote(splitID(node.id)[0], user.publicKey)) {
@@ -152,7 +133,7 @@ function useDeleteNode(): undefined | (() => void) {
                 workspaces: updatedWorkspaces,
               }),
               user.publicKey
-            ).first({ id: "my-first-workspace" as LongID }).id
+            ).first({ id: joinID(user.publicKey, "my-first-workspace") }).id
           : myDB.activeWorkspace;
       executePlan(
         planUpdateWorkspaces(

@@ -17,7 +17,7 @@ type NavBarProps = {
 };
 
 export function NavBar({ logout }: NavBarProps): JSX.Element {
-  const { title } = useWorkspace();
+  const title = useWorkspace();
   const navigate = useNavigate();
   const [isError, setIsError] = useState<boolean>(false);
   const { relayPool } = useApis();

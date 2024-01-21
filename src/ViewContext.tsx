@@ -1,7 +1,6 @@
 import React from "react";
 import { List, Set, Map } from "immutable";
 import { v4 } from "uuid";
-import { Listener } from "@remix-run/router/dist/history";
 import {
   getRelations,
   getSubjects,
@@ -14,7 +13,7 @@ import { useData } from "./DataContext";
 import { Plan, planUpsertRelations, planUpdateViews } from "./planner";
 
 export type ViewPath = {
-  root: string;
+  root: LongID;
   // objects + subjects
   indexStack: List<number>;
 };
@@ -27,7 +26,7 @@ export function ViewContextProvider({
   indices,
 }: {
   children: React.ReactNode;
-  root: string;
+  root: LongID;
   indices?: List<number>;
 }): JSX.Element {
   return (
@@ -114,34 +113,8 @@ function getDefaultRelationForNode(
   id: LongID,
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey
-): ID | undefined {
+): LongID | undefined {
   return getAvailableRelationsForNode(knowledgeDBs, myself, id).first()?.id;
-
-  /*
-  // Do I have relations in my database?
-  const myRelations = knowledgeDBs.get(myself, newDB()).relations;
-  const [remote, knowID] = splitID(id);
-  const relations = myRelations.filter((r) => r.head === id);
-  // TODO: sort relations
-  if (relations.size > 0) {
-    return relations.keySeq().first("");
-  }
-  if (remote) {
-    const remoteRelations = knowledgeDBs
-      .get(remote, newDB())
-      .relations.filter((r) => r.head === id);
-    if (remoteRelations.size > 0) {
-      const relationID = remoteRelations.keySeq().first("");
-      return `${remote}/${relationID}`;
-    }
-  }
-  // TODO: Find any other relation
-  // see if there are any relations in any of the databases
-  // if not, return undefined
-  // const withRelations = knowledgeDBs.map((db, publicKey) => db.relations.filter(r => r.head === knowID));
-  //  withRelations.filter(r => r.size > 0).map(relations => relations.first());
-  return undefined;
-   */
 }
 
 export function getDefaultView(
@@ -171,7 +144,7 @@ function getKnowNode(
   knowledgeDBs: KnowledgeDBs,
   views: Views,
   myself: PublicKey,
-  rootID: ID,
+  rootID: LongID,
   root: KnowNode,
   indices: List<number>,
   startPath: ViewPath
@@ -185,7 +158,7 @@ function getKnowNode(
   }
 
   const relations = getRelations(knowledgeDBs, view.relations, myself);
-  const items = relations?.items || List<ID>();
+  const items = relations?.items || List<LongID>();
   if (index === items.size) {
     throw new Error(
       `View path index reserved for AddNodeButton. No repo found ${viewPathToString(
@@ -371,7 +344,7 @@ export function popPrefix(viewKey: string): [string, string] {
 
 export function parseViewPath(key: string): ViewPath {
   return {
-    root: key.split(":")[0],
+    root: key.split(":")[0] as LongID,
     indexStack: List<number>(
       key
         .split(":")
@@ -395,12 +368,11 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
   return views.filter((v, k) => !k.startsWith(key) || k === key);
 }
 
-function newRelations(
+export function newRelations(
   head: LongID,
   type: RelationType,
   myself: PublicKey
 ): Relations {
-  console.log(">>> creating new relations for", head);
   return {
     head,
     items: List<LongID>(),

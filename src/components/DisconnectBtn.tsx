@@ -1,8 +1,6 @@
 import React from "react";
 import { deleteRelations } from "../connections";
-import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
 import {
-  updateNode,
   useViewPath,
   useViewKey,
   updateViewPathsAfterDeletion,

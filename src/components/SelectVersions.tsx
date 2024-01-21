@@ -1,4 +1,5 @@
 import React from "react";
+/*
 import { Map, Set } from "immutable";
 import { Dropdown } from "react-bootstrap";
 import {
@@ -240,4 +241,13 @@ export function SelectVersions({
       <AcceptVersion />
     </>
   );
+}
+*/
+
+export function SelectVersions({
+  readonly,
+}: {
+  readonly?: boolean;
+}): JSX.Element | null {
+  return null;
 }

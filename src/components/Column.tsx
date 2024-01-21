@@ -2,21 +2,19 @@ import React from "react";
 import { Droppable } from "react-beautiful-dnd";
 import { Card } from "react-bootstrap";
 import { bulkAddRelations } from "../connections";
-import { useUpdateKnowledge, useKnowledgeData } from "../KnowledgeDataContext";
 import { FileDropZone } from "./FileDropZone";
 import { DraggableNode } from "./Node";
 import { ColumnMenu } from "./Menu";
 import { useDeselectAllInView } from "./TemporaryViewContext";
 import { UIColumn, UIColumnBody, UIColumnHeader } from "./Ui";
 import { RemoveColumnButton } from "./RemoveColumnButton";
-import { useViewKey, updateNode, useViewPath } from "../ViewContext";
+import { useViewKey, useViewPath } from "../ViewContext";
 import { TreeView } from "./TreeView";
 import { AddNodeToNode } from "./AddNode";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
 export function Column(): JSX.Element | null {
-  // const { repos, views } = useKnowledgeData();
   const viewContext = useViewPath();
   const deselectByPostfix = useDeselectAllInView();
   const viewKey = useViewKey();

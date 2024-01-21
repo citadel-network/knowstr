@@ -9,7 +9,6 @@ import {
   useParentNode,
   useRelationIndex,
 } from "../ViewContext";
-import { useGetNodeText } from "../KnowledgeDataContext";
 import { getRelations } from "../connections";
 import { useData } from "../DataContext";
 
@@ -201,7 +200,6 @@ export function toggleEditing(
 
 export function ToggleEditing(): JSX.Element {
   const [node] = useNode();
-  const getNodeText = useGetNodeText();
   const ariaLabel = node ? `edit ${node.text}` : undefined;
   const { editingViews, setEditingState } = useTemporaryView();
   const viewKey = useViewKey();

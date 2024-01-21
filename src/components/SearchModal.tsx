@@ -1,6 +1,5 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Map } from "immutable";
-import { useGetNodeText } from "../KnowledgeDataContext";
 import { ModalNode, ModalNodeBody, ModalNodeTitle } from "./Ui";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
@@ -39,7 +38,7 @@ function HighlightedText({
 }
 
 type SearchModalProps = {
-  onAddExistingNode: (id: ID) => void;
+  onAddExistingNode: (id: LongID) => void;
   onHide: () => void;
 };
 
@@ -52,7 +51,6 @@ function Search({
 }): JSX.Element {
   const [filter, setFilter] = useState<string>("");
   const [selectedSuggestion, setSelectedSuggestion] = useState<number>(0);
-  const getNodeText = useGetNodeText();
   const ref = React.createRef<HTMLInputElement>();
   const searchResultRef = useRef<HTMLDivElement>(null);
 

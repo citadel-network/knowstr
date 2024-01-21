@@ -10,15 +10,12 @@ import {
 import { List, Map } from "immutable";
 import { Event } from "nostr-tools";
 import { DataContextProvider } from "./DataContext";
-import { KnowledgeDataProvider } from "./KnowledgeDataContext";
 import { findContacts } from "./contacts";
 import {
   DEFAULT_RELAYS,
-  KIND_KNOWLEDGE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_REPUTATIONS,
-  KIND_VIEWS,
   KIND_WORKSPACES,
 } from "./nostr";
 import { useApis } from "./Apis";
@@ -30,8 +27,9 @@ import {
 } from "./knowledgeEvents";
 import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
-import { PlanningContextProvider, planUpdateWorkspaces } from "./planner";
+import { PlanningContextProvider } from "./planner";
 import { ViewContextProvider } from "./ViewContext";
+import { joinID } from "./connections";
 
 type DataProps = {
   user: KeyPair;
@@ -68,7 +66,7 @@ function processEventsByAuthor(authorEvents: List<Event>): ProcessedEvents {
     workspaces: workspaces ? workspaces.workspaces : List<LongID>(),
     activeWorkspace: workspaces
       ? workspaces.activeWorkspace
-      : "my-first-workspace",
+      : ("my-first-workspace" as LongID),
     views,
   };
   return {
@@ -94,8 +92,8 @@ function useEventProcessor(
 
 function createDefaultEvents(user: KeyPair): Map<string, Event> {
   const serialized = {
-    w: ["my-first-workspace"],
-    a: "my-first-workspace",
+    w: [joinID(user.publicKey, "my-first-workspace")],
+    a: joinID(user.publicKey, "my-first-workspace"),
   };
   const createWorkspaceNodeEvent = {
     id: "createworkspace",
@@ -103,7 +101,7 @@ function createDefaultEvents(user: KeyPair): Map<string, Event> {
     pubkey: user.publicKey,
     created_at: 0,
     tags: [["d", "my-first-workspace"]],
-    content: "Satoshis Workspace",
+    content: "My first Workspace",
     sig: "",
   };
 

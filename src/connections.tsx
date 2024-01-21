@@ -1,7 +1,6 @@
-import { Map, Set } from "immutable";
+import { Set } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
-import { relationsMapToJSON, relationsToJSON } from "./serializer";
 
 export function splitID(id: ID): [PublicKey | undefined, string] {
   const split = id.split("_");

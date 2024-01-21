@@ -2,10 +2,8 @@ import { Set } from "immutable";
 import React from "react";
 import { useApis } from "../Apis";
 import { deleteRelations } from "../connections";
-import { useKnowledgeData, useUpdateKnowledge } from "../KnowledgeDataContext";
 import {
   getParentView,
-  updateNode,
   useRelationIndex,
   useViewPath,
   useViewKey,
@@ -32,7 +30,7 @@ export function RemoveColumnButton(): JSX.Element | null {
     deleteLocalStorage(viewKey);
     const updateRelationsPlan = upsertRelations(
       createPlan(),
-      viewPath,
+      parentView,
       (relations) => deleteRelations(relations, Set<number>([index]))
     );
 

@@ -1,28 +1,21 @@
 import React from "react";
 import { Map, List } from "immutable";
 import { Event, getPublicKey } from "nostr-tools";
-import { nodeModuleNameResolver } from "typescript";
 import { useData } from "./DataContext";
 import { execute } from "./executor";
 
 import { useApis } from "./Apis";
-import {
-  Serializable,
-  diffToJSON,
-  relationsToJSON,
-  viewsToJSON,
-} from "./serializer";
+import { Serializable, relationsToJSON, viewsToJSON } from "./serializer";
 import {
   KIND_DELETE,
-  KIND_KNOWLEDGE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_REPUTATIONS,
   KIND_VIEWS,
   KIND_WORKSPACES,
   finalizeEvent,
+  newTimestamp,
 } from "./nostr";
-import { KnowledgeDiff, RepoDiff } from "./knowledgeEvents";
 import { newDB } from "./knowledge";
 import { shortID } from "./connections";
 
@@ -98,72 +91,6 @@ export function usePlanner(): Planner {
   };
 }
 
-const CHUNK_SIZE_CHARS = 32000;
-
-// Splits diff into chunks of max 'chunkSizeChars'. If a Repo exceeds the chunkSizeChars a diff might come out bigger.
-export function splitDiff(
-  diff: KnowledgeDiff<BranchWithCommits>,
-  myself: PublicKey,
-  chunkSizeChars: number = CHUNK_SIZE_CHARS
-): List<KnowledgeDiff<BranchWithCommits>> {
-  if (!diff.repos) {
-    return List([diff]);
-  }
-  return diff.repos.reduce(
-    (diffs, repoDiff, id) => {
-      const last = diffs.last(undefined) as KnowledgeDiff<BranchWithCommits>;
-      const withRepo = {
-        ...last,
-        repos: (last.repos
-          ? last.repos
-          : Map<string, RepoDiff<BranchWithCommits>>()
-        ).set(id, repoDiff),
-      };
-      const lastDiffIsEmpty =
-        last.activeWorkspace === undefined &&
-        last.views === undefined &&
-        last.repos === undefined;
-      if (
-        JSON.stringify(diffToJSON(withRepo, myself)).length <= chunkSizeChars ||
-        lastDiffIsEmpty
-      ) {
-        return diffs.set(diffs.size - 1, withRepo);
-      }
-      return diffs.push({
-        repos: Map<RepoDiff<BranchWithCommits> | null>({ [id]: repoDiff }),
-      });
-    },
-    List<KnowledgeDiff<BranchWithCommits>>([
-      {
-        activeWorkspace: diff.activeWorkspace,
-        views: diff.views,
-      },
-    ])
-  );
-}
-
-export function planSetKnowledgeData(
-  plan: Plan,
-  knowledgeDiff: KnowledgeDiff<BranchWithCommits>
-): Plan {
-  const events = splitDiff(knowledgeDiff, plan.user.publicKey).map((diff) => {
-    return finalizeEvent(
-      {
-        kind: KIND_KNOWLEDGE,
-        pubkey: getPublicKey(plan.user.privateKey),
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [],
-        content: JSON.stringify(diffToJSON(diff, plan.user.publicKey)),
-      },
-      plan.user.privateKey
-    );
-  });
-  return {
-    ...plan,
-    publishEvents: plan.publishEvents.concat(events),
-  };
-}
-
 function planSetContact(context: Plan, privateContact: Contact): Plan {
   const plan = {
     ...context,
@@ -186,7 +113,7 @@ function planSetContact(context: Plan, privateContact: Contact): Plan {
     {
       kind: KIND_REPUTATIONS,
       pubkey: getPublicKey(context.user.privateKey),
-      created_at: Math.floor(Date.now() / 1000),
+      created_at: newTimestamp(),
       tags: [],
       content: JSON.stringify(contactsMap.toJSON()),
     },
@@ -221,7 +148,7 @@ export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
     {
       kind: KIND_KNOWLEDGE_LIST,
       pubkey: plan.user.publicKey,
-      created_at: Math.floor(Date.now() / 1000),
+      created_at: newTimestamp(),
       tags: [["d", shortID(relations.id)]],
       content: JSON.stringify(relationsToJSON(relations)),
     },
@@ -245,7 +172,7 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
     {
       kind: KIND_KNOWLEDGE_NODE,
       pubkey: plan.user.publicKey,
-      created_at: Math.floor(Date.now() / 1000),
+      created_at: newTimestamp(),
       tags: [["d", shortID(node.id)]],
       content: node.text,
     },
@@ -263,7 +190,7 @@ export function planDeleteNode(plan: Plan, nodeID: LongID): Plan {
     {
       kind: KIND_DELETE,
       pubkey: plan.user.publicKey,
-      created_at: Math.floor(Date.now() / 1000),
+      created_at: newTimestamp(),
       tags: [
         [
           "a",
@@ -297,7 +224,7 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
     {
       kind: KIND_VIEWS,
       pubkey: plan.user.publicKey,
-      created_at: Math.floor(Date.now() / 1000),
+      created_at: newTimestamp(),
       tags: [],
       content: JSON.stringify(viewsToJSON(views)),
     },
@@ -327,7 +254,7 @@ export function planUpdateWorkspaces(
     {
       kind: KIND_WORKSPACES,
       pubkey: getPublicKey(plan.user.privateKey),
-      created_at: Math.floor(Date.now() / 1000),
+      created_at: newTimestamp(),
       tags: [],
       content: JSON.stringify(serialized),
     },

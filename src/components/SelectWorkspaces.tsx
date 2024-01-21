@@ -9,7 +9,7 @@ import {
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { getWorkspaces } from "../KnowledgeDataContext";
-import { isIDRemote, newNode, splitID } from "../connections";
+import { isIDRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
 
@@ -74,7 +74,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   );
 }
 
-function ListItem({ id, title }: { id: string; title: string }): JSX.Element {
+function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
   const { user, knowledgeDBs } = useData();
   const myDB = knowledgeDBs.get(user.publicKey);
   const { createPlan, executePlan } = usePlanner();

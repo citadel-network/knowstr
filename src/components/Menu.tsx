@@ -1,6 +1,6 @@
 import React from "react";
 import { useMediaQuery } from "react-responsive";
-import { SelectVersions, isShowVersions } from "./SelectVersions";
+import { SelectVersions } from "./SelectVersions";
 import {
   ToggleEditing,
   ToggleMultiselect,
@@ -11,6 +11,8 @@ import { SelectRelations } from "./SelectRelations";
 import { ChangeColumnWidth } from "./ChangeColumnWidth";
 import { useNode, useViewKey } from "../ViewContext";
 import { IS_MOBILE } from "./responsive";
+import { getRelations } from "../connections";
+import { useData } from "../DataContext";
 
 export function ColumnMenu(): JSX.Element {
   const temporaryView = useTemporaryView();
@@ -63,17 +65,15 @@ export function DetailViewMenu(): JSX.Element {
 }
 
 function useIsActionable(): boolean {
-  const [repo, view] = useNode();
-  if (!repo) {
+  const [node, view] = useNode();
+  const { knowledgeDBs, user } = useData();
+  if (!node) {
     return false;
   }
-  const node = getNode(repo, view.branch);
-  const relationCount = node.relations.reduce(
-    (counter, relations) => counter + relations.size,
-    0
-  );
-  const [showVersions] = isShowVersions(repo, view);
-  return relationCount > 0 || showVersions;
+  const nRelations =
+    getRelations(knowledgeDBs, view.relations, user.publicKey)?.items.size || 0;
+  // TODO: if there are other versions it's also actionable
+  return nRelations > 0; // || isShowVersions()
 }
 
 function ReadonlyMenu(): JSX.Element | null {

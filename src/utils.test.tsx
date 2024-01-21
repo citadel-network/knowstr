@@ -6,10 +6,12 @@ import {
   screen,
   waitFor,
   MatcherFunction,
+  RenderResult,
 } from "@testing-library/react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 } from "uuid";
 import { Event, matchFilter } from "nostr-tools";
+import userEvent from "@testing-library/user-event";
 import { DEFAULT_RELAYS } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
@@ -131,7 +133,7 @@ type RenderApis = Partial<TestApis> & {
 function renderApis(
   children: React.ReactElement,
   options?: RenderApis
-): TestApis {
+): TestApis & RenderResult {
   const { fileStore, relayPool } = applyApis(options);
   // If user is explicity undefined it will be overwritten, if not set default Alice is used
   const optionsWithDefaultUser = {
@@ -145,7 +147,7 @@ function renderApis(
       }
     : undefined;
   window.history.pushState({}, "", options?.initialRoute || "/");
-  render(
+  const utils = render(
     <BrowserRouter>
       <ApiProvider
         apis={{
@@ -167,10 +169,11 @@ function renderApis(
   return {
     fileStore,
     relayPool,
+    ...utils,
   };
 }
 
-type RenderViewResult = TestApis;
+type RenderViewResult = TestApis & RenderResult;
 
 function renderApp(props: RenderApis): RenderViewResult {
   const testApis = applyApis(props);
@@ -460,6 +463,19 @@ export function matchSplitText(text: string): MatcherFunction {
     return false;
   };
   return customTextMatcher;
+}
+
+export async function typeNewNode(
+  view: RenderResult,
+  text: string
+): Promise<void> {
+  userEvent.click(await screen.findByText("Add Note"));
+  /* eslint-disable testing-library/no-container */
+  /* eslint-disable testing-library/no-node-access */
+  const input = view.container.querySelector(".ql-editor") as Element;
+  userEvent.type(input, text);
+  userEvent.click(await screen.findByText("Add Note"));
+  await screen.findByText(text);
 }
 
 export { ALICE, UNAUTHENTICATED_BOB, UNAUTHENTICATED_CAROL, renderApp };

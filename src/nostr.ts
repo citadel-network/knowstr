@@ -7,8 +7,6 @@ import { Event, UnsignedEvent, SimplePool, serializeEvent } from "nostr-tools";
 export const KIND_SETTINGS = 11071;
 export const KIND_REPUTATIONS = 11080;
 
-export const KIND_KNOWLEDGE = 7871;
-
 export const KIND_VIEWS = 11074;
 export const KIND_WORKSPACES = 11075;
 
@@ -28,6 +26,13 @@ export const DEFAULT_RELAYS: Relays = [
 // eslint-disable-next-line functional/no-let
 let lastPublished = 0;
 
+export function newTimestamp(): number {
+  const ts = Math.floor(Date.now() / 1000);
+  const timestamp = ts > lastPublished ? ts : lastPublished + 1;
+  lastPublished = timestamp;
+  return timestamp;
+}
+
 export async function publishEvent(
   relayPool: SimplePool,
   event: Event,
@@ -38,20 +43,8 @@ export async function publishEvent(
   if (writeRelayUrls.length === 0) {
     throw new Error(`No relays to publish on`);
   }
-  const modifiedDateEvent =
-    event.created_at <= lastPublished
-      ? {
-          ...event,
-          // Increase timestamp by one to make sure it's newer
-          // TODO: modified date changes signature, lol
-          created_at: lastPublished + 0,
-        }
-      : event;
-  if (modifiedDateEvent.created_at > lastPublished) {
-    lastPublished = modifiedDateEvent.created_at;
-  }
   const results = await Promise.allSettled(
-    relayPool.publish(writeRelayUrls, modifiedDateEvent)
+    relayPool.publish(writeRelayUrls, event)
   );
   // If one message can be sent publish is a success,
   // otherwise it's a failure
