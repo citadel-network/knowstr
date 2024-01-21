@@ -69,7 +69,7 @@ function jsonToView(view: Serializable): View | undefined {
   const a = asObject(view);
   return {
     displaySubjects: asBoolean(a.s),
-    relations: asString(a.o) as LongID,
+    relations: a.o !== undefined ? (asString(a.o) as LongID) : undefined,
     width: asNumber(a.w),
     expanded: a.e !== undefined ? asBoolean(a.e) : undefined,
   };

@@ -1,6 +1,7 @@
 import { Set } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
+import { getNodeFromID } from "./ViewContext";
 
 export function splitID(id: ID): [PublicKey | undefined, string] {
   const split = id.split("_");
@@ -42,7 +43,9 @@ export function getSubjects(
 ): Nodes {
   const db = knowledgeDBs.get(myself, newDB());
   const relations = db.relations.filter((r) => r.items.includes(nodeID));
-  const nodes = relations.map((r) => db.nodes.get(r.head));
+  const nodes = relations.map((r) =>
+    getNodeFromID(knowledgeDBs, r.head, myself)
+  );
   return nodes.filter((n) => n !== undefined) as Nodes;
 }
 

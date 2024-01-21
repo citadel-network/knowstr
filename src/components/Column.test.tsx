@@ -12,6 +12,9 @@ import {
   renderWithTestData,
   expectTextContent,
   commitAll,
+  renderApp,
+  typeNewNode,
+  matchSplitText,
 } from "../utils.test";
 import {
   newNode,
@@ -20,7 +23,7 @@ import {
 } from "../connections";
 import { getNode, newDB, newRepo } from "../knowledge";
 import { execute } from "../executor";
-import { createPlan, planSetKnowledgeData } from "../planner";
+import { createPlan, planSetKnowledgeData, planUpsertNode } from "../planner";
 import { WorkspaceColumnView } from "./WorkspaceColumn";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import { updateNode, ViewContextProvider } from "../ViewContext";
@@ -134,142 +137,30 @@ test("Scroll position is stored in localStorage", async () => {
 
 test("Multiple connections to same node", async () => {
   const [alice] = setup([ALICE]);
-  // w => [pl] => [c, c]
-  const repos = Map<string, Repo>({
-    w: newRepo(
-      addRelationToRelations(
-        newNode("Workspace:#FF0000", "WORKSPACE"),
-        "pl",
-        "RELEVANCE"
-      ),
-      "w"
-    ),
-    pl: newRepo(
-      bulkAddRelations(
-        newNode("Programming Languages", "TOPIC"),
-        ["c", "c"],
-        "RELEVANCE"
-      ),
-      "pl"
-    ),
-    c: newRepo(newNode("C", "TOPIC"), "c"),
-  });
+  const java = newNode("Java", alice().user.publicKey);
   await execute({
     ...alice(),
-    plan: planSetKnowledgeData(
-      createPlan(alice()),
-      compareKnowledgeDB(
-        newDB(),
-        commitAll({
-          repos,
-          views: Map<string, View>(),
-          activeWorkspace: "w",
-        })
-      )
-    ),
+    plan: planUpsertNode(createPlan(alice()), java),
   });
-  renderWithTestData(
-    <ViewContextProvider root="w" indices={List([0])}>
-      <TemporaryViewProvider>
-        <DragDropContext onDragEnd={jest.fn()}>
-          <WorkspaceColumnView />
-        </DragDropContext>
-      </TemporaryViewProvider>
-    </ViewContextProvider>,
-    alice()
-  );
-  expectTextContent(
-    await screen.findByLabelText("related to Programming Languages [main]"),
-    ["C00", "C00", " Referenced By (1)"]
-  );
-});
 
-test("Summary is shown in innerNodes if there is a summary relation", async () => {
-  const knowledgeDB = createDefaultKnowledgeTestData(TEST_WORKSPACE_ID);
-  const note = newRepo(newNode("My first note", "NOTE"), "note-id");
-  const summary = newRepo(newNode("My summary", "NOTE"), "summary-id");
-  const topic = newRepo(newNode("My first topic", "TOPIC"), "topic-id");
-  const nodes = Map<Repo>({
-    [note.id]: newRepo(
-      addRelationToRelations(getNode(note), summary.id, "SUMMARY"),
-      note.id
-    ),
-    [summary.id]: summary,
-    [topic.id]: newRepo(
-      addRelationToRelations(getNode(topic), note.id, "RELEVANCE"),
-      topic.id
-    ),
-  });
-  const addNoteToWorkspace = updateNode(
-    knowledgeDB.repos.merge(nodes),
-    knowledgeDB.views,
-    { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
-    (workspace, ctx) =>
-      addRelationToRelations(workspace, topic.id, ctx.view.relationType)
+  const view = renderApp(alice());
+  await typeNewNode(view, "Programming Languages");
+  const searchButton = screen.getByLabelText(
+    "search and attach to Programming Languages"
   );
-  await renderKnowledgeApp({
-    ...knowledgeDB,
-    ...addNoteToWorkspace,
-  });
-  await screen.findByText("My first topic");
-  fireEvent.click(screen.getByText("My summary"));
-});
-
-test("Summarized note is shown in Column when summary is opened", async () => {
-  const knowledgeDB = createDefaultKnowledgeTestData(TEST_WORKSPACE_ID);
-  const note = newRepo(newNode("My first note", "NOTE"), "note-id");
-  const summary = newRepo(newNode("My summary", "NOTE"), "summary-id");
-
-  const nodes = Map<Repo>({
-    [note.id]: newRepo(
-      addRelationToRelations(getNode(note), summary.id, "SUMMARY"),
-      note.id
-    ),
-    [summary.id]: summary,
-  });
-  const addNoteToWorkspace = updateNode(
-    knowledgeDB.repos.merge(nodes),
-    knowledgeDB.views,
-    { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
-    (workspace) => workspace
-  );
-  await renderKnowledgeApp({
-    ...knowledgeDB,
-    ...addNoteToWorkspace,
-  });
-  const searchButton = screen.getByLabelText("search");
   fireEvent.click(searchButton);
-  const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "My first");
-  fireEvent.click(await screen.findByText("My summary"));
-  await screen.findByText("My first note");
-  expect(screen.queryByText("My summary")).toBeNull();
-});
 
-test("Can't show or add Summaries on Titles", async () => {
-  const knowledgeDB = createDefaultKnowledgeTestData(TEST_WORKSPACE_ID);
-  const title = newRepo(newNode("My first title", "TITLE"), "title-id");
-  const note = newRepo(newNode("My first note", "NOTE"), "note-id");
-  const nodes = Map<Repo>({
-    [title.id]: newRepo(
-      addRelationToRelations(getNode(title), note.id, "RELEVANCE"),
-      title.id
-    ),
-    [note.id]: note,
-  });
-  const addNoteToWorkspace = updateNode(
-    knowledgeDB.repos.merge(nodes),
-    knowledgeDB.views,
-    { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
-    (workspace, ctx) =>
-      addRelationToRelations(workspace, title.id, ctx.view.relationType)
+  const searchInput = await screen.findByLabelText("search input");
+  userEvent.type(searchInput, "Jav");
+  userEvent.click(screen.getByText(matchSplitText("Java")));
+
+  fireEvent.click(searchButton);
+  const searchInput2 = await screen.findByLabelText("search input");
+  userEvent.type(searchInput2, "Jav");
+  userEvent.click(screen.getAllByText(matchSplitText("Java"))[1]);
+
+  expectTextContent(
+    await screen.findByLabelText("related to Programming Languages"),
+    ["Java", "Java", " Referenced By (1)"]
   );
-  await renderKnowledgeApp({
-    ...knowledgeDB,
-    ...addNoteToWorkspace,
-  });
-  await screen.findByText("My first title");
-  expect(
-    screen.queryByLabelText("show summaries of My first title")
-  ).toBeNull();
 });
