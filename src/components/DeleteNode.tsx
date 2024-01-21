@@ -2,7 +2,12 @@ import { Set, List } from "immutable";
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { deleteRelations, getRelations } from "../connections";
+import {
+  deleteRelations,
+  getRelations,
+  isRemote,
+  splitID,
+} from "../connections";
 import {
   getWorkspaces,
   useKnowledgeData,
@@ -12,14 +17,67 @@ import {
   getNodeFromView,
   updateNode,
   updateViewPathsAfterDeletion,
+  upsertRelations,
   useNode,
+  viewPathToString,
 } from "../ViewContext";
 import { Button } from "./Ui";
+import { useData } from "../DataContext";
+import { newDB } from "../knowledge";
+import { Plan, planDeleteNode, planUpdateViews, usePlanner } from "../planner";
 
-export function disconnectNode(
-  data: { repos: Repos; views: Views },
-  toDisconnect: string
-): { repos: Repos; views: Views } {
+export function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
+  const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  return myDB.relations.reduce((rdx, relation) => {
+    const toDelete = relation.items.reduce((indices, id, idx) => {
+      if (id === toDisconnect) {
+        return indices.add(idx);
+      }
+      return indices;
+    }, Set<number>());
+    if (toDelete.size === 0) {
+      return rdx;
+    }
+    const path = {
+      root: relation.head,
+      indexStack: List<number>([]),
+    };
+    // Modify View that the correct relation type is used
+    const ephemeralView: View = {
+      displaySubjects: false,
+      relations: relation.id,
+      width: 1,
+      expanded: false,
+    };
+    const userDB = rdx.knowledgeDBs.get(rdx.user.publicKey, newDB());
+    const views = userDB.views.set(viewPathToString(path), ephemeralView);
+    const planWithDeletedRelation = upsertRelations(
+      {
+        ...rdx,
+        knowledgeDBs: rdx.knowledgeDBs.set(rdx.user.publicKey, {
+          ...userDB,
+          views,
+        }),
+      },
+      path,
+      (relations) => deleteRelations(relations, toDelete)
+    );
+    const userDBAfterDeletion = planWithDeletedRelation.knowledgeDBs.get(
+      planWithDeletedRelation.user.publicKey,
+      newDB()
+    );
+
+    const viewsAfterDeletion = updateViewPathsAfterDeletion(
+      planWithDeletedRelation.knowledgeDBs,
+      userDBAfterDeletion.views,
+      rdx.user.publicKey,
+      path,
+      toDelete
+    );
+    return planUpdateViews(planWithDeletedRelation, viewsAfterDeletion);
+  }, plan);
+
+  /*
   return data.repos.reduce((rdx, { id }) => {
     const path = {
       root: id,
@@ -48,6 +106,7 @@ export function disconnectNode(
       views: updateViewPathsAfterDeletion(d.repos, d.views, path, toDelete),
     };
   }, data);
+   */
 }
 
 // Finds the next active workspace, in case there are no workspaces
@@ -58,15 +117,29 @@ function findNewActiveWorkspace(repos: Repos): undefined | string {
 }
 
 function useDeleteNode(): undefined | (() => void) {
-  const [repo] = useNode();
+  const [node] = useNode();
   const navigate = useNavigate();
-  const { repos, activeWorkspace, views } = useKnowledgeData();
-  const updateKnowledge = useUpdateKnowledge();
-  if (!repo) {
+  const { createPlan, executePlan } = usePlanner();
+  const { knowledgeDBs, user } = useData();
+  const myDB = knowledgeDBs.get(user.publicKey, newDB());
+  const { views } = myDB;
+
+  // Can only delete my own nodes
+  if (!node || isRemote(splitID(node.id)[0], user.publicKey)) {
     return undefined;
   }
+
+  // const { repos, activeWorkspace, views } = useKnowledgeData();
+  // const updateKnowledge = useUpdateKnowledge();
   return () => {
     navigate("/");
+    const planWithDisconnectedNode = disconnectNode(createPlan(), node.id);
+    const planWithDeletedNode = planDeleteNode(
+      planWithDisconnectedNode,
+      node.id
+    );
+    executePlan(planWithDeletedNode);
+    /*
     const { repos: updatedRepos, views: updatedViews } = disconnectNode(
       { repos, views },
       repo.id
@@ -80,6 +153,7 @@ function useDeleteNode(): undefined | (() => void) {
           ? findNewActiveWorkspace(finalRepos)
           : activeWorkspace,
     });
+     */
   };
 }
 
@@ -92,8 +166,6 @@ export function DeleteNode({
   withCaption?: boolean;
   afterOnClick?: () => void;
 }): JSX.Element | null {
-  return null;
-  /*
   const deleteNode = useDeleteNode();
   if (!deleteNode) {
     return null;
@@ -126,5 +198,4 @@ export function DeleteNode({
       {withCaption && <span className="ms-2">Delete</span>}
     </Button>
   );
-   */
 }

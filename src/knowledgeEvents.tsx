@@ -6,6 +6,7 @@ import {
   sortEvents,
 } from "citadel-commons";
 import {
+  KIND_DELETE,
   KIND_KNOWLEDGE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
@@ -350,10 +351,25 @@ export function findKnowledgeDB(
 
 export function findNodes(events: List<Event>): Map<string, KnowNode> {
   const sorted = sortEvents(
-    events.filter((event) => event.kind === KIND_KNOWLEDGE_NODE)
+    events.filter(
+      (event) =>
+        event.kind === KIND_KNOWLEDGE_NODE || event.kind === KIND_DELETE
+    )
   );
   // use reduce in case of duplicate nodes, the newer version wins
   return sorted.reduce((rdx, event) => {
+    if (event.kind === KIND_DELETE) {
+      const deleteTag = findTag(event, "a");
+      if (!deleteTag) {
+        return rdx;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const [deleteKind, _, eventToDelete] = deleteTag.split(":");
+      if (deleteKind === `${KIND_KNOWLEDGE_NODE}`) {
+        return rdx.remove(eventToDelete);
+      }
+      return rdx;
+    }
     const id = findTag(event, "d");
     if (!id) {
       return rdx;

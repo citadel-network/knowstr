@@ -14,6 +14,7 @@ export const KIND_WORKSPACES = 11075;
 
 export const KIND_KNOWLEDGE_LIST = 34750;
 export const KIND_KNOWLEDGE_NODE = 34751;
+export const KIND_DELETE = 5;
 
 export const KIND_RELAY_METADATA_EVENT = 10002;
 

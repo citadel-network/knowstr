@@ -13,6 +13,7 @@ import {
   viewsToJSON,
 } from "./serializer";
 import {
+  KIND_DELETE,
   KIND_KNOWLEDGE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
@@ -257,6 +258,35 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
   };
 }
 
+export function planDeleteNode(plan: Plan, nodeID: LongID): Plan {
+  const deleteEvent = finalizeEvent(
+    {
+      kind: KIND_DELETE,
+      pubkey: plan.user.publicKey,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [
+        [
+          "a",
+          `${KIND_KNOWLEDGE_NODE}:${plan.user.publicKey}:${shortID(nodeID)}`,
+        ],
+      ],
+      content: "",
+    },
+    plan.user.privateKey
+  );
+  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const updatedNodes = userDB.nodes.remove(shortID(nodeID));
+  const updatedDB = {
+    ...userDB,
+    nodes: updatedNodes,
+  };
+  return {
+    ...plan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, updatedDB),
+    publishEvents: plan.publishEvents.push(deleteEvent),
+  };
+}
+
 export function planUpdateViews(plan: Plan, views: Views): Plan {
   const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   // filter previous events for views
@@ -286,7 +316,7 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
 export function planUpdateWorkspaces(
   plan: Plan,
   workspaces: List<ID>,
-  activeWorkspace: ID
+  activeWorkspace: LongID
 ): Plan {
   const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   const serialized = {
