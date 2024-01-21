@@ -24,7 +24,13 @@ import {
 import { Button } from "./Ui";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
-import { Plan, planDeleteNode, planUpdateViews, usePlanner } from "../planner";
+import {
+  Plan,
+  planDeleteNode,
+  planUpdateViews,
+  planUpdateWorkspaces,
+  usePlanner,
+} from "../planner";
 
 export function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
@@ -129,8 +135,6 @@ function useDeleteNode(): undefined | (() => void) {
     return undefined;
   }
 
-  // const { repos, activeWorkspace, views } = useKnowledgeData();
-  // const updateKnowledge = useUpdateKnowledge();
   return () => {
     navigate("/");
     const planWithDisconnectedNode = disconnectNode(createPlan(), node.id);
@@ -138,7 +142,29 @@ function useDeleteNode(): undefined | (() => void) {
       planWithDisconnectedNode,
       node.id
     );
-    executePlan(planWithDeletedNode);
+    if (myDB.workspaces.filter((id) => id === node.id).size > 0) {
+      const updatedWorkspaces = myDB.workspaces.filter((id) => id !== node.id);
+      const activeWorkspace =
+        myDB.activeWorkspace === node.id
+          ? getWorkspaces(
+              planWithDeletedNode.knowledgeDBs.set(user.publicKey, {
+                ...myDB,
+                workspaces: updatedWorkspaces,
+              }),
+              user.publicKey
+            ).first({ id: "my-first-workspace" as LongID }).id
+          : myDB.activeWorkspace;
+      executePlan(
+        planUpdateWorkspaces(
+          planWithDeletedNode,
+          updatedWorkspaces,
+          activeWorkspace
+        )
+      );
+    } else {
+      executePlan(planWithDeletedNode);
+    }
+
     /*
     const { repos: updatedRepos, views: updatedViews } = disconnectNode(
       { repos, views },
