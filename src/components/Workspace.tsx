@@ -5,7 +5,7 @@ import { EmptyColumn, WorkspaceColumnView } from "./WorkspaceColumn";
 
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
-import { getRelations } from "../connections";
+import { getRelations, getRelationsNoSocial } from "../connections";
 import { PushViewIndex, useNode } from "../ViewContext";
 import { DND } from "../dnd";
 import { useData } from "../DataContext";
@@ -18,7 +18,12 @@ export function WorkspaceView(): JSX.Element | null {
   }
 
   /* eslint-disable react/no-array-index-key */
-  const relations = getRelations(knowledgeDBs, view.relations, user.publicKey);
+  const relations = getRelations(
+    knowledgeDBs,
+    view.relations,
+    user.publicKey,
+    workspace.id
+  );
   const columns = relations ? relations.items.toArray() : [];
   return (
     <TemporaryViewProvider>

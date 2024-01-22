@@ -35,7 +35,12 @@ function getDropDestinationEndOfRoot(
   views: Views,
   root: ViewPath
 ): [ViewPath, number] {
-  const rootView = getNodeFromView(knowledgeDBs, views, myself, root)[1];
+  const [rootNode, rootView] = getNodeFromView(
+    knowledgeDBs,
+    views,
+    myself,
+    root
+  );
   if (!rootView) {
     // eslint-disable-next-line no-console
     console.error(
@@ -47,7 +52,12 @@ function getDropDestinationEndOfRoot(
     );
     throw new Error("Root repo doesn't exist");
   }
-  const relations = getRelations(knowledgeDBs, rootView.relations, myself);
+  const relations = getRelations(
+    knowledgeDBs,
+    rootView.relations,
+    myself,
+    rootNode.id
+  );
   return [root, relations?.items.size || 0];
 }
 

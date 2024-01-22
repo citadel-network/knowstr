@@ -253,7 +253,12 @@ export function getNodesInTree(
   if (!parentNode) {
     return ctx;
   }
-  const relations = getRelations(knowledgeDBs, parentView.relations, myself);
+  const relations = getRelations(
+    knowledgeDBs,
+    parentView.relations,
+    myself,
+    parentNode.id
+  );
   if (!relations) {
     return ctx;
   }
@@ -370,8 +375,12 @@ export function Node(): JSX.Element | null {
   const nRelations =
     parentNode &&
     parentView &&
-    getRelations(knowledgeDBs, parentView.relations, user.publicKey)?.items
-      .size;
+    getRelations(
+      knowledgeDBs,
+      parentView.relations,
+      user.publicKey,
+      parentNode.id
+    )?.items.size;
   const index = viewPath.indexStack.last();
   const isReferencedNode =
     index !== undefined && nRelations !== undefined && index >= nRelations;

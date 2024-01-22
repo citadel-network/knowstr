@@ -18,7 +18,7 @@ import {
 } from "../planner";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
-import { getRelations, splitID } from "../connections";
+import { getRelations, getRelationsNoSocial, splitID } from "../connections";
 import {
   ViewPath,
   newRelations,
@@ -151,8 +151,8 @@ export function getRelationTypeByRelationsID(
   myself: PublicKey,
   relationsID: ID
 ): [RelationType, ID] | [undefined, undefined] {
-  const relations = getRelations(knowledgeDBs, relationsID, myself);
-  if (!relations) {
+  const relations = getRelationsNoSocial(knowledgeDBs, relationsID, myself);
+  if (!relations || relationsID === "social") {
     return [undefined, undefined];
   }
   const [remote] = splitID(relationsID);
@@ -170,6 +170,9 @@ export function planCopyRelationsTypeIfNecessary(
   plan: Plan,
   relationsID: ID
 ): Plan {
+  if (relationsID === "social") {
+    return plan;
+  }
   const [relationType, relationTypeID] = getRelationTypeByRelationsID(
     plan.knowledgeDBs,
     plan.user.publicKey,

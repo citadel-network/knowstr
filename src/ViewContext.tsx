@@ -158,7 +158,7 @@ function getKnowNode(
     return [root, view];
   }
 
-  const relations = getRelations(knowledgeDBs, view.relations, myself);
+  const relations = getRelations(knowledgeDBs, view.relations, myself, rootID);
   const items = relations?.items || List<LongID>();
   if (index === items.size) {
     throw new Error(
@@ -294,7 +294,7 @@ export function useParentNode(): [KnowNode, View] | [undefined, undefined] {
 }
 
 export function useIsAddToNode(): boolean {
-  const [, parentView] = useParentNode();
+  const [parentNode, parentView] = useParentNode();
   const { user, knowledgeDBs } = useData();
   const lastIndex = useRelationIndex();
   if (!parentView || lastIndex === undefined) {
@@ -303,7 +303,8 @@ export function useIsAddToNode(): boolean {
   const parentRelations = getRelations(
     knowledgeDBs,
     parentView.relations,
-    user.publicKey
+    user.publicKey,
+    parentNode.id
   );
   // If I don't have any relations yet
   if (!parentRelations && lastIndex === 0) {
@@ -391,9 +392,14 @@ function createUpdatableRelations(
   relationTypeID: ID
 ): Relations {
   const [remote, id] = splitID(relationsID);
-  if (remote && isRemote(remote, myself)) {
-    // copy remote relations
-    const remoteRelations = knowledgeDBs.get(remote, newDB()).relations.get(id);
+  if (relationsID === "social" || (remote && isRemote(remote, myself))) {
+    // copy remote or social relations
+    const remoteRelations = getRelations(
+      knowledgeDBs,
+      relationsID,
+      myself,
+      head
+    );
     if (!remoteRelations) {
       // This should not happen
       return newRelations(head, relationTypeID, myself);
@@ -401,6 +407,7 @@ function createUpdatableRelations(
     // Make a copy
     return {
       ...remoteRelations,
+      type: remoteRelations.type === "social" ? "" : remoteRelations.type,
       id: joinID(myself, v4()),
     };
   }

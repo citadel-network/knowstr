@@ -24,7 +24,8 @@ function ReferencedBy(): JSX.Element | null {
     return null;
   }
   const nRelations =
-    getRelations(knowledgeDBs, view.relations, user.publicKey)?.items.size || 0;
+    getRelations(knowledgeDBs, view.relations, user.publicKey, node.id)?.items
+      .size || 0;
   const subjects = getSubjects(knowledgeDBs, node.id, user.publicKey);
   /* eslint-disable react/jsx-props-no-spreading */
   return (

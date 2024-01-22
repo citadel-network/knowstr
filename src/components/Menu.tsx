@@ -71,7 +71,8 @@ function useIsActionable(): boolean {
     return false;
   }
   const nRelations =
-    getRelations(knowledgeDBs, view.relations, user.publicKey)?.items.size || 0;
+    getRelations(knowledgeDBs, view.relations, user.publicKey, node.id)?.items
+      .size || 0;
   // TODO: if there are other versions it's also actionable
   return nRelations > 0; // || isShowVersions()
 }

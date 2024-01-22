@@ -105,12 +105,11 @@ function ShowRelationsButton({
     return <></>;
   }
 
-  const relations = getRelations(knowledgeDBs, id, user.publicKey);
-  const [relationType] = getRelationTypeByRelationsID(
-    knowledgeDBs,
-    user.publicKey,
-    id
-  );
+  const relations = getRelations(knowledgeDBs, id, user.publicKey, node.id);
+  const [relationType] =
+    id === "social"
+      ? [{ label: "Social", color: "black" }]
+      : getRelationTypeByRelationsID(knowledgeDBs, user.publicKey, id);
   const relationSize = relations ? relations.items.size : 0;
   const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
   const viewKeyOfAddToNode = isFirstLevelAddToNode
@@ -220,6 +219,7 @@ export function SelectRelations({
           readonly={readonly}
         />
       ))}
+      <ShowRelationsButton id="social" />
       {!readonly && <AddRelationsButton />}
     </>
   );

@@ -298,7 +298,8 @@ export function NodeSelectbox(): JSX.Element | null {
   const relations = getRelations(
     knowledgeDBs,
     parentView.relations,
-    user.publicKey
+    user.publicKey,
+    node.id
   );
   if (!relations) {
     return null;

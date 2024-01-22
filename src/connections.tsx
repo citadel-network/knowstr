@@ -1,4 +1,4 @@
-import { Set } from "immutable";
+import { List, Set } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
 import { getNodeFromID } from "./ViewContext";
@@ -19,7 +19,7 @@ export function shortID(id: ID): string {
   return splitID(id)[1];
 }
 
-export function getRelations(
+export function getRelationsNoSocial(
   knowledgeDBs: KnowledgeDBs,
   relationID: ID | undefined,
   myself: PublicKey
@@ -33,6 +33,58 @@ export function getRelations(
   }
   const res = knowledgeDBs.get(myself)?.relations.get(relationID);
   return res;
+}
+
+function getAllRelationsForNode(
+  knowledgeDB: KnowledgeData,
+  nodeID: LongID
+): Set<LongID> {
+  return knowledgeDB.relations.reduce((rdx, relations) => {
+    if (relations.head === nodeID) {
+      return rdx.merge(relations.items);
+    }
+    return rdx;
+  }, Set<LongID>());
+}
+
+export function getSocialRelations(
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
+  nodeID: LongID // for social lookup
+): Relations | undefined {
+  // Combines all items from other users we don't have in our Lists
+  const myRelationsForNode = getAllRelationsForNode(
+    knowledgeDBs.get(myself, newDB()),
+    nodeID
+  );
+
+  const otherRelationsForNode = knowledgeDBs.reduce((rdx, knowledgeDB) => {
+    return rdx.merge(getAllRelationsForNode(knowledgeDB, nodeID));
+  }, Set<LongID>());
+
+  const myShortIds = myRelationsForNode.map((id) => shortID(id)[1]);
+
+  const items = otherRelationsForNode.filter(
+    (id) => !myShortIds.has(shortID(id)[1])
+  );
+  return {
+    items: items.toList(),
+    head: nodeID,
+    id: "social" as LongID,
+    type: "social",
+  };
+}
+
+export function getRelations(
+  knowledgeDBs: KnowledgeDBs,
+  relationID: ID | undefined,
+  myself: PublicKey,
+  nodeID: LongID // for social lookup
+): Relations | undefined {
+  if (relationID === "social") {
+    return getSocialRelations(knowledgeDBs, myself, nodeID);
+  }
+  return getRelationsNoSocial(knowledgeDBs, relationID, myself);
 }
 
 // TODO: So far we only support local subjects
