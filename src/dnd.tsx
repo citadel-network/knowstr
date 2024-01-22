@@ -36,10 +36,11 @@ function getDropDestinationEndOfRoot(
   root: ViewPath
 ): [ViewPath, number] {
   const rootView = getNodeFromView(knowledgeDBs, views, myself, root)[1];
-  if (!rootView || !rootView.relations) {
+  if (!rootView) {
     // eslint-disable-next-line no-console
     console.error(
       "root node does not exist",
+      rootView,
       root,
       knowledgeDBs.toJSON(),
       views.toJSON()
@@ -47,13 +48,7 @@ function getDropDestinationEndOfRoot(
     throw new Error("Root repo doesn't exist");
   }
   const relations = getRelations(knowledgeDBs, rootView.relations, myself);
-  if (!relations) {
-    // TODO: need to handle this case by creating a new list
-    // eslint-disable-next-line no-console
-    console.error("No relations at destination", root);
-    throw new Error("No relations at path");
-  }
-  return [root, relations.items.size];
+  return [root, relations?.items.size || 0];
 }
 
 export function getDropDestinationFromTreeView(

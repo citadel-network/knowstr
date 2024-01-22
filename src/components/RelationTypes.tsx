@@ -160,7 +160,7 @@ export function getRelationTypeByRelationsID(
   const relationType = knowledgeDBs
     .get(remote || myself, newDB())
     .relationTypes.get(relationTypeID);
-  if (!relationType || !relationTypeID) {
+  if (!relationType || relationTypeID === undefined) {
     return [undefined, undefined];
   }
   return [relationType, relationTypeID];
