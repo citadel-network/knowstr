@@ -167,7 +167,11 @@ function ShowRelationsButton({
     }
   };
   const style = relationType
-    ? { backgroundColor: relationType.color, color: "white" }
+    ? {
+        backgroundColor: relationType.color,
+        borderColor: relationType.color,
+        color: "white",
+      }
     : {};
   const label = isSelected
     ? `${relationType?.label || "Unknown"} (${relationSize})`

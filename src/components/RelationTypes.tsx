@@ -19,7 +19,13 @@ import {
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { getRelations, splitID } from "../connections";
-import { newRelations, updateView, useNode, useViewPath } from "../ViewContext";
+import {
+  ViewPath,
+  newRelations,
+  updateView,
+  useNode,
+  useViewPath,
+} from "../ViewContext";
 
 export const DEFAULT_COLOR = "#027d86";
 
@@ -48,10 +54,32 @@ export type NewRelationTypeProps = {
   onHide: () => void;
 };
 
+function planAddNewRelationToNode(
+  plan: Plan,
+  nodeID: LongID,
+  relationTypeID: ID,
+  view: View,
+  viewPath: ViewPath
+): Plan {
+  const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const relations = newRelations(nodeID, relationTypeID, plan.user.publicKey);
+  const createRelationPlan = planUpsertRelations(plan, relations);
+  return planUpdateViews(
+    createRelationPlan,
+    updateView(views, viewPath, {
+      ...view,
+      relations: relations.id,
+      expanded: true,
+    })
+  );
+}
+
 export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
   const [color, setColor] = useState<string>(COLORS[0]);
   const { createPlan, executePlan } = usePlanner();
   const { user, knowledgeDBs } = useData();
+  const [node, view] = useNode();
+  const viewPath = useViewPath();
   const onSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     event.stopPropagation();
@@ -62,12 +90,23 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
     const id = v4();
     const label = (form.elements.namedItem("name") as HTMLInputElement).value;
     const myDB = knowledgeDBs.get(user.publicKey, newDB());
-    executePlan(
-      planUpdateRelationTypes(
-        createPlan(),
-        myDB.relationTypes.set(id, { color, label })
-      )
+    const updateRelationTypesPlan = planUpdateRelationTypes(
+      createPlan(),
+      myDB.relationTypes.set(id, { color, label })
     );
+    if (node && view) {
+      executePlan(
+        planAddNewRelationToNode(
+          updateRelationTypesPlan,
+          node.id,
+          id,
+          view,
+          viewPath
+        )
+      );
+    } else {
+      executePlan(updateRelationTypesPlan);
+    }
     onHide();
   };
   return (
@@ -159,7 +198,6 @@ export function AddNewRelationsToNodeItem({
 }): JSX.Element | null {
   const { knowledgeDBs, user } = useData();
   const [node, view] = useNode();
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
   const viewPath = useViewPath();
   const { createPlan, executePlan } = usePlanner();
   const relationType = getMyRelationTypes(knowledgeDBs, user.publicKey).get(
@@ -171,15 +209,12 @@ export function AddNewRelationsToNodeItem({
     if (!node) {
       throw new Error("Node not found");
     }
-    const relations = newRelations(node.id, relationTypeID, user.publicKey);
-    const createRelationPlan = planUpsertRelations(createPlan(), relations);
-    const plan = planUpdateViews(
-      createRelationPlan,
-      updateView(views, viewPath, {
-        ...view,
-        relations: relations.id,
-        expanded: true,
-      })
+    const plan = planAddNewRelationToNode(
+      createPlan(),
+      node.id,
+      relationTypeID,
+      view,
+      viewPath
     );
     executePlan(plan);
   };
