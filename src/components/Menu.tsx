@@ -25,7 +25,7 @@ export function ColumnMenu(): JSX.Element {
         <div className="vertical-line ms-2 me-2" />
         {!isMultiSelectToggled && (
           <div className="menu-layout">
-            <SelectRelations />
+            <SelectRelations alwaysOneSelected />
             <SelectVersions />
             <ToggleEditing />
           </div>
@@ -49,7 +49,7 @@ export function DetailViewMenu(): JSX.Element {
         <div className="vertical-line ms-2 me-2" />
         {!isMultiSelectToggled && (
           <div className="menu-layout">
-            <SelectRelations />
+            <SelectRelations alwaysOneSelected />
             <SelectVersions />
             <ToggleEditing />
           </div>

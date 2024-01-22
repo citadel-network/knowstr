@@ -29,19 +29,8 @@ type ShowRelationsButtonProps = {
   id: LongID;
   readonly?: boolean;
   hideWhenZero?: boolean;
+  alwaysOneSelected?: boolean;
 };
-
-enum AriaLabelsForTypes {
-  "RELEVANCE" = "relevant relations",
-  "CONTAINS" = "contained nodes",
-  "SUMMARYG" = "summaries",
-}
-
-enum IconLabelsForTypes {
-  "RELEVANCE" = "iconsminds-link",
-  "CONTAINS" = "iconsminds-inbox-full",
-  "SUMMARY" = "iconsminds-filter-2",
-}
 
 function AddRelationsButton(): JSX.Element {
   const { knowledgeDBs, user } = useData();
@@ -93,6 +82,7 @@ function ShowRelationsButton({
   id,
   readonly: ro,
   hideWhenZero,
+  alwaysOneSelected,
 }: ShowRelationsButtonProps): JSX.Element | null {
   const [node, view] = useNode();
   const { knowledgeDBs, user } = useData();
@@ -123,9 +113,6 @@ function ShowRelationsButton({
         ...viewPath,
         indexStack: viewPath.indexStack.push(relationSize),
       });
-
-  // Removed this one
-  // <span className={`${IconLabelsForTypes[type]}`} />
   if (readonly) {
     return (
       <div className="flex-start deselected">
@@ -140,8 +127,11 @@ function ShowRelationsButton({
       ? `hide ${relations?.type || "list"} items of ${node.text}`
       : `show ${relations?.type || "list"} items of ${node.text}`;
 
-  const isSelected = isExpanded && view.relations === relations?.id;
-  const className = `btn select-relation ${isSelected ? "" : "deselected"}`;
+  const isSelected =
+    (isExpanded || alwaysOneSelected) && view.relations === relations?.id;
+  const className = `btn select-relation ${
+    isSelected ? "opacity-none" : "deselected"
+  }`;
   const onChangeRelations = (newRelations: LongID, expand: boolean): void => {
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const plan = planUpdateViews(
@@ -180,20 +170,24 @@ function ShowRelationsButton({
   const label = isSelected
     ? `${relationType?.label || "Unknown"} (${relationSize})`
     : relationSize;
-  // <span className={`${IconLabelsForTypes[id]}`} />
-  return (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      className={className}
-      style={style}
-      onClick={() => {
+  const preventDeselect = isSelected && alwaysOneSelected;
+  const onClick = preventDeselect
+    ? undefined
+    : () => {
         if (view.relations === id) {
           onToggleExpanded(!isExpanded);
         } else {
           onChangeRelations(id, true);
         }
-      }}
+      };
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      className={className}
+      disabled={preventDeselect}
+      style={style}
+      onClick={onClick}
     >
       {id === "social" && <span className="iconsminds-conference" />}
       <span className="">{label}</span>
@@ -203,8 +197,10 @@ function ShowRelationsButton({
 
 export function SelectRelations({
   readonly,
+  alwaysOneSelected,
 }: {
   readonly?: boolean;
+  alwaysOneSelected?: boolean;
 }): JSX.Element | null {
   const { knowledgeDBs, user } = useData();
   const [node] = useNode();
@@ -223,9 +219,14 @@ export function SelectRelations({
           key={relation.id}
           id={relation.id}
           readonly={readonly}
+          alwaysOneSelected={alwaysOneSelected}
         />
       ))}
-      <ShowRelationsButton id={"social" as LongID} hideWhenZero />
+      <ShowRelationsButton
+        id={"social" as LongID}
+        hideWhenZero
+        alwaysOneSelected={alwaysOneSelected}
+      />
       {!readonly && <AddRelationsButton />}
     </>
   );

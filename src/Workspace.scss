@@ -823,3 +823,7 @@ $color-map: (
   width: 25px;
   height: 25px;
 }
+
+.btn:disabled.opacity-none {
+  opacity: 1;
+}
