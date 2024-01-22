@@ -57,9 +57,24 @@ export function findNodes(events: List<Event>): Map<string, KnowNode> {
 
 export function findRelations(events: List<Event>): Map<string, Relations> {
   const sorted = sortEvents(
-    events.filter((event) => event.kind === KIND_KNOWLEDGE_LIST)
+    events.filter(
+      (event) =>
+        event.kind === KIND_KNOWLEDGE_LIST || event.kind === KIND_DELETE
+    )
   );
   return sorted.reduce((rdx, event) => {
+    if (event.kind === KIND_DELETE) {
+      const deleteTag = findTag(event, "a");
+      if (!deleteTag) {
+        return rdx;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const [deleteKind, _, eventToDelete] = deleteTag.split(":");
+      if (deleteKind === `${KIND_KNOWLEDGE_LIST}`) {
+        return rdx.remove(eventToDelete);
+      }
+      return rdx;
+    }
     const id = findTag(event, "d");
     if (!id) {
       return rdx;

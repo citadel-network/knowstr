@@ -191,32 +191,48 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
   };
 }
 
-export function planDeleteNode(plan: Plan, nodeID: LongID): Plan {
+function planDelete(plan: Plan, id: LongID, kind: number): Plan {
   const deleteEvent = finalizeEvent(
     {
       kind: KIND_DELETE,
       pubkey: plan.user.publicKey,
       created_at: newTimestamp(),
-      tags: [
-        [
-          "a",
-          `${KIND_KNOWLEDGE_NODE}:${plan.user.publicKey}:${shortID(nodeID)}`,
-        ],
-      ],
+      tags: [["a", `${kind}:${plan.user.publicKey}:${shortID(id)}`]],
       content: "",
     },
     plan.user.privateKey
   );
-  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(deleteEvent),
+  };
+}
+
+export function planDeleteNode(plan: Plan, nodeID: LongID): Plan {
+  const deletePlan = planDelete(plan, nodeID, KIND_KNOWLEDGE_NODE);
+  const userDB = plan.knowledgeDBs.get(deletePlan.user.publicKey, newDB());
   const updatedNodes = userDB.nodes.remove(shortID(nodeID));
   const updatedDB = {
     ...userDB,
     nodes: updatedNodes,
   };
   return {
-    ...plan,
+    ...deletePlan,
     knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, updatedDB),
-    publishEvents: plan.publishEvents.push(deleteEvent),
+  };
+}
+
+export function planDeleteRelations(plan: Plan, relationsID: LongID): Plan {
+  const deletePlan = planDelete(plan, relationsID, KIND_KNOWLEDGE_LIST);
+  const userDB = plan.knowledgeDBs.get(deletePlan.user.publicKey, newDB());
+  const updatedRelations = userDB.relations.remove(shortID(relationsID));
+  const updatedDB = {
+    ...userDB,
+    relations: updatedRelations,
+  };
+  return {
+    ...deletePlan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, updatedDB),
   };
 }
 

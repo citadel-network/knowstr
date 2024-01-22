@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import { Dropdown, Modal } from "react-bootstrap";
+import React, { CSSProperties, useState } from "react";
+import { Dropdown } from "react-bootstrap";
 import {
+  deleteChildViews,
   getAvailableRelationsForNode,
+  getDefaultRelationForNode,
   updateView,
   useNode,
   useViewKey,
@@ -13,10 +15,10 @@ import {
   useDeselectAllInView,
   useTemporaryView,
 } from "./TemporaryViewContext";
-import { getRelations } from "../connections";
+import { getRelations, isRemote, splitID } from "../connections";
 import { getLevels, useIsOpenInFullScreen } from "./Node";
 import { useData } from "../DataContext";
-import { planUpdateViews, usePlanner } from "../planner";
+import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import { newDB } from "../knowledge";
 import {
   AddNewRelationsToNodeItem,
@@ -45,7 +47,7 @@ function AddRelationsButton(): JSX.Element {
       )}
       <Dropdown.Toggle
         as="button"
-        className="btn select-relation"
+        className="btn new-relation"
         aria-label={ariaLabel}
       >
         <span>+</span>
@@ -64,18 +66,82 @@ function AddRelationsButton(): JSX.Element {
       </Dropdown.Menu>
     </Dropdown>
   );
-  /*
+}
+
+function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
+  const { createPlan, executePlan } = usePlanner();
+  const { knowledgeDBs, user } = useData();
+  const viewPath = useViewPath();
+  const [node, view] = useNode();
+  if (!view) {
+    return null;
+  }
+
+  const onClick = (): void => {
+    const { views } = knowledgeDBs.get(user.publicKey, newDB());
+    const deleteRelationsPlan = planDeleteRelations(createPlan(), id);
+    const plan = planUpdateViews(
+      deleteRelationsPlan,
+      updateView(deleteChildViews(views, viewPath), viewPath, {
+        ...view,
+        relations: getDefaultRelationForNode(
+          node.id,
+          deleteRelationsPlan.knowledgeDBs,
+          user.publicKey
+        ),
+      })
+    );
+    executePlan(plan);
+  };
   return (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      className="btn select-relation"
-      onClick={() => {}}
-    >
-      <span className="">+</span>
-    </button>
+    <Dropdown.Item onClick={onClick}>
+      <span className="simple-icon-trash" />
+      <span className="ms-2">Delete</span>
+    </Dropdown.Item>
   );
-   */
+}
+
+function EditRelationsDropdown({
+  className,
+  style,
+}: {
+  className: string;
+  style: CSSProperties;
+}): JSX.Element | null {
+  const [node, view] = useNode();
+  const { knowledgeDBs, user } = useData();
+  if (!view || !view.relations) {
+    return null;
+  }
+
+  const isDeleteAvailable =
+    view.relations !== "social" &&
+    !isRemote(splitID(view.relations)[0], user.publicKey);
+  if (!isDeleteAvailable) {
+    return null;
+  }
+
+  const relations = getRelations(
+    knowledgeDBs,
+    view.relations,
+    user.publicKey,
+    node.id
+  );
+
+  return (
+    <Dropdown>
+      <Dropdown.Toggle
+        as="button"
+        className={className}
+        style={{ ...style, borderLeft: "1px solid white" }}
+      >
+        <span className="iconsminds-arrow-down" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
+        {isDeleteAvailable && <DeleteRelationItem id={view.relations} />}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
 }
 
 function ShowRelationsButton({
@@ -96,12 +162,12 @@ function ShowRelationsButton({
   if (!node || !view) {
     return <></>;
   }
+  const isSocial = id === "social";
 
   const relations = getRelations(knowledgeDBs, id, user.publicKey, node.id);
-  const [relationType] =
-    id === "social"
-      ? [{ label: "Social", color: "black" }]
-      : getRelationTypeByRelationsID(knowledgeDBs, user.publicKey, id);
+  const [relationType] = isSocial
+    ? [{ label: "Social", color: "black" }]
+    : getRelationTypeByRelationsID(knowledgeDBs, user.publicKey, id);
   const relationSize = relations ? relations.items.size : 0;
   if (hideWhenZero && relationSize === 0) {
     return null;
@@ -136,7 +202,7 @@ function ShowRelationsButton({
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const plan = planUpdateViews(
       createPlan(),
-      updateView(views, viewPath, {
+      updateView(deleteChildViews(views, viewPath), viewPath, {
         ...view,
         relations: newRelations,
         expanded: expand,
@@ -181,18 +247,33 @@ function ShowRelationsButton({
         }
       };
   return (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      className={className}
-      disabled={preventDeselect}
-      style={style}
-      onClick={onClick}
-    >
-      {id === "social" && <span className="iconsminds-conference" />}
-      <span className="">{label}</span>
-    </button>
+    <div className="btn-group select-relation">
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        className={className}
+        disabled={preventDeselect}
+        style={style}
+        onClick={onClick}
+      >
+        {isSocial && <span className="iconsminds-conference" />}
+        <span className="">{label}</span>
+      </button>
+      {isSelected && !isSocial && (
+        <EditRelationsDropdown className={className} style={style} />
+      )}
+    </div>
   );
+  /*
+        <button
+          type="button"
+          className={className}
+          style={style}
+          aria-label="gunter"
+        >
+          <span className="iconsminds-arrow-down" />
+        </button>
+   */
 }
 
 export function SelectRelations({

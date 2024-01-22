@@ -804,8 +804,19 @@ $color-map: (
   text-decoration: underline;
 }
 
-.select-relation {
+.select-relation .dropdown .btn {
+  border-radius: 0 35px 35px 0 !important;
+}
+
+.select-relation .btn {
+  border-radius: 35px 0px 0px 35px !important;
+}
+
+.select-relation .btn:only-child, .new-relation {
   border-radius: 35px !important;
+}
+
+.select-relation .btn, .new-relation {
   padding: 0.45rem;
   line-height: .5;
   font-size: .68rem;

@@ -110,7 +110,7 @@ export function getAvailableRelationsForNode(
   return relations.concat(preferredRemoterelations).concat(otherRelations);
 }
 
-function getDefaultRelationForNode(
+export function getDefaultRelationForNode(
   id: LongID,
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey
