@@ -28,6 +28,7 @@ import {
 type ShowRelationsButtonProps = {
   id: LongID;
   readonly?: boolean;
+  hideWhenZero?: boolean;
 };
 
 enum AriaLabelsForTypes {
@@ -91,7 +92,8 @@ function AddRelationsButton(): JSX.Element {
 function ShowRelationsButton({
   id,
   readonly: ro,
-}: ShowRelationsButtonProps): JSX.Element {
+  hideWhenZero,
+}: ShowRelationsButtonProps): JSX.Element | null {
   const [node, view] = useNode();
   const { knowledgeDBs, user } = useData();
   const { createPlan, executePlan } = usePlanner();
@@ -111,6 +113,9 @@ function ShowRelationsButton({
       ? [{ label: "Social", color: "black" }]
       : getRelationTypeByRelationsID(knowledgeDBs, user.publicKey, id);
   const relationSize = relations ? relations.items.size : 0;
+  if (hideWhenZero && relationSize === 0) {
+    return null;
+  }
   const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
   const viewKeyOfAddToNode = isFirstLevelAddToNode
     ? viewKey
@@ -190,6 +195,7 @@ function ShowRelationsButton({
         }
       }}
     >
+      {id === "social" && <span className="iconsminds-conference" />}
       <span className="">{label}</span>
     </button>
   );
@@ -219,7 +225,7 @@ export function SelectRelations({
           readonly={readonly}
         />
       ))}
-      <ShowRelationsButton id="social" />
+      <ShowRelationsButton id={"social" as LongID} hideWhenZero />
       {!readonly && <AddRelationsButton />}
     </>
   );
