@@ -626,11 +626,6 @@ body {
   justify-content: flex-start;
 }
 
-.workspace-selection-color {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-}
 
 .workspace-selection-text {
   font-family: $font;
@@ -755,7 +750,8 @@ to {
   display: grid;
   grid-auto-columns: max-content;
   grid-auto-flow: column;
-  grid-gap: 20px;
+  grid-gap: 5px;
+  overflow-y: scroll;
 }
 
 [class^="ribbon-"] {
@@ -806,4 +802,24 @@ $color-map: (
 
 .underline {
   text-decoration: underline;
+}
+
+.select-relation {
+  border-radius: 35px !important;
+  padding: 0.45rem;
+  line-height: .5;
+  font-size: .68rem;
+  min-width: 25px;
+  min-height: 25px;
+  height: 25px;
+  margin-top: 5px;
+}
+
+.relation-type-selection-color {
+  border-radius: 35px !important;
+  padding: 0.45rem;
+  line-height: .5;
+  font-size: .68rem;
+  width: 25px;
+  height: 25px;
 }

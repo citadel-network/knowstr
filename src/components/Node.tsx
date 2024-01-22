@@ -146,8 +146,8 @@ function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
 }
 
 function NodeContent(): JSX.Element {
-  const { settings } = useData();
-  const [node] = useNode();
+  const { settings, user } = useData();
+  const [node, view] = useNode();
   if (!node) {
     return <ErrorContent />;
   }

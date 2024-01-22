@@ -9,6 +9,7 @@ export const KIND_REPUTATIONS = 11080;
 
 export const KIND_VIEWS = 11074;
 export const KIND_WORKSPACES = 11075;
+export const KIND_RELATION_TYPES = 11076;
 
 export const KIND_KNOWLEDGE_LIST = 34750;
 export const KIND_KNOWLEDGE_NODE = 34751;

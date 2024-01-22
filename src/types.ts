@@ -84,8 +84,6 @@ declare global {
 
   type NodeType = "NOTE" | "TOPIC" | "URL" | "TITLE" | "QUOTE" | "WORKSPACE";
 
-  type RelationType = string & { readonly "": unique symbol };
-
   type Hash = string;
   type ID = string;
   type LongID = string & { readonly "": unique symbol };
@@ -102,7 +100,7 @@ declare global {
     items: List<LongID>;
     head: LongID;
     id: LongID;
-    type: RelationType;
+    type: ID;
   };
 
   type KnowNode = {
@@ -114,11 +112,15 @@ declare global {
 
   type Nodes = Map<ID, KnowNode>;
 
+  type RelationType = { color: string; label: string };
+  type RelationTypes = OrderedMap<ID, { color: string; label: string }>;
+
   type KnowledgeData = {
     nodes: Map<ID, KnowNode>;
     relations: Map<ID, Relations>;
     views: Views;
     workspaces: List<ID>;
     activeWorkspace: LongID;
+    relationTypes: RelationTypes;
   };
 }

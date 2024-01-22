@@ -17,10 +17,15 @@ import {
   KIND_KNOWLEDGE_NODE,
   KIND_REPUTATIONS,
   KIND_WORKSPACES,
+  KIND_RELATION_TYPES,
+  KIND_VIEWS,
+  KIND_SETTINGS,
+  KIND_DELETE,
 } from "./nostr";
 import { useApis } from "./Apis";
 import {
   findNodes,
+  findRelationTypes,
   findRelations,
   findViews,
   findWorkspaces,
@@ -42,14 +47,21 @@ type ProcessedEvents = {
   contacts: Contacts;
 };
 
+const KINDS_CONTACTS = [
+  KIND_SETTINGS,
+  KIND_REPUTATIONS,
+  KIND_WORKSPACES,
+  KIND_RELATION_TYPES,
+  KIND_KNOWLEDGE_LIST,
+  KIND_KNOWLEDGE_NODE,
+  KIND_DELETE,
+];
+
+const KINDS_MYSELF = [...KINDS_CONTACTS, KIND_VIEWS];
+
 function createContactsEventsQueries(): GroupedByAuthorFilter {
   return {
-    kinds: [
-      KIND_REPUTATIONS,
-      KIND_WORKSPACES,
-      KIND_KNOWLEDGE_LIST,
-      KIND_KNOWLEDGE_NODE,
-    ],
+    kinds: KINDS_CONTACTS,
   };
 }
 
@@ -60,6 +72,7 @@ function processEventsByAuthor(authorEvents: List<Event>): ProcessedEvents {
   const relations = findRelations(authorEvents);
   const workspaces = findWorkspaces(authorEvents);
   const views = findViews(authorEvents);
+  const relationTypes = findRelationTypes(authorEvents);
   const knowledgeDB = {
     nodes,
     relations,
@@ -68,6 +81,7 @@ function processEventsByAuthor(authorEvents: List<Event>): ProcessedEvents {
       ? workspaces.activeWorkspace
       : ("my-first-workspace" as LongID),
     views,
+    relationTypes,
   };
   return {
     settings,
@@ -137,6 +151,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     [
       {
         authors: [myPublicKey],
+        kinds: KINDS_MYSELF,
       },
     ],
     { readFromRelays }

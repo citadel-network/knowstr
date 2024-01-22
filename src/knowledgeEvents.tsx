@@ -1,4 +1,4 @@
-import { List, Map } from "immutable";
+import { List, Map, OrderedMap } from "immutable";
 import { Event } from "nostr-tools";
 import {
   findTag,
@@ -9,6 +9,7 @@ import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
+  KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_WORKSPACES,
 } from "./nostr";
@@ -17,8 +18,10 @@ import {
   Serializable,
   jsonToViews,
   jsonToWorkspace,
+  jsonToRelationTypes,
 } from "./serializer";
 import { joinID } from "./connections";
+import { DEFAULT_COLOR } from "./components/RelationTypes";
 
 export function findNodes(events: List<Event>): Map<string, KnowNode> {
   const sorted = sortEvents(
@@ -98,4 +101,19 @@ export function findViews(events: List<Event>): Views {
     return Map<string, View>();
   }
   return jsonToViews(JSON.parse(viewEvent.content) as Serializable);
+}
+
+export function findRelationTypes(events: List<Event>): RelationTypes {
+  const relationTypesEvent = getMostRecentReplacableEvent(
+    events.filter((event) => event.kind === KIND_RELATION_TYPES)
+  );
+  if (relationTypesEvent === undefined) {
+    return OrderedMap<ID, RelationType>().set("", {
+      color: DEFAULT_COLOR,
+      label: "Default",
+    });
+  }
+  return jsonToRelationTypes(
+    JSON.parse(relationTypesEvent.content) as Serializable
+  );
 }

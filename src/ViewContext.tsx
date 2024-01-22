@@ -11,6 +11,7 @@ import {
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
 import { Plan, planUpsertRelations, planUpdateViews } from "./planner";
+import { planCopyRelationsTypeIfNecessary } from "./components/RelationTypes";
 
 export type ViewPath = {
   root: LongID;
@@ -370,7 +371,7 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
 
 export function newRelations(
   head: LongID,
-  type: RelationType,
+  type: ID,
   myself: PublicKey
 ): Relations {
   return {
@@ -387,7 +388,7 @@ function createUpdatableRelations(
   myself: PublicKey,
   relationsID: ID,
   head: LongID,
-  type: RelationType
+  relationTypeID: ID
 ): Relations {
   const [remote, id] = splitID(relationsID);
   if (remote && isRemote(remote, myself)) {
@@ -395,7 +396,7 @@ function createUpdatableRelations(
     const remoteRelations = knowledgeDBs.get(remote, newDB()).relations.get(id);
     if (!remoteRelations) {
       // This should not happen
-      return newRelations(head, type, myself);
+      return newRelations(head, relationTypeID, myself);
     }
     // Make a copy
     return {
@@ -405,7 +406,7 @@ function createUpdatableRelations(
   }
   return knowledgeDBs
     .get(myself, newDB())
-    .relations.get(id, newRelations(head, type, myself));
+    .relations.get(id, newRelations(head, relationTypeID, myself));
 }
 
 export function upsertRelations(
@@ -433,7 +434,7 @@ export function upsertRelations(
     plan.user.publicKey,
     relationsID,
     node.id,
-    "" as RelationType // TODO: relation type?
+    "" // TODO: relation type?
   );
 
   // TODO: check if this is different than the default
@@ -449,7 +450,10 @@ export function upsertRelations(
     : plan;
 
   const updatedRelations = modify(relations, { view: nodeView });
-  return planUpsertRelations(planWithUpdatedView, updatedRelations);
+  return planUpsertRelations(
+    planCopyRelationsTypeIfNecessary(planWithUpdatedView, relationsID),
+    updatedRelations
+  );
 }
 
 /*

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { Dropdown, Modal } from "react-bootstrap";
 import {
   getAvailableRelationsForNode,
   updateView,
@@ -17,6 +18,12 @@ import { getLevels, useIsOpenInFullScreen } from "./Node";
 import { useData } from "../DataContext";
 import { planUpdateViews, usePlanner } from "../planner";
 import { newDB } from "../knowledge";
+import {
+  AddNewRelationsToNodeItem,
+  NewRelationType,
+  getMyRelationTypes,
+  getRelationTypeByRelationsID,
+} from "./RelationTypes";
 
 type ShowRelationsButtonProps = {
   id: LongID;
@@ -35,6 +42,52 @@ enum IconLabelsForTypes {
   "SUMMARY" = "iconsminds-filter-2",
 }
 
+function AddRelationsButton(): JSX.Element {
+  const { knowledgeDBs, user } = useData();
+  const [newRelationType, setNewRelationType] = useState<boolean>(false);
+  const [node] = useNode();
+  const ariaLabel = `Add new Relations to ${node?.text || ""}`;
+  const relationTypes = getMyRelationTypes(knowledgeDBs, user.publicKey);
+  return (
+    <Dropdown>
+      {newRelationType && (
+        <NewRelationType onHide={() => setNewRelationType(false)} />
+      )}
+      <Dropdown.Toggle
+        as="button"
+        className="btn select-relation"
+        aria-label={ariaLabel}
+      >
+        <span>+</span>
+      </Dropdown.Toggle>
+      <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
+        {relationTypes
+          .keySeq()
+          .toArray()
+          .map((id) => (
+            <AddNewRelationsToNodeItem key={id} relationTypeID={id} />
+          ))}
+        <Dropdown.Divider />
+        <Dropdown.Item onClick={() => setNewRelationType(true)} tabIndex={0}>
+          <div className="workspace-selection-text">New Relation Type</div>
+        </Dropdown.Item>
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+  /*
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      className="btn select-relation"
+      onClick={() => {}}
+    >
+      <span className="">+</span>
+    </button>
+  );
+   */
+}
+
 function ShowRelationsButton({
   id,
   readonly: ro,
@@ -51,7 +104,13 @@ function ShowRelationsButton({
   if (!node || !view) {
     return <></>;
   }
+
   const relations = getRelations(knowledgeDBs, id, user.publicKey);
+  const [relationType] = getRelationTypeByRelationsID(
+    knowledgeDBs,
+    user.publicKey,
+    id
+  );
   const relationSize = relations ? relations.items.size : 0;
   const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
   const viewKeyOfAddToNode = isFirstLevelAddToNode
@@ -78,7 +137,7 @@ function ShowRelationsButton({
       : `show ${relations?.type || "list"} items of ${node.text}`;
 
   const isSelected = isExpanded && view.relations === relations?.id;
-  const className = `btn btn-borderless ${isSelected ? "" : "deselected"}`;
+  const className = `btn select-relation ${isSelected ? "" : "deselected"}`;
   const onChangeRelations = (newRelations: LongID, expand: boolean): void => {
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const plan = planUpdateViews(
@@ -107,12 +166,19 @@ function ShowRelationsButton({
       setEditorOpenState(closeEditor(editorOpenViews, viewKeyOfAddToNode));
     }
   };
+  const style = relationType
+    ? { backgroundColor: relationType.color, color: "white" }
+    : {};
+  const label = isSelected
+    ? `${relationType?.label || "Unknown"} (${relationSize})`
+    : relationSize;
   // <span className={`${IconLabelsForTypes[id]}`} />
   return (
     <button
       type="button"
       aria-label={ariaLabel}
       className={className}
+      style={style}
       onClick={() => {
         if (view.relations === id) {
           onToggleExpanded(!isExpanded);
@@ -121,9 +187,7 @@ function ShowRelationsButton({
         }
       }}
     >
-      <div className="flex-start">
-        <span className="font-size-small pe-1">{relationSize}</span>
-      </div>
+      <span className="">{label}</span>
     </button>
   );
 }
@@ -152,15 +216,7 @@ export function SelectRelations({
           readonly={readonly}
         />
       ))}
+      {!readonly && <AddRelationsButton />}
     </>
   );
-  /*
-  return (
-    <>
-      <ShowRelationsButton id="RELEVANCE" readonly={readonly} />
-      <ShowRelationsButton id="CONTAINS" readonly={readonly} />
-      <ShowRelationsButton id="SUMMARYGNATZ" readonly={readonly} />
-    </>
-  );
-       */
 }

@@ -5,11 +5,17 @@ import { useData } from "./DataContext";
 import { execute } from "./executor";
 
 import { useApis } from "./Apis";
-import { Serializable, relationsToJSON, viewsToJSON } from "./serializer";
+import {
+  Serializable,
+  relationTypesToJson,
+  relationsToJSON,
+  viewsToJSON,
+} from "./serializer";
 import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
+  KIND_RELATION_TYPES,
   KIND_REPUTATIONS,
   KIND_VIEWS,
   KIND_WORKSPACES,
@@ -268,5 +274,31 @@ export function planUpdateWorkspaces(
       activeWorkspace,
     }),
     publishEvents: plan.publishEvents.push(writeWorkspacesEvent),
+  };
+}
+
+export function planUpdateRelationTypes(
+  plan: Plan,
+  relationTypes: RelationTypes
+): Plan {
+  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const serialized = relationTypesToJson(relationTypes);
+  const writeRelationsEvent = finalizeEvent(
+    {
+      kind: KIND_RELATION_TYPES,
+      pubkey: getPublicKey(plan.user.privateKey),
+      created_at: newTimestamp(),
+      tags: [],
+      content: JSON.stringify(serialized),
+    },
+    plan.user.privateKey
+  );
+  return {
+    ...plan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, {
+      ...userDB,
+      relationTypes,
+    }),
+    publishEvents: plan.publishEvents.push(writeRelationsEvent),
   };
 }
