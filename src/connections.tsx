@@ -1,4 +1,4 @@
-import { List, Set } from "immutable";
+import { Set } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
 import { getNodeFromID } from "./ViewContext";

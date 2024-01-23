@@ -40,6 +40,7 @@ export function Column(): JSX.Element | null {
       relations
     );
     executePlan(addRelationsPlan);
+    deselectByPostfix(viewKey);
   };
 
   return (

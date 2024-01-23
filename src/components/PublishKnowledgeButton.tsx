@@ -1,7 +1,3 @@
-import React from "react";
-import { usePublishData } from "../KnowledgeDataContext";
-import { LoadingSpinnerButton } from "./LoadingSpinnerButton";
-
 export function PublishKnowledgeButton(): JSX.Element | null {
   return null;
   /*

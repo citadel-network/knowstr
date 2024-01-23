@@ -12,13 +12,10 @@ export function FullScreenViewWrapper({
     openNodeID: string;
   }>() as { openNodeID: string };
   const [node] = useNode();
-  const root = id || node?.id;
+  const root = (id as LongID) || node?.id;
   if (!root) {
     return null;
   }
-
-  // If there is a branch passed via URL parameter, we need to overwrite
-  // the selected branch in the view otherwise we display a wrong branch
 
   return (
     <TemporaryViewProvider>

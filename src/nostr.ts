@@ -52,14 +52,13 @@ export async function publishEvent(
   const failures = results.filter((res) => res.status === "rejected");
   if (failures.length === writeRelayUrls.length) {
     // Reject only when all have failed
+    // eslint-disable-next-line no-console
     failures.map((failure) => console.error(failure, event));
     throw new Error(
       `Failed to publish on: ${failures
         .map((failure) => failure.status)
         .join(".")}`
     );
-  } else {
-    // console.log(">> succesful sent", event);
   }
 }
 

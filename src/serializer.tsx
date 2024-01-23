@@ -139,6 +139,6 @@ export function jsonToRelations(
   return {
     items,
     head: asString(r.h) as LongID,
-    type: asString(r.t) as RelationType,
+    type: asString(r.t),
   };
 }

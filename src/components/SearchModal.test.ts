@@ -1,9 +1,7 @@
 import { screen, fireEvent } from "@testing-library/react";
-import { List } from "immutable";
 import userEvent from "@testing-library/user-event";
 import { newNode } from "../connections";
 import { ALICE, matchSplitText, renderApp, setup } from "../utils.test";
-import { getNode, newRepo } from "../knowledge";
 import { createPlan, planUpsertNode } from "../planner";
 import { execute } from "../executor";
 

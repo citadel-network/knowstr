@@ -108,8 +108,8 @@ function EditRelationsDropdown({
   className: string;
   style: CSSProperties;
 }): JSX.Element | null {
-  const [node, view] = useNode();
-  const { knowledgeDBs, user } = useData();
+  const view = useNode()[1];
+  const { user } = useData();
   if (!view || !view.relations) {
     return null;
   }
@@ -120,13 +120,6 @@ function EditRelationsDropdown({
   if (!isDeleteAvailable) {
     return null;
   }
-
-  const relations = getRelations(
-    knowledgeDBs,
-    view.relations,
-    user.publicKey,
-    node.id
-  );
 
   return (
     <Dropdown>

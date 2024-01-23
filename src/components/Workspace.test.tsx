@@ -1,16 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { List, Map, OrderedMap } from "immutable";
 import userEvent from "@testing-library/user-event";
-import { addRelationToRelations, getRelations, newNode } from "../connections";
-import {
-  ALICE,
-  renderApp,
-  renderKnowledgeApp,
-  createDefaultKnowledgeTestData,
-  setup,
-} from "../utils.test";
-import { DEFAULT_BRANCH_NAME, getNode, newDB, newRepo } from "../knowledge";
-import { viewPathToString } from "../ViewContext";
+import { ALICE, renderApp, setup } from "../utils.test";
 
 test("Create a new Workspace", async () => {
   const [alice] = setup([ALICE]);

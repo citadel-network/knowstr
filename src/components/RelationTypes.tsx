@@ -18,7 +18,7 @@ import {
 } from "../planner";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
-import { getRelations, getRelationsNoSocial, splitID } from "../connections";
+import { getRelationsNoSocial, splitID } from "../connections";
 import {
   ViewPath,
   newRelations,

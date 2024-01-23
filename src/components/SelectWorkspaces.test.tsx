@@ -1,7 +1,6 @@
 import React from "react";
 import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createPlan } from "../planner";
 import {
   connectContacts,
   renderWithTestData,

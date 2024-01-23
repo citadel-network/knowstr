@@ -8,7 +8,7 @@ type RawContact = {
   createdAt: string | undefined;
 };
 
-export function createContactsQuery(authors: PublicKey[]): Filter<number> {
+export function createContactsQuery(authors: PublicKey[]): Filter {
   return {
     kinds: [KIND_REPUTATIONS],
     authors,
@@ -47,9 +47,7 @@ export function findContacts(events: List<Event>): Contacts {
   return parseContactEvent(contactEvent);
 }
 
-export function createContactsOfContactsQuery(
-  contacts: Contacts
-): Filter<number> {
+export function createContactsOfContactsQuery(contacts: Contacts): Filter {
   const contactsPublicKeys = contacts
     .keySeq()
     .sortBy((k) => k)
@@ -58,7 +56,7 @@ export function createContactsOfContactsQuery(
 }
 
 export function parseContactOfContactsEvents(
-  events: List<Event<number>>
+  events: List<Event>
 ): ContactsOfContacts {
   return events.reduce((rdx, event) => {
     return rdx.merge(

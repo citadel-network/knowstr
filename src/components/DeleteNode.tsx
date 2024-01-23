@@ -71,37 +71,6 @@ export function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
     );
     return planUpdateViews(planWithDeletedRelation, viewsAfterDeletion);
   }, plan);
-
-  /*
-  return data.repos.reduce((rdx, { id }) => {
-    const path = {
-      root: id,
-      indexStack: List<number>([]),
-    };
-    const [repo, view] = getNodeFromView(rdx.repos, rdx.views, path);
-    if (!repo) {
-      return rdx;
-    }
-    const node = getNode(repo, view.branch);
-    const relations = getRelations(node, view.relationType);
-    const toDelete = relations.reduce((indices, relation, index) => {
-      if (relation.id === toDisconnect) {
-        return indices.add(index);
-      }
-      return indices;
-    }, Set<number>());
-    if (toDelete.size === 0) {
-      return rdx;
-    }
-    const d = updateNode(rdx.repos, rdx.views, path, (n) =>
-      deleteRelations(n, toDelete, view.relationType)
-    );
-    return {
-      repos: d.repos,
-      views: updateViewPathsAfterDeletion(d.repos, d.views, path, toDelete),
-    };
-  }, data);
-   */
 }
 
 function useDeleteNode(): undefined | (() => void) {
@@ -145,22 +114,6 @@ function useDeleteNode(): undefined | (() => void) {
     } else {
       executePlan(planWithDeletedNode);
     }
-
-    /*
-    const { repos: updatedRepos, views: updatedViews } = disconnectNode(
-      { repos, views },
-      repo.id
-    );
-    const finalRepos = updatedRepos.remove(repo.id);
-    updateKnowledge({
-      repos: finalRepos,
-      views: updatedViews,
-      activeWorkspace:
-        activeWorkspace === repo.id
-          ? findNewActiveWorkspace(finalRepos)
-          : activeWorkspace,
-    });
-     */
   };
 }
 

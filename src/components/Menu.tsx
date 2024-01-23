@@ -84,7 +84,7 @@ function ReadonlyMenu(): JSX.Element | null {
   return (
     <div className="menu-layout w-100" style={{ height: "min-content" }}>
       <SelectRelations readonly />
-      <SelectVersions readonly />
+      <SelectVersions />
     </div>
   );
 }

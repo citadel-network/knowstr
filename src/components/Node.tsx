@@ -146,8 +146,8 @@ function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
 }
 
 function NodeContent(): JSX.Element {
-  const { settings, user } = useData();
-  const [node, view] = useNode();
+  const { settings } = useData();
+  const [node] = useNode();
   if (!node) {
     return <ErrorContent />;
   }
@@ -349,17 +349,6 @@ function DraggingNode(): JSX.Element {
     </NodeCard>
   );
 }
-
-/*
-function Ribbon(): JSX.Element | null {
-  const repo = useNode()[0];
-  const nodeType = repo !== undefined ? getNode(repo).nodeType : undefined;
-  if (!nodeType) {
-    return null;
-  }
-  return <div className={`ribbon-${nodeType}`} />;
-}
-   */
 
 export function Node(): JSX.Element | null {
   const { knowledgeDBs, user } = useData();

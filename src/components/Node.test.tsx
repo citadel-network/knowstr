@@ -1,24 +1,11 @@
 import React from "react";
 import { fireEvent, screen } from "@testing-library/react";
-import { Map, List } from "immutable";
+import { List } from "immutable";
 import userEvent from "@testing-library/user-event";
-import {
-  addRelationToRelations,
-  bulkAddRelations,
-  newNode,
-} from "../connections";
+import { addRelationToRelations, newNode } from "../connections";
 import { DND } from "../dnd";
-import { getNode, newRepo } from "../knowledge";
-import { RelationContext } from "../KnowledgeDataContext";
-import {
-  ALICE,
-  TEST_WORKSPACE_ID,
-  createDefaultKnowledgeTestData,
-  renderKnowledgeApp,
-  renderWithTestData,
-  setup,
-} from "../utils.test";
-import { ViewContextProvider, newRelations, updateNode } from "../ViewContext";
+import { ALICE, renderWithTestData, setup } from "../utils.test";
+import { ViewContextProvider, newRelations } from "../ViewContext";
 import { Column } from "./Column";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import {

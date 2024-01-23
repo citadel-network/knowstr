@@ -5,7 +5,7 @@ import { EmptyColumn, WorkspaceColumnView } from "./WorkspaceColumn";
 
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
-import { getRelations, getRelationsNoSocial } from "../connections";
+import { getRelations } from "../connections";
 import { PushViewIndex, useNode } from "../ViewContext";
 import { DND } from "../dnd";
 import { useData } from "../DataContext";
@@ -47,16 +47,3 @@ export function WorkspaceView(): JSX.Element | null {
   );
   /* eslint-enable react/no-array-index-key */
 }
-
-/*
-            <DND>
-              {columns.map((column, index) => {
-                return (
-                  <PushViewIndex push={List([index])} key={index}>
-                    <WorkspaceColumnView />
-                  </PushViewIndex>
-                );
-              })}
-              <EmptyColumn />
-            </DND>
-            */

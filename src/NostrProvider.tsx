@@ -27,7 +27,7 @@ export function NostrProvider({
     <ApiProvider
       apis={{
         ...apis,
-        releayPool: pool,
+        relayPool: pool,
       }}
     >
       {children}

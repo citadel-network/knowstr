@@ -6,9 +6,8 @@ import { FileDropZone } from "./FileDropZone";
 import { Column } from "./Column";
 import { IS_MOBILE } from "./responsive";
 import { WorkspaceColumn } from "./Ui";
-import { bulkAddRelations } from "../connections";
+import { addRelationToRelations } from "../connections";
 import {
-  updateNode,
   useViewPath,
   useViewKey,
   useNode,
@@ -48,14 +47,13 @@ export function EmptyColumn(): JSX.Element {
     const addTopNodesPlan = upsertRelations(
       bulkUpsertPlan,
       viewContext,
-      (r: Relations) => bulkAddRelations(r, topNodes)
+      (r: Relations) => addRelationToRelations(r, topNodes[0])
     );
     const addRelationsPlan = planBulkUpsertRelations(
       addTopNodesPlan,
       relations
     );
     executePlan(addRelationsPlan);
-    deselectByPostfix(viewKey);
   };
   return (
     <WorkspaceColumn>

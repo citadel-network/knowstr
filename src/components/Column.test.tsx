@@ -14,7 +14,6 @@ import {
 import { newNode } from "../connections";
 import { execute } from "../executor";
 import { createPlan, planUpsertNode } from "../planner";
-import { ViewContextProvider } from "../ViewContext";
 import { WorkspaceView } from "./Workspace";
 
 test("Multiple connections to same node", async () => {

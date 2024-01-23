@@ -9,9 +9,9 @@ import {
   RenderResult,
 } from "@testing-library/react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { v4 } from "uuid";
 import { Event, matchFilter } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
+import { hexToBytes } from "@noble/hashes/utils";
 import { DEFAULT_RELAYS } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
@@ -20,28 +20,13 @@ import {
   parseContactOfContactsEvents,
   parseContactEvent,
 } from "./contacts";
-import {
-  planSetKnowledgeData,
-  createPlan,
-  planEnsurePrivateContact,
-} from "./planner";
+import { createPlan, planEnsurePrivateContact } from "./planner";
 import { execute } from "./executor";
 import { ApiProvider, Apis } from "./Apis";
 import { App } from "./App";
 import { DataContextProps } from "./DataContext";
-import { commitAllBranches, newDB, newRepo } from "./knowledge";
-import { newNode } from "./connections";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
-import {
-  KnowledgeDiff,
-  compareKnowledgeDB,
-  createKnowledgeQuery,
-  createKnowledgeDBs,
-  parseKnowledgeEvents,
-  KnowledgeDiffWithCommits,
-  mergeKnowledgeData,
-} from "./knowledgeEvents";
 import { NostrAuthContext } from "./NostrAuthContext";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -65,8 +50,9 @@ const UNAUTHENTICATED_ALICE: Contact = {
 
 const ALICE: KeyPair = {
   publicKey: UNAUTHENTICATED_ALICE.publicKey,
-  privateKey:
-    "04d22f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e",
+  privateKey: hexToBytes(
+    "04d22f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e"
+  ),
 };
 
 const UNAUTHENTICATED_BOB: Contact = {
@@ -75,7 +61,7 @@ const UNAUTHENTICATED_BOB: Contact = {
 
 export const BOB: KeyPair = {
   publicKey: BOB_PUBLIC_KEY,
-  privateKey: BOB_PRIVATE_KEY,
+  privateKey: hexToBytes(BOB_PRIVATE_KEY),
 };
 
 const UNAUTHENTICATED_CAROL: Contact = {
@@ -84,7 +70,7 @@ const UNAUTHENTICATED_CAROL: Contact = {
 
 export const CAROL: KeyPair = {
   publicKey: CAROL_PUBLIC_KEY,
-  privateKey: CAROL_PRIVATE_KEY,
+  privateKey: hexToBytes(CAROL_PRIVATE_KEY),
 };
 
 export const TEST_WORKSPACE_ID = "my-first-workspace-id";
@@ -202,7 +188,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   sentEvents: List<Event>(),
   settings: DEFAULT_SETTINGS,
   relays: DEFAULT_RELAYS,
-  knowledgeDBs: Map<PublicKey, KnowledgeDataWithCommits>(),
+  knowledgeDBs: Map<PublicKey, KnowledgeData>(),
 };
 
 type TestAppState = DataContextProps & TestApis;
@@ -234,43 +220,6 @@ function getContactsOfContacts(appState: TestAppState): ContactsOfContacts {
     matchFilter(query, e)
   );
   return parseContactOfContactsEvents(events);
-}
-export function extractKnowledgeEvents(
-  appState: TestAppState
-): Map<string, Event> {
-  const contacts = getPrivateContacts(appState);
-  const contactsOfContacts = getContactsOfContacts(appState);
-  const authors = contacts
-    .merge(contactsOfContacts)
-    .set(appState.user.publicKey, appState.user)
-    .keySeq()
-    .toArray();
-  const query = createKnowledgeQuery(authors);
-  return Map<string, Event>(
-    List<Event>(appState.relayPool.getEvents())
-      .filter((e) => matchFilter(query, e))
-      .map((e) => [e.id, e])
-  );
-}
-
-export function extractKnowledgeDiffs(
-  appState: TestAppState,
-  events: Map<string, Event>
-): Map<string, KnowledgeDiffWithCommits> {
-  return parseKnowledgeEvents(
-    events,
-    Map<string, KnowledgeDiff<BranchWithCommits>>(),
-    appState.user.publicKey
-  );
-}
-
-export function extractKnowledgeDB(appState: TestAppState): KnowledgeData {
-  const events = extractKnowledgeEvents(appState);
-  const decryptedDiffs = extractKnowledgeDiffs(appState, events);
-  return mergeKnowledgeData(
-    createKnowledgeDBs(events, decryptedDiffs),
-    appState.user.publicKey
-  );
 }
 
 type UpdateState = () => TestAppState;
@@ -353,63 +302,6 @@ export function renderWithTestData(
 export async function fillAndSubmitInviteForm(): Promise<void> {
   fireEvent.click(await screen.findByText("Follow"));
   await waitForLoadingToBeNull();
-}
-
-function addTestWorkspaceToKnowledge(
-  knowledgeData: KnowledgeData,
-  title: string,
-  testId?: string
-): KnowledgeData {
-  const id = testId || v4();
-  const workspace = newRepo(newNode(`${title}`, "WORKSPACE"), id);
-  return {
-    ...knowledgeData,
-    repos: knowledgeData.repos.set(id, workspace),
-    activeWorkspace: id,
-  };
-}
-
-export function createDefaultKnowledgeTestData(
-  workspaceTestId?: string,
-  title?: string
-): KnowledgeData {
-  return addTestWorkspaceToKnowledge(
-    newDB(),
-    title || "My Workspace",
-    workspaceTestId
-  );
-}
-
-export function commitAll(
-  knowledgeData: KnowledgeData
-): KnowledgeData<BranchWithCommits> {
-  const commitedRepos = knowledgeData.repos.map((repo) => {
-    return commitAllBranches(repo);
-  });
-  return {
-    ...knowledgeData,
-    repos: commitedRepos,
-  };
-}
-
-export async function renderKnowledgeApp(
-  knowledgeData: KnowledgeData<Branch>,
-  appState?: UpdateState
-): Promise<RenderViewResult> {
-  const update = appState || setup([ALICE])[0];
-  const utils = update();
-  const plan = createPlan(utils);
-  const diff = compareKnowledgeDB<BranchWithCommits>(
-    newDB(),
-    commitAll(knowledgeData)
-  );
-  await execute({
-    ...utils,
-    plan: planSetKnowledgeData(plan, diff),
-  });
-  const view = renderApp(update());
-  await screen.findByText("My Workspace");
-  return view;
 }
 
 export function expectTextContent(

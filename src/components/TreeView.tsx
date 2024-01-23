@@ -13,7 +13,6 @@ import { DraggableNode, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { ReadingStatus } from "./ReadingStatus";
 import { ReferencedByCollapsable } from "./ReferencedBy";
 import { useData } from "../DataContext";
-import { viewsToJSON } from "../serializer";
 
 /* eslint-disable react/jsx-props-no-spreading */
 export function TreeView(): JSX.Element | null {
@@ -29,17 +28,8 @@ export function TreeView(): JSX.Element | null {
     List<ViewPath>(),
     isOpenInFullScreen
   );
-  const [node, view] = useNode();
+  const [node] = useNode();
   const ariaLabel = node ? `related to ${node.text}` : undefined;
-  /*
-  console.log(
-    ">> relations",
-    knowledgeDBs.get(user.publicKey)?.relations.toArray()
-  );
-   */
-  const views = knowledgeDBs.get(user.publicKey)?.views;
-  // console.log(">>> views", viewsToJSON(views));
-  // console.log(">>> nodes in tree view", nodes, view);
 
   return (
     <ReadingStatus nodes={nodes} ariaLabel={ariaLabel}>
