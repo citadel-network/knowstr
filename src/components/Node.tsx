@@ -385,7 +385,6 @@ export function Node(): JSX.Element | null {
   const isReferencedNode =
     index !== undefined && nRelations !== undefined && index >= nRelations;
   const displayMenu = levels > 0 && !isReferencedNode;
-
   return (
     <NodeCard
       className={!isMobile ? "hover-light-bg" : undefined}

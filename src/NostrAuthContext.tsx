@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { getPublicKey } from "nostr-tools";
+import { hexToBytes } from "@noble/hashes/utils";
 import { useApis } from "./Apis";
 
 type Context = {
@@ -27,10 +28,11 @@ export function useUser(): KeyPair | undefined {
 }
 
 function userFromPrivateKey(privateKey: string): KeyPair {
-  const publicKey = getPublicKey(privateKey) as PublicKey;
+  const key = hexToBytes(privateKey);
+  const publicKey = getPublicKey(key) as PublicKey;
   return {
     publicKey,
-    privateKey,
+    privateKey: key,
   };
 }
 

@@ -8,9 +8,14 @@ import { ColumnMenu } from "./Menu";
 import { useDeselectAllInView } from "./TemporaryViewContext";
 import { UIColumn, UIColumnBody, UIColumnHeader } from "./Ui";
 import { RemoveColumnButton } from "./RemoveColumnButton";
-import { useViewKey, useViewPath } from "../ViewContext";
+import { upsertRelations, useViewKey, useViewPath } from "../ViewContext";
 import { TreeView } from "./TreeView";
 import { AddNodeToNode } from "./AddNode";
+import {
+  planBulkUpsertNodes,
+  planBulkUpsertRelations,
+  usePlanner,
+} from "../planner";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -18,18 +23,23 @@ export function Column(): JSX.Element | null {
   const viewContext = useViewPath();
   const deselectByPostfix = useDeselectAllInView();
   const viewKey = useViewKey();
+  const { createPlan, executePlan } = usePlanner();
   const onDropFiles = (
-    topNodes: Array<string>,
-    nodes: Map<ID, KnowNode>
+    nodes: KnowNode[],
+    relations: Relations[],
+    topNodes: Array<LongID>
   ): void => {
-    /*
-    upsertRepos(
-      updateNode(repos.merge(nodes), views, viewContext, (n, ctx) =>
-        bulkAddRelations(n, topNodes, ctx.view.relationType)
-      )
+    const bulkUpsertPlan = planBulkUpsertNodes(createPlan(), nodes);
+    const addTopNodesPlan = upsertRelations(
+      bulkUpsertPlan,
+      viewContext,
+      (r: Relations) => bulkAddRelations(r, topNodes)
     );
-    deselectByPostfix(viewKey);
-     */
+    const addRelationsPlan = planBulkUpsertRelations(
+      addTopNodesPlan,
+      relations
+    );
+    executePlan(addRelationsPlan);
   };
 
   return (

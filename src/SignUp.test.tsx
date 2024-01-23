@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import React from "react";
 import { Route, Routes, BrowserRouter } from "react-router-dom";
-import { getPublicKey, nip06, nip19 } from "nostr-tools";
+import { getPublicKey, nip19 } from "nostr-tools";
+// eslint-disable-next-line import/no-unresolved
+import * as nip06 from "nostr-tools/nip06";
+import { hexToBytes } from "@noble/hashes/utils";
 import { SignUp } from "./SignUp";
 
 test("create nostr login data", () => {
@@ -20,7 +23,9 @@ test("create nostr login data", () => {
     .value;
   /* eslint-enable @typescript-eslint/no-unnecessary-type-assertion */
 
-  const privateKeyFromMnemonic = nip06.privateKeyFromSeedWords(mnemonic);
+  const privateKeyFromMnemonic = hexToBytes(
+    nip06.privateKeyFromSeedWords(mnemonic)
+  );
 
   expect(privateKey).toEqual(nip19.nsecEncode(privateKeyFromMnemonic));
   expect(publicKey).toEqual(

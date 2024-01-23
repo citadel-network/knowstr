@@ -11,221 +11,174 @@ import { DND } from "../dnd";
 import { getNode, newRepo } from "../knowledge";
 import { RelationContext } from "../KnowledgeDataContext";
 import {
+  ALICE,
   TEST_WORKSPACE_ID,
   createDefaultKnowledgeTestData,
   renderKnowledgeApp,
   renderWithTestData,
+  setup,
 } from "../utils.test";
-import { ViewContextProvider, updateNode } from "../ViewContext";
+import { ViewContextProvider, newRelations, updateNode } from "../ViewContext";
 import { Column } from "./Column";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
+import {
+  createPlan,
+  planBulkUpsertNodes,
+  planUpsertNode,
+  planUpsertRelations,
+} from "../planner";
+import { execute } from "../executor";
+import { Node } from "./Node";
+import { TreeView } from "./TreeView";
 
-test("Render non existing Repo", async () => {
-  const pl = newRepo(
-    addRelationToRelations(
-      newNode("Programming Languages", "TOPIC"),
-      "not-existing-id",
-      "RELEVANCE"
-    )
+test("Render non existing Node", async () => {
+  const [alice] = setup([ALICE]);
+  const { publicKey } = alice().user;
+  const pl = newNode("Programming Languages", publicKey);
+  const relations = addRelationToRelations(
+    newRelations(pl.id, "", publicKey),
+    "not-existing-id" as LongID
   );
-  const repos = Map<Repo>({
-    [pl.id]: pl,
-    ws: newRepo(
-      addRelationToRelations(
-        newNode("Workspace:#FF", "WORKSPACE"),
-        pl.id,
-        "RELEVANCE"
-      )
-    ),
+  const plan = planUpsertRelations(
+    planUpsertNode(createPlan(alice()), pl),
+    relations
+  );
+  await execute({
+    ...alice(),
+    plan,
   });
   renderWithTestData(
-    <RelationContext.Provider
-      value={{
-        data: {
-          repos,
-          views: Map<string, View>(),
-          activeWorkspace: "ws",
-        },
-        publishKnowledgeData: jest.fn(),
-        hasUnpublishedData: false,
-        setKnowledgeData: jest.fn(),
-      }}
-    >
+    <ViewContextProvider root={pl.id}>
       <TemporaryViewProvider>
         <DND>
-          <ViewContextProvider root="ws" indices={List([0])}>
-            <Column />
-          </ViewContextProvider>
+          <Column />
         </DND>
       </TemporaryViewProvider>
-    </RelationContext.Provider>
+    </ViewContextProvider>,
+    alice()
   );
   await screen.findByText("Programming Languages");
   screen.getByText("Error: Node not found");
 });
 
 test("Edit node via Column Menu", async () => {
-  const knowledgeDB = createDefaultKnowledgeTestData(TEST_WORKSPACE_ID);
-  const source = newRepo(newNode("My source", "TITLE"), "source-id");
-
-  const nodes = Map<Repo>({
-    [source.id]: source,
+  const [alice] = setup([ALICE]);
+  const { publicKey } = alice().user;
+  const note = newNode("My Note", publicKey);
+  await execute({
+    ...alice(),
+    plan: planUpsertNode(createPlan(alice()), note),
   });
-
-  const addToWorkspace = updateNode(
-    knowledgeDB.repos.merge(nodes),
-    knowledgeDB.views,
-    { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
-    (workspace, ctx) =>
-      addRelationToRelations(workspace, source.id, ctx.view.relationType)
+  renderWithTestData(
+    <ViewContextProvider root={note.id}>
+      <TemporaryViewProvider>
+        <DND>
+          <Column />
+        </DND>
+      </TemporaryViewProvider>
+    </ViewContextProvider>,
+    alice()
   );
-
-  await renderKnowledgeApp({
-    ...knowledgeDB,
-    ...addToWorkspace,
-  });
-  await screen.findByText("My source");
-  fireEvent.click(screen.getByLabelText("edit My source"));
+  await screen.findByText("My Note");
+  fireEvent.click(screen.getByLabelText("edit My Note"));
   userEvent.keyboard(
-    "{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}edited source{enter}"
+    "{backspace}{backspace}{backspace}{backspace}edited Note{enter}"
   );
   fireEvent.click(screen.getByLabelText("save"));
   expect(screen.queryByText("Save")).toBeNull();
-  await screen.findByText("My edited source");
+  await screen.findByText("My edited Note");
 });
 
 test("Edit node inline", async () => {
-  const knowledgeDB = createDefaultKnowledgeTestData(TEST_WORKSPACE_ID);
-  const source = newRepo(newNode("My source", "TITLE"), "source-id");
-  const firstQuote = newRepo(
-    newNode("My first quote", "QUOTE"),
-    "first-quote-id"
+  const [alice] = setup([ALICE]);
+  const { publicKey } = alice().user;
+  const note = newNode("My Note", publicKey);
+  // Connect the note with itself so it's not the root note
+  // Menu doesn't show on root notes
+  const plan = planUpsertRelations(
+    createPlan(alice()),
+    addRelationToRelations(newRelations(note.id, "", publicKey), note.id)
   );
-
-  const nodes = Map<Repo>({
-    [source.id]: newRepo(
-      addRelationToRelations(getNode(source), firstQuote.id, "CONTAINS"),
-      source.id
-    ),
-    [firstQuote.id]: firstQuote,
+  await execute({
+    ...alice(),
+    plan: planUpsertNode(plan, note),
   });
-
-  const addToWorkspace = updateNode(
-    knowledgeDB.repos.merge(nodes),
-    knowledgeDB.views,
-    { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
-    (workspace, ctx) =>
-      addRelationToRelations(workspace, source.id, ctx.view.relationType)
+  renderWithTestData(
+    <ViewContextProvider root={note.id} indices={List([0, 0])}>
+      <TemporaryViewProvider>
+        <DND>
+          <Node />
+        </DND>
+      </TemporaryViewProvider>
+    </ViewContextProvider>,
+    alice()
   );
-
-  await renderKnowledgeApp({
-    ...knowledgeDB,
-    ...addToWorkspace,
-  });
-  await screen.findByText("My source");
-  fireEvent.click(screen.getByLabelText("show contained nodes of My source"));
-  await screen.findByText("My first quote");
-  fireEvent.click(screen.getByLabelText("edit My first quote"));
+  await screen.findByText("My Note");
+  fireEvent.click(screen.getByLabelText("edit My Note"));
   userEvent.keyboard(
-    "{backspace}{backspace}{backspace}{backspace}{backspace}edited quote{enter}"
+    "{backspace}{backspace}{backspace}{backspace}edited Note{enter}"
   );
   fireEvent.click(screen.getByLabelText("save"));
   expect(screen.queryByText("Save")).toBeNull();
-  await screen.findByText("My first edited quote");
+  await screen.findByText("My edited Note");
 });
 
 test("Edited node is shown in Tree View", async () => {
-  const knowledgeDB = createDefaultKnowledgeTestData(TEST_WORKSPACE_ID);
-  const source = newRepo(newNode("My source", "TITLE"), "source-id");
-  const firstQuote = newRepo(
-    newNode("My first quote", "QUOTE"),
-    "first-quote-id"
-  );
-  const secondQuoteId = "second-quote-id";
+  const [alice] = setup([ALICE]);
+  const { publicKey } = alice().user;
+  const pl = newNode("Programming Languages", publicKey);
+  const oop = newNode("Object Oriented Programming languages", publicKey);
+  const java = newNode("Java", publicKey);
 
-  const nodes = Map<Repo>({
-    [source.id]: newRepo(
-      bulkAddRelations(
-        getNode(source),
-        [firstQuote.id, secondQuoteId],
-        "CONTAINS"
-      ),
-      source.id
+  const plan = planUpsertRelations(
+    planUpsertRelations(
+      createPlan(alice()),
+      addRelationToRelations(newRelations(pl.id, "", publicKey), oop.id)
     ),
-    [firstQuote.id]: firstQuote,
-    [secondQuoteId]: newRepo(
-      addRelationToRelations(
-        newNode("My second quote", "QUOTE"),
-        firstQuote.id,
-        "RELEVANCE"
-      ),
-      secondQuoteId
-    ),
+    addRelationToRelations(newRelations(oop.id, "", publicKey), java.id)
+  );
+  await execute({
+    ...alice(),
+    plan: planBulkUpsertNodes(plan, [pl, oop, java]),
   });
-
-  const addToWorkspace = updateNode(
-    knowledgeDB.repos.merge(nodes),
-    knowledgeDB.views,
-    { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
-    (workspace, ctx) =>
-      addRelationToRelations(
-        addRelationToRelations(workspace, source.id, ctx.view.relationType),
-        firstQuote.id,
-        ctx.view.relationType
-      )
+  renderWithTestData(
+    <ViewContextProvider root={pl.id} indices={List([0])}>
+      <TemporaryViewProvider>
+        <DND>
+          <TreeView />
+        </DND>
+      </TemporaryViewProvider>
+    </ViewContextProvider>,
+    alice()
   );
-
-  await renderKnowledgeApp({
-    ...knowledgeDB,
-    ...addToWorkspace,
-  });
-  await screen.findByText("My source", { exact: false });
-  fireEvent.click(
-    screen.getByLabelText("show relevant relations of My second quote")
-  );
-  const firstQuotes = await screen.findAllByText("My first quote");
-  expect(firstQuotes).toHaveLength(3);
-  fireEvent.click(screen.getAllByLabelText("edit My first quote")[0]);
-  userEvent.keyboard(
-    "{backspace}{backspace}{backspace}{backspace}{backspace}edited quote{enter}"
-  );
+  fireEvent.click(await screen.findByLabelText("edit Java"));
+  userEvent.keyboard("{backspace}{backspace}{backspace}{backspace}C++{enter}");
   fireEvent.click(screen.getByLabelText("save"));
   expect(screen.queryByText("Save")).toBeNull();
-  const editedFirstQuotes = await screen.findAllByText("My first edited quote");
-  expect(editedFirstQuotes).toHaveLength(3);
-  expect(screen.queryByText("My first quote")).toBeNull();
+  expect(screen.queryByText("Java")).toBeNull();
+  await screen.findByText("C++");
 });
 
 test("Delete node", async () => {
-  const knowledgeDB = createDefaultKnowledgeTestData(TEST_WORKSPACE_ID);
-  const source = newRepo(newNode("My source", "TITLE"), "source-id");
-  const firstNote = newRepo(newNode("My first note", "NOTE"), "first-note-id");
-
-  const nodes = Map<Repo>({
-    [source.id]: newRepo(
-      addRelationToRelations(getNode(source), firstNote.id, "CONTAINS"),
-      source.id
-    ),
-    [firstNote.id]: firstNote,
+  const [alice] = setup([ALICE]);
+  const { publicKey } = alice().user;
+  const note = newNode("My Note", publicKey);
+  await execute({
+    ...alice(),
+    plan: planUpsertNode(createPlan(alice()), note),
   });
-
-  const addToWorkspace = updateNode(
-    knowledgeDB.repos.merge(nodes),
-    knowledgeDB.views,
-    { root: TEST_WORKSPACE_ID, indexStack: List<number>() },
-    (workspace, ctx) =>
-      addRelationToRelations(workspace, source.id, ctx.view.relationType)
+  renderWithTestData(
+    <ViewContextProvider root={note.id}>
+      <TemporaryViewProvider>
+        <DND>
+          <Column />
+        </DND>
+      </TemporaryViewProvider>
+    </ViewContextProvider>,
+    alice()
   );
-
-  await renderKnowledgeApp({
-    ...knowledgeDB,
-    ...addToWorkspace,
-  });
-  await screen.findByText("My source", { exact: false });
-  fireEvent.click(screen.getByLabelText("show contained nodes of My source"));
-  await screen.findByText("My first note");
-  fireEvent.click(screen.getByLabelText("edit My first note"));
-  const deleteButton = (await screen.findAllByLabelText("delete node"))[1];
-  fireEvent.click(deleteButton);
-  expect(screen.queryByText("My first note")).toBeNull();
+  await screen.findByText("My Note");
+  userEvent.click(screen.getByLabelText("edit My Note"));
+  userEvent.click(screen.getByLabelText("delete node"));
+  expect(screen.queryByText("My Note")).toBeNull();
 });

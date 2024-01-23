@@ -191,6 +191,20 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
   };
 }
 
+export function planBulkUpsertNodes(plan: Plan, nodes: KnowNode[]): Plan {
+  return nodes.reduce((p, node) => planUpsertNode(p, node), plan);
+}
+
+export function planBulkUpsertRelations(
+  plan: Plan,
+  relations: Relations[]
+): Plan {
+  return relations.reduce(
+    (p, relation) => planUpsertRelations(p, relation),
+    plan
+  );
+}
+
 function planDelete(plan: Plan, id: LongID, kind: number): Plan {
   const deleteEvent = finalizeEvent(
     {

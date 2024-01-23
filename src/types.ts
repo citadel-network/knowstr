@@ -3,7 +3,7 @@ import { Event } from "nostr-tools";
 
 declare global {
   export type KeyPair = {
-    privateKey: string;
+    privateKey: Uint8Array;
     publicKey: PublicKey;
   };
 

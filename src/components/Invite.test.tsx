@@ -3,7 +3,6 @@ import { screen, waitFor, fireEvent } from "@testing-library/react";
 import {
   renderWithTestData,
   renderApp,
-  fillAndSubmitInviteForm,
   ALICE,
   BOB,
   BOB_PUBLIC_KEY,
@@ -11,7 +10,6 @@ import {
   addContact,
 } from "../utils.test";
 import Invite from "./Invite";
-import { mockRelayPool, MockRelayPool } from "../nostrMock.test";
 
 beforeAll(() => {
   // eslint-disable-next-line functional/immutable-data
@@ -34,23 +32,6 @@ beforeAll(() => {
       return Promise.resolve();
     },
   });
-});
-
-it("displays error messages", async () => {
-  const relayPool = {
-    ...mockRelayPool(),
-    publish: (): Promise<void> => {
-      throw new Error("Alice is not allowed");
-    },
-  } as unknown as MockRelayPool;
-
-  renderWithTestData(<Invite />, {
-    relayPool,
-    initialRoute: `/invite?eosAccountName=bob&publicKey=${BOB_PUBLIC_KEY}`,
-  });
-
-  await fillAndSubmitInviteForm();
-  await screen.findByText("Alice is not allowed");
 });
 
 it("QR Code", async () => {

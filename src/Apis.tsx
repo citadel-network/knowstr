@@ -1,6 +1,5 @@
 import React from "react";
 import { SimplePool } from "nostr-tools";
-import { usePool } from "./NostrProvider";
 
 export type Apis = {
   fileStore: LocalStorage;
@@ -22,16 +21,7 @@ export function ApiProvider({
   apis,
 }: {
   children: React.ReactNode;
-  apis: Omit<Apis, "relayPool"> & { relayPool?: SimplePool };
+  apis: Apis;
 }): JSX.Element {
-  return (
-    <ApiContext.Provider
-      value={{
-        relayPool: apis.relayPool || usePool(),
-        fileStore: apis.fileStore,
-      }}
-    >
-      {children}
-    </ApiContext.Provider>
-  );
+  return <ApiContext.Provider value={apis}>{children}</ApiContext.Provider>;
 }

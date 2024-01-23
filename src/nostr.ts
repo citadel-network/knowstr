@@ -59,13 +59,13 @@ export async function publishEvent(
         .join(".")}`
     );
   } else {
-    console.log(">> succesful sent", event);
+    // console.log(">> succesful sent", event);
   }
 }
 
 export function finalizeEvent(
   event: UnsignedEvent,
-  privateKey: string,
+  privateKey: Uint8Array,
   oldID?: string
 ): Event {
   const eventHash = sha256(

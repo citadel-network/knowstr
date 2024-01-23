@@ -337,9 +337,9 @@ export async function connectContacts(
 export function renderWithTestData(
   children: React.ReactElement,
   options?: Partial<TestAppState> & { initialRoute?: string }
-): TestAppState {
+): TestAppState & RenderResult {
   const props = applyDefaults(options);
-  renderApis(
+  const utils = renderApis(
     <Routes>
       <Route element={<RequireLogin />}>
         <Route path="*" element={<>{children}</>} />
@@ -347,7 +347,7 @@ export function renderWithTestData(
     </Routes>,
     props
   );
-  return props;
+  return { ...props, ...utils };
 }
 
 export async function fillAndSubmitInviteForm(): Promise<void> {

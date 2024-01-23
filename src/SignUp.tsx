@@ -4,6 +4,7 @@ import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
 import { Link } from "react-router-dom";
+import { hexToBytes } from "@noble/hashes/utils";
 import { StandaloneCard } from "./components/Ui";
 
 export function SignUp(): JSX.Element {
@@ -11,7 +12,7 @@ export function SignUp(): JSX.Element {
 
   const mnemonic = nip06.generateSeedWords();
   const pk = nip06.privateKeyFromSeedWords(mnemonic);
-  const privateKey = Buffer.from(pk, "hex");
+  const privateKey = hexToBytes(pk);
 
   const nsec = nip19.nsecEncode(privateKey);
 

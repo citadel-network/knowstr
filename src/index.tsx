@@ -1,7 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { SimplePool } from "nostr-tools";
 import * as serviceWorker from "./serviceWorker";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./assets/css/sass/themes/gogo.light.blue.scss";
@@ -12,10 +11,9 @@ import "./editor.css";
 import "./Workspace.scss";
 import "./App.css";
 import "react-quill/dist/quill.bubble.css";
-import { ApiProvider } from "./Apis";
 import { App } from "./App";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
-import { NostrProvider, usePool } from "./NostrProvider";
+import { NostrProvider } from "./NostrWasmProvider";
 
 function createFileStore(): LocalStorage {
   return {
@@ -30,16 +28,10 @@ const root = document.getElementById("root");
 if (root !== null) {
   createRoot(root).render(
     <BrowserRouter>
-      <NostrProvider>
-        <ApiProvider
-          apis={{
-            fileStore: createFileStore(),
-          }}
-        >
-          <NostrAuthContextProvider>
-            <App />
-          </NostrAuthContextProvider>
-        </ApiProvider>
+      <NostrProvider apis={{ fileStore: createFileStore() }}>
+        <NostrAuthContextProvider>
+          <App />
+        </NostrAuthContextProvider>
       </NostrProvider>
     </BrowserRouter>
   );

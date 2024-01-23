@@ -1,55 +1,43 @@
 import React from "react";
-import { fireEvent, screen } from "@testing-library/react";
-import { createPlan, planSetKnowledgeData } from "../planner";
-import { execute } from "../executor";
+import { cleanup, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { createPlan } from "../planner";
 import {
   connectContacts,
-  createDefaultKnowledgeTestData,
   renderWithTestData,
   setup,
   ALICE,
   BOB,
   expectTextContent,
-  commitAll,
 } from "../utils.test";
 import { SelectWorkspaces } from "./SelectWorkspaces";
-import { compareKnowledgeDB } from "../knowledgeEvents";
-import { newDB } from "../knowledge";
 
 test("Distinguish between local and remote dashboards", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
   await connectContacts(alice, bob);
-  await execute({
-    ...bob(),
-    plan: planSetKnowledgeData(
-      createPlan(bob()),
-      compareKnowledgeDB(
-        newDB(),
-        commitAll(createDefaultKnowledgeTestData("bobs-ws", "Bobs Workspace"))
-      )
-    ),
-  });
 
-  await execute({
-    ...alice(),
-    plan: planSetKnowledgeData(
-      createPlan(alice()),
-      compareKnowledgeDB(
-        newDB(),
-        commitAll(createDefaultKnowledgeTestData("alice-ws", "Alice Workspace"))
-      )
-    ),
-  });
+  renderWithTestData(<SelectWorkspaces />, bob());
+  const switchWsBtn = await screen.findByLabelText("switch workspace");
+  userEvent.click(switchWsBtn);
+  const newWsBtn = screen.getByText("New Workspace");
+  userEvent.click(newWsBtn);
+  userEvent.type(
+    screen.getByLabelText("title of new workspace"),
+    "Bobs Workspace"
+  );
+  userEvent.click(screen.getByText("Create Workspace"));
 
+  cleanup();
   renderWithTestData(<SelectWorkspaces />, alice());
-
-  fireEvent.click(await screen.findByLabelText("switch workspace"));
-  const selection = await screen.findByLabelText("workspace selection");
-  expectTextContent(selection, [
-    "Your Workspaces",
-    "Alice Workspace",
-    "Your Contacts Workspaces",
-    "Bobs Workspace",
-    "New Workspace",
-  ]);
+  userEvent.click(await screen.findByLabelText("switch workspace"));
+  await waitFor(() => {
+    const selection = screen.getByLabelText("workspace selection");
+    expectTextContent(selection, [
+      "Your Workspaces",
+      "My first Workspace",
+      "Your Contacts Workspaces",
+      "Bobs Workspace",
+      "New Workspace",
+    ]);
+  });
 });

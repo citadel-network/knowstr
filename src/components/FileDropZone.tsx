@@ -1,9 +1,10 @@
 import React from "react";
 import { useDropzone } from "react-dropzone";
 import MarkdownIt from "markdown-it";
-import Immutable from "immutable";
 
-import { newNode, addRelationToRelations } from "../connections";
+import { newNode, bulkAddRelations } from "../connections";
+import { newRelations } from "../ViewContext";
+import { useData } from "../DataContext";
 
 /* eslint-disable functional/immutable-data */
 function convertToPlainText(html: string): string {
@@ -13,42 +14,46 @@ function convertToPlainText(html: string): string {
 }
 /* eslint-enable functional/immutable-data */
 
-function createSourceFromParagraphs(paragraphs: Array<string>): {
-  repos: Repos;
-  topRepoID: string;
+function createSourceFromParagraphs(
+  paragraphs: Array<string>,
+  myself: PublicKey
+): {
+  nodes: KnowNode[];
+  relations: Relations;
+  topNodeID: LongID;
 } {
   const topParagraph = paragraphs[0];
   const furtherParagraphs = paragraphs.slice(1);
 
-  const source = newRepo(newNode(topParagraph, "TITLE"));
-  const repos = furtherParagraphs.reduce((r, paragraph) => {
-    const quote = newRepo(newNode(paragraph, "QUOTE"));
-    const s = r.get(source.id) as Repo;
-    return r
-      .set(quote.id, quote)
-      .set(
-        source.id,
-        addToBranch(
-          s,
-          addRelationToRelations(getNode(s), quote.id, "CONTAINS"),
-          DEFAULT_BRANCH_NAME
-        )
-      );
-  }, Immutable.Map<string, Repo>().set(source.id, source));
+  const topNode = newNode(topParagraph, myself);
+  const innerNodes = furtherParagraphs.map((paragraph) => {
+    return newNode(paragraph, myself);
+  });
+  const relations = bulkAddRelations(
+    newRelations(topNode.id, "", myself),
+    innerNodes.map((n) => n.id)
+  );
+  const nodes = [topNode, ...innerNodes];
   return {
-    repos,
-    topRepoID: source.id,
+    nodes,
+    topNodeID: topNode.id,
+    relations,
   };
 }
 
 type FileDropZoneProps = {
   children: React.ReactNode;
-  onDrop: (topNodes: Array<string>, nodes: Repos) => void;
+  onDrop: (
+    nodes: KnowNode[],
+    relations: Relations[],
+    topNodes: Array<LongID>
+  ) => void;
 };
 
 type MarkdownReducer = {
-  repos: Repos;
-  topNodeIDs: Array<string>;
+  nodes: KnowNode[];
+  topNodeIDs: LongID[];
+  relations: Relations[];
 };
 
 /* eslint-disable react/jsx-props-no-spreading */
@@ -56,6 +61,7 @@ export function FileDropZone({
   children,
   onDrop,
 }: FileDropZoneProps): JSX.Element {
+  const { user } = useData();
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     noClick: true,
     noKeyboard: true,
@@ -78,23 +84,26 @@ export function FileDropZone({
       const mdNodes = markdowns.reduce(
         (rdx: MarkdownReducer, markdown: string) => {
           const paragraphs = markdown.split("\n\n");
-          const { repos, topRepoID } = createSourceFromParagraphs(
+          const { nodes, relations, topNodeID } = createSourceFromParagraphs(
             paragraphs.map((paragraph: string) => {
               const md = new MarkdownIt();
               return convertToPlainText(md.render(paragraph));
-            })
+            }),
+            user.publicKey
           );
           return {
-            repos: rdx.repos.merge(repos),
-            topNodeIDs: [...rdx.topNodeIDs, topRepoID],
+            nodes: [...rdx.nodes, ...nodes],
+            topNodeIDs: [...rdx.topNodeIDs, topNodeID],
+            relations: [...rdx.relations, relations],
           };
         },
         {
-          repos: Immutable.Map<string, Repo>(),
+          nodes: [],
           topNodeIDs: [],
+          relations: [],
         }
       );
-      onDrop(mdNodes.topNodeIDs, mdNodes.repos);
+      onDrop(mdNodes.nodes, mdNodes.relations, mdNodes.topNodeIDs);
     },
   });
   const className = isDragActive ? "dimmed flex-col-100" : "flex-col-100";
