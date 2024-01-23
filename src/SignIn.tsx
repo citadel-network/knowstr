@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card, Form } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { getPublicKey, nip06, nip19 } from "nostr-tools";
+import { getPublicKey, nip19 } from "nostr-tools";
+// eslint-disable-next-line import/no-unresolved
+import * as nip06 from "nostr-tools/nip06";
 import { Button, StandaloneCard } from "./components/Ui";
 import { useLogin } from "./NostrAuthContext";
 import createSubmitHandler from "./components/modalFormSubmitHandler";
@@ -14,7 +16,7 @@ function convertInputToPrivateKey(input: string): string | undefined {
     if (type !== "nsec") {
       return undefined;
     }
-    return data;
+    return Buffer.from(data).toString("hex");
   } catch {}
   try {
     // Is this a seed phrase?
@@ -22,7 +24,7 @@ function convertInputToPrivateKey(input: string): string | undefined {
   } catch {}
   try {
     // Is this a private key?
-    getPublicKey(input);
+    getPublicKey(Buffer.from(input, "hex"));
     return input;
   } catch {}
   return undefined;

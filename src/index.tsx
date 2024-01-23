@@ -15,6 +15,7 @@ import "react-quill/dist/quill.bubble.css";
 import { ApiProvider } from "./Apis";
 import { App } from "./App";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
+import { NostrProvider, usePool } from "./NostrProvider";
 
 function createFileStore(): LocalStorage {
   return {
@@ -29,16 +30,17 @@ const root = document.getElementById("root");
 if (root !== null) {
   createRoot(root).render(
     <BrowserRouter>
-      <ApiProvider
-        apis={{
-          fileStore: createFileStore(),
-          relayPool: new SimplePool(),
-        }}
-      >
-        <NostrAuthContextProvider>
-          <App />
-        </NostrAuthContextProvider>
-      </ApiProvider>
+      <NostrProvider>
+        <ApiProvider
+          apis={{
+            fileStore: createFileStore(),
+          }}
+        >
+          <NostrAuthContextProvider>
+            <App />
+          </NostrAuthContextProvider>
+        </ApiProvider>
+      </NostrProvider>
     </BrowserRouter>
   );
 }

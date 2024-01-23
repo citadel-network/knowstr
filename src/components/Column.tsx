@@ -18,7 +18,10 @@ export function Column(): JSX.Element | null {
   const viewContext = useViewPath();
   const deselectByPostfix = useDeselectAllInView();
   const viewKey = useViewKey();
-  const onDropFiles = (topNodes: Array<string>, nodes: Repos): void => {
+  const onDropFiles = (
+    topNodes: Array<string>,
+    nodes: Map<ID, KnowNode>
+  ): void => {
     /*
     upsertRepos(
       updateNode(repos.merge(nodes), views, viewContext, (n, ctx) =>

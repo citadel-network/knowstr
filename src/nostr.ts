@@ -63,8 +63,8 @@ export async function publishEvent(
   }
 }
 
-export function finalizeEvent<T extends number>(
-  event: UnsignedEvent<T>,
+export function finalizeEvent(
+  event: UnsignedEvent,
   privateKey: string,
   oldID?: string
 ): Event {

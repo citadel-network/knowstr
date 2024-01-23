@@ -1,6 +1,8 @@
 import React from "react";
 import { Card, Form } from "react-bootstrap";
-import { getPublicKey, nip19, nip06 } from "nostr-tools";
+import { getPublicKey, nip19 } from "nostr-tools";
+// eslint-disable-next-line import/no-unresolved
+import * as nip06 from "nostr-tools/nip06";
 import { Link } from "react-router-dom";
 import { StandaloneCard } from "./components/Ui";
 
@@ -8,7 +10,8 @@ export function SignUp(): JSX.Element {
   document.body.classList.add("background");
 
   const mnemonic = nip06.generateSeedWords();
-  const privateKey = nip06.privateKeyFromSeedWords(mnemonic);
+  const pk = nip06.privateKeyFromSeedWords(mnemonic);
+  const privateKey = Buffer.from(pk, "hex");
 
   const nsec = nip19.nsecEncode(privateKey);
 

@@ -128,7 +128,7 @@ function createDefaultEvents(user: KeyPair): Map<string, Event> {
     content: JSON.stringify(serialized),
     sig: "",
   };
-  return Map<Event<number>>({
+  return Map<Event>({
     [createWorkspaceNodeEvent.id]: createWorkspaceNodeEvent,
     [writeWorkspacesEvent.id]: writeWorkspacesEvent,
   });
