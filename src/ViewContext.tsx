@@ -380,6 +380,7 @@ export function newRelations(
     items: List<LongID>(),
     id: joinID(myself, v4()),
     type,
+    updated: Math.floor(Date.now() / 1000),
   };
 }
 

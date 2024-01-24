@@ -1,5 +1,6 @@
 import React, { CSSProperties, useState } from "react";
 import { Dropdown } from "react-bootstrap";
+import { List } from "immutable";
 import {
   deleteChildViews,
   getAvailableRelationsForNode,
@@ -26,13 +27,6 @@ import {
   getMyRelationTypes,
   getRelationTypeByRelationsID,
 } from "./RelationTypes";
-
-type ShowRelationsButtonProps = {
-  id: LongID;
-  readonly?: boolean;
-  hideWhenZero?: boolean;
-  alwaysOneSelected?: boolean;
-};
 
 function AddRelationsButton(): JSX.Element {
   const { knowledgeDBs, user } = useData();
@@ -101,12 +95,79 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
   );
 }
 
+type ChangeRelation = (relations: Relations, expand: boolean) => void;
+
+function useOnChangeRelations(): undefined | ChangeRelation {
+  const { knowledgeDBs, user } = useData();
+  const { editorOpenViews, setEditorOpenState } = useTemporaryView();
+  const viewPath = useViewPath();
+  const { createPlan, executePlan } = usePlanner();
+  const view = useNode()[1];
+  const viewKey = useViewKey();
+  const deselectAllInView = useDeselectAllInView();
+  const isFullScreen = useIsOpenInFullScreen();
+  if (!view) {
+    return undefined;
+  }
+
+  return (relations: Relations, expand: boolean): void => {
+    const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
+    const viewKeyOfAddToNode = isFirstLevelAddToNode
+      ? viewKey
+      : viewPathToString({
+          ...viewPath,
+          indexStack: viewPath.indexStack.push(relations.items.size),
+        });
+
+    const { views } = knowledgeDBs.get(user.publicKey, newDB());
+    const plan = planUpdateViews(
+      createPlan(),
+      updateView(deleteChildViews(views, viewPath), viewPath, {
+        ...view,
+        relations: relations.id,
+        expanded: expand,
+      })
+    );
+    executePlan(plan);
+    setEditorOpenState(closeEditor(editorOpenViews, viewKeyOfAddToNode));
+    deselectAllInView(viewKey);
+  };
+}
+
+function SelectOtherRelationsItem({
+  relations,
+}: {
+  relations: Relations;
+}): JSX.Element | null {
+  const onChangeRelations = useOnChangeRelations();
+  if (!onChangeRelations) {
+    return null;
+  }
+  const remote = isRemote(splitID(relations.id)[0], useData().user.publicKey);
+  return (
+    <>
+      <Dropdown.Item onClick={() => onChangeRelations(relations, true)}>
+        <div>
+          <span>{relations.items.size} Notes</span>
+          <span>{remote && <span className="iconsminds-conference" />}</span>
+        </div>
+        <div>
+          <span>{new Date(relations.updated * 1000).toLocaleDateString()}</span>
+        </div>
+      </Dropdown.Item>
+      <Dropdown.Divider />
+    </>
+  );
+}
+
 function EditRelationsDropdown({
   className,
   style,
+  otherRelations,
 }: {
   className: string;
   style: CSSProperties;
+  otherRelations: List<Relations>;
 }): JSX.Element | null {
   const view = useNode()[1];
   const { user } = useData();
@@ -117,7 +178,7 @@ function EditRelationsDropdown({
   const isDeleteAvailable =
     view.relations !== "social" &&
     !isRemote(splitID(view.relations)[0], user.publicKey);
-  if (!isDeleteAvailable) {
+  if (!isDeleteAvailable && otherRelations.size === 0) {
     return null;
   }
 
@@ -131,81 +192,46 @@ function EditRelationsDropdown({
         <span className="iconsminds-arrow-down" />
       </Dropdown.Toggle>
       <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
+        {otherRelations.map((r) => (
+          <SelectOtherRelationsItem key={r.id} relations={r} />
+        ))}
+
         {isDeleteAvailable && <DeleteRelationItem id={view.relations} />}
       </Dropdown.Menu>
     </Dropdown>
   );
 }
 
-function ShowRelationsButton({
-  id,
-  readonly: ro,
-  hideWhenZero,
-  alwaysOneSelected,
-}: ShowRelationsButtonProps): JSX.Element | null {
-  const [node, view] = useNode();
+type ShowRelationsButtonProps = {
+  relationList: List<Relations>;
+  readonly?: boolean;
+  alwaysOneSelected?: boolean;
+  currentSelectedRelations?: Relations;
+};
+
+function useOnToggleExpanded(): (
+  expand: boolean,
+  relations: Relations
+) => void {
   const { knowledgeDBs, user } = useData();
   const { createPlan, executePlan } = usePlanner();
-  const readonly = ro === true;
   const viewPath = useViewPath();
+  const view = useNode()[1];
   const viewKey = useViewKey();
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
   const isFullScreen = useIsOpenInFullScreen();
-  const deselectAllInView = useDeselectAllInView();
-  if (!node || !view) {
-    return <></>;
+  if (!view) {
+    return () => undefined;
   }
-  const isSocial = id === "social";
+  return (expand: boolean, relations: Relations): void => {
+    const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
+    const viewKeyOfAddToNode = isFirstLevelAddToNode
+      ? viewKey
+      : viewPathToString({
+          ...viewPath,
+          indexStack: viewPath.indexStack.push(relations.items.size),
+        });
 
-  const relations = getRelations(knowledgeDBs, id, user.publicKey, node.id);
-  const [relationType] = isSocial
-    ? [{ label: "Social", color: "black" }]
-    : getRelationTypeByRelationsID(knowledgeDBs, user.publicKey, id);
-  const relationSize = relations ? relations.items.size : 0;
-  if (hideWhenZero && relationSize === 0) {
-    return null;
-  }
-  const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
-  const viewKeyOfAddToNode = isFirstLevelAddToNode
-    ? viewKey
-    : viewPathToString({
-        ...viewPath,
-        indexStack: viewPath.indexStack.push(relationSize),
-      });
-  if (readonly) {
-    return (
-      <div className="flex-start deselected">
-        <span className="font-size-small pe-1">{relationSize}</span>
-      </div>
-    );
-  }
-
-  const isExpanded = view.expanded === true;
-  const ariaLabel =
-    isExpanded && view.relations === relations?.id
-      ? `hide ${relations?.type || "list"} items of ${node.text}`
-      : `show ${relations?.type || "list"} items of ${node.text}`;
-
-  const isSelected =
-    (isExpanded || alwaysOneSelected) && view.relations === relations?.id;
-  const className = `btn select-relation ${
-    isSelected ? "opacity-none" : "deselected"
-  }`;
-  const onChangeRelations = (newRelations: LongID, expand: boolean): void => {
-    const { views } = knowledgeDBs.get(user.publicKey, newDB());
-    const plan = planUpdateViews(
-      createPlan(),
-      updateView(deleteChildViews(views, viewPath), viewPath, {
-        ...view,
-        relations: newRelations,
-        expanded: expand,
-      })
-    );
-    executePlan(plan);
-    setEditorOpenState(closeEditor(editorOpenViews, viewKeyOfAddToNode));
-    deselectAllInView(viewKey);
-  };
-  const onToggleExpanded = (expand: boolean): void => {
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const plan = planUpdateViews(
       createPlan(),
@@ -219,6 +245,142 @@ function ShowRelationsButton({
       setEditorOpenState(closeEditor(editorOpenViews, viewKeyOfAddToNode));
     }
   };
+}
+
+function SocialRelationsButton({
+  alwaysOneSelected,
+  currentRelations,
+  readonly,
+}: {
+  readonly?: boolean;
+  alwaysOneSelected?: boolean;
+  currentRelations?: Relations;
+}): JSX.Element | null {
+  const [node, view] = useNode();
+  const { knowledgeDBs, user } = useData();
+  const onChangeRelations = useOnChangeRelations();
+  const onToggleExpanded = useOnToggleExpanded();
+  if (!node || !onChangeRelations || !onToggleExpanded) {
+    return null;
+  }
+  const socialRelations = getRelations(
+    knowledgeDBs,
+    "social",
+    user.publicKey,
+    node.id
+  );
+  if (!socialRelations || socialRelations.items.size === 0) {
+    return null;
+  }
+  const isSelected = currentRelations?.id === "social";
+  const isExpanded = view.expanded === true;
+  const ariaLabel =
+    isExpanded && isSelected
+      ? `hide items created by contacts of ${node.text}`
+      : `show items created by contacts of ${node.text}`;
+  const isActive = (isExpanded || alwaysOneSelected) && isSelected;
+  const className = `btn select-relation ${
+    isActive ? "opacity-none" : "deselected"
+  }`;
+  const style = {
+    backgroundColor: "black",
+    borderColor: "black",
+    color: "white",
+  };
+  const preventDeselect = isActive && alwaysOneSelected;
+  const onClick = preventDeselect
+    ? undefined
+    : () => {
+        if (view.relations === socialRelations.id) {
+          onToggleExpanded(!isExpanded, socialRelations);
+        } else {
+          onChangeRelations(socialRelations, true);
+        }
+      };
+  const label = isActive
+    ? `By Contacts (${socialRelations.items.size})`
+    : socialRelations.items.size;
+
+  return (
+    <div className="btn-group select-relation">
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        className={className}
+        disabled={preventDeselect || readonly}
+        style={style}
+        onClick={onClick}
+      >
+        <span className="iconsminds-conference" />
+        <span>{label}</span>
+      </button>
+    </div>
+  );
+}
+
+function sortRelations(
+  relationList: List<Relations>,
+  myself: PublicKey
+): List<Relations> {
+  return relationList.sort((rA, rB) => {
+    // Sort by date, but the one relation which is not remote comes always first
+    if (!isRemote(splitID(rA.id)[0], myself)) {
+      return -1;
+    }
+    if (!isRemote(splitID(rB.id)[0], myself)) {
+      return 1;
+    }
+    return rB.updated - rA.updated;
+  });
+}
+
+function SelectRelationsButton({
+  relationList,
+  readonly: ro,
+  alwaysOneSelected,
+  currentSelectedRelations,
+}: ShowRelationsButtonProps): JSX.Element | null {
+  const [node, view] = useNode();
+  const { knowledgeDBs, user } = useData();
+  const readonly = ro === true;
+  const onChangeRelations = useOnChangeRelations();
+  const onToggleExpanded = useOnToggleExpanded();
+  if (!node || !view || !onChangeRelations) {
+    return null;
+  }
+  const isSelected =
+    relationList.filter((r) => r.id === currentSelectedRelations?.id).size > 0;
+  const sorted = sortRelations(relationList, user.publicKey);
+  const topRelation = isSelected ? currentSelectedRelations : sorted.first();
+  if (!topRelation) {
+    return null;
+  }
+  const otherRelations = sorted.filter((r) => r.id !== topRelation.id);
+  const [relationType] = getRelationTypeByRelationsID(
+    knowledgeDBs,
+    user.publicKey,
+    topRelation.id
+  );
+  const relationSize = topRelation.items.size;
+
+  if (readonly) {
+    return (
+      <div className="flex-start deselected">
+        <span className="font-size-small pe-1">{relationSize}</span>
+      </div>
+    );
+  }
+
+  const isExpanded = view.expanded === true;
+  const ariaLabel =
+    isExpanded && isSelected
+      ? `hide ${relationType?.label || "list"} items of ${node.text}`
+      : `show ${relationType?.label || "list"} items of ${node.text}`;
+
+  const isActive = (isExpanded || alwaysOneSelected) && isSelected;
+  const className = `btn select-relation ${
+    isActive ? "opacity-none" : "deselected"
+  }`;
   const style = relationType
     ? {
         backgroundColor: relationType.color,
@@ -226,17 +388,17 @@ function ShowRelationsButton({
         color: "white",
       }
     : {};
-  const label = isSelected
+  const label = isActive
     ? `${relationType?.label || "Unknown"} (${relationSize})`
     : relationSize;
-  const preventDeselect = isSelected && alwaysOneSelected;
+  const preventDeselect = isActive && alwaysOneSelected;
   const onClick = preventDeselect
     ? undefined
     : () => {
-        if (view.relations === id) {
-          onToggleExpanded(!isExpanded);
+        if (view.relations === topRelation.id) {
+          onToggleExpanded(!isExpanded, topRelation);
         } else {
-          onChangeRelations(id, true);
+          onChangeRelations(topRelation, true);
         }
       };
   return (
@@ -249,24 +411,17 @@ function ShowRelationsButton({
         style={style}
         onClick={onClick}
       >
-        {isSocial && <span className="iconsminds-conference" />}
         <span className="">{label}</span>
       </button>
-      {isSelected && !isSocial && (
-        <EditRelationsDropdown className={className} style={style} />
+      {isActive && (
+        <EditRelationsDropdown
+          className={className}
+          style={style}
+          otherRelations={otherRelations}
+        />
       )}
     </div>
   );
-  /*
-        <button
-          type="button"
-          className={className}
-          style={style}
-          aria-label="gunter"
-        >
-          <span className="iconsminds-arrow-down" />
-        </button>
-   */
 }
 
 export function SelectRelations({
@@ -277,29 +432,37 @@ export function SelectRelations({
   alwaysOneSelected?: boolean;
 }): JSX.Element | null {
   const { knowledgeDBs, user } = useData();
-  const [node] = useNode();
+  const [node, view] = useNode();
   if (!node) {
     return null;
   }
+  const currentRelations = getRelations(
+    knowledgeDBs,
+    view.relations,
+    user.publicKey,
+    node.id
+  );
   const relations = getAvailableRelationsForNode(
     knowledgeDBs,
     user.publicKey,
     node.id
   );
+  const groupedByType = relations.groupBy((r) => r.type);
   return (
     <>
-      {relations.toArray().map((relation) => (
-        <ShowRelationsButton
-          key={relation.id}
-          id={relation.id}
+      {groupedByType.toArray().map(([type, r]) => (
+        <SelectRelationsButton
+          relationList={r.toList()}
           readonly={readonly}
           alwaysOneSelected={alwaysOneSelected}
+          currentSelectedRelations={currentRelations}
+          key={type}
         />
       ))}
-      <ShowRelationsButton
-        id={"social" as LongID}
-        hideWhenZero
+      <SocialRelationsButton
+        readonly={readonly}
         alwaysOneSelected={alwaysOneSelected}
+        currentRelations={currentRelations}
       />
       {!readonly && <AddRelationsButton />}
     </>

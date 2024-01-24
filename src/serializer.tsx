@@ -129,7 +129,8 @@ export function relationsToJSON(relations: Relations): Serializable {
 }
 
 export function jsonToRelations(
-  s: Serializable | undefined
+  s: Serializable | undefined,
+  updated: number
 ): Omit<Relations, "id"> | undefined {
   if (!s) {
     return undefined;
@@ -140,5 +141,6 @@ export function jsonToRelations(
     items,
     head: asString(r.h) as LongID,
     type: asString(r.t),
+    updated,
   };
 }

@@ -68,6 +68,7 @@ export function getSocialRelations(
     (id) => !myShortIds.has(shortID(id)[1])
   );
   return {
+    updated: Math.floor(Date.now() / 1000),
     items: items.toList(),
     head: nodeID,
     id: "social" as LongID,

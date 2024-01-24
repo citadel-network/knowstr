@@ -101,6 +101,7 @@ declare global {
     head: LongID;
     id: LongID;
     type: ID;
+    updated: number;
   };
 
   type KnowNode = {

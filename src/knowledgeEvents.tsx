@@ -80,7 +80,8 @@ export function findRelations(events: List<Event>): Map<string, Relations> {
       return rdx;
     }
     const relations = jsonToRelations(
-      JSON.parse(event.content) as Serializable
+      JSON.parse(event.content) as Serializable,
+      event.created_at
     );
     if (!relations) {
       return rdx;
