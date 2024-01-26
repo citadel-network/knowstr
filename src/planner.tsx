@@ -145,7 +145,10 @@ export function planEnsurePrivateContact(
 
 export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
   const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
-  const updatedRelations = userDB.relations.set(relations.id, relations);
+  const updatedRelations = userDB.relations.set(
+    shortID(relations.id),
+    relations
+  );
   const updatedDB = {
     ...userDB,
     relations: updatedRelations,

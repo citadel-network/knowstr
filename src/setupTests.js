@@ -14,6 +14,7 @@ global.Buffer = Buffer;
 
 /* eslint-disable no-console */
 const originalError = console.error.bind(console.error);
+const originalWarn = console.warn.bind(console.warn);
 // NostrQueryProvider has side effects which will lead to
 // An update to NostrQueryProvider inside a test... errors
 beforeAll(() => {
@@ -28,9 +29,17 @@ beforeAll(() => {
       originalError(msg, params);
     }
   };
+  // eslint-disable-next-line functional/immutable-data
+  console.warn = (msg, params) => {
+    if (!msg.toString().includes("@hello-pangea/dnd")) {
+      originalWarn(msg, params);
+    }
+  };
 });
 afterAll(() => {
   // eslint-disable-next-line functional/immutable-data
   console.error = originalError;
+  // eslint-disable-next-line functional/immutable-data
+  console.warn = originalWarn;
 });
 /* eslint-enable no-console */

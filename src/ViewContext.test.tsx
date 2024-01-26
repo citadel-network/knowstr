@@ -1,6 +1,7 @@
 import React from "react";
-import { fireEvent, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { List } from "immutable";
 import Data from "./Data";
 import {
   newNode,
@@ -14,9 +15,20 @@ import {
   planBulkUpsertNodes,
   planUpsertRelations,
 } from "./planner";
-import { renderWithTestData, ALICE, setup } from "./utils.test";
-import { newRelations } from "./ViewContext";
+import {
+  renderWithTestData,
+  ALICE,
+  setup,
+  setupTestDB,
+  findNodeByText,
+  startDragging,
+  dragUp,
+  drop,
+  extractNodes,
+} from "./utils.test";
+import { ViewContextProvider, newRelations } from "./ViewContext";
 import { WorkspaceView } from "./components/Workspace";
+import { TreeView } from "./components/TreeView";
 
 test("Move View Settings on Delete", async () => {
   const [alice] = setup([ALICE]);
@@ -75,4 +87,51 @@ test("Move View Settings on Delete", async () => {
   userEvent.click(screen.getByLabelText("hide Default items of C"));
   screen.getByLabelText("show Default items of C");
   expect(screen.queryByText("C++")).toBeNull();
+});
+
+test("Move Node Up", async () => {
+  const [alice] = setup([ALICE]);
+  const executedPlan = await setupTestDB(
+    alice(),
+    [
+      [
+        "My Workspace",
+        [["Programming Languages", [["FPL"], ["OOP", ["C++", "Java"]]]]],
+      ],
+    ],
+    {
+      activeWorkspace: "My Workspace",
+    }
+  );
+  const root = (findNodeByText(executedPlan, "My Workspace") as KnowNode).id;
+  const utils = renderWithTestData(
+    <Data user={alice().user}>
+      <ViewContextProvider root={root} indices={List([0])}>
+        <TreeView />
+      </ViewContextProvider>
+    </Data>,
+    alice()
+  );
+  await screen.findByText("FPL");
+  expect(extractNodes(utils.container)).toEqual(["FPL", "OOP"]);
+  userEvent.click(screen.getByLabelText("show Default items of OOP"));
+  expect(extractNodes(utils.container)).toEqual(["FPL", "OOP", "C++", "Java"]);
+
+  const draggableID = `${root}:0:1`;
+  const el = startDragging(utils.container, draggableID);
+  dragUp(el);
+  drop(el);
+  expect(extractNodes(utils.container)).toEqual(["OOP", "C++", "Java", "FPL"]);
+  cleanup();
+
+  const { container } = renderWithTestData(
+    <Data user={alice().user}>
+      <ViewContextProvider root={root} indices={List([0])}>
+        <TreeView />
+      </ViewContextProvider>
+    </Data>,
+    alice()
+  );
+  await screen.findByText("FPL");
+  expect(extractNodes(container)).toEqual(["OOP", "C++", "Java", "FPL"]);
 });

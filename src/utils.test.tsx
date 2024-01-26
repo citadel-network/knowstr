@@ -12,6 +12,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Event, matchFilter } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import { hexToBytes } from "@noble/hashes/utils";
+import { Container } from "react-dom";
 import { DEFAULT_RELAYS } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
@@ -20,7 +21,14 @@ import {
   parseContactOfContactsEvents,
   parseContactEvent,
 } from "./contacts";
-import { createPlan, planEnsurePrivateContact } from "./planner";
+import {
+  Plan,
+  createPlan,
+  planEnsurePrivateContact,
+  planUpdateWorkspaces,
+  planUpsertNode,
+  planUpsertRelations,
+} from "./planner";
 import { execute } from "./executor";
 import { ApiProvider, Apis } from "./Apis";
 import { App } from "./App";
@@ -29,6 +37,13 @@ import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
 import { NostrAuthContext } from "./NostrAuthContext";
 import { FocusContext, FocusContextProvider } from "./FocusContextProvider";
+import {
+  addRelationToRelations,
+  getRelationsNoSocial,
+  newNode,
+} from "./connections";
+import { newRelations } from "./ViewContext";
+import { newDB } from "./knowledge";
 import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 
@@ -377,6 +392,125 @@ export async function typeNewNode(
   userEvent.type(input, text);
   userEvent.click(await screen.findByText("Add Note"));
   await screen.findByText(text);
+}
+
+type NodeDescription = [string, (NodeDescription[] | string[])?];
+
+function createNodesAndRelations(
+  plan: Plan,
+  currentRelationsID: LongID | undefined,
+  nodes: NodeDescription[]
+): Plan {
+  return List(nodes).reduce((rdx: Plan, nodeDescription: NodeDescription) => {
+    const currentRelations = currentRelationsID
+      ? getRelationsNoSocial(
+          rdx.knowledgeDBs,
+          currentRelationsID,
+          rdx.user.publicKey
+        )
+      : undefined;
+    const text =
+      typeof nodeDescription === "string"
+        ? nodeDescription
+        : nodeDescription[0];
+    const children =
+      typeof nodeDescription === "string"
+        ? undefined
+        : (nodeDescription[1] as NodeDescription[] | undefined);
+
+    const node = newNode(text, rdx.user.publicKey);
+    const planWithNode = planUpsertNode(rdx, node);
+    // Add Node to current relation
+    const planWithUpdatedRelation = currentRelations
+      ? planUpsertRelations(
+          planWithNode,
+          addRelationToRelations(currentRelations, node.id)
+        )
+      : planWithNode;
+    if (children) {
+      // Create Relations for children
+      const relationForChildren = newRelations(node.id, "", rdx.user.publicKey);
+      const planWithRelations = planUpsertRelations(
+        planWithUpdatedRelation,
+        relationForChildren
+      );
+      return createNodesAndRelations(
+        planWithRelations,
+        relationForChildren.id,
+        children
+      );
+    }
+    return planWithUpdatedRelation;
+  }, plan);
+}
+
+type Options = {
+  activeWorkspace: string;
+};
+
+export function findNodeByText(plan: Plan, text: string): KnowNode | undefined {
+  const { knowledgeDBs, user } = plan;
+  return knowledgeDBs
+    .get(user.publicKey, newDB())
+    .nodes.find((node) => node.text === text);
+}
+
+export async function setupTestDB(
+  appState: TestAppState,
+  nodes: NodeDescription[],
+  options?: Options
+): Promise<Plan> {
+  const plan = createNodesAndRelations(createPlan(appState), undefined, nodes);
+
+  const setNewWorkspace =
+    options?.activeWorkspace && findNodeByText(plan, options.activeWorkspace);
+  const planWithWorkspace = setNewWorkspace
+    ? planUpdateWorkspaces(
+        plan,
+        plan.knowledgeDBs
+          .get(plan.user.publicKey, newDB())
+          .workspaces.push(setNewWorkspace.id),
+        setNewWorkspace.id
+      )
+    : plan;
+  await execute({ ...appState, plan: planWithWorkspace });
+  return planWithWorkspace;
+}
+
+export function startDragging(
+  container: Container,
+  draggableID: string
+): Element {
+  const el = container.querySelector(
+    `div[data-rfd-draggable-id="${draggableID}"]`
+  );
+  if (!el) {
+    throw new Error(`Element with drag id ${draggableID} not found`);
+  }
+  // User event doesn't work to activate dragging on a specific event, the only way to use
+  // user event is to cycle through by pressing tab until the element is in focus which is
+  // very slow
+
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.keyDown(el, { keyCode: 32 });
+  return el;
+}
+
+export function dragUp(el: Element): void {
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.keyDown(el, { keyCode: 38 });
+}
+
+export function drop(el: Element): void {
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.keyDown(el, { keyCode: 32 });
+}
+
+export function extractNodes(container: Container): Array<string | null> {
+  const allDraggables = container.querySelectorAll(
+    "[data-rfd-draggable-id] .inner-node .break-word"
+  );
+  return Array.from(allDraggables).map((el) => el.textContent);
 }
 
 export { ALICE, UNAUTHENTICATED_BOB, UNAUTHENTICATED_CAROL, renderApp };
