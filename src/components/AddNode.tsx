@@ -24,6 +24,7 @@ import {
   closeEditor,
   useTemporaryView,
   useIsEditorOpen,
+  useIsAnyEditorOpen,
 } from "./TemporaryViewContext";
 import { Plan, planUpsertNode, usePlanner } from "../planner";
 
@@ -147,6 +148,7 @@ function AddNode({
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
   const viewKey = useViewKey();
   const isEditorOpen = useIsEditorOpen();
+  const isAnyEditorOpen = useIsAnyEditorOpen();
   const isFullScreen = useIsFullScreen();
   const isSearchModalInFullScreen = useGetFullScreenViewRepo();
   // disable shortcut for SearchModal if the AddNode Element in Column if AddNode Element in FullScreenView is opened
@@ -159,7 +161,7 @@ function AddNode({
   useEffect((): (() => void) | undefined => {
     if (isSearchEnabledByShortcut) {
       const handler = (event: KeyboardEvent): void => {
-        if (event.key === "/" && !isOpen) {
+        if (event.key === "/" && !isOpen && !isAnyEditorOpen) {
           openModal();
         }
       };
@@ -174,7 +176,7 @@ function AddNode({
       };
     }
     return undefined;
-  }, [disableSearchModal]);
+  }, [disableSearchModal, isAnyEditorOpen]);
 
   const createNewNode = (text: string): void => {
     onCreateNewNode(text);

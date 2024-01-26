@@ -222,6 +222,11 @@ function isEditorOpen(editorOpenViews: Set<string>, viewKey: string): boolean {
   return editorOpenViews.has(viewKey);
 }
 
+export function useIsAnyEditorOpen(): boolean {
+  const { editorOpenViews } = useTemporaryView();
+  return editorOpenViews.size > 0;
+}
+
 export function useIsEditorOpen(): boolean {
   const { editorOpenViews } = useTemporaryView();
   const viewKey = useViewKey();
