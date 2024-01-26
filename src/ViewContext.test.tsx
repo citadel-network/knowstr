@@ -60,7 +60,7 @@ test("Move View Settings on Delete", async () => {
     </Data>,
     alice()
   );
-  fireEvent.click(await screen.findByLabelText("show list items of C"));
+  fireEvent.click(await screen.findByLabelText("show Default items of C"));
   await screen.findByText("C++");
   // Remove JAVA Node
   userEvent.click(
@@ -70,9 +70,9 @@ test("Move View Settings on Delete", async () => {
   userEvent.click(screen.getByLabelText("disconnect 1 selected nodes"));
   // Ensure C is still expanded
   await screen.findByText("C++");
-  screen.getByLabelText("hide list items of C");
+  screen.getByLabelText("hide Default items of C");
 
-  userEvent.click(screen.getByLabelText("hide list items of C"));
-  screen.getByLabelText("show list items of C");
+  userEvent.click(screen.getByLabelText("hide Default items of C"));
+  screen.getByLabelText("show Default items of C");
   expect(screen.queryByText("C++")).toBeNull();
 });

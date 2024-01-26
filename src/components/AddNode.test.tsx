@@ -51,7 +51,7 @@ test("Link Nodes from other Users", async () => {
   );
   // Open the relations
   fireEvent.click(
-    screen.getByLabelText("show list items of Object Oriented Languages")
+    screen.getByLabelText("show Default items of Object Oriented Languages")
   );
   screen.getByText("Java");
 });
