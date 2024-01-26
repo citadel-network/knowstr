@@ -5,7 +5,7 @@ import {
   DragUpdate,
   DropResult,
   ResponderProvided,
-} from "react-beautiful-dnd";
+} from "@hello-pangea/dnd";
 import {
   deselectAllChildren,
   getSelectedIndices,

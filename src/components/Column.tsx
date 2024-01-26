@@ -1,5 +1,5 @@
 import React from "react";
-import { Droppable } from "react-beautiful-dnd";
+import { Droppable } from "@hello-pangea/dnd";
 import { Card } from "react-bootstrap";
 import { bulkAddRelations } from "../connections";
 import { FileDropZone } from "./FileDropZone";

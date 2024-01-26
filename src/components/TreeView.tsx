@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { List } from "immutable";
-import { Droppable } from "react-beautiful-dnd";
+import { Droppable } from "@hello-pangea/dnd";
 import {
   useNode,
   useViewKey,

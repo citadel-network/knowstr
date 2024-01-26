@@ -1,6 +1,6 @@
 import { List } from "immutable";
 import React, { useContext, useEffect } from "react";
-import { Draggable } from "react-beautiful-dnd";
+import { Draggable } from "@hello-pangea/dnd";
 import { useMediaQuery } from "react-responsive";
 import { Link, matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
