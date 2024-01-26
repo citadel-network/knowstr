@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "start": "webpack serve --open --config config/webpack/dev.config.js",
+    "start": "webpack serve --config config/webpack/dev.config.js",
     "build": "npm run build --workspaces --if-present && webpack --config config/webpack/production.config.js",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "format": "prettier --write \"src/**/*.+(ts|tsx|js|jsx|json|md|)\" \"README.md\" \"scripts/*.js\"",
