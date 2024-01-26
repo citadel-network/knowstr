@@ -74,7 +74,7 @@ export function MobileView(): JSX.Element | null {
       >
         <NavBar logout={logout} />
         <div className="background-white position-relative asset-workspace-height">
-          <div className="position-absolute board ps-2 overflow-auto">
+          <div className="position-absolute board ps-2 overflow-y-auto">
             <MobileViewNodes />
           </div>
         </div>

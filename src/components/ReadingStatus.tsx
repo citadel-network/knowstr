@@ -152,7 +152,7 @@ export function ReadingStatus({
         const initialScrollTop = (offsetParent as HTMLElement).scrollTop;
         elementFromStorage.scrollIntoView(
           "scrollBehavior" in document.documentElement.style
-            ? { block: "start", inline: "start" }
+            ? { block: "start", inline: "nearest" }
             : true
         );
         if (!isMobile) {
