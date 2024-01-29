@@ -28,6 +28,7 @@ import { DataContextProps } from "./DataContext";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
 import { NostrAuthContext } from "./NostrAuthContext";
+import { FocusContext, FocusContextProvider } from "./FocusContextProvider";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -112,7 +113,7 @@ function applyApis(props?: Partial<TestApis>): TestApis {
 
 type RenderApis = Partial<TestApis> & {
   initialRoute?: string;
-  testBootstrapInterval?: number;
+  includeFocusContext?: boolean;
   user?: KeyPair;
 };
 
@@ -147,7 +148,19 @@ function renderApis(
             setBlockstackUser: jest.fn(),
           }}
         >
-          {children}
+          {" "}
+          {options?.includeFocusContext === true ? (
+            <FocusContextProvider>{children}</FocusContextProvider>
+          ) : (
+            <FocusContext.Provider
+              value={{
+                isInputElementInFocus: true,
+                setIsInputElementInFocus: jest.fn(),
+              }}
+            >
+              {children}
+            </FocusContext.Provider>
+          )}
         </NostrAuthContext.Provider>
       </ApiProvider>
     </BrowserRouter>
@@ -165,7 +178,7 @@ function renderApp(props: RenderApis): RenderViewResult {
   const testApis = applyApis(props);
   return renderApis(<App />, {
     ...testApis,
-    testBootstrapInterval: props.testBootstrapInterval,
+    includeFocusContext: props.includeFocusContext,
   });
 }
 

@@ -1,17 +1,11 @@
 import React, { useState } from "react";
-import {
-  Dropdown,
-  Modal,
-  Form,
-  InputGroup,
-  FormControl,
-  Button,
-} from "react-bootstrap";
+import { Dropdown, Modal, Form, InputGroup, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { getWorkspaces } from "../KnowledgeDataContext";
 import { isIDRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
+import { FormControlWrapper } from "./FormControlWrapper";
 
 type NewWorkspaceProps = {
   onHide: () => void;
@@ -57,7 +51,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
         <Modal.Body>
           <InputGroup>
             <InputGroup.Text>Title</InputGroup.Text>
-            <FormControl
+            <FormControlWrapper
               aria-label="title of new workspace"
               name="title"
               required

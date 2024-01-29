@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Dropdown,
-  Form,
-  FormControl,
-  InputGroup,
-  Modal,
-} from "react-bootstrap";
+import { Button, Dropdown, Form, InputGroup, Modal } from "react-bootstrap";
 import { CirclePicker } from "react-color";
 import { v4 } from "uuid";
 import {
@@ -26,6 +19,7 @@ import {
   useNode,
   useViewPath,
 } from "../ViewContext";
+import { FormControlWrapper } from "./FormControlWrapper";
 
 export const DEFAULT_COLOR = "#027d86";
 
@@ -116,7 +110,7 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
         <Modal.Body>
           <InputGroup>
             <InputGroup.Text>Name of Relation Type</InputGroup.Text>
-            <FormControl
+            <FormControlWrapper
               aria-label="Name of new Relation Type"
               name="name"
               required

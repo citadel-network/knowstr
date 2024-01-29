@@ -31,6 +31,7 @@ import {
   useIsEditingOn,
   useIsParentMultiselectBtnOn,
 } from "./TemporaryViewContext";
+import { useInputElementFocus } from "../FocusContextProvider";
 import { IS_MOBILE } from "./responsive";
 import { AddNodeToNode } from "./AddNode";
 import { NodeMenu } from "./Menu";
@@ -39,6 +40,7 @@ import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { planUpsertNode, usePlanner } from "../planner";
+import { ReactQuillWrapper } from "./ReactQuillWrapper";
 
 export function getLevels(
   viewPath: ViewPath,
@@ -107,17 +109,15 @@ function InlineEditor({
     <>
       <div className="editor">
         <div className="scrolling-container flex-row-start w-100">
-          <ReactQuill
-            theme="bubble"
-            formats={[]}
-            modules={{ toolbar: false }}
-            scrollingContainer="scrolling-container"
-            ref={ref}
-          />
+          <ReactQuillWrapper ref={ref} />
         </div>
       </div>
       <div className="flex-row-space-between">
-        <DeleteNode afterOnClick={onStopEditing} />
+        <DeleteNode
+          afterOnClick={() => {
+            onStopEditing();
+          }}
+        />
         <div className="flex-row-end">
           <Button
             className="btn font-size-small"
@@ -126,7 +126,11 @@ function InlineEditor({
           >
             <span>Save</span>
           </Button>
-          <CloseButton onClose={onStopEditing} />
+          <CloseButton
+            onClose={() => {
+              onStopEditing();
+            }}
+          />
         </div>
       </div>
     </>
@@ -188,6 +192,7 @@ function EditingNodeContent(): JSX.Element | null {
   const { createPlan, executePlan } = usePlanner();
   const viewKey = useViewKey();
   const { editingViews, setEditingState } = useTemporaryView();
+  const { setIsInputElementInFocus } = useInputElementFocus();
   if (!node) {
     return null;
   }
@@ -200,6 +205,7 @@ function EditingNodeContent(): JSX.Element | null {
     );
   };
   const closeEditor = (): void => {
+    setIsInputElementInFocus(false);
     setEditingState(toggleEditing(editingViews, viewKey));
   };
   return (

@@ -1,4 +1,4 @@
-import { screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { newNode } from "../connections";
 import { ALICE, matchSplitText, renderApp, setup } from "../utils.test";
@@ -83,11 +83,13 @@ test("On Fullscreen, search also starts with press on slash key", async () => {
       newNode("My source", alice().user.publicKey)
     ),
   });
-  renderApp(alice());
+  renderApp({ ...alice(), includeFocusContext: true });
   userEvent.type(await screen.findByText("My first Workspace"), "/");
   screen.getByPlaceholderText("Search");
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "My s{enter}");
-  await screen.findByText("My source");
+  await waitFor(() => {
+    userEvent.type(searchInput, "My s{enter}");
+    screen.getByText("My source");
+  });
   expect(screen.queryByPlaceholderText("Search")).toBeNull();
 });

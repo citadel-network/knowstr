@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./Ui";
@@ -7,6 +7,7 @@ import { useData } from "../DataContext";
 import { DEFAULT_RELAYS, publishRelayMetadata } from "../nostr";
 import { useApis } from "../Apis";
 import { republishEvents } from "../executor";
+import { FormControlWrapper } from "./FormControlWrapper";
 
 type RelayButtonProps = {
   onClick: () => void;
@@ -29,7 +30,6 @@ function RelayButton({
 type EditableFormControlProps = {
   isEdit: boolean;
   setIsEdit: React.Dispatch<React.SetStateAction<boolean>>;
-  relayRef: React.MutableRefObject<HTMLInputElement | null>;
   onSave: (newRelay: string) => void;
   relay?: string;
   defaultValue?: string;
@@ -38,7 +38,6 @@ type EditableFormControlProps = {
 function EditableFormControl({
   isEdit,
   setIsEdit,
-  relayRef,
   onSave,
   relay,
   defaultValue,
@@ -47,8 +46,7 @@ function EditableFormControl({
   const [inputValue, setInputValue] = useState<string>(startingInput);
   return (
     <>
-      <Form.Control
-        ref={relayRef}
+      <FormControlWrapper
         name={`relay ${startingInput}`}
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
@@ -97,7 +95,6 @@ function RelayFormGroup({
   onSave,
 }: RelayFormGroupProps): JSX.Element {
   const [isEdit, setIsEdit] = useState<boolean>(false);
-  const relayRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <Form.Group className="d-flex align-items-center mb-2">
@@ -114,7 +111,6 @@ function RelayFormGroup({
       <EditableFormControl
         isEdit={isEdit}
         setIsEdit={setIsEdit}
-        relayRef={relayRef}
         onSave={onSave}
         relay={relay}
       />
@@ -141,7 +137,6 @@ function NewRelayFormGroup({
   defaultValue,
 }: NewRelayFormGroupProps): JSX.Element {
   const [isEdit, setIsEdit] = useState<boolean>(false);
-  const relayRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <Form.Group className="d-flex align-items-center mb-2">
@@ -153,7 +148,6 @@ function NewRelayFormGroup({
         <EditableFormControl
           isEdit={isEdit}
           setIsEdit={setIsEdit}
-          relayRef={relayRef}
           onSave={onSave}
           defaultValue={defaultValue}
         />

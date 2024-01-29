@@ -14,6 +14,7 @@ import "react-quill/dist/quill.bubble.css";
 import { App } from "./App";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
 import { NostrProvider } from "./NostrWasmProvider";
+import { FocusContextProvider } from "./FocusContextProvider";
 
 function createFileStore(): LocalStorage {
   return {
@@ -30,7 +31,9 @@ if (root !== null) {
     <BrowserRouter>
       <NostrProvider apis={{ fileStore: createFileStore() }}>
         <NostrAuthContextProvider>
-          <App />
+          <FocusContextProvider>
+            <App />
+          </FocusContextProvider>
         </NostrAuthContextProvider>
       </NostrProvider>
     </BrowserRouter>

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import ReactQuill from "react-quill";
 import { useMediaQuery } from "react-responsive";
 import { matchPath, useLocation, useParams } from "react-router-dom";
+import ReactQuill from "react-quill";
 import { shorten } from "../KnowledgeDataContext";
 import { newNode } from "../connections";
 import {
@@ -13,6 +13,7 @@ import {
   useViewKey,
   upsertRelations,
 } from "../ViewContext";
+import { useInputElementFocus } from "../FocusContextProvider";
 import { Button, CloseButton } from "./Ui";
 import useModal from "./useModal";
 import { ESC, SearchModal } from "./SearchModal";
@@ -26,6 +27,7 @@ import {
   useIsEditorOpen,
 } from "./TemporaryViewContext";
 import { Plan, planUpsertNode, usePlanner } from "../planner";
+import { ReactQuillWrapper } from "./ReactQuillWrapper";
 
 function AddNodeButton({
   onClick,
@@ -81,7 +83,9 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
   const ref = React.createRef<ReactQuill>();
 
   useEffect(() => {
-    (ref.current as ReactQuill).focus();
+    if (ref.current) {
+      ref.current.focus();
+    }
   }, []);
 
   const onSave = (nodeType: NodeType, relationType?: RelationType): void => {
@@ -94,12 +98,8 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
   return (
     <div className="editor">
       <div className="scrolling-container">
-        <ReactQuill
-          theme="bubble"
-          formats={[]}
-          modules={{ toolbar: false }}
+        <ReactQuillWrapper
           placeholder="Create a Note"
-          scrollingContainer="scrolling-container"
           ref={ref}
           onKeyDown={(e: KeyboardEvent) => {
             if (e.keyCode === ESC) {
@@ -110,7 +110,11 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
       </div>
       <div>
         <Button onClick={() => onSave("NOTE")}>Add Note</Button>
-        <CloseButton onClose={onClose} />
+        <CloseButton
+          onClose={() => {
+            onClose();
+          }}
+        />
       </div>
     </div>
   );
@@ -145,19 +149,20 @@ function AddNode({
   const isMobile = useMediaQuery(IS_MOBILE);
   const { openModal, closeModal, isOpen } = useModal();
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
+  const { isInputElementInFocus, setIsInputElementInFocus } =
+    useInputElementFocus();
   const viewKey = useViewKey();
   const isEditorOpen = useIsEditorOpen();
   const isFullScreen = useIsFullScreen();
-  const isSearchModalInFullScreen = useGetFullScreenViewRepo();
-  // disable shortcut for SearchModal if the AddNode Element in Column if AddNode Element in FullScreenView is opened
-  const disableSearchModal =
-    isFullScreen && isSearchModalInFullScreen === undefined;
+  const isRepoInFullScreen = useGetFullScreenViewRepo();
+  // disable shortcut for SearchModal if the AddNode Element in FullScreenView is opened
+  const disableSearchModal = isFullScreen && isRepoInFullScreen === undefined;
   const reset = (): void => {
+    setIsInputElementInFocus(false);
     setEditorOpenState(closeEditor(editorOpenViews, viewKey));
   };
-
   useEffect((): (() => void) | undefined => {
-    if (isSearchEnabledByShortcut) {
+    if (isSearchEnabledByShortcut && !isInputElementInFocus) {
       const handler = (event: KeyboardEvent): void => {
         if (event.key === "/" && !isOpen) {
           openModal();
@@ -174,7 +179,7 @@ function AddNode({
       };
     }
     return undefined;
-  }, [disableSearchModal]);
+  }, [disableSearchModal, isInputElementInFocus]);
 
   const createNewNode = (text: string): void => {
     onCreateNewNode(text);

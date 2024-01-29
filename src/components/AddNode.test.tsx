@@ -38,7 +38,7 @@ test("Link Nodes from other Users", async () => {
     ...bob(),
     plan,
   });
-  const view = renderApp(alice());
+  const view = renderApp({ ...alice(), includeFocusContext: true });
   await typeNewNode(view, "Programming Languages");
   const searchButton = screen.getByLabelText(
     "search and attach to Programming Languages"
@@ -46,12 +46,14 @@ test("Link Nodes from other Users", async () => {
   fireEvent.click(searchButton);
   const searchInput = await screen.findByLabelText("search input");
   userEvent.type(searchInput, "Object");
-  userEvent.click(
-    screen.getByText(matchSplitText("Object Oriented Languages"))
+  fireEvent.click(
+    await screen.findByText(matchSplitText("Object Oriented Languages"))
   );
   // Open the relations
   fireEvent.click(
-    screen.getByLabelText("show Default items of Object Oriented Languages")
+    await screen.findByLabelText(
+      "show Default items of Object Oriented Languages"
+    )
   );
-  screen.getByText("Java");
+  await screen.findByText("Java");
 });
