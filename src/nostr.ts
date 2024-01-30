@@ -13,6 +13,9 @@ export const KIND_RELATION_TYPES = 11076;
 
 export const KIND_KNOWLEDGE_LIST = 34750;
 export const KIND_KNOWLEDGE_NODE = 34751;
+// Essentially a markdown which is not editable
+export const KIND_KNOWLEDGE_NODE_COLLECTION = 2945;
+
 export const KIND_DELETE = 5;
 
 export const KIND_RELAY_METADATA_EVENT = 10002;

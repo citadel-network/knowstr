@@ -13,11 +13,7 @@ import {
   useNode,
   upsertRelations,
 } from "../ViewContext";
-import {
-  planBulkUpsertNodes,
-  planBulkUpsertRelations,
-  usePlanner,
-} from "../planner";
+import { Plan, usePlanner } from "../planner";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -37,23 +33,12 @@ export function WorkspaceColumnView(): JSX.Element | null {
 
 export function EmptyColumn(): JSX.Element {
   const viewContext = useViewPath();
-  const { createPlan, executePlan } = usePlanner();
-  const onDropFiles = (
-    nodes: KnowNode[],
-    relations: Relations[],
-    topNodes: Array<LongID>
-  ): void => {
-    const bulkUpsertPlan = planBulkUpsertNodes(createPlan(), nodes);
-    const addTopNodesPlan = upsertRelations(
-      bulkUpsertPlan,
-      viewContext,
-      (r: Relations) => addRelationToRelations(r, topNodes[0])
+  const { executePlan } = usePlanner();
+  const onDropFiles = (plan: Plan, topNodes: Array<LongID>): void => {
+    const addTopNodesPlan = upsertRelations(plan, viewContext, (r: Relations) =>
+      addRelationToRelations(r, topNodes[0])
     );
-    const addRelationsPlan = planBulkUpsertRelations(
-      addTopNodesPlan,
-      relations
-    );
-    executePlan(addRelationsPlan);
+    executePlan(addTopNodesPlan);
   };
   return (
     <WorkspaceColumn>

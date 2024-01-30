@@ -29,6 +29,8 @@ import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
 import { NostrAuthContext } from "./NostrAuthContext";
 import { FocusContext, FocusContextProvider } from "./FocusContextProvider";
+import { TemporaryViewProvider } from "./components/TemporaryViewContext";
+import { DND } from "./dnd";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -235,7 +237,7 @@ function getContactsOfContacts(appState: TestAppState): ContactsOfContacts {
   return parseContactOfContactsEvents(events);
 }
 
-type UpdateState = () => TestAppState;
+export type UpdateState = () => TestAppState;
 
 export function setup(
   users: KeyPair[],
@@ -271,19 +273,6 @@ export async function addContact(
     ...utils,
     plan,
   });
-  // TODO: remove if tests are not flaky
-  /*
-  const filter = {
-    kinds: [KEY_DISTR_EVENT],
-    authors: [utils.user.publicKey],
-    "#p": [publicKey],
-  };
-  await waitFor(() => {
-    expect(
-      utils.relayPool.getEvents().filter((e) => matchFilter(filter, e)).length
-    ).toBeGreaterThanOrEqual(1);
-  });
-   */
 }
 
 export async function connectContacts(
@@ -304,7 +293,14 @@ export function renderWithTestData(
   const utils = renderApis(
     <Routes>
       <Route element={<RequireLogin />}>
-        <Route path="*" element={<>{children}</>} />
+        <Route
+          path="*"
+          element={
+            <TemporaryViewProvider>
+              <DND>{children}</DND>
+            </TemporaryViewProvider>
+          }
+        />
       </Route>
     </Routes>,
     props

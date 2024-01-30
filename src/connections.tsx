@@ -171,9 +171,9 @@ export function bulkAddRelations(
   }, relations);
 }
 
-export function newNode(text: string, myself: PublicKey): KnowNode {
+export function newNode(text: string, myself: PublicKey, id?: ID): KnowNode {
   return {
     text,
-    id: joinID(myself, v4()),
+    id: joinID(myself, id || v4()),
   };
 }

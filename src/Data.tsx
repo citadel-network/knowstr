@@ -21,6 +21,7 @@ import {
   KIND_VIEWS,
   KIND_SETTINGS,
   KIND_DELETE,
+  KIND_KNOWLEDGE_NODE_COLLECTION,
 } from "./nostr";
 import { useApis } from "./Apis";
 import {
@@ -54,6 +55,7 @@ const KINDS_CONTACTS = [
   KIND_RELATION_TYPES,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
+  KIND_KNOWLEDGE_NODE_COLLECTION,
   KIND_DELETE,
 ];
 

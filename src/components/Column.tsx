@@ -11,11 +11,7 @@ import { RemoveColumnButton } from "./RemoveColumnButton";
 import { upsertRelations, useViewKey, useViewPath } from "../ViewContext";
 import { TreeView } from "./TreeView";
 import { AddNodeToNode } from "./AddNode";
-import {
-  planBulkUpsertNodes,
-  planBulkUpsertRelations,
-  usePlanner,
-} from "../planner";
+import { Plan, usePlanner } from "../planner";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -23,23 +19,12 @@ export function Column(): JSX.Element | null {
   const viewContext = useViewPath();
   const deselectByPostfix = useDeselectAllInView();
   const viewKey = useViewKey();
-  const { createPlan, executePlan } = usePlanner();
-  const onDropFiles = (
-    nodes: KnowNode[],
-    relations: Relations[],
-    topNodes: Array<LongID>
-  ): void => {
-    const bulkUpsertPlan = planBulkUpsertNodes(createPlan(), nodes);
-    const addTopNodesPlan = upsertRelations(
-      bulkUpsertPlan,
-      viewContext,
-      (r: Relations) => bulkAddRelations(r, topNodes)
+  const { executePlan } = usePlanner();
+  const onDropFiles = (plan: Plan, topNodes: Array<LongID>): void => {
+    const addTopNodesPlan = upsertRelations(plan, viewContext, (r: Relations) =>
+      bulkAddRelations(r, topNodes)
     );
-    const addRelationsPlan = planBulkUpsertRelations(
-      addTopNodesPlan,
-      relations
-    );
-    executePlan(addRelationsPlan);
+    executePlan(addTopNodesPlan);
     deselectByPostfix(viewKey);
   };
 
