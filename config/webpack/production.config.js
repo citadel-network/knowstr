@@ -20,7 +20,7 @@ module.exports = {
     path: path.join(__dirname, "../../build"),
     filename: "static/js/[name].[contenthash:8].js",
     chunkFilename: "static/js/[name].[contenthash:8].chunk.js",
-    publicPath: "",
+    publicPath: "/",
   },
   optimization: {
     minimize: true,
