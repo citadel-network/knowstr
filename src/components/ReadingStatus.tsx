@@ -160,6 +160,12 @@ export function ReadingStatus({
           (offsetParent as HTMLElement).scrollTop = initialScrollTop;
         }
       }
+    }
+    return undefined;
+  }, [window.URL, view && view.width, nodesListRef.current]);
+
+  useEffect((): void => {
+    if (nodes.size > 1 && nodesListRef.current) {
       const renderedNodeList = nodesListRef.current;
       if (renderedNodeList) {
         const topBorderMap = calculateTopBorderMap(renderedNodeList);
@@ -180,7 +186,7 @@ export function ReadingStatus({
       }
     }
     return undefined;
-  }, [nodes.size, window.URL, view && view.width, nodesListRef.current]);
+  }, [window.URL, view && view.width]);
   if (!view) {
     return <>{children}</>;
   }
