@@ -408,7 +408,10 @@ export async function typeNewNode(
   await screen.findByText(text);
 }
 
-type NodeDescription = [string, (NodeDescription[] | string[])?];
+type NodeDescription = [
+  string | KnowNode,
+  (NodeDescription[] | (string | KnowNode)[])?
+];
 
 function createNodesAndRelations(
   plan: Plan,
@@ -423,17 +426,19 @@ function createNodesAndRelations(
           rdx.user.publicKey
         )
       : undefined;
-    const text =
-      typeof nodeDescription === "string"
-        ? nodeDescription
-        : nodeDescription[0];
-    const children =
-      typeof nodeDescription === "string"
-        ? undefined
-        : (nodeDescription[1] as NodeDescription[] | undefined);
-
-    const node = newNode(text, rdx.user.publicKey);
-    const planWithNode = planUpsertNode(rdx, node);
+    const textOrNode = Array.isArray(nodeDescription)
+      ? nodeDescription[0]
+      : nodeDescription;
+    const children = Array.isArray(nodeDescription)
+      ? (nodeDescription[1] as NodeDescription[] | undefined)
+      : undefined;
+    const node =
+      typeof textOrNode === "string"
+        ? newNode(textOrNode, rdx.user.publicKey)
+        : textOrNode;
+    // no need to upsert if it's already a node
+    const planWithNode =
+      typeof textOrNode === "string" ? planUpsertNode(rdx, node) : rdx;
     // Add Node to current relation
     const planWithUpdatedRelation = currentRelations
       ? planUpsertRelations(

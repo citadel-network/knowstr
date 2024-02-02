@@ -25,6 +25,8 @@ import {
   dragUp,
   drop,
   extractNodes,
+  BOB,
+  connectContacts,
 } from "./utils.test";
 import { ViewContextProvider, newRelations } from "./ViewContext";
 import { WorkspaceView } from "./components/Workspace";
@@ -134,4 +136,61 @@ test("Move Node Up", async () => {
   );
   await screen.findByText("FPL");
   expect(extractNodes(container)).toEqual(["OOP", "C++", "Java", "FPL"]);
+});
+
+test("Contact reorders list", async () => {
+  const [alice, bob] = setup([ALICE, BOB]);
+  connectContacts(alice, bob);
+  const bobsKnowledgeDB = await setupTestDB(bob(), [
+    [
+      "Bobs Workspace",
+      [["Programming Languages", [["OOP", ["C++", "Java"]], ["FPL"]]]],
+    ],
+  ]);
+  const pl = findNodeByText(
+    bobsKnowledgeDB,
+    "Programming Languages"
+  ) as KnowNode;
+
+  const aliceDB = await setupTestDB(alice(), [["My Workspace", [pl]]]);
+  const root = (findNodeByText(aliceDB, "My Workspace") as KnowNode).id;
+  const utils = renderWithTestData(
+    <Data user={alice().user}>
+      <ViewContextProvider root={root} indices={List([0])}>
+        <TreeView />
+      </ViewContextProvider>
+    </Data>,
+    alice()
+  );
+  await screen.findByText("FPL");
+  expect(extractNodes(utils.container)).toEqual(["OOP", "FPL"]);
+  userEvent.click(screen.getByLabelText("show Default items of OOP"));
+  await screen.findByText("C++");
+  expect(extractNodes(utils.container)).toEqual(["OOP", "C++", "Java", "FPL"]);
+  cleanup();
+
+  // let bob remove OOP
+  renderWithTestData(
+    <Data user={bob().user}>
+      <ViewContextProvider root={root} indices={List([0])}>
+        <TreeView />
+      </ViewContextProvider>
+    </Data>,
+    bob()
+  );
+  userEvent.click(await screen.findByLabelText("edit OOP"));
+  userEvent.click(screen.getByLabelText("delete node"));
+  cleanup();
+
+  const { container } = renderWithTestData(
+    <Data user={alice().user}>
+      <ViewContextProvider root={root} indices={List([0])}>
+        <TreeView />
+      </ViewContextProvider>
+    </Data>,
+    alice()
+  );
+  // OOP is gone, so are it's children
+  await screen.findByText("FPL");
+  expect(extractNodes(container)).toEqual(["FPL"]);
 });
