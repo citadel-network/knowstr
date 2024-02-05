@@ -222,7 +222,7 @@ function EditingNodeContent(): JSX.Element | null {
 const INDENTATION = 10;
 const ARROW_WIDTH = 6;
 
-function Indent({ levels }: { levels: number }): JSX.Element {
+export function Indent({ levels }: { levels: number }): JSX.Element {
   return (
     <>
       {Array.from(Array(levels).keys()).map((k) => {

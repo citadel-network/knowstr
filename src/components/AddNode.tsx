@@ -14,11 +14,11 @@ import {
   upsertRelations,
 } from "../ViewContext";
 import { useInputElementFocus } from "../FocusContextProvider";
-import { Button, CloseButton } from "./Ui";
+import { Button, CloseButton, NodeCard } from "./Ui";
 import useModal from "./useModal";
 import { ESC, SearchModal } from "./SearchModal";
 import { IS_MOBILE } from "./responsive";
-import { useIsOpenInFullScreen } from "./Node";
+import { Indent, useIsOpenInFullScreen } from "./Node";
 import { FULL_SCREEN_PATH } from "../App";
 import {
   openEditor,
@@ -39,7 +39,7 @@ function AddNodeButton({
   const isInline = useIsAddToNode() || useMediaQuery(IS_MOBILE);
   const className = isInline
     ? "workspace-droppable font-italic font-size-medium black-dimmed hover-black-dimmed"
-    : "workspace-droppable";
+    : "workspace-droppable background-transparent";
   return (
     <button
       type="button"
@@ -146,7 +146,6 @@ function AddNode({
   onAddExistingNode,
   isSearchEnabledByShortcut,
 }: AddNodeProps): JSX.Element {
-  const isMobile = useMediaQuery(IS_MOBILE);
   const { openModal, closeModal, isOpen } = useModal();
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
   const { isInputElementInFocus, setIsInputElementInFocus } =
@@ -203,11 +202,7 @@ function AddNode({
       )}
       <div className="w-100">
         {!isEditorOpen && (
-          <div
-            className={`d-flex background-white ${
-              !isMobile ? "hover-light-bg" : ""
-            }`}
-          >
+          <div className="d-flex">
             <AddNodeButton
               ariaLabel={ariaLabel}
               onClick={() => {
@@ -255,12 +250,15 @@ export function AddColumn(): JSX.Element {
   };
 
   return (
-    <AddNode
-      onCreateNewNode={onCreateNewNode}
-      onAddExistingNode={(id) => onAddNode(createPlan(), id)}
-      ariaLabel="add node"
-      isSearchEnabledByShortcut={!isOpenInFullScreen}
-    />
+    <NodeCard className="hover-light-bg">
+      <Indent levels={1} />
+      <AddNode
+        onCreateNewNode={onCreateNewNode}
+        onAddExistingNode={(id) => onAddNode(createPlan(), id)}
+        ariaLabel="add node"
+        isSearchEnabledByShortcut={!isOpenInFullScreen}
+      />
+    </NodeCard>
   );
 }
 

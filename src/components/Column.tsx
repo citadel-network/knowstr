@@ -1,17 +1,19 @@
 import React from "react";
 import { Droppable } from "@hello-pangea/dnd";
 import { Card } from "react-bootstrap";
+import { useMediaQuery } from "react-responsive";
 import { bulkAddRelations } from "../connections";
 import { FileDropZone } from "./FileDropZone";
-import { DraggableNode } from "./Node";
+import { DraggableNode, Indent } from "./Node";
 import { ColumnMenu } from "./Menu";
 import { useDeselectAllInView } from "./TemporaryViewContext";
-import { UIColumn, UIColumnBody, UIColumnHeader } from "./Ui";
+import { NodeCard, UIColumn, UIColumnBody, UIColumnHeader } from "./Ui";
 import { RemoveColumnButton } from "./RemoveColumnButton";
 import { upsertRelations, useViewKey, useViewPath } from "../ViewContext";
 import { TreeView } from "./TreeView";
 import { AddNodeToNode } from "./AddNode";
 import { Plan, usePlanner } from "../planner";
+import { IS_MOBILE } from "./responsive";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -20,6 +22,7 @@ export function Column(): JSX.Element | null {
   const deselectByPostfix = useDeselectAllInView();
   const viewKey = useViewKey();
   const { executePlan } = usePlanner();
+  const isMobile = useMediaQuery(IS_MOBILE);
   const onDropFiles = (plan: Plan, topNodes: Array<LongID>): void => {
     const addTopNodesPlan = upsertRelations(plan, viewContext, (r: Relations) =>
       bulkAddRelations(r, topNodes)
@@ -60,9 +63,14 @@ export function Column(): JSX.Element | null {
             >
               {provided.placeholder}
               {!snapshot.isDraggingOver && (
-                <div className="add-to-node">
+                <NodeCard
+                  className={
+                    !isMobile ? "hover-light-bg border-top-strong" : undefined
+                  }
+                >
+                  <Indent levels={1} />
                   <AddNodeToNode />
-                </div>
+                </NodeCard>
               )}
             </div>
           )}

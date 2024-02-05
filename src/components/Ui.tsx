@@ -135,10 +135,7 @@ export function NodeCard({
   cardBodyClassName,
 }: Partial<Children> & KnowledgeNodeCardProps): JSX.Element {
   return (
-    <Card
-      className={`inner-node background-white ${className || ""}`}
-      style={style}
-    >
+    <Card className={`inner-node ${className || ""}`} style={style}>
       <Badge value={badgeValue} isLeft size={80} />
       <Card.Body className={cardBodyClassName || "ps-0 pb-2 pt-2"}>
         <div className="d-flex align-center">{children}</div>
