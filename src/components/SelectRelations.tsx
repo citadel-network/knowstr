@@ -187,7 +187,12 @@ function EditRelationsDropdown({
       <Dropdown.Toggle
         as="button"
         className={className}
-        style={{ ...style, borderLeft: "1px solid white" }}
+        style={{
+          ...style,
+          borderLeftWidth: "1px",
+          borderLeftStyle: "solid",
+          borderLeftColor: "white",
+        }}
       >
         <span className="iconsminds-arrow-down" />
       </Dropdown.Toggle>
@@ -284,7 +289,10 @@ function SocialRelationsButton({
   }`;
   const style = {
     backgroundColor: "black",
-    borderColor: "black",
+    borderTopColor: "black",
+    borderRightColor: "black",
+    borderBottomColor: "black",
+    borderLeftColor: "black",
     color: "white",
   };
   const preventDeselect = isActive && alwaysOneSelected;
@@ -384,7 +392,10 @@ function SelectRelationsButton({
   const style = relationType
     ? {
         backgroundColor: relationType.color,
-        borderColor: relationType.color,
+        borderTopColor: relationType.color,
+        borderRightColor: relationType.color,
+        borderBottomColor: relationType.color,
+        borderLeftColor: relationType.color,
         color: "white",
       }
     : {};
