@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { List, OrderedSet, Set } from "immutable";
 import {
   DragDropContext,
@@ -11,7 +11,12 @@ import {
   getSelectedIndices,
   useTemporaryView,
 } from "./components/TemporaryViewContext";
-import { bulkAddRelations, getRelations, moveRelations } from "./connections";
+import {
+  bulkAddRelations,
+  deleteRelations,
+  getRelations,
+  moveRelations,
+} from "./connections";
 import { newDB } from "./knowledge";
 import {
   parseViewPath,
@@ -25,6 +30,7 @@ import {
   updateView,
   bulkUpdateViewPathsAfterAddRelation,
   updateViewPathsAfterMoveRelations,
+  updateViewPathsAfterDeletion,
 } from "./ViewContext";
 import { getNodesInTree } from "./components/Node";
 import { Plan, planUpdateViews, usePlanner } from "./planner";
@@ -95,7 +101,8 @@ export function dnd(
   selection: OrderedSet<string>,
   source: string,
   to: string,
-  toIndex: number
+  toIndex: number,
+  isDeleteSourceRelations: boolean
 ): Plan {
   const { knowledgeDBs } = plan;
   const myself = plan.user.publicKey;
@@ -175,8 +182,33 @@ export function dnd(
     toRepo.id === fromRepo.id &&
     fromView.relations === toV.relations;
 
+  const viewPathForDeleteRelations = getParentView(sourceViewPath);
+  const planWithDeletedRelations = viewPathForDeleteRelations
+    ? upsertRelations(plan, viewPathForDeleteRelations, (r: Relations) =>
+        deleteRelations(r, sourceIndices)
+      )
+    : plan;
+  const { views: viewsWithDeletedRelations } =
+    planWithDeletedRelations.knowledgeDBs.get(
+      planWithDeletedRelations.user.publicKey,
+      newDB()
+    );
+  const updatedViewsPlan =
+    isDeleteSourceRelations && viewPathForDeleteRelations
+      ? planUpdateViews(
+          planWithDeletedRelations,
+          updateViewPathsAfterDeletion(
+            planWithDeletedRelations.knowledgeDBs,
+            viewsWithDeletedRelations,
+            planWithDeletedRelations.user.publicKey,
+            viewPathForDeleteRelations,
+            sourceIndices
+          )
+        )
+      : plan;
+
   const updatedRelationsPlan = upsertRelations(
-    plan,
+    updatedViewsPlan,
     toView,
     (relations: Relations) => {
       if (move) {
@@ -219,6 +251,27 @@ export function DND({ children }: { children: React.ReactNode }): JSX.Element {
     initial: undefined,
     provided: undefined,
   });
+  const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === "Shift") {
+        setIsShiftPressed(true);
+      }
+    };
+    const handleKeyUp = (event: KeyboardEvent): void => {
+      if (event.key === "Shift") {
+        setIsShiftPressed(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   const onDragEnd = (result: DropResult): void => {
     if (result.destination) {
@@ -228,7 +281,8 @@ export function DND({ children }: { children: React.ReactNode }): JSX.Element {
           selection,
           result.draggableId,
           result.destination.droppableId,
-          result.destination.index
+          result.destination.index,
+          isShiftPressed
         )
       );
       const parentKey = getParentKey(result.draggableId);
