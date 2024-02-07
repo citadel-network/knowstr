@@ -1,41 +1,51 @@
 import { List, Map } from "immutable";
 import { Event } from "nostr-tools";
-import { getMostRecentReplacableEvent } from "citadel-commons";
+import { findAllTags, getMostRecentReplacableEvent } from "citadel-commons";
 import { KIND_CONTACTLIST } from "./nostr";
 
-type RawContact = {
-  publicKey: PublicKey;
-  createdAt: string | undefined;
-};
+type FollowList = Array<Contact>;
 
-export function parseContactEvent(event: Event): Contacts {
-  const rawContacts = JSON.parse(event.content) as {
-    [publicKey: PublicKey]: RawContact;
-  };
-  if (!rawContacts) {
-    return Map<PublicKey, Contact>();
+export function parseFollowListEvent(event: Event): FollowList {
+  const contactListTags = findAllTags(event, "p");
+  if (!contactListTags) {
+    return [];
   }
-  return Map<PublicKey, RawContact>(rawContacts)
-    .mapEntries(([, contact]) => {
+  return contactListTags
+    .filter((tag) => tag.length >= 1)
+    .map((tag) => {
+      const { length } = tag;
+      const publicKey = tag[0] as PublicKey;
+      // we don't use mainRelay and userName, but we don't want to be a nostr client that deletes a user's data
+      const mainRelay = length >= 2 ? tag[1] : undefined;
+      const userName = length >= 3 ? tag[2] : undefined;
+      return {
+        publicKey,
+        mainRelay,
+        userName,
+      };
+    });
+}
+
+function getContactsFromFollowList(followList: FollowList): Contacts {
+  return Map<PublicKey, Contact>(
+    followList.map((contact) => {
       return [
         contact.publicKey,
         {
-          ...contact,
-          createdAt: contact.createdAt
-            ? new Date(contact.createdAt)
-            : undefined,
+          publicKey: contact.publicKey,
         },
       ];
     })
-    .filter((pubKey, contact) => pubKey !== undefined && contact !== undefined);
+  );
 }
 
 export function findContacts(events: List<Event>): Contacts {
-  const contactEvent = getMostRecentReplacableEvent(
+  const contactListEvent = getMostRecentReplacableEvent(
     events.filter((event) => event.kind === KIND_CONTACTLIST)
   );
-  if (!contactEvent) {
+  if (!contactListEvent) {
     return Map<PublicKey, Contact>();
   }
-  return parseContactEvent(contactEvent);
+  const followList = parseFollowListEvent(contactListEvent);
+  return getContactsFromFollowList(followList);
 }

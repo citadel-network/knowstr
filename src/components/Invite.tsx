@@ -6,7 +6,7 @@ import { Modal, Spinner } from "react-bootstrap";
 import { QrReader } from "react-qr-reader";
 import { useMediaQuery } from "react-responsive";
 import ModalForm from "./ModalForm";
-import { usePlanner, planEnsurePrivateContact } from "../planner";
+import { usePlanner, planAddContact } from "../planner";
 import { useData } from "../DataContext";
 import { LoadingSpinnerButton } from "./LoadingSpinnerButton";
 import { IS_MOBILE } from "./responsive";
@@ -276,7 +276,7 @@ function Invite(): JSX.Element {
   }
   const onHide = (): void => navigate(`/`);
   const handleSubmit = async (): Promise<void> => {
-    await executePlan(planEnsurePrivateContact(createPlan(), publicKey));
+    await executePlan(planAddContact(createPlan(), publicKey));
   };
   const SubmitButton = (): JSX.Element => (
     <LoadingSpinnerButton className="btn btn-primary" type="submit">

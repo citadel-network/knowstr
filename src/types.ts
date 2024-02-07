@@ -9,7 +9,8 @@ declare global {
 
   export type Contact = {
     publicKey: PublicKey;
-    createdAt?: Date;
+    mainRelay?: string;
+    userName?: string;
   };
 
   export type ContactOfContact = Contact & {
@@ -19,14 +20,6 @@ declare global {
   export type HasPublicKey = {
     publicKey: PublicKey;
   };
-
-  /* eslint-disable camelcase */
-  type RawContactEntry = {
-    user: string;
-    payload: string;
-    public_key: string;
-  };
-  /* eslint-enable camelcase */
 
   type Contacts = Map<PublicKey, Contact>;
   type ContactsOfContacts = Map<PublicKey, ContactOfContact>;

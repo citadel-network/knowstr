@@ -15,11 +15,10 @@ import { hexToBytes } from "@noble/hashes/utils";
 import { Container } from "react-dom";
 import { DEFAULT_RELAYS, KIND_CONTACTLIST } from "./nostr";
 import { RequireLogin } from "./AppState";
-import { parseContactEvent } from "./contacts";
 import {
   Plan,
   createPlan,
-  planEnsurePrivateContact,
+  planAddContact,
   planUpdateWorkspaces,
   planUpsertNode,
   planUpsertRelations,
@@ -41,6 +40,7 @@ import { newRelations } from "./ViewContext";
 import { newDB } from "./knowledge";
 import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
+import { findContacts } from "./contacts";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -226,51 +226,46 @@ function applyDefaults(props?: Partial<TestAppState>): TestAppState {
   };
 }
 
-function createContactsQuery(authors: PublicKey[]): Filter {
+function createContactsQuery(author: PublicKey): Filter {
   return {
     kinds: [KIND_CONTACTLIST],
-    authors,
+    authors: [author],
   };
 }
 
-function createContactsOfContactsQuery(contacts: Contacts): Filter {
-  const contactsPublicKeys = contacts
-    .keySeq()
-    .sortBy((k) => k)
-    .toArray();
-  return createContactsQuery(contactsPublicKeys);
+function getContactListEventsOfUser(
+  publicKey: PublicKey,
+  events: Array<Event>
+): List<Event> {
+  const query = createContactsQuery(publicKey);
+  return List<Event>(events).filter((e) => matchFilter(query, e));
 }
 
-function parseContactOfContactsEvents(events: List<Event>): ContactsOfContacts {
-  return events.reduce((rdx, event) => {
-    return rdx.merge(
-      parseContactEvent(event).map((contact) => ({
-        ...contact,
-        commonContact: event.pubkey as PublicKey,
-      }))
-    );
-  }, Map<PublicKey, ContactOfContact>());
-}
-
-function getPrivateContacts(appState: TestAppState): Contacts {
-  const query = createContactsQuery([appState.user.publicKey]);
-  const events = List<Event>(appState.relayPool.getEvents()).filter((e) =>
-    matchFilter(query, e)
+function getContacts(appState: TestAppState): Contacts {
+  const events = getContactListEventsOfUser(
+    appState.user.publicKey,
+    appState.relayPool.getEvents()
   );
-  const newestContactsEvent = events.last(undefined);
-  if (!newestContactsEvent) {
-    return Map<PublicKey, Contact>();
-  }
-  return parseContactEvent(newestContactsEvent);
+  return findContacts(events);
 }
 
 function getContactsOfContacts(appState: TestAppState): ContactsOfContacts {
-  const contacts = getPrivateContacts(appState);
-  const query = createContactsOfContactsQuery(contacts);
-  const events = List<Event>(appState.relayPool.getEvents()).filter((e) =>
-    matchFilter(query, e)
-  );
-  return parseContactOfContactsEvents(events);
+  const contacts = getContacts(appState);
+  return contacts.reduce((rdx, contact) => {
+    const contactListEventsOfContact = getContactListEventsOfUser(
+      contact.publicKey,
+      appState.relayPool.getEvents()
+    );
+    const contactsOfContact = findContacts(contactListEventsOfContact);
+    return contactsOfContact.reduce((coc, contactOfContact) => {
+      return coc.has(contactOfContact.publicKey)
+        ? coc
+        : coc.set(contactOfContact.publicKey, {
+            ...contactOfContact,
+            commonContact: contact.publicKey,
+          });
+    }, rdx);
+  }, Map<PublicKey, ContactOfContact>());
 }
 
 export type UpdateState = () => TestAppState;
@@ -286,9 +281,7 @@ export function setup(
         ...appState,
         user,
       };
-      const contacts = appState.contacts.merge(
-        getPrivateContacts(updatedState)
-      );
+      const contacts = appState.contacts.merge(getContacts(updatedState));
       const contactsOfContacts = getContactsOfContacts(updatedState);
       return {
         ...updatedState,
@@ -304,7 +297,7 @@ export async function addContact(
   publicKey: PublicKey
 ): Promise<void> {
   const utils = cU();
-  const plan = planEnsurePrivateContact(createPlan(utils), publicKey);
+  const plan = planAddContact(createPlan(utils), publicKey);
   await execute({
     ...utils,
     plan,

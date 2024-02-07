@@ -6,7 +6,6 @@ import { execute } from "./executor";
 
 import { useApis } from "./Apis";
 import {
-  Serializable,
   relationTypesToJson,
   relationsToJSON,
   viewsToJSON,
@@ -97,50 +96,43 @@ export function usePlanner(): Planner {
   };
 }
 
-function planSetContact(context: Plan, privateContact: Contact): Plan {
-  const plan = {
-    ...context,
-    contacts: context.contacts.set(privateContact.publicKey, privateContact),
+export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
+  if (plan.contacts.has(publicKey)) {
+    return plan;
+  }
+  const newContact: Contact = {
+    publicKey,
   };
-  const contactsMap = plan.contacts.map(
-    // TODO: write a test to ensure that honourBet, honour and eosAccountName will be preserved
-    (contact): Serializable => {
-      // Write this explicit, so we don't accidentally expose private data
-      return {
-        ...contact,
-        createdAt: contact.createdAt ? contact.createdAt.getTime() : 0,
-        // Delete Private Key explicitly
-        privateKey: undefined,
-        commonContact: undefined,
-      };
-    }
-  );
-  const event = finalizeEvent(
+  const contacts = plan.contacts.set(publicKey, newContact);
+  const tags = contacts
+    .valueSeq()
+    .toArray()
+    .map((c) => {
+      if (c.mainRelay && c.userName) {
+        return ["p", c.publicKey, c.mainRelay, c.userName];
+      }
+      if (c.mainRelay) {
+        return ["p", c.publicKey, c.mainRelay];
+      }
+      if (c.userName) {
+        return ["p", c.publicKey, c.userName];
+      }
+      return ["p", c.publicKey];
+    });
+  const addContactEvent = finalizeEvent(
     {
       kind: KIND_CONTACTLIST,
-      pubkey: getPublicKey(context.user.privateKey),
+      pubkey: plan.user.publicKey,
       created_at: newTimestamp(),
-      tags: [],
-      content: JSON.stringify(contactsMap.toJSON()),
+      tags,
+      content: "",
     },
     plan.user.privateKey
   );
   return {
     ...plan,
-    publishEvents: plan.publishEvents.push(event),
+    publishEvents: plan.publishEvents.push(addContactEvent),
   };
-}
-
-export function planEnsurePrivateContact(
-  context: Plan,
-  publicKey: PublicKey
-): Plan {
-  return context.contacts.has(publicKey)
-    ? context
-    : planSetContact(context, {
-        publicKey,
-        createdAt: new Date(),
-      });
 }
 
 export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
