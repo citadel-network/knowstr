@@ -16,7 +16,7 @@ import {
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_RELATION_TYPES,
-  KIND_REPUTATIONS,
+  KIND_CONTACTLIST,
   KIND_VIEWS,
   KIND_WORKSPACES,
   finalizeEvent,
@@ -117,7 +117,7 @@ function planSetContact(context: Plan, privateContact: Contact): Plan {
   );
   const event = finalizeEvent(
     {
-      kind: KIND_REPUTATIONS,
+      kind: KIND_CONTACTLIST,
       pubkey: getPublicKey(context.user.privateKey),
       created_at: newTimestamp(),
       tags: [],

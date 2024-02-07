@@ -13,7 +13,7 @@ import { Event, Filter, matchFilter } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import { hexToBytes } from "@noble/hashes/utils";
 import { Container } from "react-dom";
-import { DEFAULT_RELAYS, KIND_REPUTATIONS } from "./nostr";
+import { DEFAULT_RELAYS, KIND_CONTACTLIST } from "./nostr";
 import { RequireLogin } from "./AppState";
 import { parseContactEvent } from "./contacts";
 import {
@@ -228,7 +228,7 @@ function applyDefaults(props?: Partial<TestAppState>): TestAppState {
 
 function createContactsQuery(authors: PublicKey[]): Filter {
   return {
-    kinds: [KIND_REPUTATIONS],
+    kinds: [KIND_CONTACTLIST],
     authors,
   };
 }

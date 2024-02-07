@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { Event, UnsignedEvent, SimplePool, serializeEvent } from "nostr-tools";
 
 export const KIND_SETTINGS = 11071;
-export const KIND_REPUTATIONS = 11080;
+export const KIND_CONTACTLIST = 11080;
 
 export const KIND_VIEWS = 11074;
 export const KIND_WORKSPACES = 11075;

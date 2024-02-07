@@ -1,7 +1,7 @@
 import { List, Map } from "immutable";
 import { Event } from "nostr-tools";
 import { getMostRecentReplacableEvent } from "citadel-commons";
-import { KIND_REPUTATIONS } from "./nostr";
+import { KIND_CONTACTLIST } from "./nostr";
 
 type RawContact = {
   publicKey: PublicKey;
@@ -32,7 +32,7 @@ export function parseContactEvent(event: Event): Contacts {
 
 export function findContacts(events: List<Event>): Contacts {
   const contactEvent = getMostRecentReplacableEvent(
-    events.filter((event) => event.kind === KIND_REPUTATIONS)
+    events.filter((event) => event.kind === KIND_CONTACTLIST)
   );
   if (!contactEvent) {
     return Map<PublicKey, Contact>();
