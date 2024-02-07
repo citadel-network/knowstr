@@ -9,18 +9,13 @@ import {
   RenderResult,
 } from "@testing-library/react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Event, matchFilter } from "nostr-tools";
+import { Event, Filter, matchFilter } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import { hexToBytes } from "@noble/hashes/utils";
 import { Container } from "react-dom";
-import { DEFAULT_RELAYS } from "./nostr";
+import { DEFAULT_RELAYS, KIND_REPUTATIONS } from "./nostr";
 import { RequireLogin } from "./AppState";
-import {
-  createContactsOfContactsQuery,
-  createContactsQuery,
-  parseContactOfContactsEvents,
-  parseContactEvent,
-} from "./contacts";
+import { parseContactEvent } from "./contacts";
 import {
   Plan,
   createPlan,
@@ -229,6 +224,32 @@ function applyDefaults(props?: Partial<TestAppState>): TestAppState {
     ...DEFAULT_DATA_CONTEXT_PROPS,
     ...props,
   };
+}
+
+function createContactsQuery(authors: PublicKey[]): Filter {
+  return {
+    kinds: [KIND_REPUTATIONS],
+    authors,
+  };
+}
+
+function createContactsOfContactsQuery(contacts: Contacts): Filter {
+  const contactsPublicKeys = contacts
+    .keySeq()
+    .sortBy((k) => k)
+    .toArray();
+  return createContactsQuery(contactsPublicKeys);
+}
+
+function parseContactOfContactsEvents(events: List<Event>): ContactsOfContacts {
+  return events.reduce((rdx, event) => {
+    return rdx.merge(
+      parseContactEvent(event).map((contact) => ({
+        ...contact,
+        commonContact: event.pubkey as PublicKey,
+      }))
+    );
+  }, Map<PublicKey, ContactOfContact>());
 }
 
 function getPrivateContacts(appState: TestAppState): Contacts {
