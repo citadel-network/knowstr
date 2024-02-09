@@ -22,7 +22,6 @@ declare global {
   };
 
   type Contacts = Map<PublicKey, Contact>;
-  type ContactsOfContacts = Map<PublicKey, ContactOfContact>;
 
   type Relay = {
     url: string;
@@ -36,7 +35,6 @@ declare global {
 
   type Data = {
     contacts: Contacts;
-    contactsOfContacts: ContactsOfContacts;
     user: KeyPair;
     sentEvents: List<Event>;
     settings: Settings;

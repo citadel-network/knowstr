@@ -209,7 +209,6 @@ export function waitForLoadingToBeNull(): Promise<void> {
 const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
-  contactsOfContacts: Map<PublicKey, ContactOfContact>(),
   sentEvents: List<Event>(),
   settings: DEFAULT_SETTINGS,
   relays: DEFAULT_RELAYS,
@@ -249,25 +248,6 @@ function getContacts(appState: TestAppState): Contacts {
   return findContacts(events);
 }
 
-function getContactsOfContacts(appState: TestAppState): ContactsOfContacts {
-  const contacts = getContacts(appState);
-  return contacts.reduce((rdx, contact) => {
-    const contactListEventsOfContact = getContactListEventsOfUser(
-      contact.publicKey,
-      appState.relayPool.getEvents()
-    );
-    const contactsOfContact = findContacts(contactListEventsOfContact);
-    return contactsOfContact.reduce((coc, contactOfContact) => {
-      return coc.has(contactOfContact.publicKey)
-        ? coc
-        : coc.set(contactOfContact.publicKey, {
-            ...contactOfContact,
-            commonContact: contact.publicKey,
-          });
-    }, rdx);
-  }, Map<PublicKey, ContactOfContact>());
-}
-
 export type UpdateState = () => TestAppState;
 
 export function setup(
@@ -282,11 +262,9 @@ export function setup(
         user,
       };
       const contacts = appState.contacts.merge(getContacts(updatedState));
-      const contactsOfContacts = getContactsOfContacts(updatedState);
       return {
         ...updatedState,
         contacts,
-        contactsOfContacts,
       };
     };
   });

@@ -181,40 +181,8 @@ function Data({ user, children }: DataProps): JSX.Element {
     Map<string, Event>()
   );
   const contactsData = useEventProcessor(contactsEvents);
-  const contactsOfContacts = contactsData.reduce((coc, data, contact) => {
-    return data.contacts.reduce(
-      (rdx, contactOfContact, contactOfContactKey) => {
-        if (
-          contacts.has(contactOfContactKey) ||
-          contactOfContactKey === myPublicKey
-        ) {
-          return rdx;
-        }
-        return rdx.set(contactOfContactKey, {
-          ...contactOfContact,
-          commonContact: contact,
-        });
-      },
-      coc
-    );
-  }, Map<PublicKey, ContactOfContact>());
-
-  const contactsOfContactsQueryResult = useEventQueryByAuthor(
-    relayPool,
-    [createContactsEventsQueries()],
-    contactsOfContacts.keySeq().toArray(),
-    { readFromRelays }
-  );
-  const contactsOfContactsEvents = contactsOfContactsQueryResult.reduce(
-    (rdx, result) => rdx.merge(result.events),
-    Map<string, Event>()
-  );
-  const contactsOfContactsData = useEventProcessor(contactsOfContactsEvents);
 
   const contactsKnowledgeDBs = contactsData.map((data) => data.knowledgeDB);
-  const contactsOfContactsKnowledgeDBs = contactsOfContactsData.map(
-    (data) => data.knowledgeDB
-  );
 
   if (!sentEventsEose) {
     return <div className="loading" aria-label="loading" />;
@@ -223,9 +191,7 @@ function Data({ user, children }: DataProps): JSX.Element {
 
   const knowledgeDBs = Map<PublicKey, KnowledgeData>({
     [myPublicKey]: myDB,
-  })
-    .merge(contactsOfContactsKnowledgeDBs)
-    .merge(contactsKnowledgeDBs);
+  }).merge(contactsKnowledgeDBs);
 
   const addNewEvents = (events: Map<string, Event>): void => {
     setNewEvents((prev) => prev.merge(events));
@@ -234,7 +200,6 @@ function Data({ user, children }: DataProps): JSX.Element {
   return (
     <DataContextProvider
       contacts={processedEvents.get(myPublicKey)?.contacts || Map()}
-      contactsOfContacts={contactsOfContacts}
       user={user}
       sentEvents={sentEvents.toList()}
       settings={processedEvents.get(myPublicKey)?.settings || DEFAULT_SETTINGS}

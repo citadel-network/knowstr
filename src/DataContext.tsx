@@ -17,7 +17,6 @@ export function useData(): DataContextProps {
 export function DataContextProvider({
   children,
   contacts,
-  contactsOfContacts,
   user,
   sentEvents,
   settings,
@@ -30,7 +29,6 @@ export function DataContextProvider({
     <DataContext.Provider
       value={{
         contacts,
-        contactsOfContacts,
         user,
         sentEvents,
         settings,
