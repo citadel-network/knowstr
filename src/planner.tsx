@@ -1,6 +1,6 @@
 import React from "react";
 import { Map, List } from "immutable";
-import { Event, getPublicKey } from "nostr-tools";
+import { Event } from "nostr-tools";
 import { useData } from "./DataContext";
 import { execute } from "./executor";
 
@@ -272,7 +272,7 @@ export function planUpdateWorkspaces(
   const writeWorkspacesEvent = finalizeEvent(
     {
       kind: KIND_WORKSPACES,
-      pubkey: getPublicKey(plan.user.privateKey),
+      pubkey: plan.user.publicKey,
       created_at: newTimestamp(),
       tags: [],
       content: JSON.stringify(serialized),
@@ -299,7 +299,7 @@ export function planUpdateRelationTypes(
   const writeRelationsEvent = finalizeEvent(
     {
       kind: KIND_RELATION_TYPES,
-      pubkey: getPublicKey(plan.user.privateKey),
+      pubkey: plan.user.publicKey,
       created_at: newTimestamp(),
       tags: [],
       content: JSON.stringify(serialized),
