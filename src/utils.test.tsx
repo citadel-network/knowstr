@@ -282,16 +282,6 @@ export async function addContact(
   });
 }
 
-export async function connectContacts(
-  a: UpdateState,
-  b: UpdateState
-): Promise<void> {
-  const aUser = a().user;
-  const bUser = b().user;
-  await addContact(a, bUser.publicKey);
-  await addContact(b, aUser.publicKey);
-}
-
 export function renderWithTestData(
   children: React.ReactElement,
   options?: Partial<TestAppState> & { initialRoute?: string }

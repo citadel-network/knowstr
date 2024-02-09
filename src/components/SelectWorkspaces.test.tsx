@@ -2,18 +2,18 @@ import React from "react";
 import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
-  connectContacts,
   renderWithTestData,
   setup,
   ALICE,
   BOB,
   expectTextContent,
+  addContact,
 } from "../utils.test";
 import { SelectWorkspaces } from "./SelectWorkspaces";
 
 test("Distinguish between local and remote dashboards", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
-  await connectContacts(alice, bob);
+  await addContact(alice, bob().user.publicKey);
 
   renderWithTestData(<SelectWorkspaces />, bob());
   const switchWsBtn = await screen.findByLabelText("switch workspace");
