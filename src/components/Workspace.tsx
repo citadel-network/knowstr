@@ -6,7 +6,7 @@ import { EmptyColumn, WorkspaceColumnView } from "./WorkspaceColumn";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
 import { getRelations } from "../connections";
-import { PushViewIndex, useNode } from "../ViewContext";
+import { PushNode, useNode } from "../ViewContext";
 import { DND } from "../dnd";
 import { useData } from "../DataContext";
 
@@ -33,9 +33,9 @@ export function WorkspaceView(): JSX.Element | null {
             <DND>
               {columns.map((column, index) => {
                 return (
-                  <PushViewIndex push={List([index])} key={index}>
+                  <PushNode push={List([index])} key={index}>
                     <WorkspaceColumnView />
-                  </PushViewIndex>
+                  </PushNode>
                 );
               })}
               <EmptyColumn />

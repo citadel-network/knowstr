@@ -26,9 +26,7 @@ import { shortID } from "./connections";
 
 type Context = (plan: Plan) => Promise<void>;
 
-export const PlanningContext = React.createContext<Context | undefined>(
-  undefined
-);
+const PlanningContext = React.createContext<Context | undefined>(undefined);
 
 export type Plan = Data & {
   publishEvents: List<Event>;
@@ -188,16 +186,6 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
 
 export function planBulkUpsertNodes(plan: Plan, nodes: KnowNode[]): Plan {
   return nodes.reduce((p, node) => planUpsertNode(p, node), plan);
-}
-
-export function planBulkUpsertRelations(
-  plan: Plan,
-  relations: Relations[]
-): Plan {
-  return relations.reduce(
-    (p, relation) => planUpsertRelations(p, relation),
-    plan
-  );
 }
 
 function planDelete(plan: Plan, id: LongID, kind: number): Plan {

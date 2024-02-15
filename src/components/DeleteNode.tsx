@@ -1,15 +1,10 @@
-import { Set, List } from "immutable";
+import { Set } from "immutable";
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { deleteRelations, isRemote, joinID, splitID } from "../connections";
 import { getWorkspaces } from "../KnowledgeDataContext";
-import {
-  updateViewPathsAfterDeletion,
-  upsertRelations,
-  useNode,
-  viewPathToString,
-} from "../ViewContext";
+import { updateViewPathsAfterDeleteNode, useNode } from "../ViewContext";
 import { Button } from "./Ui";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
@@ -18,10 +13,11 @@ import {
   planDeleteNode,
   planUpdateViews,
   planUpdateWorkspaces,
+  planUpsertRelations,
   usePlanner,
 } from "../planner";
 
-export function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
+function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   return myDB.relations.reduce((rdx, relation) => {
     const toDelete = relation.items.reduce((indices, id, idx) => {
@@ -33,44 +29,8 @@ export function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
     if (toDelete.size === 0) {
       return rdx;
     }
-    const path = {
-      root: relation.head,
-      indexStack: List<number>([]),
-    };
-    // Modify View that the correct relation type is used
-    const ephemeralView: View = {
-      displaySubjects: false,
-      relations: relation.id,
-      width: 1,
-      expanded: false,
-    };
-    const userDB = rdx.knowledgeDBs.get(rdx.user.publicKey, newDB());
-    const views = userDB.views.set(viewPathToString(path), ephemeralView);
-    const planWithDeletedRelation = upsertRelations(
-      {
-        ...rdx,
-        knowledgeDBs: rdx.knowledgeDBs.set(rdx.user.publicKey, {
-          ...userDB,
-          views,
-        }),
-      },
-      path,
-      (relations) => deleteRelations(relations, toDelete)
-    );
-    const userDBAfterDeletion = planWithDeletedRelation.knowledgeDBs.get(
-      planWithDeletedRelation.user.publicKey,
-      newDB()
-    );
-
-    const viewsAfterDeletion = updateViewPathsAfterDeletion(
-      planWithDeletedRelation.knowledgeDBs,
-      userDBAfterDeletion.views,
-      rdx.user.publicKey,
-      path,
-      toDelete
-    );
-    return planUpdateViews(planWithDeletedRelation, viewsAfterDeletion);
-  }, plan);
+    return planUpsertRelations(rdx, deleteRelations(relation, toDelete));
+  }, planUpdateViews(plan, updateViewPathsAfterDeleteNode(myDB.views, toDisconnect)));
 }
 
 function useDeleteNode(): undefined | (() => void) {

@@ -34,7 +34,7 @@ import {
 import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
 import { PlanningContextProvider } from "./planner";
-import { ViewContextProvider } from "./ViewContext";
+import { RootViewContextProvider } from "./ViewContext";
 import { joinID } from "./connections";
 
 type DataProps = {
@@ -242,9 +242,9 @@ function Data({ user, children }: DataProps): JSX.Element {
       knowledgeDBs={knowledgeDBs}
     >
       <PlanningContextProvider addNewEvents={addNewEvents}>
-        <ViewContextProvider root={myDB.activeWorkspace}>
+        <RootViewContextProvider root={myDB.activeWorkspace}>
           {children}
-        </ViewContextProvider>
+        </RootViewContextProvider>
       </PlanningContextProvider>
     </DataContextProvider>
   );

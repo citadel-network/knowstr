@@ -7,8 +7,10 @@ import {
   useRelationIndex,
   useViewPath,
   useViewKey,
-  updateViewPathsAfterDeletion,
   upsertRelations,
+  updateViewPathsAfterDisconnect,
+  getLast,
+  useParentNode,
 } from "../ViewContext";
 import { switchOffMultiselect, useTemporaryView } from "./TemporaryViewContext";
 import { planUpdateViews, usePlanner } from "../planner";
@@ -21,8 +23,10 @@ export function RemoveColumnButton(): JSX.Element | null {
   const { multiselectBtns, selection, setState } = useTemporaryView();
   const viewKey = useViewKey();
   const viewPath = useViewPath();
-  const parentView = getParentView(viewPath);
-  if (index === undefined || !parentView) {
+  const parentViewPath = getParentView(viewPath);
+  const parentView = useParentNode()[1];
+  const relationsID = parentView && parentView.relations;
+  if (!parentView || !relationsID || !parentViewPath || index === undefined) {
     return null;
   }
 
@@ -30,19 +34,19 @@ export function RemoveColumnButton(): JSX.Element | null {
     deleteLocalStorage(viewKey);
     const updateRelationsPlan = upsertRelations(
       createPlan(),
-      parentView,
+      parentViewPath,
       (relations) => deleteRelations(relations, Set<number>([index]))
     );
-
-    const updatedViews = updateViewPathsAfterDeletion(
-      updateRelationsPlan.knowledgeDBs,
-      updateRelationsPlan.knowledgeDBs.get(
-        updateRelationsPlan.user.publicKey,
-        newDB()
-      ).views,
+    const { views } = updateRelationsPlan.knowledgeDBs.get(
       updateRelationsPlan.user.publicKey,
-      parentView,
-      Set<number>([index])
+      newDB()
+    );
+    const { nodeID, nodeIndex } = getLast(viewPath);
+    const updatedViews = updateViewPathsAfterDisconnect(
+      views,
+      nodeID,
+      relationsID,
+      nodeIndex
     );
     const plan = planUpdateViews(updateRelationsPlan, updatedViews);
     executePlan(plan);

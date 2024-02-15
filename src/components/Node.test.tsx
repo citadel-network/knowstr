@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { addRelationToRelations, newNode } from "../connections";
 import { DND } from "../dnd";
 import { ALICE, renderWithTestData, setup } from "../utils.test";
-import { ViewContextProvider, newRelations } from "../ViewContext";
+import { RootViewContextProvider, newRelations } from "../ViewContext";
 import { Column } from "./Column";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import {
@@ -35,13 +35,13 @@ test("Render non existing Node", async () => {
     plan,
   });
   renderWithTestData(
-    <ViewContextProvider root={pl.id}>
+    <RootViewContextProvider root={pl.id}>
       <TemporaryViewProvider>
         <DND>
           <Column />
         </DND>
       </TemporaryViewProvider>
-    </ViewContextProvider>,
+    </RootViewContextProvider>,
     alice()
   );
   await screen.findByText("Programming Languages");
@@ -57,13 +57,13 @@ test("Edit node via Column Menu", async () => {
     plan: planUpsertNode(createPlan(alice()), note),
   });
   renderWithTestData(
-    <ViewContextProvider root={note.id}>
+    <RootViewContextProvider root={note.id}>
       <TemporaryViewProvider>
         <DND>
           <Column />
         </DND>
       </TemporaryViewProvider>
-    </ViewContextProvider>,
+    </RootViewContextProvider>,
     alice()
   );
   await screen.findByText("My Note");
@@ -91,13 +91,13 @@ test("Edit node inline", async () => {
     plan: planUpsertNode(plan, note),
   });
   renderWithTestData(
-    <ViewContextProvider root={note.id} indices={List([0, 0])}>
+    <RootViewContextProvider root={note.id} indices={List([0, 0])}>
       <TemporaryViewProvider>
         <DND>
           <Node />
         </DND>
       </TemporaryViewProvider>
-    </ViewContextProvider>,
+    </RootViewContextProvider>,
     alice()
   );
   await screen.findByText("My Note");
@@ -129,13 +129,13 @@ test("Edited node is shown in Tree View", async () => {
     plan: planBulkUpsertNodes(plan, [pl, oop, java]),
   });
   renderWithTestData(
-    <ViewContextProvider root={pl.id} indices={List([0])}>
+    <RootViewContextProvider root={pl.id} indices={List([0])}>
       <TemporaryViewProvider>
         <DND>
           <TreeView />
         </DND>
       </TemporaryViewProvider>
-    </ViewContextProvider>,
+    </RootViewContextProvider>,
     alice()
   );
   fireEvent.click(await screen.findByLabelText("edit Java"));
@@ -155,13 +155,13 @@ test("Delete node", async () => {
     plan: planUpsertNode(createPlan(alice()), note),
   });
   renderWithTestData(
-    <ViewContextProvider root={note.id}>
+    <RootViewContextProvider root={note.id}>
       <TemporaryViewProvider>
         <DND>
           <Column />
         </DND>
       </TemporaryViewProvider>
-    </ViewContextProvider>,
+    </RootViewContextProvider>,
     alice()
   );
   await screen.findByText("My Note");

@@ -44,7 +44,7 @@ const COLORS = [
   "#795548",
 ];
 
-export type NewRelationTypeProps = {
+type NewRelationTypeProps = {
   onHide: () => void;
 };
 

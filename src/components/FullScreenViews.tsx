@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { List } from "immutable";
 import {
-  ViewContextProvider,
+  ViewContext,
   ViewPath,
   useViewPath,
   viewPathToString,
@@ -49,15 +49,11 @@ function MobileViewNodes(): JSX.Element | null {
       <DetailView />
       {nodes.map((path) => {
         return (
-          <ViewContextProvider
-            root={path.root}
-            indices={path.indexStack}
-            key={viewPathToString(path)}
-          >
+          <ViewContext.Provider value={path} key={viewPathToString(path)}>
             <div id={viewPathToString(path)}>
               <Node />
             </div>
-          </ViewContextProvider>
+          </ViewContext.Provider>
         );
       })}
     </ReadingStatus>

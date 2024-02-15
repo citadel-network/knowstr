@@ -1,4 +1,5 @@
 import { Map, List, OrderedMap } from "immutable";
+import { parseViewPath } from "./ViewContext";
 
 export type Serializable =
   | string
@@ -91,7 +92,18 @@ export function jsonToWorkspace(
 export function jsonToViews(s: Serializable): Map<string, View> {
   return Map(asObject(s))
     .map((v) => jsonToView(v))
-    .filter((v) => v !== undefined) as Map<string, View>;
+    .filter((v, k) => {
+      if (v === undefined) {
+        return false;
+      }
+      try {
+        // Test if view path is valid
+        parseViewPath(k);
+        return true;
+      } catch {
+        return false;
+      }
+    }) as Map<string, View>;
 }
 
 export function jsonToRelationTypes(s: Serializable): RelationTypes {

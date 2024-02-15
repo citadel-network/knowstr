@@ -3,50 +3,56 @@ import { deleteRelations } from "../connections";
 import {
   useViewPath,
   useViewKey,
-  updateViewPathsAfterDeletion,
   upsertRelations,
+  getRelationsFromView,
+  getLast,
+  updateViewPathsAfterDisconnect,
+  parseViewPath,
 } from "../ViewContext";
 import {
   switchOffMultiselect,
   useDeselectAllInView,
+  useGetSelectedInView,
   useSelectedIndices,
   useTemporaryView,
 } from "./TemporaryViewContext";
 import { planUpdateViews, usePlanner } from "../planner";
 import { newDB } from "../knowledge";
+import { useData } from "../DataContext";
 
 export function DisconnectBtn(): JSX.Element | null {
+  const { knowledgeDBs, user } = useData();
   const { createPlan, executePlan } = usePlanner();
   const { multiselectBtns, selection, setState } = useTemporaryView();
   const viewContext = useViewPath();
   const viewKey = useViewKey();
   const selectedIndices = useSelectedIndices();
+  const selected = useGetSelectedInView()(viewKey);
   const deselectAllInView = useDeselectAllInView();
   if (selectedIndices.size === 0) {
     return null;
   }
   const onDisconnect = (): void => {
-    const disconnectPlan = upsertRelations(
-      createPlan(),
-      viewContext,
-      (relations) => deleteRelations(relations, selectedIndices)
+    const relations = getRelationsFromView(
+      knowledgeDBs,
+      user.publicKey,
+      viewContext
     );
-    const { views } = disconnectPlan.knowledgeDBs.get(
-      disconnectPlan.user.publicKey,
-      newDB()
+    if (!relations) {
+      return;
+    }
+    const disconnectPlan = upsertRelations(createPlan(), viewContext, (rel) =>
+      deleteRelations(rel, selectedIndices)
     );
-    executePlan(
-      planUpdateViews(
-        disconnectPlan,
-        updateViewPathsAfterDeletion(
-          disconnectPlan.knowledgeDBs,
-          views,
-          disconnectPlan.user.publicKey,
-          viewContext,
-          selectedIndices
-        )
-      )
-    );
+    const finalPlan = selected.reduce((plan, path) => {
+      const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+      const { nodeID, nodeIndex } = getLast(parseViewPath(path));
+      return planUpdateViews(
+        plan,
+        updateViewPathsAfterDisconnect(views, nodeID, relations.id, nodeIndex)
+      );
+    }, disconnectPlan);
+    executePlan(finalPlan);
     deselectAllInView(viewKey);
     setState(switchOffMultiselect(multiselectBtns, selection, viewKey));
   };

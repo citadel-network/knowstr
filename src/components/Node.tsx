@@ -19,8 +19,10 @@ import {
   useViewPath,
   ViewPath,
   parseViewPath,
-  useParentNode,
   useIsAddToNode,
+  getRoot,
+  addNodeToPath,
+  addAddToNodeToPath,
 } from "../ViewContext";
 import {
   useGetSelectedInView,
@@ -42,14 +44,11 @@ import { newDB } from "../knowledge";
 import { planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
 
-export function getLevels(
-  viewPath: ViewPath,
-  isOpenInFullScreen: boolean
-): number {
+function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {
-    return viewPath.indexStack.size;
+    return viewPath.length - 1;
   }
-  return viewPath.indexStack.size - 1;
+  return viewPath.length - 2;
 }
 
 export function useIsOpenInFullScreen(): boolean {
@@ -61,7 +60,7 @@ export function useIsOpenInFullScreen(): boolean {
   if (matchPath(FULL_SCREEN_PATH, location.pathname) === null) {
     return false;
   }
-  return !!(id !== undefined && id === viewPath.root);
+  return !!(id !== undefined && id === getRoot(viewPath).nodeID);
 }
 
 function ErrorContent(): JSX.Element {
@@ -268,14 +267,10 @@ export function getNodesInTree(
   if (!relations) {
     return ctx;
   }
-  const childPaths = relations.items.map((rel, i) => ({
-    ...parentPath,
-    indexStack: parentPath.indexStack.push(i),
-  }));
-  const addNodePath = {
-    ...parentPath,
-    indexStack: parentPath.indexStack.push(childPaths.size),
-  };
+  const childPaths = relations.items.map((_, i) =>
+    addNodeToPath(knowledgeDBs, myself, parentPath, i)
+  );
+  const addNodePath = addAddToNodeToPath(knowledgeDBs, myself, parentPath);
   const nodesInTree = childPaths.reduce(
     (nodesList: List<ViewPath>, childPath: ViewPath) => {
       const [childRepo, childView] = getNodeFromView(
@@ -345,7 +340,7 @@ function DraggingNode(): JSX.Element {
           parseViewPath(popPrefix(dropDestination.droppableId)[1]),
           dropDestination.index
           // this will be the new parent, therefore no -1
-        )[0].indexStack.size
+        )[0].length - 1
       : getLevels(viewPath, isOpenInFullScreen);
 
   return (
@@ -357,29 +352,14 @@ function DraggingNode(): JSX.Element {
 }
 
 export function Node(): JSX.Element | null {
-  const { knowledgeDBs, user } = useData();
   const isMobile = useMediaQuery(IS_MOBILE);
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const levels = getLevels(viewPath, isOpenInFullScreen);
   const isAddToNode = useIsAddToNode();
-  const [parentNode, parentView] = useParentNode();
   const isNodeBeingEdited = useIsEditingOn();
   const isMultiselect = useIsParentMultiselectBtnOn();
-
-  const nRelations =
-    parentNode &&
-    parentView &&
-    getRelations(
-      knowledgeDBs,
-      parentView.relations,
-      user.publicKey,
-      parentNode.id
-    )?.items.size;
-  const index = viewPath.indexStack.last();
-  const isReferencedNode =
-    index !== undefined && nRelations !== undefined && index >= nRelations;
-  const displayMenu = levels > 0 && !isReferencedNode;
+  const displayMenu = levels > 0;
   return (
     <NodeCard
       className={!isMobile ? "hover-light-bg" : undefined}

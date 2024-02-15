@@ -2,7 +2,7 @@ import React from "react";
 import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { List } from "immutable";
-import { ViewContextProvider, newRelations } from "../ViewContext";
+import { RootViewContextProvider, newRelations } from "../ViewContext";
 import { execute } from "../executor";
 import { createPlan, planUpsertRelations } from "../planner";
 import { ALICE, renderWithTestData, setup, UpdateState } from "../utils.test";
@@ -40,9 +40,9 @@ async function uploadAndRenderMarkdown(alice: UpdateState): Promise<void> {
   });
 
   renderWithTestData(
-    <ViewContextProvider root={wsID} indices={List([0])}>
+    <RootViewContextProvider root={wsID} indices={List([0])}>
       <Column />
-    </ViewContextProvider>,
+    </RootViewContextProvider>,
     alice()
   );
   await screen.findByText("Programming Languages");
@@ -71,9 +71,9 @@ test("Delete Node uploaded from Markdown", async () => {
   const wsID = joinID(alice().user.publicKey, "my-first-workspace");
   // Test after rerender
   renderWithTestData(
-    <ViewContextProvider root={wsID} indices={List([0])}>
+    <RootViewContextProvider root={wsID} indices={List([0])}>
       <Column />
-    </ViewContextProvider>,
+    </RootViewContextProvider>,
     alice()
   );
   await screen.findByText("Java");

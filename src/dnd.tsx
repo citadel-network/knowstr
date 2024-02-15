@@ -1,5 +1,5 @@
 import React, { createContext, useState } from "react";
-import { List, OrderedSet, Set } from "immutable";
+import { List, OrderedSet } from "immutable";
 import {
   DragDropContext,
   DragUpdate,
@@ -8,7 +8,7 @@ import {
 } from "@hello-pangea/dnd";
 import {
   deselectAllChildren,
-  getSelectedIndices,
+  getSelectedInView,
   useTemporaryView,
 } from "./components/TemporaryViewContext";
 import { bulkAddRelations, getRelations, moveRelations } from "./connections";
@@ -25,6 +25,7 @@ import {
   updateView,
   bulkUpdateViewPathsAfterAddRelation,
   updateViewPathsAfterMoveRelations,
+  getRelationIndex,
 } from "./ViewContext";
 import { getNodesInTree } from "./components/Node";
 import { Plan, planUpdateViews, usePlanner } from "./planner";
@@ -35,6 +36,7 @@ function getDropDestinationEndOfRoot(
   views: Views,
   root: ViewPath
 ): [ViewPath, number] {
+  // TODO: Replace everything here with getRelationsFromView
   const [rootNode, rootView] = getNodeFromView(
     knowledgeDBs,
     views,
@@ -77,8 +79,9 @@ export function getDropDestinationFromTreeView(
   if (!parentView) {
     return getDropDestinationEndOfRoot(knowledgeDBs, myself, views, root);
   }
-  // index is last path element of the sibling
-  return [parentView, dropBefore.indexStack.last(0)];
+  // new index is the current index of the sibling
+  const index = getRelationIndex(knowledgeDBs, myself, dropBefore);
+  return [parentView, index || 0];
 }
 
 // Workspace
@@ -110,7 +113,6 @@ export function dnd(
   }
 
   const sourceViewPath = parseViewPath(source);
-  const sourceIndex = sourceViewPath.indexStack.last() || 0;
   const sourceView = getNodeFromView(
     knowledgeDBs,
     views,
@@ -120,24 +122,22 @@ export function dnd(
   if (!sourceView) {
     return plan;
   }
-  const sourceIndices = selection.contains(source)
-    ? // eslint-disable-next-line functional/immutable-data
-      getSelectedIndices(selection, getParentKey(source))
-    : Set<number>([sourceIndex]); // get source multiselect
+  const selectedSources = getSelectedInView(selection, getParentKey(source));
+  const sources = selection.contains(source) ? selectedSources : List([source]);
 
   const isTreeView = prefix === "tree";
   const indexTo = isTreeView ? toIndex : undefined;
 
-  const sourceRepos = sourceIndices
-    .toList()
-    .map((index): LongID | undefined => {
-      const [r] = getNodeFromView(knowledgeDBs, views, myself, {
-        root: sourceViewPath.root,
-        indexStack: sourceViewPath.indexStack.pop().push(index),
-      });
-      return r ? r.id : undefined;
+  const sourceNodes = List(
+    sources.map((s) => {
+      const path = parseViewPath(s);
+      const [node] = getNodeFromView(knowledgeDBs, views, myself, path);
+      return node ? node.id : undefined;
     })
-    .filter((id) => id) as List<LongID>;
+  ).filter((n) => n !== undefined) as List<LongID>;
+  const sourceIndices = List(
+    sources.map((n) => getRelationIndex(knowledgeDBs, myself, parseViewPath(n)))
+  ).filter((n) => n !== undefined) as List<number>;
 
   const [fromRepo, fromView] = getParentNode(
     knowledgeDBs,
@@ -169,6 +169,7 @@ export function dnd(
     return plan;
   }
 
+  // TODO: this can be optimized
   const move =
     dropIndex !== undefined &&
     fromRepo !== undefined &&
@@ -182,7 +183,7 @@ export function dnd(
       if (move) {
         return moveRelations(relations, sourceIndices.toArray(), dropIndex);
       }
-      return bulkAddRelations(relations, sourceRepos.toArray(), dropIndex);
+      return bulkAddRelations(relations, sourceNodes.toArray(), dropIndex);
     }
   );
   const updatedViews = move
@@ -197,7 +198,7 @@ export function dnd(
         updatedRelationsPlan.knowledgeDBs,
         updatedRelationsPlan.user.publicKey,
         toView,
-        sourceRepos.size,
+        sourceNodes.size,
         dropIndex
       );
   return planUpdateViews(updatedRelationsPlan, updatedViews);

@@ -49,7 +49,6 @@ test("Multiple connections to same node", async () => {
       "Java",
       "+Default",
       "New Relation Type",
-      " Referenced By (1)",
     ]
   );
 });

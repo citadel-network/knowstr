@@ -2,6 +2,7 @@ import React, { CSSProperties, useState } from "react";
 import { Dropdown } from "react-bootstrap";
 import { List } from "immutable";
 import {
+  addAddToNodeToPath,
   deleteChildViews,
   getAvailableRelationsForNode,
   getDefaultRelationForNode,
@@ -17,7 +18,6 @@ import {
   useTemporaryView,
 } from "./TemporaryViewContext";
 import { getRelations, isRemote, splitID } from "../connections";
-import { getLevels, useIsOpenInFullScreen } from "./Node";
 import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import { newDB } from "../knowledge";
@@ -74,6 +74,7 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
   const onClick = (): void => {
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const deleteRelationsPlan = planDeleteRelations(createPlan(), id);
+    // TODO: deleteChildViews should only be necessary for the deleted relation not the other
     const plan = planUpdateViews(
       deleteRelationsPlan,
       updateView(deleteChildViews(views, viewPath), viewPath, {
@@ -105,31 +106,30 @@ function useOnChangeRelations(): undefined | ChangeRelation {
   const view = useNode()[1];
   const viewKey = useViewKey();
   const deselectAllInView = useDeselectAllInView();
-  const isFullScreen = useIsOpenInFullScreen();
   if (!view) {
     return undefined;
   }
 
   return (relations: Relations, expand: boolean): void => {
-    const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
-    const viewKeyOfAddToNode = isFirstLevelAddToNode
-      ? viewKey
-      : viewPathToString({
-          ...viewPath,
-          indexStack: viewPath.indexStack.push(relations.items.size),
-        });
+    const viewKeyOfAddToNode = addAddToNodeToPath(
+      knowledgeDBs,
+      user.publicKey,
+      viewPath
+    );
 
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const plan = planUpdateViews(
       createPlan(),
-      updateView(deleteChildViews(views, viewPath), viewPath, {
+      updateView(views, viewPath, {
         ...view,
         relations: relations.id,
         expanded: expand,
       })
     );
     executePlan(plan);
-    setEditorOpenState(closeEditor(editorOpenViews, viewKeyOfAddToNode));
+    setEditorOpenState(
+      closeEditor(editorOpenViews, viewPathToString(viewKeyOfAddToNode))
+    );
     deselectAllInView(viewKey);
   };
 }
@@ -214,29 +214,19 @@ type ShowRelationsButtonProps = {
   currentSelectedRelations?: Relations;
 };
 
-function useOnToggleExpanded(): (
-  expand: boolean,
-  relations: Relations
-) => void {
+function useOnToggleExpanded(): (expand: boolean) => void {
   const { knowledgeDBs, user } = useData();
   const { createPlan, executePlan } = usePlanner();
   const viewPath = useViewPath();
   const view = useNode()[1];
-  const viewKey = useViewKey();
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
-  const isFullScreen = useIsOpenInFullScreen();
   if (!view) {
     return () => undefined;
   }
-  return (expand: boolean, relations: Relations): void => {
-    const isFirstLevelAddToNode = getLevels(viewPath, isFullScreen) === 0;
-    const viewKeyOfAddToNode = isFirstLevelAddToNode
-      ? viewKey
-      : viewPathToString({
-          ...viewPath,
-          indexStack: viewPath.indexStack.push(relations.items.size),
-        });
-
+  return (expand: boolean): void => {
+    const viewKeyOfAddToNode = viewPathToString(
+      addAddToNodeToPath(knowledgeDBs, user.publicKey, viewPath)
+    );
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const plan = planUpdateViews(
       createPlan(),
@@ -300,7 +290,7 @@ function SocialRelationsButton({
     ? undefined
     : () => {
         if (view.relations === socialRelations.id) {
-          onToggleExpanded(!isExpanded, socialRelations);
+          onToggleExpanded(!isExpanded);
         } else {
           onChangeRelations(socialRelations, true);
         }
@@ -407,7 +397,7 @@ function SelectRelationsButton({
     ? undefined
     : () => {
         if (view.relations === topRelation.id) {
-          onToggleExpanded(!isExpanded, topRelation);
+          onToggleExpanded(!isExpanded);
         } else {
           onChangeRelations(topRelation, true);
         }

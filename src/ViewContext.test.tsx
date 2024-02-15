@@ -1,7 +1,7 @@
 import React from "react";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import Data from "./Data";
 import {
   newNode,
@@ -28,7 +28,17 @@ import {
   BOB,
   connectContacts,
 } from "./utils.test";
-import { ViewContextProvider, newRelations } from "./ViewContext";
+import {
+  RootViewContextProvider,
+  calculateIndexFromNodeIndex,
+  calculateNodeIndex,
+  newRelations,
+  parseViewPath,
+  updateViewPathsAfterDisconnect,
+  NodeIndex,
+  addNodeToPath,
+  viewPathToString,
+} from "./ViewContext";
 import { WorkspaceView } from "./components/Workspace";
 import { TreeView } from "./components/TreeView";
 
@@ -108,9 +118,9 @@ test("Move Node Up", async () => {
   const root = (findNodeByText(executedPlan, "My Workspace") as KnowNode).id;
   const utils = renderWithTestData(
     <Data user={alice().user}>
-      <ViewContextProvider root={root} indices={List([0])}>
+      <RootViewContextProvider root={root} indices={List([0])}>
         <TreeView />
-      </ViewContextProvider>
+      </RootViewContextProvider>
     </Data>,
     alice()
   );
@@ -119,7 +129,19 @@ test("Move Node Up", async () => {
   userEvent.click(screen.getByLabelText("show Default items of OOP"));
   expect(extractNodes(utils.container)).toEqual(["FPL", "OOP", "C++", "Java"]);
 
-  const draggableID = `${root}:0:1`;
+  const draggableID = viewPathToString(
+    addNodeToPath(
+      executedPlan.knowledgeDBs,
+      executedPlan.user.publicKey,
+      addNodeToPath(
+        executedPlan.knowledgeDBs,
+        executedPlan.user.publicKey,
+        [{ nodeID: root, nodeIndex: 0 as NodeIndex }],
+        0
+      ),
+      1
+    )
+  );
   const el = startDragging(utils.container, draggableID);
   dragUp(el);
   drop(el);
@@ -128,9 +150,9 @@ test("Move Node Up", async () => {
 
   const { container } = renderWithTestData(
     <Data user={alice().user}>
-      <ViewContextProvider root={root} indices={List([0])}>
+      <RootViewContextProvider root={root} indices={List([0])}>
         <TreeView />
-      </ViewContextProvider>
+      </RootViewContextProvider>
     </Data>,
     alice()
   );
@@ -156,9 +178,9 @@ test("Contact reorders list", async () => {
   const root = (findNodeByText(aliceDB, "My Workspace") as KnowNode).id;
   const utils = renderWithTestData(
     <Data user={alice().user}>
-      <ViewContextProvider root={root} indices={List([0])}>
+      <RootViewContextProvider root={root} indices={List([0])}>
         <TreeView />
-      </ViewContextProvider>
+      </RootViewContextProvider>
     </Data>,
     alice()
   );
@@ -170,11 +192,15 @@ test("Contact reorders list", async () => {
   cleanup();
 
   // let bob remove OOP
+  const bobsWorkspace = findNodeByText(
+    bobsKnowledgeDB,
+    "Bobs Workspace"
+  ) as KnowNode;
   renderWithTestData(
     <Data user={bob().user}>
-      <ViewContextProvider root={root} indices={List([0])}>
+      <RootViewContextProvider root={bobsWorkspace.id} indices={List([0])}>
         <TreeView />
-      </ViewContextProvider>
+      </RootViewContextProvider>
     </Data>,
     bob()
   );
@@ -184,13 +210,78 @@ test("Contact reorders list", async () => {
 
   const { container } = renderWithTestData(
     <Data user={alice().user}>
-      <ViewContextProvider root={root} indices={List([0])}>
+      <RootViewContextProvider root={root} indices={List([0])}>
         <TreeView />
-      </ViewContextProvider>
+      </RootViewContextProvider>
     </Data>,
     alice()
   );
   // OOP is gone, so are it's children
   await screen.findByText("FPL");
   expect(extractNodes(container)).toEqual(["FPL"]);
+});
+
+test("Alter View paths after disconnect", () => {
+  // Assume I'm deleting r:n:1 (first occurance of n in r)
+  const views = Map<string, { e: string }>({
+    "root:0:r:n:1": { e: "delete" },
+    "root:0:r:n:3": { e: "root:0:r:n:2" },
+    "root:0:r:n:12": { e: "root:0:r:n:11" },
+    "root2:0:r:n:2:r:n:3": { e: "root2:0:r:n:1:r:n:2" },
+    "root2:0:r:n:2:r:n:1": { e: "delete" },
+    "root2:0:r:n:1:r:n:2": { e: "delete" },
+    "root:0:r:n:0": { e: "root:0:r:n:0" },
+    "root:0:r:n:2:r2:a:0:r:n:45": { e: "root:0:r:n:1:r2:a:0:r:n:44" },
+  });
+  const updatedViews = updateViewPathsAfterDisconnect(
+    views as unknown as Views,
+    "n" as LongID,
+    "r" as LongID,
+    1 as NodeIndex
+  );
+
+  const expectedResult = views
+    .filter((v) => v.e !== "delete")
+    .mapEntries((e) => [e[1].e, e[1]]);
+  expect(updatedViews.keySeq().toJS()).toEqual(expectedResult.keySeq().toJS());
+});
+
+test("Calculate index from node index", () => {
+  const relations: Relations = {
+    items: List(["pl", "oop", "pl", "pl", "java"]),
+  } as Relations;
+  expect(calculateNodeIndex(relations, 0)).toBe(0);
+  expect(calculateNodeIndex(relations, 1)).toBe(0);
+  expect(calculateNodeIndex(relations, 2)).toBe(1);
+  expect(calculateNodeIndex(relations, 3)).toBe(2);
+  expect(calculateNodeIndex(relations, 4)).toBe(0);
+
+  expect(
+    calculateIndexFromNodeIndex(relations, "pl" as LongID, 0 as NodeIndex)
+  ).toBe(0);
+  expect(
+    calculateIndexFromNodeIndex(relations, "oop" as LongID, 0 as NodeIndex)
+  ).toBe(1);
+  expect(
+    calculateIndexFromNodeIndex(relations, "pl" as LongID, 1 as NodeIndex)
+  ).toBe(2);
+  expect(
+    calculateIndexFromNodeIndex(relations, "pl" as LongID, 2 as NodeIndex)
+  ).toBe(3);
+  expect(
+    calculateIndexFromNodeIndex(relations, "java" as LongID, 0 as NodeIndex)
+  ).toBe(4);
+});
+
+test("Parse View path", () => {
+  expect(parseViewPath("root:1")).toEqual([{ nodeID: "root", nodeIndex: 1 }]);
+  expect(parseViewPath("root:0:rl:pl:0")).toEqual([
+    { nodeID: "root", nodeIndex: 0, relationsID: "rl" },
+    { nodeID: "pl", nodeIndex: 0 },
+  ]);
+  expect(parseViewPath("root:0:rl:pl:0:rl:oop:1")).toEqual([
+    { nodeID: "root", nodeIndex: 0, relationsID: "rl" },
+    { nodeID: "pl", nodeIndex: 0, relationsID: "rl" },
+    { nodeID: "oop", nodeIndex: 1 },
+  ]);
 });

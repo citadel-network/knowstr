@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import { ViewContextProvider, useNode } from "../ViewContext";
+import { RootViewContextProvider, useNode } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
 export function FullScreenViewWrapper({
@@ -19,7 +19,7 @@ export function FullScreenViewWrapper({
 
   return (
     <TemporaryViewProvider>
-      <ViewContextProvider root={root}>{children}</ViewContextProvider>
+      <RootViewContextProvider root={root}>{children}</RootViewContextProvider>
     </TemporaryViewProvider>
   );
 }

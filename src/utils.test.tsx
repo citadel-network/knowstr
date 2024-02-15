@@ -337,11 +337,6 @@ export function renderWithTestData(
   return { ...props, ...utils };
 }
 
-export async function fillAndSubmitInviteForm(): Promise<void> {
-  fireEvent.click(await screen.findByText("Follow"));
-  await waitForLoadingToBeNull();
-}
-
 export function expectTextContent(
   element: HTMLElement,
   textContent: Array<string>

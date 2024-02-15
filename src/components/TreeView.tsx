@@ -6,12 +6,11 @@ import {
   useViewKey,
   useViewPath,
   ViewPath,
-  ViewContextProvider,
   viewPathToString,
+  ViewContext,
 } from "../ViewContext";
 import { DraggableNode, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { ReadingStatus } from "./ReadingStatus";
-import { ReferencedByCollapsable } from "./ReferencedBy";
 import { useData } from "../DataContext";
 
 /* eslint-disable react/jsx-props-no-spreading */
@@ -63,15 +62,14 @@ export function TreeView(): JSX.Element | null {
                   return null;
                 }
                 return (
-                  <ViewContextProvider
-                    root={path.root}
-                    indices={path.indexStack}
+                  <ViewContext.Provider
+                    value={path}
                     key={viewPathToString(path)}
                   >
                     <div>
                       <DraggableNode dndIndex={index} />
                     </div>
-                  </ViewContextProvider>
+                  </ViewContext.Provider>
                 );
               })}
               {provided.placeholder}
@@ -79,7 +77,6 @@ export function TreeView(): JSX.Element | null {
           );
         }}
       </Droppable>
-      <ReferencedByCollapsable />
     </ReadingStatus>
   );
 }

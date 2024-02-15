@@ -8,6 +8,7 @@ import {
   useNode,
   useParentNode,
   useRelationIndex,
+  getRelationIndex,
 } from "../ViewContext";
 import { getRelations } from "../connections";
 import { useData } from "../DataContext";
@@ -77,26 +78,32 @@ export function useIsSelected(): boolean {
   return selection.contains(viewKey);
 }
 
-function getSelectedInView(
+export function getSelectedInView(
   selection: OrderedSet<string>,
   viewKey: string
 ): OrderedSet<string> {
   return selection.filter((sel) => sel.startsWith(viewKey));
 }
 
-export function getSelectedIndices(
+function getSelectedIndices(
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
   selection: OrderedSet<string>,
   viewKey: string
 ): OrderedSet<number> {
   return getSelectedInView(selection, viewKey)
-    .map((key) => parseViewPath(key).indexStack.last(undefined))
+    .map((key) => {
+      const path = parseViewPath(key);
+      return getRelationIndex(knowledgeDBs, myself, path);
+    })
     .filter((n) => n !== undefined) as OrderedSet<number>;
 }
 
 export function useSelectedIndices(): OrderedSet<number> {
   const { selection } = useTemporaryView();
+  const { knowledgeDBs, user } = useData();
   const viewKey = useViewKey();
-  return getSelectedIndices(selection, viewKey);
+  return getSelectedIndices(knowledgeDBs, user.publicKey, selection, viewKey);
 }
 
 export function useGetSelectedInView(): FindSelectedByPostfix {
