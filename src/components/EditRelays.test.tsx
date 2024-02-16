@@ -2,10 +2,14 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Event } from "nostr-tools";
 import { ALICE, setup, renderApp } from "../utils.test";
-import { KIND_RELAY_METADATA_EVENT } from "../nostr";
+import { DEFAULT_RELAYS, KIND_RELAY_METADATA_EVENT } from "../nostr";
 
 const filterRelayMetadataEvents = (event: Event): boolean =>
   event.kind === KIND_RELAY_METADATA_EVENT;
+
+function relayTags(relays: Relays): string[][] {
+  return relays.map((r) => ["r", r.url]);
+}
 
 test("Remove a Nostr Relay", async () => {
   const [alice] = setup([ALICE]);
@@ -28,17 +32,16 @@ test("Remove a Nostr Relay", async () => {
       relayPool.getEvents().filter(filterRelayMetadataEvents)
     ).toHaveLength(1)
   );
+  const tags = relayTags(
+    DEFAULT_RELAYS.filter((r) => r.url !== "wss://nos.lol") as unknown as Relays
+  );
   const event = relayPool.getEvents().filter(filterRelayMetadataEvents)[0];
   expect(event).toEqual(
     expect.objectContaining({
       kind: 10002,
       pubkey:
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
-      tags: [
-        ["r", "wss://relay.damus.io"],
-        ["r", "wss://relay.snort.social"],
-        ["r", "wss://nostr.wine"],
-      ],
+      tags,
       content: "",
     })
   );
@@ -76,17 +79,19 @@ test("Edit an existing Nostr Relay", async () => {
     ).toHaveLength(1)
   );
   const event = relayPool.getEvents().filter(filterRelayMetadataEvents)[0];
+  const tags = relayTags(
+    DEFAULT_RELAYS.map((r) =>
+      r.url === "wss://nostr.wine"
+        ? { ...r, url: "wss://nostr.wine.second.edit" }
+        : r
+    ) as Relays
+  );
   expect(event).toEqual(
     expect.objectContaining({
       kind: 10002,
       pubkey:
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
-      tags: [
-        ["r", "wss://relay.damus.io"],
-        ["r", "wss://relay.snort.social"],
-        ["r", "wss://nos.lol"],
-        ["r", "wss://nostr.wine.second.edit"],
-      ],
+      tags,
       content: "",
     })
   );
