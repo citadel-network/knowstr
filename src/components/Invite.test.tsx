@@ -8,7 +8,7 @@ import {
   BOB,
   BOB_PUBLIC_KEY,
   setup,
-  addContact,
+  follow,
 } from "../utils.test";
 import Invite from "./Invite";
 import { KIND_CONTACTLIST } from "../nostr";
@@ -50,7 +50,7 @@ it("QR Code", async () => {
 
 test("follow an already followed user leads to success screen", async () => {
   const [alice] = setup([ALICE]);
-  await addContact(alice, BOB.publicKey);
+  await follow(alice, BOB.publicKey);
 
   renderWithTestData(<Invite />, {
     ...alice(),

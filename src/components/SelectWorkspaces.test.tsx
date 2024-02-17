@@ -7,13 +7,13 @@ import {
   ALICE,
   BOB,
   expectTextContent,
-  addContact,
+  follow,
 } from "../utils.test";
 import { SelectWorkspaces } from "./SelectWorkspaces";
 
 test("Distinguish between local and remote dashboards", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
-  await addContact(alice, bob().user.publicKey);
+  await follow(alice, bob().user.publicKey);
 
   renderWithTestData(<SelectWorkspaces />, bob());
   const switchWsBtn = await screen.findByLabelText("switch workspace");

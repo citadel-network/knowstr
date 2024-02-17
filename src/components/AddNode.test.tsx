@@ -8,7 +8,7 @@ import {
   matchSplitText,
   renderApp,
   typeNewNode,
-  addContact,
+  follow,
 } from "../utils.test";
 import { execute } from "../executor";
 import { createPlan, planUpsertNode, planUpsertRelations } from "../planner";
@@ -22,7 +22,7 @@ test("Add New Note", async () => {
 
 test("Link Nodes from other Users", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
-  await addContact(alice, bob().user.publicKey);
+  await follow(alice, bob().user.publicKey);
 
   const oop = newNode("Object Oriented Languages", bob().user.publicKey);
   const java = newNode("Java", bob().user.publicKey);

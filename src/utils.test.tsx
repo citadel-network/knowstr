@@ -270,7 +270,7 @@ export function setup(
   });
 }
 
-export async function addContact(
+export async function follow(
   cU: UpdateState,
   publicKey: PublicKey
 ): Promise<void> {
