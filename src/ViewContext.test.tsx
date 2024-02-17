@@ -26,7 +26,7 @@ import {
   drop,
   extractNodes,
   BOB,
-  connectContacts,
+  follow,
 } from "./utils.test";
 import {
   RootViewContextProvider,
@@ -162,7 +162,7 @@ test("Move Node Up", async () => {
 
 test("Contact reorders list", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
-  connectContacts(alice, bob);
+  await follow(alice, bob().user.publicKey);
   const bobsKnowledgeDB = await setupTestDB(bob(), [
     [
       "Bobs Workspace",
