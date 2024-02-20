@@ -94,6 +94,15 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               </Dropdown.Item>
               <Dropdown.Item
                 className="d-flex workspace-selection"
+                onClick={() => navigate("/follow")}
+                aria-label="follow user"
+                tabIndex={0}
+              >
+                <span className="simple-icon-user-follow d-block dropdown-item-icon" />
+                <div className="workspace-selection-text">Follow User</div>
+              </Dropdown.Item>
+              <Dropdown.Item
+                className="d-flex workspace-selection"
                 onClick={() => navigate("/relays")}
                 aria-label="edit relays"
                 tabIndex={0}

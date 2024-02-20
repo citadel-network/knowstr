@@ -94,14 +94,7 @@ export function usePlanner(): Planner {
   };
 }
 
-export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
-  if (plan.contacts.has(publicKey)) {
-    return plan;
-  }
-  const newContact: Contact = {
-    publicKey,
-  };
-  const contacts = plan.contacts.set(publicKey, newContact);
+function newContactListEvent(contacts: Contacts, user: KeyPair): Event {
   const tags = contacts
     .valueSeq()
     .toArray()
@@ -117,19 +110,43 @@ export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
       }
       return ["p", c.publicKey];
     });
-  const addContactEvent = finalizeEvent(
+  return finalizeEvent(
     {
       kind: KIND_CONTACTLIST,
-      pubkey: plan.user.publicKey,
+      pubkey: user.publicKey,
       created_at: newTimestamp(),
       tags,
       content: "",
     },
-    plan.user.privateKey
+    user.privateKey
   );
+}
+
+export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
+  if (plan.contacts.has(publicKey)) {
+    return plan;
+  }
+  const newContact: Contact = {
+    publicKey,
+  };
+  const newContacts = plan.contacts.set(publicKey, newContact);
+  const contactListEvent = newContactListEvent(newContacts, plan.user);
   return {
     ...plan,
-    publishEvents: plan.publishEvents.push(addContactEvent),
+    publishEvents: plan.publishEvents.push(contactListEvent),
+  };
+}
+
+export function planRemoveContact(plan: Plan, publicKey: PublicKey): Plan {
+  const contactToRemove = plan.contacts.get(publicKey);
+  if (!contactToRemove) {
+    return plan;
+  }
+  const newContacts = plan.contacts.remove(publicKey);
+  const contactListEvent = newContactListEvent(newContacts, plan.user);
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(contactListEvent),
   };
 }
 

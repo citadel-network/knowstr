@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
 import Dashboard from "./components/Dashboard";
 import Invite, { VCard } from "./components/Invite";
+import { Follow } from "./components/Follow";
 import { IS_MOBILE } from "./components/responsive";
 import { DesktopView, MobileView } from "./components/FullScreenViews";
 import { EditRelays } from "./components/EditRelays";
@@ -22,6 +23,7 @@ export function App(): JSX.Element {
         <Route path="/" element={<Dashboard />}>
           <Route path="/vcard" element={<VCard />} />
           <Route path="/invite" element={<Invite />} />
+          <Route path="/follow" element={<Follow />} />
           <Route path="/relays" element={<EditRelays />} />
           <Route path={FULL_SCREEN_PATH} element={<DesktopView />} />
         </Route>
