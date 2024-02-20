@@ -21,8 +21,8 @@ test("Login and logout with seed phrase", async () => {
   });
 
   fireEvent.click(screen.getByLabelText("open menu"));
-  fireEvent.click(screen.getByLabelText("invite user"));
-  await screen.findByDisplayValue(
+  fireEvent.click(screen.getByLabelText("show profile"));
+  await screen.findByText(
     /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
   );
 
@@ -43,8 +43,8 @@ test("Login with nsec", async () => {
     "nsec10allq0gjx7fddtzef0ax00mdps9t2kmtrldkyjfs8l5xruwvh2dq0lhhkp{enter}"
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
-  fireEvent.click(screen.getByLabelText("invite user"));
-  await screen.findByDisplayValue(
+  fireEvent.click(screen.getByLabelText("show profile"));
+  await screen.findByText(
     /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
   );
 });
@@ -60,8 +60,8 @@ test("Login with private key", async () => {
     "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
-  fireEvent.click(screen.getByLabelText("invite user"));
-  await screen.findByDisplayValue(
+  fireEvent.click(screen.getByLabelText("show profile"));
+  await screen.findByText(
     /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
   );
 });

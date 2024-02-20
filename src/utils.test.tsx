@@ -19,6 +19,7 @@ import {
   Plan,
   createPlan,
   planAddContact,
+  planRemoveContact,
   planUpdateWorkspaces,
   planUpsertNode,
   planUpsertRelations,
@@ -276,6 +277,18 @@ export async function follow(
 ): Promise<void> {
   const utils = cU();
   const plan = planAddContact(createPlan(utils), publicKey);
+  await execute({
+    ...utils,
+    plan,
+  });
+}
+
+export async function unfollow(
+  cU: UpdateState,
+  publicKey: PublicKey
+): Promise<void> {
+  const utils = cU();
+  const plan = planRemoveContact(createPlan(utils), publicKey);
   await execute({
     ...utils,
     plan,

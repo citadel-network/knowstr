@@ -6,7 +6,6 @@ import { SelectWorkspaces } from "./SelectWorkspaces";
 import { useWorkspace } from "../KnowledgeDataContext";
 import { IS_MOBILE } from "./responsive";
 import { DeleteNode } from "./DeleteNode";
-import { PublishKnowledgeButton } from "./PublishKnowledgeButton";
 import { NotificationCenter } from "./NotificationCenter";
 import { publishSettings } from "../nostr";
 import { useData } from "../DataContext";
@@ -70,7 +69,6 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
           </div>
         )}
         <div className="navbar-right">
-          <PublishKnowledgeButton />
           <NotificationCenter />
           <Dropdown className="options-dropdown">
             <Dropdown.Toggle
@@ -85,12 +83,12 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               <DeleteNode as="item" />
               <Dropdown.Item
                 className="d-flex workspace-selection"
-                onClick={() => navigate("/vcard")}
-                aria-label="invite user"
+                onClick={() => navigate("/profile")}
+                aria-label="show profile"
                 tabIndex={0}
               >
-                <span className="simple-icon-user-follow d-block dropdown-item-icon" />
-                <div className="workspace-selection-text">Invite New User</div>
+                <span className="simple-icon-user d-block dropdown-item-icon" />
+                <div className="workspace-selection-text">Profile</div>
               </Dropdown.Item>
               <Dropdown.Item
                 className="d-flex workspace-selection"

@@ -67,7 +67,7 @@ export function Follow(): JSX.Element {
           <Form onSubmit={onSubmit}>
             <div className="d-flex m-2 align-items-center">
               <FormControlWrapper
-                name="find user"
+                aria-label="find user"
                 defaultValue=""
                 onChange={onChange}
                 placeholder="Enter publicKey or npub"
@@ -112,7 +112,7 @@ export function Follow(): JSX.Element {
       <Modal.Body>
         <div className="d-flex m-2 align-items-center">
           <FormControlWrapper
-            name="user publicKey"
+            aria-label="user publicKey"
             value={publicKey}
             readOnly
             disabled
@@ -122,23 +122,23 @@ export function Follow(): JSX.Element {
           <div className="ms-4">
             <Button
               className="btn btn-primary"
-              ariaLabel="unfollow contact"
+              ariaLabel="unfollow user"
               onClick={unfollowContact}
               disabled={!isFollowing}
               type="button"
             >
-              Unfollow
+              <span className="simple-icon-user-unfollow d-block" />
             </Button>
           </div>
           <div className="ms-2">
             <Button
               className="btn btn-primary"
-              ariaLabel="follow contact"
+              ariaLabel="follow user"
               onClick={followContact}
               disabled={isFollowing}
               type="button"
             >
-              Unfollow
+              <span className="simple-icon-user-follow d-block" />
             </Button>
           </div>
         </div>
