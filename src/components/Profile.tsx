@@ -23,6 +23,12 @@ export function Profile(): JSX.Element {
             <div className="ms-2">{nip19.npubEncode(user.publicKey)}</div>
           </div>
           <div className="flex-row-start m-2">
+            <div className="bold">Your nostr nprofile:</div>
+            <div className="ms-2">
+              {nip19.nprofileEncode({ pubkey: user.publicKey })}
+            </div>
+          </div>
+          <div className="flex-row-start m-2">
             <div className="bold">Your Public Key:</div>
             <div className="ms-2">{user.publicKey}</div>
           </div>

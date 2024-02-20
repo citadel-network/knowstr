@@ -59,6 +59,22 @@ test("find a user by npub", async () => {
   screen.getByDisplayValue(`${BOB_PUBLIC_KEY}`);
 });
 
+test("find a user by nprofile", async () => {
+  const [alice] = setup([ALICE]);
+  const nprofile = nip19.nprofileEncode({ pubkey: BOB_PUBLIC_KEY });
+
+  renderWithTestData(<Follow />, {
+    ...alice(),
+    initialRoute: `/follow`,
+  });
+  const input = await screen.findByLabelText(`find user`);
+  userEvent.type(input, nprofile);
+  fireEvent.click(screen.getByText(`Find`));
+
+  await screen.findByLabelText(`follow user`);
+  screen.getByDisplayValue(`${BOB_PUBLIC_KEY}`);
+});
+
 test("follow a new user", async () => {
   const [alice] = setup([ALICE]);
 

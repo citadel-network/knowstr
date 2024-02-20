@@ -8,6 +8,11 @@ import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
 
+type ProfilePointer = {
+  pubkey: string;
+  relays?: string[];
+};
+
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
   const { contacts } = useData();
@@ -33,9 +38,14 @@ export function Follow(): JSX.Element {
     }
     try {
       const decodedInput = nip19.decode(changedInput);
+      const inputType = decodedInput.type;
+      const decodedPublicKey =
+        inputType === "npub"
+          ? decodedInput.data
+          : (decodedInput.data as ProfilePointer).pubkey;
       setInputPublicKey(
-        decodedInput.type === "npub"
-          ? (decodedInput.data as PublicKey)
+        inputType === "npub" || inputType === "nprofile"
+          ? (decodedPublicKey as PublicKey)
           : undefined
       );
     } catch (err) {
