@@ -1,17 +1,41 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Form, Modal } from "react-bootstrap";
-import { nip19 } from "nostr-tools";
+import { nip19, nip05 } from "nostr-tools";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
 
-type ProfilePointer = {
-  pubkey: string;
-  relays?: string[];
-};
+async function decodeInput(
+  input: string | undefined
+): Promise<PublicKey | undefined> {
+  if (!input) {
+    return undefined;
+  }
+  try {
+    const decodedInput = nip19.decode(input);
+    const inputType = decodedInput.type;
+    if (inputType === "npub") {
+      return decodedInput.data as PublicKey;
+    }
+    if (inputType === "nprofile") {
+      return decodedInput.data.pubkey as PublicKey;
+    }
+    // eslint-disable-next-line no-empty
+  } catch (e) {}
+  const publicKeyRegex = /^[a-fA-F0-9]{64}$/;
+  if (publicKeyRegex.test(input)) {
+    return input as PublicKey;
+  }
+  const nip05Regex = /^[a-z0-9-_.]+@[a-z0-9-_.]+\.[a-z0-9-_.]+$/i;
+  if (nip05Regex.test(input)) {
+    const profile = await nip05.queryProfile(input);
+    return profile !== null ? (profile.pubkey as PublicKey) : undefined;
+  }
+  return undefined;
+}
 
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
@@ -21,9 +45,7 @@ export function Follow(): JSX.Element {
   const params = new URLSearchParams(search);
   const rawPublicKey = params.get("publicKey");
   const publicKey = rawPublicKey ? (rawPublicKey as PublicKey) : undefined;
-  const [inputPublicKey, setInputPublicKey] = useState<PublicKey | undefined>(
-    undefined
-  );
+  const [input, setInput] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
   const onHide = (): void => {
@@ -32,38 +54,21 @@ export function Follow(): JSX.Element {
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const changedInput = e.target.value;
-    if (!changedInput) {
-      setInputPublicKey(undefined);
+    if (changedInput === input) {
       return;
     }
-    try {
-      const decodedInput = nip19.decode(changedInput);
-      const inputType = decodedInput.type;
-      const decodedPublicKey =
-        inputType === "npub"
-          ? decodedInput.data
-          : (decodedInput.data as ProfilePointer).pubkey;
-      setInputPublicKey(
-        inputType === "npub" || inputType === "nprofile"
-          ? (decodedPublicKey as PublicKey)
-          : undefined
-      );
-    } catch (err) {
-      const publicKeyRegex = /^[a-fA-F0-9]{64}$/;
-      setInputPublicKey(
-        publicKeyRegex.test(changedInput)
-          ? (changedInput as PublicKey)
-          : undefined
-      );
-    }
+    setInput(!changedInput ? undefined : changedInput);
   };
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const onSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
-    if (!inputPublicKey) {
-      setError("Invalid publicKey or npub");
+    const decodedInput = await decodeInput(input);
+    if (!decodedInput) {
+      setError("Invalid publicKey, npub, nprofile or nip-05 identifier");
     } else {
-      navigate(`/follow?publicKey=${inputPublicKey}`);
+      navigate(`/follow?publicKey=${decodedInput}`);
     }
   };
 
@@ -80,12 +85,17 @@ export function Follow(): JSX.Element {
                 aria-label="find user"
                 defaultValue=""
                 onChange={onChange}
-                placeholder="Enter publicKey or npub"
+                placeholder="Enter publicKey, npub or nprofile"
                 className="p-2"
                 style={{ flexGrow: 1 }}
               />
               <div className="ms-4">
-                <Button type="submit" className="btn btn-primary">
+                <Button
+                  type="submit"
+                  className="btn btn-primary"
+                  ariaLabel="start search"
+                  disabled={!input}
+                >
                   Find
                 </Button>
               </div>
@@ -155,7 +165,7 @@ export function Follow(): JSX.Element {
         <div className="p-2">
           <Button
             onClick={() => {
-              setInputPublicKey(undefined);
+              setInput(undefined);
               navigate(`/follow`);
             }}
             className="btn"

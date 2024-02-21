@@ -1,6 +1,6 @@
 import React from "react";
 import { screen, waitFor, fireEvent } from "@testing-library/react";
-import { Event, nip19 } from "nostr-tools";
+import { Event, nip05, nip19 } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import {
   renderWithTestData,
@@ -40,7 +40,9 @@ test("search for an invalid user", async () => {
   userEvent.type(input, "invalidPublicKey");
   fireEvent.click(screen.getByText(`Find`));
 
-  await screen.findByText("Invalid publicKey or npub");
+  await screen.findByText(
+    "Invalid publicKey, npub, nprofile or nip-05 identifier"
+  );
 });
 
 test("find a user by npub", async () => {
@@ -73,6 +75,32 @@ test("find a user by nprofile", async () => {
 
   await screen.findByLabelText(`follow user`);
   screen.getByDisplayValue(`${BOB_PUBLIC_KEY}`);
+});
+
+test("find a user by nip-05 identifier", async () => {
+  const bobsIdentifier = `bob@bobsdomain.com`;
+  nip05.useFetchImplementation(async () =>
+    Promise.resolve({
+      json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
+    })
+  );
+
+  const [alice] = setup([ALICE]);
+  renderWithTestData(<Follow />, {
+    ...alice(),
+    initialRoute: `/follow`,
+  });
+  const input = await screen.findByLabelText(`find user`);
+  userEvent.type(input, bobsIdentifier);
+
+  const findButton = screen.getByText("Find");
+  await waitFor(() => {
+    expect(findButton.ariaDisabled).toBe(undefined);
+  });
+  fireEvent.click(findButton);
+
+  await screen.findByLabelText(`follow user`);
+  screen.getByDisplayValue(BOB_PUBLIC_KEY);
 });
 
 test("follow a new user", async () => {
