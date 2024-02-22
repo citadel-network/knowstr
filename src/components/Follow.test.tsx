@@ -45,6 +45,20 @@ test("search for an invalid user", async () => {
   );
 });
 
+test("search for myself leads to profile", async () => {
+  const [alice] = setup([ALICE]);
+
+  renderApp(alice());
+
+  fireEvent.click(await screen.findByLabelText("open menu"));
+  fireEvent.click(await screen.findByLabelText("follow user"));
+
+  const input = await screen.findByLabelText(`find user`);
+  userEvent.type(input, ALICE.publicKey);
+  fireEvent.click(screen.getByText(`Find`));
+  await screen.findByText(`Your nostr npub:`);
+});
+
 test("find a user by npub", async () => {
   const [alice] = setup([ALICE]);
   const npub = nip19.npubEncode(BOB_PUBLIC_KEY);

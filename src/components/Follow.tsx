@@ -39,7 +39,7 @@ async function decodeInput(
 
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
-  const { contacts } = useData();
+  const { user, contacts } = useData();
   const { createPlan, executePlan } = usePlanner();
   const { search } = useLocation();
   const params = new URLSearchParams(search);
@@ -80,7 +80,11 @@ export function Follow(): JSX.Element {
     if (!decodedInput) {
       setError("Invalid publicKey, npub, nprofile or nip-05 identifier");
     } else {
-      navigate(`/follow?publicKey=${decodedInput}`);
+      navigate(
+        decodedInput === user.publicKey
+          ? `/profile`
+          : `/follow?publicKey=${decodedInput}`
+      );
     }
   };
 
