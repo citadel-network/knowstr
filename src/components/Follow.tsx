@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Form, Modal } from "react-bootstrap";
+import { Form, InputGroup, Modal } from "react-bootstrap";
 import { nip19, nip05 } from "nostr-tools";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
@@ -48,6 +48,18 @@ export function Follow(): JSX.Element {
   const [input, setInput] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
+  const pasteFromClipboard = async (): Promise<void> => {
+    const text = await navigator.clipboard.readText();
+    const inputElement = document.querySelector(
+      'input[aria-label="find user"]'
+    );
+    if (inputElement) {
+      // eslint-disable-next-line functional/immutable-data
+      (inputElement as HTMLInputElement).value = text;
+    }
+    setInput(text);
+  };
+
   const onHide = (): void => {
     navigate(`/`);
   };
@@ -81,14 +93,31 @@ export function Follow(): JSX.Element {
         <Modal.Body>
           <Form onSubmit={onSubmit}>
             <div className="d-flex m-2 align-items-center">
-              <FormControlWrapper
-                aria-label="find user"
-                defaultValue=""
-                onChange={onChange}
-                placeholder="Enter publicKey, npub or nprofile"
-                className="p-2"
-                style={{ flexGrow: 1 }}
-              />
+              <InputGroup>
+                <div style={{ position: "relative", flexGrow: 1 }}>
+                  <FormControlWrapper
+                    aria-label="find user"
+                    defaultValue=""
+                    onChange={onChange}
+                    placeholder="Enter publicKey, npub or nprofile"
+                    className="p-2 w-100"
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      top: "20%",
+                    }}
+                  >
+                    <Button
+                      className="btn btn-borderless background-transparent"
+                      onClick={pasteFromClipboard}
+                    >
+                      <span className="iconsminds-file-clipboard" />
+                    </Button>
+                  </div>
+                </div>
+              </InputGroup>
               <div className="ms-4">
                 <Button
                   type="submit"

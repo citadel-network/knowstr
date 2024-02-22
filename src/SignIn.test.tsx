@@ -22,7 +22,7 @@ test("Login and logout with seed phrase", async () => {
 
   fireEvent.click(screen.getByLabelText("open menu"));
   fireEvent.click(screen.getByLabelText("show profile"));
-  await screen.findByText(
+  await screen.findByDisplayValue(
     /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
   );
 
@@ -44,7 +44,7 @@ test("Login with nsec", async () => {
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(screen.getByLabelText("show profile"));
-  await screen.findByText(
+  await screen.findByDisplayValue(
     /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
   );
 });
@@ -61,7 +61,7 @@ test("Login with private key", async () => {
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(screen.getByLabelText("show profile"));
-  await screen.findByText(
+  await screen.findByDisplayValue(
     /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
   );
 });
