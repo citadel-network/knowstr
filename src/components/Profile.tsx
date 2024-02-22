@@ -6,16 +6,20 @@ import { useData } from "../DataContext";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 
+type CopiedState = "not-copied" | "npub" | "nprofile";
+
 type UserPublicIdentifierProps = {
   identifierName: string;
   identifier: string;
-  copyToClipboard?: () => void;
+  copyToClipboard: () => void;
+  showCopiedSuccess: boolean;
 };
 
 function UserPublicIdentifier({
   identifierName,
   identifier,
   copyToClipboard,
+  showCopiedSuccess,
 }: UserPublicIdentifierProps): JSX.Element {
   return (
     <div className="flex-row-start m-2 align-items-center">
@@ -39,7 +43,11 @@ function UserPublicIdentifier({
               className="btn-borderless background-white"
               onClick={copyToClipboard}
             >
-              <span className="iconsminds-files" />
+              <span
+                className={
+                  showCopiedSuccess ? "iconsminds-yes" : "iconsminds-files"
+                }
+              />
             </Button>
           </div>
         </div>
@@ -54,6 +62,7 @@ export function Profile(): JSX.Element {
   const onHide = (): void => {
     navigate("/");
   };
+  const [copied, setCopied] = React.useState<CopiedState>("not-copied");
   const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text);
   };
@@ -72,14 +81,18 @@ export function Profile(): JSX.Element {
             identifier={npub as string}
             copyToClipboard={() => {
               copyToClipboard(npub);
+              setCopied("npub");
             }}
+            showCopiedSuccess={copied === "npub"}
           />
           <UserPublicIdentifier
             identifierName="nprofile"
             identifier={nprofile as string}
             copyToClipboard={() => {
               copyToClipboard(nprofile);
+              setCopied("nprofile");
             }}
+            showCopiedSuccess={copied === "nprofile"}
           />
         </div>
       </Modal.Body>
