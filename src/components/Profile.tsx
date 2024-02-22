@@ -32,11 +32,11 @@ function UserPublicIdentifier({
             style={{
               position: "absolute",
               right: "2px",
-              top: "20%",
+              top: "10%",
             }}
           >
             <Button
-              className="btn btn-borderless background-white"
+              className="btn-borderless background-white"
               onClick={copyToClipboard}
             >
               <span className="iconsminds-files" />
@@ -79,13 +79,6 @@ export function Profile(): JSX.Element {
             identifier={nprofile as string}
             copyToClipboard={() => {
               copyToClipboard(nprofile);
-            }}
-          />
-          <UserPublicIdentifier
-            identifierName="Public Key"
-            identifier={user.publicKey as string}
-            copyToClipboard={() => {
-              copyToClipboard(user.publicKey);
             }}
           />
         </div>

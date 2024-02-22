@@ -26,7 +26,7 @@ test("find a user", async () => {
   fireEvent.click(screen.getByText(`Find`));
 
   await screen.findByLabelText(`follow user`);
-  screen.getByDisplayValue(`${BOB_PUBLIC_KEY}`);
+  screen.getByDisplayValue(nip19.npubEncode(BOB_PUBLIC_KEY));
 });
 
 test("search for an invalid user", async () => {
@@ -58,12 +58,13 @@ test("find a user by npub", async () => {
   fireEvent.click(screen.getByText(`Find`));
 
   await screen.findByLabelText(`follow user`);
-  screen.getByDisplayValue(`${BOB_PUBLIC_KEY}`);
+  screen.getByDisplayValue(npub);
 });
 
 test("find a user by nprofile", async () => {
   const [alice] = setup([ALICE]);
   const nprofile = nip19.nprofileEncode({ pubkey: BOB_PUBLIC_KEY });
+  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
 
   renderWithTestData(<Follow />, {
     ...alice(),
@@ -74,7 +75,7 @@ test("find a user by nprofile", async () => {
   fireEvent.click(screen.getByText(`Find`));
 
   await screen.findByLabelText(`follow user`);
-  screen.getByDisplayValue(`${BOB_PUBLIC_KEY}`);
+  screen.getByDisplayValue(npub);
 });
 
 test("find a user by nip-05 identifier", async () => {
@@ -100,7 +101,8 @@ test("find a user by nip-05 identifier", async () => {
   fireEvent.click(findButton);
 
   await screen.findByLabelText(`follow user`);
-  screen.getByDisplayValue(BOB_PUBLIC_KEY);
+  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
+  screen.getByDisplayValue(npub);
 });
 
 test("follow a new user", async () => {

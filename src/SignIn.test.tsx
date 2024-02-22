@@ -1,9 +1,14 @@
 import React from "react";
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { nip19 } from "nostr-tools";
 import { renderWithTestData } from "./utils.test";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
 import { App } from "./App";
+
+const npub = nip19.npubEncode(
+  "17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917"
+);
 
 test("Login and logout with seed phrase", async () => {
   renderWithTestData(
@@ -22,9 +27,7 @@ test("Login and logout with seed phrase", async () => {
 
   fireEvent.click(screen.getByLabelText("open menu"));
   fireEvent.click(screen.getByLabelText("show profile"));
-  await screen.findByDisplayValue(
-    /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
-  );
+  await screen.findByDisplayValue(npub);
 
   fireEvent.click(await screen.findByLabelText("open menu"));
   const logoutButton = await screen.findByLabelText("logout");
@@ -44,9 +47,7 @@ test("Login with nsec", async () => {
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(screen.getByLabelText("show profile"));
-  await screen.findByDisplayValue(
-    /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
-  );
+  await screen.findByDisplayValue(npub);
 });
 
 test("Login with private key", async () => {
@@ -61,9 +62,7 @@ test("Login with private key", async () => {
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(screen.getByLabelText("show profile"));
-  await screen.findByDisplayValue(
-    /17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917/
-  );
+  await screen.findByDisplayValue(npub);
 });
 
 test("Display Error", async () => {

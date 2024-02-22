@@ -99,18 +99,18 @@ export function Follow(): JSX.Element {
                     aria-label="find user"
                     defaultValue=""
                     onChange={onChange}
-                    placeholder="Enter publicKey, npub or nprofile"
+                    placeholder="Enter npub, nprofile or nostr address"
                     className="p-2 w-100"
                   />
                   <div
                     style={{
                       position: "absolute",
                       right: "10px",
-                      top: "20%",
+                      top: "15%",
                     }}
                   >
                     <Button
-                      className="btn btn-borderless background-transparent"
+                      className="btn-borderless background-transparent"
                       onClick={pasteFromClipboard}
                     >
                       <span className="iconsminds-file-clipboard" />
@@ -139,6 +139,7 @@ export function Follow(): JSX.Element {
   }
 
   const privateContact = contacts.get(publicKey);
+  const npub = nip19.npubEncode(publicKey);
   const isFollowing = privateContact !== undefined;
 
   const followContact = async (): Promise<void> => {
@@ -161,8 +162,8 @@ export function Follow(): JSX.Element {
       <Modal.Body>
         <div className="d-flex m-2 align-items-center">
           <FormControlWrapper
-            aria-label="user publicKey"
-            value={publicKey}
+            aria-label="user npub"
+            value={npub}
             readOnly
             disabled
             className="p-2"
