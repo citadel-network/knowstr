@@ -157,6 +157,12 @@ body {
   justify-content: flex-start;
 }
 
+.flex-row-center {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
 .flex-row-end {
   display: flex;
   flex-direction: row;

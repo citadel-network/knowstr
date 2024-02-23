@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { InputGroup, Modal } from "react-bootstrap";
 import { nip19 } from "nostr-tools";
+import QRCode from "react-qr-code";
 import { useData } from "../DataContext";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 
-type CopiedState = "not-copied" | "npub" | "nprofile";
+type Identifier = "none" | "npub" | "nprofile" | "invite";
 
 type UserPublicIdentifierProps = {
   identifierName: string;
   identifier: string;
   copyToClipboard: () => void;
   showCopiedSuccess: boolean;
+  toggleQrCode: () => void;
+  isQRToggled: boolean;
 };
 
 function UserPublicIdentifier({
@@ -20,12 +23,18 @@ function UserPublicIdentifier({
   identifier,
   copyToClipboard,
   showCopiedSuccess,
+  toggleQrCode,
+  isQRToggled,
 }: UserPublicIdentifierProps): JSX.Element {
   return (
     <div className="flex-row-start m-2 align-items-center">
-      <div className="bold w-25">Your nostr {identifierName}:</div>
+      <div className="bold w-25">
+        {identifierName === "invite"
+          ? "Your Knowstr Invite Link"
+          : `Your nostr ${identifierName}:`}
+      </div>
       <InputGroup>
-        <div style={{ position: "relative", flexGrow: 1, maxWidth: "40rem" }}>
+        <div style={{ position: "relative", flexGrow: 1, maxWidth: "42rem" }}>
           <FormControlWrapper
             aria-label={identifierName}
             defaultValue={identifier}
@@ -49,6 +58,14 @@ function UserPublicIdentifier({
                 }
               />
             </Button>
+            <Button
+              className={`btn btn-borderless ${
+                isQRToggled ? "background-dark" : "background-white"
+              }`}
+              onClick={toggleQrCode}
+            >
+              <span className="iconsminds-qr-code" />
+            </Button>
           </div>
         </div>
       </InputGroup>
@@ -59,15 +76,32 @@ function UserPublicIdentifier({
 export function Profile(): JSX.Element {
   const navigate = useNavigate();
   const { user } = useData();
+  const [copied, setCopied] = useState<Identifier>("none");
+  const [qrCodeIdentifier, setQrCodeIdentifier] = useState<Identifier>("none");
+
   const onHide = (): void => {
     navigate("/");
   };
-  const [copied, setCopied] = React.useState<CopiedState>("not-copied");
+
   const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text);
   };
   const npub = nip19.npubEncode(user.publicKey);
   const nprofile = nip19.nprofileEncode({ pubkey: user.publicKey });
+  const inviteLink = `${window.location.origin}/follow?publicKey=${user.publicKey}`;
+
+  const encodeForQR = (identifier: string): string => {
+    switch (identifier) {
+      case "npub":
+        return encodeURIComponent(npub);
+      case "nprofile":
+        return encodeURIComponent(nprofile);
+      case "invite":
+        return inviteLink;
+      default:
+        return "";
+    }
+  };
 
   return (
     <Modal show onHide={onHide} size="xl">
@@ -81,19 +115,64 @@ export function Profile(): JSX.Element {
             identifier={npub as string}
             copyToClipboard={() => {
               copyToClipboard(npub);
-              setCopied("npub");
+              if (copied !== "npub") {
+                setCopied("npub");
+              }
             }}
             showCopiedSuccess={copied === "npub"}
+            toggleQrCode={() => {
+              if (qrCodeIdentifier === "npub") {
+                setQrCodeIdentifier("none");
+              } else {
+                setQrCodeIdentifier("npub");
+              }
+            }}
+            isQRToggled={qrCodeIdentifier === "npub"}
           />
           <UserPublicIdentifier
             identifierName="nprofile"
             identifier={nprofile as string}
             copyToClipboard={() => {
               copyToClipboard(nprofile);
-              setCopied("nprofile");
+              if (copied !== "nprofile") {
+                setCopied("nprofile");
+              }
             }}
             showCopiedSuccess={copied === "nprofile"}
+            toggleQrCode={() => {
+              if (qrCodeIdentifier === "nprofile") {
+                setQrCodeIdentifier("none");
+              } else {
+                setQrCodeIdentifier("nprofile");
+              }
+            }}
+            isQRToggled={qrCodeIdentifier === "nprofile"}
           />
+
+          <UserPublicIdentifier
+            identifierName="invite"
+            identifier={inviteLink}
+            copyToClipboard={() => {
+              copyToClipboard(inviteLink);
+              if (copied !== "invite") {
+                setCopied("invite");
+              }
+            }}
+            showCopiedSuccess={copied === "invite"}
+            toggleQrCode={() => {
+              if (qrCodeIdentifier === "invite") {
+                setQrCodeIdentifier("none");
+              } else {
+                setQrCodeIdentifier("invite");
+              }
+            }}
+            isQRToggled={qrCodeIdentifier === "invite"}
+          />
+          {qrCodeIdentifier !== "none" && (
+            <div className="flex-row-center m-2">
+              <QRCode value={encodeForQR(qrCodeIdentifier)} level="M" />
+            </div>
+          )}
         </div>
       </Modal.Body>
     </Modal>
