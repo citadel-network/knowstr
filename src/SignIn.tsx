@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card, Form } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
@@ -97,6 +97,7 @@ function SignInWithSeed({
 }
 
 export function SignInFullScreen(): JSX.Element {
+  const { search, pathname } = useLocation();
   const login = useLogin();
   const navigate = useNavigate();
   document.body.classList.add("background");
@@ -109,7 +110,7 @@ export function SignInFullScreen(): JSX.Element {
         <SignInWithSeed
           setPrivateKey={(pk) => {
             login(pk);
-            navigate("/");
+            navigate(pathname + search, { replace: true });
           }}
         />
       </div>

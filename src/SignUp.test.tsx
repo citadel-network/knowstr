@@ -8,6 +8,11 @@ import { hexToBytes } from "@noble/hashes/utils";
 import { SignUp } from "./SignUp";
 
 test("create nostr login data", () => {
+  // eslint-disable-next-line functional/immutable-data
+  Object.defineProperty(document, "referrer", {
+    writable: true,
+    value: "http://localhost/signin",
+  });
   render(
     <BrowserRouter>
       <Routes>

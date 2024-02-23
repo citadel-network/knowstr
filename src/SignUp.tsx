@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Form } from "react-bootstrap";
 import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
@@ -9,6 +9,20 @@ import { StandaloneCard } from "./components/Ui";
 
 export function SignUp(): JSX.Element {
   document.body.classList.add("background");
+  const [referrer, setReferrer] = useState("/signin");
+
+  useEffect(() => {
+    const lastVisitedUrl = document.referrer;
+    const lastVisitedUrlObject = new URL(lastVisitedUrl);
+
+    if (lastVisitedUrlObject.origin === window.location.origin) {
+      setReferrer(
+        lastVisitedUrlObject.pathname +
+          lastVisitedUrlObject.search +
+          lastVisitedUrlObject.hash
+      );
+    }
+  }, []);
 
   const mnemonic = nip06.generateSeedWords();
   const pk = nip06.privateKeyFromSeedWords(mnemonic);
@@ -63,7 +77,7 @@ export function SignUp(): JSX.Element {
       </div>
       <div className="float-end mt-4">
         <div className="btn">
-          <Link className="no-underline" to="/signin">
+          <Link className="no-underline" to={referrer}>
             I created a backup of my key
           </Link>
         </div>
