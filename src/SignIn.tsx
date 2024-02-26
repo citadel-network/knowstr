@@ -97,7 +97,7 @@ function SignInWithSeed({
 }
 
 export function SignInFullScreen(): JSX.Element {
-  const { search, pathname } = useLocation();
+  const path = useLocation();
   const login = useLogin();
   const navigate = useNavigate();
   document.body.classList.add("background");
@@ -110,7 +110,7 @@ export function SignInFullScreen(): JSX.Element {
         <SignInWithSeed
           setPrivateKey={(pk) => {
             login(pk);
-            navigate(pathname + search, { replace: true });
+            navigate(path, { replace: true });
           }}
         />
       </div>
