@@ -53,7 +53,7 @@ test("search for myself leads to profile", async () => {
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(await screen.findByLabelText("follow user"));
 
-  const input = await screen.findByLabelText(`find user`);
+  const input = await screen.findByLabelText("find user");
   userEvent.type(input, ALICE.publicKey);
   fireEvent.click(screen.getByText(`Find`));
   await screen.findByText(`Your nostr npub:`);
