@@ -7,6 +7,7 @@ import { useData } from "../DataContext";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
+import { useApis } from "../Apis";
 
 async function decodeInput(
   input: string | undefined
@@ -40,6 +41,7 @@ async function decodeInput(
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
   const { user, contacts } = useData();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const { search } = useLocation();
   const params = new URLSearchParams(search);
@@ -147,12 +149,14 @@ export function Follow(): JSX.Element {
   const isFollowing = privateContact !== undefined;
 
   const followContact = async (): Promise<void> => {
-    await executePlan(planAddContact(createPlan(), publicKey));
+    await executePlan(planAddContact(createPlan(), publicKey, finalizeEvent));
     navigate(`/follow?publicKey=${publicKey}`);
   };
 
   const unfollowContact = async (): Promise<void> => {
-    await executePlan(planRemoveContact(createPlan(), publicKey));
+    await executePlan(
+      planRemoveContact(createPlan(), publicKey, finalizeEvent)
+    );
     navigate(`/follow?publicKey=${publicKey}`);
   };
 

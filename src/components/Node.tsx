@@ -43,6 +43,7 @@ import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
+import { useApis } from "../Apis";
 
 function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {
@@ -188,6 +189,7 @@ function NodeAutoLink({
 
 function EditingNodeContent(): JSX.Element | null {
   const [node] = useNode();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const viewKey = useViewKey();
   const { editingViews, setEditingState } = useTemporaryView();
@@ -197,10 +199,14 @@ function EditingNodeContent(): JSX.Element | null {
   }
   const editNodeText = (text: string): void => {
     executePlan(
-      planUpsertNode(createPlan(), {
-        ...node,
-        text,
-      })
+      planUpsertNode(
+        createPlan(),
+        {
+          ...node,
+          text,
+        },
+        finalizeEvent
+      )
     );
   };
   const closeEditor = (): void => {

@@ -5,15 +5,12 @@ import MarkdownIt from "markdown-it";
 import { v4 } from "uuid";
 import { Map } from "immutable";
 import { Event } from "nostr-tools";
-import {
-  finalizeEvent,
-  KIND_KNOWLEDGE_NODE_COLLECTION,
-  newTimestamp,
-} from "../nostr";
+import { KIND_KNOWLEDGE_NODE_COLLECTION, newTimestamp } from "../nostr";
 import { newNode, bulkAddRelations, shortID } from "../connections";
 import { newRelations } from "../ViewContext";
 import { Plan, planUpsertRelations, usePlanner } from "../planner";
 import { newDB } from "../knowledge";
+import { FinalizeEvent, useApis } from "../Apis";
 
 /* eslint-disable functional/immutable-data */
 function convertToPlainText(html: string): string {
@@ -68,7 +65,8 @@ function splitMarkdownInChunkSizes(markdown: string): string[] {
 
 export function planCreateNodesFromMarkdown(
   plan: Plan,
-  markdown: string
+  markdown: string,
+  finalizeEvent: FinalizeEvent
 ): [Plan, topNodeID: LongID] {
   const splittedMarkdown = splitMarkdownInChunkSizes(markdown);
   const { events, nodes } = splittedMarkdown.reduce(
@@ -78,7 +76,6 @@ export function planCreateNodesFromMarkdown(
       const publishNodeEvent = finalizeEvent(
         {
           kind: KIND_KNOWLEDGE_NODE_COLLECTION,
-          pubkey: plan.user.publicKey,
           created_at: newTimestamp(),
           tags: [["d", baseID]],
           content: md,
@@ -96,7 +93,7 @@ export function planCreateNodesFromMarkdown(
     nodes,
     plan.user.publicKey
   );
-  const planWithRelations = planUpsertRelations(plan, relations);
+  const planWithRelations = planUpsertRelations(plan, relations, finalizeEvent);
   const userDB = planWithRelations.knowledgeDBs.get(
     plan.user.publicKey,
     newDB()
@@ -135,6 +132,7 @@ export function FileDropZone({
   children,
   onDrop,
 }: FileDropZoneProps): JSX.Element {
+  const { finalizeEvent } = useApis();
   const { createPlan } = usePlanner();
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     noClick: true,
@@ -159,7 +157,8 @@ export function FileDropZone({
         (rdx: MarkdownReducer, markdown: string) => {
           const [plan, topNodeID] = planCreateNodesFromMarkdown(
             rdx.plan,
-            markdown
+            markdown,
+            finalizeEvent
           );
           return {
             plan,

@@ -6,6 +6,7 @@ import { isIDRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
 import { FormControlWrapper } from "./FormControlWrapper";
+import { useApis } from "../Apis";
 
 type NewWorkspaceProps = {
   onHide: () => void;
@@ -13,6 +14,7 @@ type NewWorkspaceProps = {
 
 function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   const navigate = useNavigate();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const { user } = useData();
 
@@ -25,7 +27,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
     }
     const title = (form.elements.namedItem("title") as HTMLInputElement).value;
     const node = newNode(title, user.publicKey);
-    const newNodePlan = planUpsertNode(createPlan(), node);
+    const newNodePlan = planUpsertNode(createPlan(), node, finalizeEvent);
     // set node as active
     const myDB = newNodePlan.knowledgeDBs.get(newNodePlan.user.publicKey);
     if (!myDB) {
@@ -35,7 +37,8 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
     const setActivePlan = planUpdateWorkspaces(
       newNodePlan,
       myDB.workspaces.push(node.id),
-      node.id
+      node.id,
+      finalizeEvent
     );
     executePlan(setActivePlan);
     navigate(`/w/${node.id}`);
@@ -71,6 +74,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
 function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
   const { user, knowledgeDBs } = useData();
   const myDB = knowledgeDBs.get(user.publicKey);
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const navigate = useNavigate();
 
@@ -79,7 +83,9 @@ function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
       return;
     }
     const { workspaces } = myDB;
-    executePlan(planUpdateWorkspaces(createPlan(), workspaces, id));
+    executePlan(
+      planUpdateWorkspaces(createPlan(), workspaces, id, finalizeEvent)
+    );
     navigate(`/w/${id}`);
   };
 

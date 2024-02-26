@@ -5,7 +5,13 @@ import { List } from "immutable";
 import { RootViewContextProvider, newRelations } from "../ViewContext";
 import { execute } from "../executor";
 import { createPlan, planUpsertRelations } from "../planner";
-import { ALICE, renderWithTestData, setup, UpdateState } from "../utils.test";
+import {
+  ALICE,
+  mockFinalizeEvent,
+  renderWithTestData,
+  setup,
+  UpdateState,
+} from "../utils.test";
 import { planCreateNodesFromMarkdown } from "./FileDropZone";
 import { Column } from "./Column";
 import { addRelationToRelations, joinID } from "../connections";
@@ -24,7 +30,8 @@ Python is a programming language
 async function uploadAndRenderMarkdown(alice: UpdateState): Promise<void> {
   const [plan, topNodeID] = planCreateNodesFromMarkdown(
     createPlan(alice()),
-    TEST_FILE
+    TEST_FILE,
+    mockFinalizeEvent
   );
   const wsID = joinID(alice().user.publicKey, "my-first-workspace");
   const addNodeToWS = planUpsertRelations(
@@ -32,7 +39,8 @@ async function uploadAndRenderMarkdown(alice: UpdateState): Promise<void> {
     addRelationToRelations(
       newRelations(wsID, "", alice().user.publicKey),
       topNodeID
-    )
+    ),
+    mockFinalizeEvent
   );
   await execute({
     ...alice(),

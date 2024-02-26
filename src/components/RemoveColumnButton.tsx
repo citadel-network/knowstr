@@ -18,6 +18,7 @@ import { newDB } from "../knowledge";
 
 export function RemoveColumnButton(): JSX.Element | null {
   const { deleteLocalStorage } = useApis().fileStore;
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const index = useRelationIndex();
   const { multiselectBtns, selection, setState } = useTemporaryView();
@@ -35,7 +36,8 @@ export function RemoveColumnButton(): JSX.Element | null {
     const updateRelationsPlan = upsertRelations(
       createPlan(),
       parentViewPath,
-      (relations) => deleteRelations(relations, Set<number>([index]))
+      (relations) => deleteRelations(relations, Set<number>([index])),
+      finalizeEvent
     );
     const { views } = updateRelationsPlan.knowledgeDBs.get(
       updateRelationsPlan.user.publicKey,
@@ -48,7 +50,11 @@ export function RemoveColumnButton(): JSX.Element | null {
       relationsID,
       nodeIndex
     );
-    const plan = planUpdateViews(updateRelationsPlan, updatedViews);
+    const plan = planUpdateViews(
+      updateRelationsPlan,
+      updatedViews,
+      finalizeEvent
+    );
     executePlan(plan);
     setState(switchOffMultiselect(multiselectBtns, selection, viewKey));
   };

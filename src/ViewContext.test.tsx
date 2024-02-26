@@ -27,6 +27,7 @@ import {
   extractNodes,
   BOB,
   follow,
+  mockFinalizeEvent,
 } from "./utils.test";
 import {
   RootViewContextProvider,
@@ -51,12 +52,11 @@ test("Move View Settings on Delete", async () => {
   const java = newNode("Java", publicKey);
   const pl = newNode("Programming Languages", publicKey);
 
-  const planWithNodes = planBulkUpsertNodes(createPlan(alice()), [
-    c,
-    cpp,
-    java,
-    pl,
-  ]);
+  const planWithNodes = planBulkUpsertNodes(
+    createPlan(alice()),
+    [c, cpp, java, pl],
+    mockFinalizeEvent
+  );
 
   const wsRelations = addRelationToRelations(
     newRelations(joinID(publicKey, "my-first-workspace"), "", publicKey),
@@ -66,11 +66,14 @@ test("Move View Settings on Delete", async () => {
     planUpsertRelations(
       planUpsertRelations(
         planWithNodes,
-        bulkAddRelations(newRelations(pl.id, "", publicKey), [c.id, java.id])
+        bulkAddRelations(newRelations(pl.id, "", publicKey), [c.id, java.id]),
+        mockFinalizeEvent
       ),
-      wsRelations
+      wsRelations,
+      mockFinalizeEvent
     ),
-    addRelationToRelations(newRelations(c.id, "", publicKey), cpp.id)
+    addRelationToRelations(newRelations(c.id, "", publicKey), cpp.id),
+    mockFinalizeEvent
   );
 
   await execute({

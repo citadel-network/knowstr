@@ -9,6 +9,7 @@ import {
   renderApp,
   typeNewNode,
   follow,
+  mockFinalizeEvent,
 } from "../utils.test";
 import { execute } from "../executor";
 import { createPlan, planUpsertNode, planUpsertRelations } from "../planner";
@@ -22,8 +23,8 @@ test("Add New Note", async () => {
 
 test("Link Nodes from other Users", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
-  await follow(alice, bob().user.publicKey);
 
+  await follow(alice, bob().user.publicKey);
   const oop = newNode("Object Oriented Languages", bob().user.publicKey);
   const java = newNode("Java", bob().user.publicKey);
   const relations = addRelationToRelations(
@@ -31,8 +32,13 @@ test("Link Nodes from other Users", async () => {
     java.id
   );
   const plan = planUpsertRelations(
-    planUpsertNode(planUpsertNode(createPlan(bob()), oop), java),
-    relations
+    planUpsertNode(
+      planUpsertNode(createPlan(bob()), oop, mockFinalizeEvent),
+      java,
+      mockFinalizeEvent
+    ),
+    relations,
+    mockFinalizeEvent
   );
   await execute({
     ...bob(),

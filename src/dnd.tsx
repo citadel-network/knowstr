@@ -29,6 +29,7 @@ import {
 } from "./ViewContext";
 import { getNodesInTree } from "./components/Node";
 import { Plan, planUpdateViews, usePlanner } from "./planner";
+import { FinalizeEvent, useApis } from "./Apis";
 
 function getDropDestinationEndOfRoot(
   knowledgeDBs: KnowledgeDBs,
@@ -98,7 +99,8 @@ export function dnd(
   selection: OrderedSet<string>,
   source: string,
   to: string,
-  toIndex: number
+  toIndex: number,
+  finalizeEvent: FinalizeEvent
 ): Plan {
   const { knowledgeDBs } = plan;
   const myself = plan.user.publicKey;
@@ -184,7 +186,8 @@ export function dnd(
         return moveRelations(relations, sourceIndices.toArray(), dropIndex);
       }
       return bulkAddRelations(relations, sourceNodes.toArray(), dropIndex);
-    }
+    },
+    finalizeEvent
   );
   const updatedViews = move
     ? updateViewPathsAfterMoveRelations(
@@ -201,7 +204,7 @@ export function dnd(
         sourceNodes.size,
         dropIndex
       );
-  return planUpdateViews(updatedRelationsPlan, updatedViews);
+  return planUpdateViews(updatedRelationsPlan, updatedViews, finalizeEvent);
 }
 
 type DragUpdateState = {
@@ -214,6 +217,7 @@ export const DragUpdateStateContext = createContext<
 >(undefined);
 
 export function DND({ children }: { children: React.ReactNode }): JSX.Element {
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const { setState, selection, multiselectBtns } = useTemporaryView();
   const [dragUpdateState, setDragUpdateState] = useState<DragUpdateState>({
@@ -229,7 +233,8 @@ export function DND({ children }: { children: React.ReactNode }): JSX.Element {
           selection,
           result.draggableId,
           result.destination.droppableId,
-          result.destination.index
+          result.destination.index,
+          finalizeEvent
         )
       );
       const parentKey = getParentKey(result.draggableId);

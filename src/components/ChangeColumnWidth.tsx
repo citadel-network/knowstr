@@ -5,11 +5,13 @@ import { IS_MOBILE } from "./responsive";
 import { newDB } from "../knowledge";
 import { useData } from "../DataContext";
 import { planUpdateViews, usePlanner } from "../planner";
+import { useApis } from "../Apis";
 
 export function ChangeColumnWidth(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
   const { knowledgeDBs, user } = useData();
   const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const viewContext = useViewPath();
   const view = useNode()[1];
@@ -28,7 +30,8 @@ export function ChangeColumnWidth(): JSX.Element | null {
         updateView(views, viewContext, {
           ...view,
           width: view.width + 1,
-        })
+        }),
+        finalizeEvent
       )
     );
   };
@@ -39,7 +42,8 @@ export function ChangeColumnWidth(): JSX.Element | null {
         updateView(views, viewContext, {
           ...view,
           width: Math.max(view.width - 1, 1),
-        })
+        }),
+        finalizeEvent
       )
     );
   };

@@ -10,6 +10,7 @@ import {
   typeNewNode,
   matchSplitText,
   renderWithTestData,
+  mockFinalizeEvent,
 } from "../utils.test";
 import { newNode } from "../connections";
 import { execute } from "../executor";
@@ -21,7 +22,7 @@ test("Multiple connections to same node", async () => {
   const java = newNode("Java", alice().user.publicKey);
   await execute({
     ...alice(),
-    plan: planUpsertNode(createPlan(alice()), java),
+    plan: planUpsertNode(createPlan(alice()), java, mockFinalizeEvent),
   });
 
   const view = renderApp(alice());

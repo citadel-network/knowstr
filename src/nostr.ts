@@ -1,8 +1,6 @@
-import { bytesToHex } from "@noble/hashes/utils";
-import { sha256 } from "@noble/hashes/sha256";
-import { schnorr } from "@noble/curves/secp256k1";
 import crypto from "crypto";
-import { Event, UnsignedEvent, SimplePool, serializeEvent } from "nostr-tools";
+import { Event, SimplePool } from "nostr-tools";
+import { FinalizeEvent } from "./Apis";
 
 export const KIND_SETTINGS = 11071;
 
@@ -65,29 +63,12 @@ export async function publishEvent(
   }
 }
 
-export function finalizeEvent(
-  event: UnsignedEvent,
-  privateKey: Uint8Array,
-  oldID?: string
-): Event {
-  const eventHash = sha256(
-    new Uint8Array(Buffer.from(serializeEvent(event), "utf8"))
-  );
-
-  const id = oldID || bytesToHex(eventHash);
-  const sig = bytesToHex(schnorr.sign(eventHash, privateKey));
-  return {
-    ...event,
-    id,
-    sig,
-  };
-}
-
 export function publishSettings(
   relayPool: SimplePool,
   user: KeyPair,
   settings: Settings,
-  writeToRelays: Relays
+  writeToRelays: Relays,
+  finalizeEvent: FinalizeEvent
 ): Promise<void> {
   const compressedSettings: CompressedSettings = {
     b: settings.bionicReading,
@@ -110,7 +91,8 @@ export async function publishRelayMetadata(
   relayPool: SimplePool,
   user: KeyPair,
   relays: Relays,
-  writeRelays: Relays
+  writeRelays: Relays,
+  finalizeEvent: FinalizeEvent
 ): Promise<void> {
   const tags = relays.map((r) => {
     if (r.read && r.write) {

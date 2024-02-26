@@ -9,9 +9,20 @@ import {
   RenderResult,
 } from "@testing-library/react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Event, Filter, matchFilter } from "nostr-tools";
+import {
+  Event,
+  EventTemplate,
+  Filter,
+  VerifiedEvent,
+  getPublicKey,
+  matchFilter,
+  serializeEvent,
+  verifiedSymbol,
+} from "nostr-tools";
 import userEvent from "@testing-library/user-event";
-import { hexToBytes } from "@noble/hashes/utils";
+import { sha256 } from "@noble/hashes/sha256";
+import { schnorr } from "@noble/curves/secp256k1";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { Container } from "react-dom";
 import { DEFAULT_RELAYS, KIND_CONTACTLIST } from "./nostr";
 import { RequireLogin } from "./AppState";
@@ -25,7 +36,7 @@ import {
   planUpsertRelations,
 } from "./planner";
 import { execute } from "./executor";
-import { ApiProvider, Apis } from "./Apis";
+import { ApiProvider, Apis, FinalizeEvent } from "./Apis";
 import { App } from "./App";
 import { DataContextProps } from "./DataContext";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
@@ -111,6 +122,30 @@ function mockFileStore(): MockFileStore {
   };
 }
 
+export function mockFinalizeEvent(
+  t: EventTemplate,
+  secretKey: Uint8Array
+): VerifiedEvent {
+  const pubkey = getPublicKey(secretKey);
+  const eventHash = sha256(
+    new Uint8Array(Buffer.from(serializeEvent({ ...t, pubkey }), "utf8"))
+  );
+  const id = bytesToHex(eventHash);
+  const sig = bytesToHex(schnorr.sign(eventHash, secretKey));
+  return {
+    ...t,
+    id,
+    sig,
+    pubkey,
+    [verifiedSymbol]: true,
+  };
+}
+
+function createMockFinalizeEvent(): FinalizeEvent {
+  return (t: EventTemplate, secretKey: Uint8Array): VerifiedEvent =>
+    mockFinalizeEvent(t, secretKey);
+}
+
 type TestApis = Omit<Apis, "fileStore" | "relayPool"> & {
   fileStore: MockFileStore;
   relayPool: MockRelayPool;
@@ -120,6 +155,7 @@ function applyApis(props?: Partial<TestApis>): TestApis {
   return {
     fileStore: mockFileStore(),
     relayPool: mockRelayPool(),
+    finalizeEvent: createMockFinalizeEvent(),
     ...props,
   };
 }
@@ -134,7 +170,7 @@ function renderApis(
   children: React.ReactElement,
   options?: RenderApis
 ): TestApis & RenderResult {
-  const { fileStore, relayPool } = applyApis(options);
+  const { fileStore, relayPool, finalizeEvent } = applyApis(options);
   // If user is explicity undefined it will be overwritten, if not set default Alice is used
   const optionsWithDefaultUser = {
     user: ALICE,
@@ -153,6 +189,7 @@ function renderApis(
         apis={{
           fileStore,
           relayPool,
+          finalizeEvent,
         }}
       >
         <NostrAuthContext.Provider
@@ -181,6 +218,7 @@ function renderApis(
   return {
     fileStore,
     relayPool,
+    finalizeEvent,
     ...utils,
   };
 }
@@ -276,7 +314,7 @@ export async function follow(
   publicKey: PublicKey
 ): Promise<void> {
   const utils = cU();
-  const plan = planAddContact(createPlan(utils), publicKey);
+  const plan = planAddContact(createPlan(utils), publicKey, mockFinalizeEvent);
   await execute({
     ...utils,
     plan,
@@ -288,7 +326,11 @@ export async function unfollow(
   publicKey: PublicKey
 ): Promise<void> {
   const utils = cU();
-  const plan = planRemoveContact(createPlan(utils), publicKey);
+  const plan = planRemoveContact(
+    createPlan(utils),
+    publicKey,
+    mockFinalizeEvent
+  );
   await execute({
     ...utils,
     plan,
@@ -414,12 +456,15 @@ function createNodesAndRelations(
         : textOrNode;
     // no need to upsert if it's already a node
     const planWithNode =
-      typeof textOrNode === "string" ? planUpsertNode(rdx, node) : rdx;
+      typeof textOrNode === "string"
+        ? planUpsertNode(rdx, node, mockFinalizeEvent)
+        : rdx;
     // Add Node to current relation
     const planWithUpdatedRelation = currentRelations
       ? planUpsertRelations(
           planWithNode,
-          addRelationToRelations(currentRelations, node.id)
+          addRelationToRelations(currentRelations, node.id),
+          mockFinalizeEvent
         )
       : planWithNode;
     if (children) {
@@ -427,7 +472,8 @@ function createNodesAndRelations(
       const relationForChildren = newRelations(node.id, "", rdx.user.publicKey);
       const planWithRelations = planUpsertRelations(
         planWithUpdatedRelation,
-        relationForChildren
+        relationForChildren,
+        mockFinalizeEvent
       );
       return createNodesAndRelations(
         planWithRelations,
@@ -465,7 +511,8 @@ export async function setupTestDB(
         plan.knowledgeDBs
           .get(plan.user.publicKey, newDB())
           .workspaces.push(setNewWorkspace.id),
-        setNewWorkspace.id
+        setNewWorkspace.id,
+        mockFinalizeEvent
       )
     : plan;
   await execute({ ...appState, plan: planWithWorkspace });

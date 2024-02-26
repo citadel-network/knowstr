@@ -2,6 +2,7 @@ import React from "react";
 import { Droppable } from "@hello-pangea/dnd";
 import { Card } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
+import { finalizeEvent } from "nostr-tools";
 import { bulkAddRelations } from "../connections";
 import { FileDropZone } from "./FileDropZone";
 import { DraggableNode, Indent } from "./Node";
@@ -24,8 +25,11 @@ export function Column(): JSX.Element | null {
   const { executePlan } = usePlanner();
   const isMobile = useMediaQuery(IS_MOBILE);
   const onDropFiles = (plan: Plan, topNodes: Array<LongID>): void => {
-    const addTopNodesPlan = upsertRelations(plan, viewContext, (r: Relations) =>
-      bulkAddRelations(r, topNodes)
+    const addTopNodesPlan = upsertRelations(
+      plan,
+      viewContext,
+      (r: Relations) => bulkAddRelations(r, topNodes),
+      finalizeEvent
     );
     executePlan(addTopNodesPlan);
     deselectByPostfix(viewKey);

@@ -178,7 +178,7 @@ function mergeRelays(relays: Relays, relaysToMerge: Relays): Relays {
 
 export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
-  const { relayPool } = useApis();
+  const { relayPool, finalizeEvent } = useApis();
   const { user, relays, sentEvents } = useData();
   const [relayState, setRelayState] = useState<Relays>(relays);
 
@@ -205,7 +205,13 @@ export function EditRelays(): JSX.Element {
       DEFAULT_RELAYS,
       mergeRelays(relays, relayState)
     );
-    await publishRelayMetadata(relayPool, user, relayState, allRelays);
+    await publishRelayMetadata(
+      relayPool,
+      user,
+      relayState,
+      allRelays,
+      finalizeEvent
+    );
     const newRelays = relayState.filter(
       (newrel) => !relays.some((r) => r.url === newrel.url)
     );

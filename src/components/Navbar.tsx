@@ -19,7 +19,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
   const title = useWorkspace();
   const navigate = useNavigate();
   const [isError, setIsError] = useState<boolean>(false);
-  const { relayPool } = useApis();
+  const { relayPool, finalizeEvent } = useApis();
   const { user, settings, relays } = useData();
   const isBionic = settings.bionicReading;
   const writeToRelays = relays.filter((r) => r.write === true);
@@ -32,7 +32,8 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
           ...settings,
           bionicReading: !isBionic,
         },
-        writeToRelays
+        writeToRelays,
+        finalizeEvent
       );
     } catch (e) {
       setIsError(true);

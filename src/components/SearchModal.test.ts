@@ -1,7 +1,13 @@
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { newNode } from "../connections";
-import { ALICE, matchSplitText, renderApp, setup } from "../utils.test";
+import {
+  ALICE,
+  matchSplitText,
+  mockFinalizeEvent,
+  renderApp,
+  setup,
+} from "../utils.test";
 import { createPlan, planUpsertNode } from "../planner";
 import { execute } from "../executor";
 
@@ -17,10 +23,16 @@ test("Search works like spotlight", async () => {
     ...alice(),
     plan: planUpsertNode(
       planUpsertNode(
-        planUpsertNode(planUpsertNode(createPlan(alice()), note), secondNote),
-        thirdNote
+        planUpsertNode(
+          planUpsertNode(createPlan(alice()), note, mockFinalizeEvent),
+          secondNote,
+          mockFinalizeEvent
+        ),
+        thirdNote,
+        mockFinalizeEvent
       ),
-      topic
+      topic,
+      mockFinalizeEvent
     ),
   });
 
@@ -80,7 +92,8 @@ test("On Fullscreen, search also starts with press on slash key", async () => {
     ...alice(),
     plan: planUpsertNode(
       createPlan(alice()),
-      newNode("My source", alice().user.publicKey)
+      newNode("My source", alice().user.publicKey),
+      mockFinalizeEvent
     ),
   });
   renderApp({ ...alice(), includeFocusContext: true });

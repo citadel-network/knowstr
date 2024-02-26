@@ -16,8 +16,13 @@ import {
   planUpsertRelations,
   usePlanner,
 } from "../planner";
+import { FinalizeEvent, useApis } from "../Apis";
 
-function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
+function disconnectNode(
+  plan: Plan,
+  toDisconnect: LongID,
+  finalizeEvent: FinalizeEvent
+): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   return myDB.relations.reduce((rdx, relation) => {
     const toDelete = relation.items.reduce((indices, id, idx) => {
@@ -29,13 +34,18 @@ function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
     if (toDelete.size === 0) {
       return rdx;
     }
-    return planUpsertRelations(rdx, deleteRelations(relation, toDelete));
-  }, planUpdateViews(plan, updateViewPathsAfterDeleteNode(myDB.views, toDisconnect)));
+    return planUpsertRelations(
+      rdx,
+      deleteRelations(relation, toDelete),
+      finalizeEvent
+    );
+  }, planUpdateViews(plan, updateViewPathsAfterDeleteNode(myDB.views, toDisconnect), finalizeEvent));
 }
 
 function useDeleteNode(): undefined | (() => void) {
   const [node] = useNode();
   const navigate = useNavigate();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const { knowledgeDBs, user } = useData();
   const myDB = knowledgeDBs.get(user.publicKey, newDB());
@@ -47,10 +57,15 @@ function useDeleteNode(): undefined | (() => void) {
 
   return () => {
     navigate("/");
-    const planWithDisconnectedNode = disconnectNode(createPlan(), node.id);
+    const planWithDisconnectedNode = disconnectNode(
+      createPlan(),
+      node.id,
+      finalizeEvent
+    );
     const planWithDeletedNode = planDeleteNode(
       planWithDisconnectedNode,
-      node.id
+      node.id,
+      finalizeEvent
     );
     if (myDB.workspaces.filter((id) => id === node.id).size > 0) {
       const updatedWorkspaces = myDB.workspaces.filter((id) => id !== node.id);
@@ -68,7 +83,8 @@ function useDeleteNode(): undefined | (() => void) {
         planUpdateWorkspaces(
           planWithDeletedNode,
           updatedWorkspaces,
-          activeWorkspace
+          activeWorkspace,
+          finalizeEvent
         )
       );
     } else {

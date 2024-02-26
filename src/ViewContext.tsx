@@ -6,6 +6,7 @@ import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
 import { Plan, planUpsertRelations, planUpdateViews } from "./planner";
 import { planCopyRelationsTypeIfNecessary } from "./components/RelationTypes";
+import { FinalizeEvent } from "./Apis";
 
 // only exported for tests
 export type NodeIndex = number & { readonly "": unique symbol };
@@ -471,7 +472,8 @@ function createUpdatableRelations(
 export function upsertRelations(
   plan: Plan,
   viewContext: ViewPath,
-  modify: (relations: Relations, ctx: { view: View }) => Relations
+  modify: (relations: Relations, ctx: { view: View }) => Relations,
+  finalizeEvent: FinalizeEvent
 ): Plan {
   const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   const [node, nodeView] = getNodeFromView(
@@ -504,14 +506,20 @@ export function upsertRelations(
         views.set(viewPathToString(viewContext), {
           ...nodeView,
           relations: relations.id,
-        })
+        }),
+        finalizeEvent
       )
     : plan;
 
   const updatedRelations = modify(relations, { view: nodeView });
   return planUpsertRelations(
-    planCopyRelationsTypeIfNecessary(planWithUpdatedView, relationsID),
-    updatedRelations
+    planCopyRelationsTypeIfNecessary(
+      planWithUpdatedView,
+      relationsID,
+      finalizeEvent
+    ),
+    updatedRelations,
+    finalizeEvent
   );
 }
 

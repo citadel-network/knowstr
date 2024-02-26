@@ -28,6 +28,7 @@ import {
 } from "./TemporaryViewContext";
 import { Plan, planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
+import { useApis } from "../Apis";
 
 function AddNodeButton({
   onClick,
@@ -226,6 +227,7 @@ export function AddColumn(): JSX.Element {
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const [workspace, workspaceBranch] = useNode();
   const viewPath = useViewPath();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   if (!workspace || !workspaceBranch) {
     return <div />;
@@ -238,7 +240,8 @@ export function AddColumn(): JSX.Element {
       (relations) => ({
         ...relations,
         items: relations.items.push(nodeID),
-      })
+      }),
+      finalizeEvent
     );
     executePlan(updateRelationsPlan);
   };
@@ -246,7 +249,7 @@ export function AddColumn(): JSX.Element {
   const onCreateNewNode = (text: string): void => {
     const plan = createPlan();
     const node = newNode(text, plan.user.publicKey);
-    onAddNode(planUpsertNode(plan, node), node.id);
+    onAddNode(planUpsertNode(plan, node, finalizeEvent), node.id);
   };
 
   return (
@@ -266,6 +269,7 @@ export function AddNodeToNode(): JSX.Element | null {
   const isAddToNode = useIsAddToNode();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const vContext = useViewPath();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const viewContext = isAddToNode ? getParentView(vContext) : vContext;
   const [node] = isAddToNode ? useParentNode() : useNode();
@@ -280,7 +284,8 @@ export function AddNodeToNode(): JSX.Element | null {
       (relations) => ({
         ...relations,
         items: relations.items.push(nodeID),
-      })
+      }),
+      finalizeEvent
     );
     executePlan(updateRelationsPlan);
   };
@@ -288,7 +293,7 @@ export function AddNodeToNode(): JSX.Element | null {
   const onCreateNewNode = (text: string): void => {
     const plan = createPlan();
     const n = newNode(text, plan.user.publicKey);
-    onAddNode(planUpsertNode(plan, n), n.id);
+    onAddNode(planUpsertNode(plan, n, finalizeEvent), n.id);
   };
 
   return (

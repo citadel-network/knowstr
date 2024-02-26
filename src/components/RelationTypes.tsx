@@ -20,6 +20,7 @@ import {
   useViewPath,
 } from "../ViewContext";
 import { FormControlWrapper } from "./FormControlWrapper";
+import { FinalizeEvent, useApis } from "../Apis";
 
 export const DEFAULT_COLOR = "#027d86";
 
@@ -53,23 +54,30 @@ function planAddNewRelationToNode(
   nodeID: LongID,
   relationTypeID: ID,
   view: View,
-  viewPath: ViewPath
+  viewPath: ViewPath,
+  finalizeEvent: FinalizeEvent
 ): Plan {
   const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   const relations = newRelations(nodeID, relationTypeID, plan.user.publicKey);
-  const createRelationPlan = planUpsertRelations(plan, relations);
+  const createRelationPlan = planUpsertRelations(
+    plan,
+    relations,
+    finalizeEvent
+  );
   return planUpdateViews(
     createRelationPlan,
     updateView(views, viewPath, {
       ...view,
       relations: relations.id,
       expanded: true,
-    })
+    }),
+    finalizeEvent
   );
 }
 
 export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
   const [color, setColor] = useState<string>(COLORS[0]);
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const { user, knowledgeDBs } = useData();
   const [node, view] = useNode();
@@ -86,7 +94,8 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
     const myDB = knowledgeDBs.get(user.publicKey, newDB());
     const updateRelationTypesPlan = planUpdateRelationTypes(
       createPlan(),
-      myDB.relationTypes.set(id, { color, label })
+      myDB.relationTypes.set(id, { color, label }),
+      finalizeEvent
     );
     if (node && view) {
       executePlan(
@@ -95,7 +104,8 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
           node.id,
           id,
           view,
-          viewPath
+          viewPath,
+          finalizeEvent
         )
       );
     } else {
@@ -162,7 +172,8 @@ export function getRelationTypeByRelationsID(
 
 export function planCopyRelationsTypeIfNecessary(
   plan: Plan,
-  relationsID: ID
+  relationsID: ID,
+  finalizeEvent: FinalizeEvent
 ): Plan {
   if (relationsID === "social") {
     return plan;
@@ -184,7 +195,8 @@ export function planCopyRelationsTypeIfNecessary(
   }
   return planUpdateRelationTypes(
     plan,
-    myRelationTypes.set(relationTypeID, relationType)
+    myRelationTypes.set(relationTypeID, relationType),
+    finalizeEvent
   );
 }
 
@@ -196,6 +208,7 @@ export function AddNewRelationsToNodeItem({
   const { knowledgeDBs, user } = useData();
   const [node, view] = useNode();
   const viewPath = useViewPath();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const relationType = getMyRelationTypes(knowledgeDBs, user.publicKey).get(
     relationTypeID,
@@ -211,7 +224,8 @@ export function AddNewRelationsToNodeItem({
       node.id,
       relationTypeID,
       view,
-      viewPath
+      viewPath,
+      finalizeEvent
     );
     executePlan(plan);
   };

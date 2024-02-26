@@ -27,6 +27,7 @@ import {
   getMyRelationTypes,
   getRelationTypeByRelationsID,
 } from "./RelationTypes";
+import { useApis } from "../Apis";
 
 function AddRelationsButton(): JSX.Element {
   const { knowledgeDBs, user } = useData();
@@ -63,6 +64,7 @@ function AddRelationsButton(): JSX.Element {
 }
 
 function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const { knowledgeDBs, user } = useData();
   const viewPath = useViewPath();
@@ -73,7 +75,11 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
 
   const onClick = (): void => {
     const { views } = knowledgeDBs.get(user.publicKey, newDB());
-    const deleteRelationsPlan = planDeleteRelations(createPlan(), id);
+    const deleteRelationsPlan = planDeleteRelations(
+      createPlan(),
+      id,
+      finalizeEvent
+    );
     // TODO: deleteChildViews should only be necessary for the deleted relation not the other
     const plan = planUpdateViews(
       deleteRelationsPlan,
@@ -84,7 +90,8 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
           deleteRelationsPlan.knowledgeDBs,
           user.publicKey
         ),
-      })
+      }),
+      finalizeEvent
     );
     executePlan(plan);
   };
@@ -102,6 +109,7 @@ function useOnChangeRelations(): undefined | ChangeRelation {
   const { knowledgeDBs, user } = useData();
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
   const viewPath = useViewPath();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const view = useNode()[1];
   const viewKey = useViewKey();
@@ -124,7 +132,8 @@ function useOnChangeRelations(): undefined | ChangeRelation {
         ...view,
         relations: relations.id,
         expanded: expand,
-      })
+      }),
+      finalizeEvent
     );
     executePlan(plan);
     setEditorOpenState(
@@ -216,6 +225,7 @@ type ShowRelationsButtonProps = {
 
 function useOnToggleExpanded(): (expand: boolean) => void {
   const { knowledgeDBs, user } = useData();
+  const { finalizeEvent } = useApis();
   const { createPlan, executePlan } = usePlanner();
   const viewPath = useViewPath();
   const view = useNode()[1];
@@ -233,7 +243,8 @@ function useOnToggleExpanded(): (expand: boolean) => void {
       updateView(views, viewPath, {
         ...view,
         expanded: expand,
-      })
+      }),
+      finalizeEvent
     );
     executePlan(plan);
     if (!expand) {

@@ -4,7 +4,12 @@ import { List } from "immutable";
 import userEvent from "@testing-library/user-event";
 import { addRelationToRelations, newNode } from "../connections";
 import { DND } from "../dnd";
-import { ALICE, renderWithTestData, setup } from "../utils.test";
+import {
+  ALICE,
+  mockFinalizeEvent,
+  renderWithTestData,
+  setup,
+} from "../utils.test";
 import { RootViewContextProvider, newRelations } from "../ViewContext";
 import { Column } from "./Column";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
@@ -27,8 +32,9 @@ test("Render non existing Node", async () => {
     "not-existing-id" as LongID
   );
   const plan = planUpsertRelations(
-    planUpsertNode(createPlan(alice()), pl),
-    relations
+    planUpsertNode(createPlan(alice()), pl, mockFinalizeEvent),
+    relations,
+    mockFinalizeEvent
   );
   await execute({
     ...alice(),
@@ -54,7 +60,7 @@ test("Edit node via Column Menu", async () => {
   const note = newNode("My Note", publicKey);
   await execute({
     ...alice(),
-    plan: planUpsertNode(createPlan(alice()), note),
+    plan: planUpsertNode(createPlan(alice()), note, mockFinalizeEvent),
   });
   renderWithTestData(
     <RootViewContextProvider root={note.id}>
@@ -84,11 +90,12 @@ test("Edit node inline", async () => {
   // Menu doesn't show on root notes
   const plan = planUpsertRelations(
     createPlan(alice()),
-    addRelationToRelations(newRelations(note.id, "", publicKey), note.id)
+    addRelationToRelations(newRelations(note.id, "", publicKey), note.id),
+    mockFinalizeEvent
   );
   await execute({
     ...alice(),
-    plan: planUpsertNode(plan, note),
+    plan: planUpsertNode(plan, note, mockFinalizeEvent),
   });
   renderWithTestData(
     <RootViewContextProvider root={note.id} indices={List([0, 0])}>
@@ -120,13 +127,15 @@ test("Edited node is shown in Tree View", async () => {
   const plan = planUpsertRelations(
     planUpsertRelations(
       createPlan(alice()),
-      addRelationToRelations(newRelations(pl.id, "", publicKey), oop.id)
+      addRelationToRelations(newRelations(pl.id, "", publicKey), oop.id),
+      mockFinalizeEvent
     ),
-    addRelationToRelations(newRelations(oop.id, "", publicKey), java.id)
+    addRelationToRelations(newRelations(oop.id, "", publicKey), java.id),
+    mockFinalizeEvent
   );
   await execute({
     ...alice(),
-    plan: planBulkUpsertNodes(plan, [pl, oop, java]),
+    plan: planBulkUpsertNodes(plan, [pl, oop, java], mockFinalizeEvent),
   });
   renderWithTestData(
     <RootViewContextProvider root={pl.id} indices={List([0])}>
@@ -152,7 +161,7 @@ test("Delete node", async () => {
   const note = newNode("My Note", publicKey);
   await execute({
     ...alice(),
-    plan: planUpsertNode(createPlan(alice()), note),
+    plan: planUpsertNode(createPlan(alice()), note, mockFinalizeEvent),
   });
   renderWithTestData(
     <RootViewContextProvider root={note.id}>
