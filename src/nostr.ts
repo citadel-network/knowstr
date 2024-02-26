@@ -45,7 +45,7 @@ export async function publishEvent(
   const writeRelayUrls = writeToRelays.map((r) => r.url);
 
   if (writeRelayUrls.length === 0) {
-    throw new Error(`No relays to publish on`);
+    throw new Error("No relays to publish on");
   }
   const results = await Promise.allSettled(
     relayPool.publish(writeRelayUrls, event)

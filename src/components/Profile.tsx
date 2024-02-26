@@ -52,7 +52,7 @@ export function Profile(): JSX.Element {
   const navigate = useNavigate();
   const { user } = useData();
   const onHide = (): void => {
-    navigate(`/`);
+    navigate("/");
   };
   const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text);

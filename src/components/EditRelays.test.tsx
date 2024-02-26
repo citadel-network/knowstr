@@ -19,7 +19,7 @@ test("Remove a Nostr Relay", async () => {
     screen.getByDisplayValue("wss://nos.lol");
     screen.getByDisplayValue("wss://nostr.wine");
   });
-  fireEvent.click(screen.getByLabelText(`remove wss://nos.lol`));
+  fireEvent.click(screen.getByLabelText("remove wss://nos.lol"));
   screen.getByDisplayValue("wss://nostr.wine");
   fireEvent.click(screen.getByText("Save"));
 
@@ -56,7 +56,7 @@ test("Edit an existing Nostr Relay", async () => {
     screen.getByDisplayValue("wss://nos.lol");
     screen.getByDisplayValue("wss://nostr.wine");
   });
-  fireEvent.click(screen.getByLabelText(`edit relay wss://nostr.wine`));
+  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine"));
   const inputRelay = await screen.findByDisplayValue("wss://nostr.wine");
   userEvent.type(inputRelay, ".edited");
 
@@ -64,7 +64,7 @@ test("Edit an existing Nostr Relay", async () => {
   fireEvent.click(screen.getByLabelText("undo edit relay"));
   const inputRelaySecond = await screen.findByDisplayValue("wss://nostr.wine");
 
-  fireEvent.click(screen.getByLabelText(`edit relay wss://nostr.wine`));
+  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine"));
   userEvent.type(inputRelaySecond, ".second.edit");
   fireEvent.click(screen.getByLabelText("save edit relay"));
   fireEvent.click(screen.getByText("Save"));

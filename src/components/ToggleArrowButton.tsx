@@ -13,7 +13,7 @@ export function ToggleArrowButton({
   children,
 }: ToggleArrowButtonProps & { children?: React.ReactNode }): JSX.Element {
   const aria = ariaLabel
-    ? `${expanded ? `collapse` : `expand`} ${ariaLabel}`
+    ? `${expanded ? "collapse" : "expand"} ${ariaLabel}`
     : undefined;
   return (
     <button

@@ -61,7 +61,7 @@ export function Follow(): JSX.Element {
   };
 
   const onHide = (): void => {
-    navigate(`/`);
+    navigate("/");
   };
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -82,7 +82,7 @@ export function Follow(): JSX.Element {
     } else {
       navigate(
         decodedInput === user.publicKey
-          ? `/profile`
+          ? "/profile"
           : `/follow?publicKey=${decodedInput}`
       );
     }
@@ -160,7 +160,7 @@ export function Follow(): JSX.Element {
     <Modal show onHide={onHide} size="xl">
       <Modal.Header closeButton>
         <Modal.Title>
-          {isFollowing ? `You follow this User` : `Follow User`}
+          {isFollowing ? "You follow this User" : "Follow User"}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -200,7 +200,7 @@ export function Follow(): JSX.Element {
           <Button
             onClick={() => {
               setInput(undefined);
-              navigate(`/follow`);
+              navigate("follow user");
             }}
             className="btn"
           >

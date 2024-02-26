@@ -82,7 +82,7 @@ export function MobileView(): JSX.Element | null {
 export function DesktopView(): JSX.Element {
   const navigate = useNavigate();
   const onHide = (): void => {
-    navigate(`/`);
+    navigate("/");
   };
   return (
     <FullScreenViewWrapper>

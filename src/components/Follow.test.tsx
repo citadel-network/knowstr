@@ -19,13 +19,13 @@ test("find a user", async () => {
 
   renderWithTestData(<Follow />, {
     ...alice(),
-    initialRoute: `/follow`,
+    initialRoute: "follow user",
   });
-  const input = await screen.findByLabelText(`find user`);
+  const input = await screen.findByLabelText("find user");
   userEvent.type(input, BOB_PUBLIC_KEY);
-  fireEvent.click(screen.getByText(`Find`));
+  fireEvent.click(screen.getByText("Find"));
 
-  await screen.findByLabelText(`follow user`);
+  await screen.findByLabelText("follow user");
   screen.getByDisplayValue(nip19.npubEncode(BOB_PUBLIC_KEY));
 });
 
@@ -34,11 +34,11 @@ test("search for an invalid user", async () => {
 
   renderWithTestData(<Follow />, {
     ...alice(),
-    initialRoute: `/follow`,
+    initialRoute: "follow user",
   });
-  const input = await screen.findByLabelText(`find user`);
+  const input = await screen.findByLabelText("find user");
   userEvent.type(input, "invalidPublicKey");
-  fireEvent.click(screen.getByText(`Find`));
+  fireEvent.click(screen.getByText("Find"));
 
   await screen.findByText(
     "Invalid publicKey, npub, nprofile or nip-05 identifier"
@@ -55,8 +55,8 @@ test("search for myself leads to profile", async () => {
 
   const input = await screen.findByLabelText("find user");
   userEvent.type(input, ALICE.publicKey);
-  fireEvent.click(screen.getByText(`Find`));
-  await screen.findByText(`Your nostr npub:`);
+  fireEvent.click(screen.getByText("Find"));
+  await screen.findByText("Your nostr npub:");
 });
 
 test("find a user by npub", async () => {
@@ -65,13 +65,13 @@ test("find a user by npub", async () => {
 
   renderWithTestData(<Follow />, {
     ...alice(),
-    initialRoute: `/follow`,
+    initialRoute: "follow user",
   });
-  const input = await screen.findByLabelText(`find user`);
+  const input = await screen.findByLabelText("find user");
   userEvent.type(input, npub);
-  fireEvent.click(screen.getByText(`Find`));
+  fireEvent.click(screen.getByText("Find"));
 
-  await screen.findByLabelText(`follow user`);
+  await screen.findByLabelText("follow user");
   screen.getByDisplayValue(npub);
 });
 
@@ -82,18 +82,18 @@ test("find a user by nprofile", async () => {
 
   renderWithTestData(<Follow />, {
     ...alice(),
-    initialRoute: `/follow`,
+    initialRoute: "follow user",
   });
-  const input = await screen.findByLabelText(`find user`);
+  const input = await screen.findByLabelText("find user");
   userEvent.type(input, nprofile);
-  fireEvent.click(screen.getByText(`Find`));
+  fireEvent.click(screen.getByText("Find"));
 
-  await screen.findByLabelText(`follow user`);
+  await screen.findByLabelText("follow user");
   screen.getByDisplayValue(npub);
 });
 
 test("find a user by nip-05 identifier", async () => {
-  const bobsIdentifier = `bob@bobsdomain.com`;
+  const bobsIdentifier = "bob@bobsdomain.com";
   nip05.useFetchImplementation(async () =>
     Promise.resolve({
       json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
@@ -103,9 +103,9 @@ test("find a user by nip-05 identifier", async () => {
   const [alice] = setup([ALICE]);
   renderWithTestData(<Follow />, {
     ...alice(),
-    initialRoute: `/follow`,
+    initialRoute: "follow user",
   });
-  const input = await screen.findByLabelText(`find user`);
+  const input = await screen.findByLabelText("find user");
   userEvent.type(input, bobsIdentifier);
 
   const findButton = screen.getByText("Find");
@@ -114,7 +114,7 @@ test("find a user by nip-05 identifier", async () => {
   });
   fireEvent.click(findButton);
 
-  await screen.findByLabelText(`follow user`);
+  await screen.findByLabelText("follow user");
   const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
   screen.getByDisplayValue(npub);
 });
@@ -126,8 +126,8 @@ test("follow a new user", async () => {
     ...alice(),
     initialRoute: `/follow?publicKey=${BOB_PUBLIC_KEY}`,
   });
-  fireEvent.click(await screen.findByLabelText(`follow user`));
-  await screen.findByText(`You follow this User`);
+  fireEvent.click(await screen.findByLabelText("follow user"));
+  await screen.findByText("You follow this User");
 });
 
 test("unfollow an already followed user", async () => {
@@ -138,8 +138,8 @@ test("unfollow an already followed user", async () => {
     ...alice(),
     initialRoute: `/follow?publicKey=${BOB_PUBLIC_KEY}`,
   });
-  fireEvent.click(await screen.findByLabelText(`unfollow user`));
-  await screen.findByText(`Follow User`);
+  fireEvent.click(await screen.findByLabelText("unfollow user"));
+  await screen.findByText("Follow User");
 });
 
 const filterContactListEvents = (event: Event): boolean =>
