@@ -193,7 +193,7 @@ export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
   const { relays, sentEvents } = useData();
   const { createPlan, executePlan } = usePlanner();
-  const { relayPool } = useApis();
+  const { relayPool, finalizeEvent } = useApis();
   const [relayState, setRelayState] = useState<Relays>(relays);
 
   const deleteRelay = (index: number): void => {
@@ -227,6 +227,7 @@ export function EditRelays(): JSX.Element {
       plan,
       relayPool,
       relays: allRelays.filter((r) => r.write === true),
+      finalizeEvent,
     });
 
     const newRelays = relayState.filter(

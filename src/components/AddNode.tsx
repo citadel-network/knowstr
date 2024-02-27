@@ -38,8 +38,8 @@ function AddNodeButton({
 }): JSX.Element {
   const isInline = useIsAddToNode() || useMediaQuery(IS_MOBILE);
   const className = isInline
-    ? "workspace-droppable font-italic font-size-medium black-dimmed hover-black-dimmed"
-    : "workspace-droppable background-transparent";
+    ? "add-node-button black-dimmed hover-black-dimmed"
+    : "add-node-button background-transparent";
   return (
     <button
       type="button"
