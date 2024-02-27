@@ -1,8 +1,7 @@
-import { bytesToHex } from "@noble/hashes/utils";
-import { sha256 } from "@noble/hashes/sha256";
-import { schnorr } from "@noble/curves/secp256k1";
 import crypto from "crypto";
-import { Event, UnsignedEvent, SimplePool, serializeEvent } from "nostr-tools";
+import { SimplePool } from "nostr-tools";
+import { List } from "immutable";
+import { finalizeEvents, publishEvents } from "./executor";
 
 export const KIND_SETTINGS = 11071;
 
@@ -37,52 +36,6 @@ export function newTimestamp(): number {
   return timestamp;
 }
 
-export async function publishEvent(
-  relayPool: SimplePool,
-  event: Event,
-  writeToRelays: Relays
-): Promise<void> {
-  const writeRelayUrls = writeToRelays.map((r) => r.url);
-
-  if (writeRelayUrls.length === 0) {
-    throw new Error("No relays to publish on");
-  }
-  const results = await Promise.allSettled(
-    relayPool.publish(writeRelayUrls, event)
-  );
-  // If one message can be sent publish is a success,
-  // otherwise it's a failure
-  const failures = results.filter((res) => res.status === "rejected");
-  if (failures.length === writeRelayUrls.length) {
-    // Reject only when all have failed
-    // eslint-disable-next-line no-console
-    failures.map((failure) => console.error(failure, event));
-    throw new Error(
-      `Failed to publish on: ${failures
-        .map((failure) => failure.status)
-        .join(".")}`
-    );
-  }
-}
-
-export function finalizeEvent(
-  event: UnsignedEvent,
-  privateKey: Uint8Array,
-  oldID?: string
-): Event {
-  const eventHash = sha256(
-    new Uint8Array(Buffer.from(serializeEvent(event), "utf8"))
-  );
-
-  const id = oldID || bytesToHex(eventHash);
-  const sig = bytesToHex(schnorr.sign(eventHash, privateKey));
-  return {
-    ...event,
-    id,
-    sig,
-  };
-}
-
 export function publishSettings(
   relayPool: SimplePool,
   user: KeyPair,
@@ -102,8 +55,11 @@ export function publishSettings(
     tags: [],
     content,
   };
-  const finalizedEvent = finalizeEvent(unsingedEvent, user.privateKey);
-  return publishEvent(relayPool, finalizedEvent, writeToRelays);
+  return publishEvents(
+    relayPool,
+    finalizeEvents(List([unsingedEvent]), user),
+    writeToRelays
+  );
 }
 
 export async function publishRelayMetadata(
@@ -131,6 +87,9 @@ export async function publishRelayMetadata(
     tags,
     content: "",
   };
-  const finalizedEvent = finalizeEvent(unsingedEvent, user.privateKey);
-  return publishEvent(relayPool, finalizedEvent, writeRelays);
+  return publishEvents(
+    relayPool,
+    finalizeEvents(List([unsingedEvent]), user),
+    writeRelays
+  );
 }

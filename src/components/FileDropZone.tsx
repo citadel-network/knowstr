@@ -4,12 +4,8 @@ import MarkdownIt from "markdown-it";
 
 import { v4 } from "uuid";
 import { Map } from "immutable";
-import { Event } from "nostr-tools";
-import {
-  finalizeEvent,
-  KIND_KNOWLEDGE_NODE_COLLECTION,
-  newTimestamp,
-} from "../nostr";
+import { UnsignedEvent } from "nostr-tools";
+import { KIND_KNOWLEDGE_NODE_COLLECTION, newTimestamp } from "../nostr";
 import { newNode, bulkAddRelations, shortID } from "../connections";
 import { newRelations } from "../ViewContext";
 import { Plan, planUpsertRelations, usePlanner } from "../planner";
@@ -72,19 +68,16 @@ export function planCreateNodesFromMarkdown(
 ): [Plan, topNodeID: LongID] {
   const splittedMarkdown = splitMarkdownInChunkSizes(markdown);
   const { events, nodes } = splittedMarkdown.reduce(
-    (rdx: { events: Event[]; nodes: KnowNode[] }, md: string) => {
+    (rdx: { events: UnsignedEvent[]; nodes: KnowNode[] }, md: string) => {
       const baseID = v4();
       const mdNodes = createNodesFromMarkdown(md, baseID, plan.user.publicKey);
-      const publishNodeEvent = finalizeEvent(
-        {
-          kind: KIND_KNOWLEDGE_NODE_COLLECTION,
-          pubkey: plan.user.publicKey,
-          created_at: newTimestamp(),
-          tags: [["d", baseID]],
-          content: md,
-        },
-        plan.user.privateKey
-      );
+      const publishNodeEvent = {
+        kind: KIND_KNOWLEDGE_NODE_COLLECTION,
+        pubkey: plan.user.publicKey,
+        created_at: newTimestamp(),
+        tags: [["d", baseID]],
+        content: md,
+      };
       return {
         events: [...rdx.events, publishNodeEvent],
         nodes: [...rdx.nodes, ...mdNodes],

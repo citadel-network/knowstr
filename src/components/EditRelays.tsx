@@ -6,7 +6,7 @@ import ModalForm from "./ModalForm";
 import { useData } from "../DataContext";
 import { DEFAULT_RELAYS, publishRelayMetadata } from "../nostr";
 import { useApis } from "../Apis";
-import { republishEvents } from "../executor";
+import { finalizeEvents, publishEvents } from "../executor";
 import { FormControlWrapper } from "./FormControlWrapper";
 
 type RelayButtonProps = {
@@ -210,7 +210,11 @@ export function EditRelays(): JSX.Element {
       (newrel) => !relays.some((r) => r.url === newrel.url)
     );
     if (newRelays.length > 0) {
-      await republishEvents(relayPool, sentEvents, newRelays);
+      await publishEvents(
+        relayPool,
+        finalizeEvents(sentEvents, user),
+        newRelays
+      );
     }
     navigate("/");
   };

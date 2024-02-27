@@ -1,5 +1,5 @@
 import { Map, OrderedMap, List } from "immutable";
-import { Event } from "nostr-tools";
+import { UnsignedEvent } from "nostr-tools";
 
 declare global {
   export type KeyPair = {
@@ -36,7 +36,7 @@ declare global {
   type Data = {
     contacts: Contacts;
     user: KeyPair;
-    sentEvents: List<Event>;
+    sentEvents: List<UnsignedEvent>;
     settings: Settings;
     relays: Relays;
     knowledgeDBs: KnowledgeDBs;

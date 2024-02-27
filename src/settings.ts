@@ -1,9 +1,9 @@
-import { Event } from "nostr-tools";
+import { UnsignedEvent } from "nostr-tools";
 import { getMostRecentReplacableEvent } from "citadel-commons";
 import { List } from "immutable";
 import { KIND_SETTINGS } from "./nostr";
 
-function settingsFromEvent(event: Event): Settings {
+function settingsFromEvent(event: UnsignedEvent): Settings {
   try {
     const compressedSettings = JSON.parse(
       event.content
@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS = {
   bionicReading: false,
 };
 
-export function findSettings(events: List<Event>): Settings {
+export function findSettings(events: List<UnsignedEvent>): Settings {
   const settingsEvent = getMostRecentReplacableEvent(
     events.filter((e) => e.kind === KIND_SETTINGS)
   );

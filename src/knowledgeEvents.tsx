@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap } from "immutable";
-import { Event } from "nostr-tools";
+import { UnsignedEvent } from "nostr-tools";
 import {
   findTag,
   getMostRecentReplacableEvent,
@@ -27,7 +27,7 @@ import { createNodesFromMarkdown } from "./components/FileDropZone";
 
 function handleNodeCollection(
   rdx: Map<string, KnowNode>,
-  event: Event
+  event: UnsignedEvent
 ): Map<string, KnowNode> {
   const id = findTag(event, "d");
   if (!id) {
@@ -42,7 +42,7 @@ function handleNodeCollection(
   return rdx.merge(nodesMap);
 }
 
-export function findNodes(events: List<Event>): Map<string, KnowNode> {
+export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
   const sorted = sortEvents(
     events.filter(
       (event) =>
@@ -79,7 +79,9 @@ export function findNodes(events: List<Event>): Map<string, KnowNode> {
   }, Map<string, KnowNode>());
 }
 
-export function findRelations(events: List<Event>): Map<string, Relations> {
+export function findRelations(
+  events: List<UnsignedEvent>
+): Map<string, Relations> {
   const sorted = sortEvents(
     events.filter(
       (event) =>
@@ -122,7 +124,9 @@ type Workspaces = {
   activeWorkspace: LongID;
 };
 
-export function findWorkspaces(events: List<Event>): Workspaces | undefined {
+export function findWorkspaces(
+  events: List<UnsignedEvent>
+): Workspaces | undefined {
   const workspaceEvent = getMostRecentReplacableEvent(
     events.filter((event) => event.kind === KIND_WORKSPACES)
   );
@@ -133,7 +137,7 @@ export function findWorkspaces(events: List<Event>): Workspaces | undefined {
   return jsonToWorkspace(parsed);
 }
 
-export function findViews(events: List<Event>): Views {
+export function findViews(events: List<UnsignedEvent>): Views {
   const viewEvent = getMostRecentReplacableEvent(
     events.filter((event) => event.kind === KIND_VIEWS)
   );
@@ -143,7 +147,7 @@ export function findViews(events: List<Event>): Views {
   return jsonToViews(JSON.parse(viewEvent.content) as Serializable);
 }
 
-export function findRelationTypes(events: List<Event>): RelationTypes {
+export function findRelationTypes(events: List<UnsignedEvent>): RelationTypes {
   const relationTypesEvent = getMostRecentReplacableEvent(
     events.filter((event) => event.kind === KIND_RELATION_TYPES)
   );

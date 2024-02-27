@@ -1,11 +1,11 @@
 import { List, Map } from "immutable";
-import { Event } from "nostr-tools";
+import { UnsignedEvent } from "nostr-tools";
 import { findAllTags, getMostRecentReplacableEvent } from "citadel-commons";
 import { KIND_CONTACTLIST } from "./nostr";
 
 type FollowList = Array<Contact>;
 
-export function parseFollowListEvent(event: Event): FollowList {
+export function parseFollowListEvent(event: UnsignedEvent): FollowList {
   const contactListTags = findAllTags(event, "p");
   if (!contactListTags) {
     return [];
@@ -39,7 +39,7 @@ function getContactsFromFollowList(followList: FollowList): Contacts {
   );
 }
 
-export function findContacts(events: List<Event>): Contacts {
+export function findContacts(events: List<UnsignedEvent>): Contacts {
   const contactListEvent = getMostRecentReplacableEvent(
     events.filter((event) => event.kind === KIND_CONTACTLIST)
   );

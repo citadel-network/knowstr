@@ -9,7 +9,7 @@ import {
   RenderResult,
 } from "@testing-library/react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Event, Filter, matchFilter } from "nostr-tools";
+import { Event, Filter, UnsignedEvent, matchFilter } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import { hexToBytes } from "@noble/hashes/utils";
 import { Container } from "react-dom";
@@ -210,7 +210,7 @@ export function waitForLoadingToBeNull(): Promise<void> {
 const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
-  sentEvents: List<Event>(),
+  sentEvents: List<UnsignedEvent>(),
   settings: DEFAULT_SETTINGS,
   relays: DEFAULT_RELAYS,
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),

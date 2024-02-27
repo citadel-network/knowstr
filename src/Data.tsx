@@ -8,7 +8,7 @@ import {
   useRelaysQuery,
 } from "citadel-commons";
 import { List, Map } from "immutable";
-import { Event } from "nostr-tools";
+import { Event, UnsignedEvent } from "nostr-tools";
 import { DataContextProvider } from "./DataContext";
 import { findContacts } from "./contacts";
 import {
@@ -67,7 +67,9 @@ function createContactsEventsQueries(): GroupedByAuthorFilter {
   };
 }
 
-function processEventsByAuthor(authorEvents: List<Event>): ProcessedEvents {
+function processEventsByAuthor(
+  authorEvents: List<UnsignedEvent | Event>
+): ProcessedEvents {
   const settings = findSettings(authorEvents);
   const contacts = findContacts(authorEvents);
   const nodes = findNodes(authorEvents);
@@ -93,7 +95,7 @@ function processEventsByAuthor(authorEvents: List<Event>): ProcessedEvents {
 }
 
 function useEventProcessor(
-  events: Map<string, Event>
+  events: List<UnsignedEvent>
 ): Map<PublicKey, ProcessedEvents> {
   const groupedByAuthor = events.groupBy((e) => e.pubkey as PublicKey);
   const sorted = groupedByAuthor.map((authorEvents) =>
@@ -106,39 +108,32 @@ function useEventProcessor(
   );
 }
 
-function createDefaultEvents(user: KeyPair): Map<string, Event> {
+function createDefaultEvents(user: KeyPair): List<UnsignedEvent> {
   const serialized = {
     w: [joinID(user.publicKey, "my-first-workspace")],
     a: joinID(user.publicKey, "my-first-workspace"),
   };
   const createWorkspaceNodeEvent = {
-    id: "createworkspace",
     kind: KIND_KNOWLEDGE_NODE,
     pubkey: user.publicKey,
     created_at: 0,
     tags: [["d", "my-first-workspace"]],
     content: "My first Workspace",
-    sig: "",
   };
 
   const writeWorkspacesEvent = {
-    id: "writeworkspaces",
     kind: KIND_WORKSPACES,
     pubkey: user.publicKey,
     created_at: 0,
     tags: [],
     content: JSON.stringify(serialized),
-    sig: "",
   };
-  return Map<Event>({
-    [createWorkspaceNodeEvent.id]: createWorkspaceNodeEvent,
-    [writeWorkspacesEvent.id]: writeWorkspacesEvent,
-  });
+  return List<UnsignedEvent>([createWorkspaceNodeEvent, writeWorkspacesEvent]);
 }
 
 function Data({ user, children }: DataProps): JSX.Element {
   const myPublicKey = user.publicKey;
-  const [newEvents, setNewEvents] = useState<Map<string, Event>>(Map());
+  const [newEvents, setNewEvents] = useState<List<UnsignedEvent>>(List());
   const { relayPool } = useApis();
   const { relays: myRelays } = useRelaysQuery(
     relayPool,
@@ -159,7 +154,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     { readFromRelays }
   );
   const sentEvents = createDefaultEvents(user).merge(
-    sentEventsFromQuery.merge(newEvents)
+    sentEventsFromQuery.valueSeq().toList().merge(newEvents)
   );
   const processedEvents = useEventProcessor(sentEvents);
   const myProcessedEvents = processedEvents.get(myPublicKey, {
@@ -180,7 +175,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     (rdx, result) => rdx.merge(result.events),
     Map<string, Event>()
   );
-  const contactsData = useEventProcessor(contactsEvents);
+  const contactsData = useEventProcessor(contactsEvents.valueSeq().toList());
 
   const contactsKnowledgeDBs = contactsData.map((data) => data.knowledgeDB);
 
@@ -193,7 +188,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     [myPublicKey]: myDB,
   }).merge(contactsKnowledgeDBs);
 
-  const addNewEvents = (events: Map<string, Event>): void => {
+  const addNewEvents = (events: List<UnsignedEvent>): void => {
     setNewEvents((prev) => prev.merge(events));
   };
 
