@@ -119,7 +119,7 @@ export function SignInFullScreen(): JSX.Element {
         <SignInWithSeed
           setPrivateKey={(pk) => {
             login(pk);
-            navigate(path.pathname === "/signin" ? "/" : path, {
+            navigate(path.pathname.startsWith("/signin") ? "/" : path, {
               replace: true,
             });
           }}
