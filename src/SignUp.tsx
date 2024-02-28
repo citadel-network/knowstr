@@ -1,28 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Card, Form } from "react-bootstrap";
 import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { hexToBytes } from "@noble/hashes/utils";
 import { StandaloneCard } from "./components/Ui";
 
+type LocationState = {
+  referrer?: string;
+};
+
 export function SignUp(): JSX.Element {
   document.body.classList.add("background");
-  const [referrer, setReferrer] = useState("/signin");
-
-  useEffect(() => {
-    const lastVisitedUrl = document.referrer;
-    const lastVisitedUrlObject = new URL(lastVisitedUrl);
-
-    if (lastVisitedUrlObject.origin === window.location.origin) {
-      setReferrer(
-        lastVisitedUrlObject.pathname +
-          lastVisitedUrlObject.search +
-          lastVisitedUrlObject.hash
-      );
-    }
-  }, []);
+  const location = useLocation();
+  const referrer =
+    (location.state as LocationState | undefined)?.referrer || "/signin";
 
   const mnemonic = nip06.generateSeedWords();
   const pk = nip06.privateKeyFromSeedWords(mnemonic);

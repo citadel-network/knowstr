@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card, Form } from "react-bootstrap";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
@@ -37,8 +37,10 @@ function SignInWithSeed({
 }: {
   setPrivateKey: (privateKey: string) => void;
 }): JSX.Element {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { pathname, search, hash } = new URL(window.location.href);
 
   const componentIsMounted = useRef(true);
   useEffect(() => {
@@ -81,9 +83,16 @@ function SignInWithSeed({
         />
       </Form.Group>
       <div>
-        <Link to="/signup" className="btn btn-borderless underline">
+        <Button
+          className="btn btn-borderless underline"
+          onClick={() => {
+            navigate("/signup", {
+              state: { referrer: pathname + search + hash },
+            });
+          }}
+        >
           Create new Account
-        </Link>
+        </Button>
         <div className="float-end">
           {loading ? (
             <div aria-label="loading" className="spinner-border" />
