@@ -1,9 +1,15 @@
 import React from "react";
-import { SimplePool } from "nostr-tools";
+import { EventTemplate, SimplePool, VerifiedEvent } from "nostr-tools";
+
+export type FinalizeEvent = (
+  t: EventTemplate,
+  secretKey: Uint8Array
+) => VerifiedEvent;
 
 export type Apis = {
   fileStore: LocalStorage;
   relayPool: SimplePool;
+  finalizeEvent: FinalizeEvent;
 };
 
 const ApiContext = React.createContext<Apis | undefined>(undefined);

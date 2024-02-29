@@ -1,34 +1,6 @@
-import { bytesToHex } from "@noble/hashes/utils";
-import { sha256 } from "@noble/hashes/sha256";
-import { schnorr } from "@noble/curves/secp256k1";
-import { Event, UnsignedEvent, SimplePool, serializeEvent } from "nostr-tools";
-import { List } from "immutable";
+import { Event, SimplePool } from "nostr-tools";
 import { Plan } from "./planner";
-
-function finalizeEvent(
-  event: UnsignedEvent,
-  privateKey: Uint8Array,
-  oldID?: string
-): Event {
-  const eventHash = sha256(
-    new Uint8Array(Buffer.from(serializeEvent(event), "utf8"))
-  );
-
-  const id = oldID || bytesToHex(eventHash);
-  const sig = bytesToHex(schnorr.sign(eventHash, privateKey));
-  return {
-    ...event,
-    id,
-    sig,
-  };
-}
-
-function finalizeEvents(
-  events: List<UnsignedEvent>,
-  user: KeyPair
-): List<Event> {
-  return events.map((e) => finalizeEvent(e, user.privateKey));
-}
+import { FinalizeEvent } from "./Apis";
 
 async function publishEvent(
   relayPool: SimplePool,
@@ -58,30 +30,28 @@ async function publishEvent(
   }
 }
 
-async function publishEvents(
-  relayPool: SimplePool,
-  events: List<Event>,
-  writeRelays: Relays
-): Promise<void> {
-  await Promise.all(
-    events.toArray().map((event) => publishEvent(relayPool, event, writeRelays))
-  );
-}
-
 export async function execute({
   plan,
   relayPool,
   relays,
+  finalizeEvent,
 }: {
   plan: Plan;
   relayPool: SimplePool;
   relays: Relays;
+  finalizeEvent: FinalizeEvent;
 }): Promise<void> {
   if (plan.publishEvents.size === 0) {
     // eslint-disable-next-line no-console
     console.warn("Won't execute Noop plan");
     return;
   }
-  const finalizedEvents = finalizeEvents(plan.publishEvents, plan.user);
-  await publishEvents(relayPool, finalizedEvents, relays);
+  const finalizedEvents = plan.publishEvents.map((e) =>
+    finalizeEvent(e, plan.user.privateKey)
+  );
+  await Promise.all(
+    finalizedEvents
+      .toArray()
+      .map((event) => publishEvent(relayPool, event, relays))
+  );
 }
