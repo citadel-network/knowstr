@@ -23,7 +23,7 @@ function finalizeEvent(
   };
 }
 
-export function finalizeEvents(
+function finalizeEvents(
   events: List<UnsignedEvent>,
   user: KeyPair
 ): List<Event> {
@@ -58,7 +58,7 @@ async function publishEvent(
   }
 }
 
-export async function publishEvents(
+async function publishEvents(
   relayPool: SimplePool,
   events: List<Event>,
   writeRelays: Relays

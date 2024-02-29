@@ -7,9 +7,8 @@ import { useWorkspace } from "../KnowledgeDataContext";
 import { IS_MOBILE } from "./responsive";
 import { DeleteNode } from "./DeleteNode";
 import { NotificationCenter } from "./NotificationCenter";
-import { publishSettings } from "../nostr";
 import { useData } from "../DataContext";
-import { useApis } from "../Apis";
+import { planPublishSettings, usePlanner } from "../planner";
 
 type NavBarProps = {
   logout: () => void;
@@ -18,21 +17,17 @@ type NavBarProps = {
 export function NavBar({ logout }: NavBarProps): JSX.Element {
   const title = useWorkspace();
   const navigate = useNavigate();
+  const { createPlan, executePlan } = usePlanner();
   const [isError, setIsError] = useState<boolean>(false);
-  const { relayPool } = useApis();
-  const { user, settings, relays } = useData();
+  const { settings } = useData();
   const isBionic = settings.bionicReading;
-  const writeToRelays = relays.filter((r) => r.write === true);
   const onToggleBionic = async (): Promise<void> => {
     try {
-      await publishSettings(
-        relayPool,
-        user,
-        {
+      await executePlan(
+        planPublishSettings(createPlan(), {
           ...settings,
           bionicReading: !isBionic,
-        },
-        writeToRelays
+        })
       );
     } catch (e) {
       setIsError(true);

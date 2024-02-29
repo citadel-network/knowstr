@@ -1,8 +1,3 @@
-import crypto from "crypto";
-import { SimplePool } from "nostr-tools";
-import { List } from "immutable";
-import { finalizeEvents, publishEvents } from "./executor";
-
 export const KIND_SETTINGS = 11071;
 
 export const KIND_VIEWS = 11074;
@@ -34,62 +29,4 @@ export function newTimestamp(): number {
   const timestamp = ts > lastPublished ? ts : lastPublished + 1;
   lastPublished = timestamp;
   return timestamp;
-}
-
-export function publishSettings(
-  relayPool: SimplePool,
-  user: KeyPair,
-  settings: Settings,
-  writeToRelays: Relays
-): Promise<void> {
-  const compressedSettings: CompressedSettings = {
-    b: settings.bionicReading,
-    v: "v1",
-    n: crypto.randomBytes(8),
-  };
-  const content = JSON.stringify(compressedSettings);
-  const unsingedEvent = {
-    kind: KIND_SETTINGS,
-    pubkey: user.publicKey,
-    created_at: Math.floor(Date.now() / 1000),
-    tags: [],
-    content,
-  };
-  return publishEvents(
-    relayPool,
-    finalizeEvents(List([unsingedEvent]), user),
-    writeToRelays
-  );
-}
-
-export async function publishRelayMetadata(
-  relayPool: SimplePool,
-  user: KeyPair,
-  relays: Relays,
-  writeRelays: Relays
-): Promise<void> {
-  const tags = relays.map((r) => {
-    if (r.read && r.write) {
-      return ["r", r.url];
-    }
-    if (r.read) {
-      return ["r", r.url, "read"];
-    }
-    if (r.write) {
-      return ["r", r.url, "write"];
-    }
-    return [];
-  });
-  const unsingedEvent = {
-    kind: KIND_RELAY_METADATA_EVENT,
-    pubkey: user.publicKey,
-    created_at: Math.floor(Date.now() / 1000),
-    tags,
-    content: "",
-  };
-  return publishEvents(
-    relayPool,
-    finalizeEvents(List([unsingedEvent]), user),
-    writeRelays
-  );
 }

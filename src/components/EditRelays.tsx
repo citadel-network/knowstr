@@ -4,10 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./Ui";
 import ModalForm from "./ModalForm";
 import { useData } from "../DataContext";
-import { DEFAULT_RELAYS, publishRelayMetadata } from "../nostr";
-import { useApis } from "../Apis";
-import { finalizeEvents, publishEvents } from "../executor";
+import { DEFAULT_RELAYS } from "../nostr";
 import { FormControlWrapper } from "./FormControlWrapper";
+import { planPublishRelayMetadata, usePlanner } from "../planner";
 
 type RelayButtonProps = {
   onClick: () => void;
@@ -178,8 +177,8 @@ function mergeRelays(relays: Relays, relaysToMerge: Relays): Relays {
 
 export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
-  const { relayPool } = useApis();
-  const { user, relays, sentEvents } = useData();
+  const { relays, sentEvents } = useData();
+  const { createPlan, executePlan } = usePlanner();
   const [relayState, setRelayState] = useState<Relays>(relays);
 
   const deleteRelay = (index: number): void => {
@@ -205,16 +204,22 @@ export function EditRelays(): JSX.Element {
       DEFAULT_RELAYS,
       mergeRelays(relays, relayState)
     );
-    await publishRelayMetadata(relayPool, user, relayState, allRelays);
+
+    await executePlan(
+      planPublishRelayMetadata(
+        { ...createPlan(), relays: allRelays },
+        relayState
+      )
+    );
     const newRelays = relayState.filter(
       (newrel) => !relays.some((r) => r.url === newrel.url)
     );
     if (newRelays.length > 0) {
-      await publishEvents(
-        relayPool,
-        finalizeEvents(sentEvents, user),
-        newRelays
-      );
+      await executePlan({
+        ...createPlan(),
+        publishEvents: sentEvents,
+        relays: relayState,
+      });
     }
     navigate("/");
   };

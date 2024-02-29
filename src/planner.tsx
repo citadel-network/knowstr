@@ -1,9 +1,9 @@
 import React from "react";
 import { List } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
+import crypto from "crypto";
 import { useData } from "./DataContext";
 import { execute } from "./executor";
-
 import { useApis } from "./Apis";
 import {
   relationTypesToJson,
@@ -19,6 +19,8 @@ import {
   KIND_VIEWS,
   KIND_WORKSPACES,
   newTimestamp,
+  KIND_SETTINGS,
+  KIND_RELAY_METADATA_EVENT,
 } from "./nostr";
 import { newDB } from "./knowledge";
 import { shortID } from "./connections";
@@ -308,5 +310,51 @@ export function planUpdateRelationTypes(
       relationTypes,
     }),
     publishEvents: plan.publishEvents.push(writeRelationsEvent),
+  };
+}
+
+export function planPublishSettings(plan: Plan, settings: Settings): Plan {
+  const compressedSettings: CompressedSettings = {
+    b: settings.bionicReading,
+    v: "v1",
+    n: crypto.randomBytes(8),
+  };
+  const content = JSON.stringify(compressedSettings);
+  const publishSettingsEvent = {
+    kind: KIND_SETTINGS,
+    pubkey: plan.user.publicKey,
+    created_at: Math.floor(Date.now() / 1000),
+    tags: [],
+    content,
+  };
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(publishSettingsEvent),
+  };
+}
+
+export function planPublishRelayMetadata(plan: Plan, relays: Relays): Plan {
+  const tags = relays.map((r) => {
+    if (r.read && r.write) {
+      return ["r", r.url];
+    }
+    if (r.read) {
+      return ["r", r.url, "read"];
+    }
+    if (r.write) {
+      return ["r", r.url, "write"];
+    }
+    return [];
+  });
+  const publishRelayMetadataEvent = {
+    kind: KIND_RELAY_METADATA_EVENT,
+    pubkey: plan.user.publicKey,
+    created_at: Math.floor(Date.now() / 1000),
+    tags,
+    content: "",
+  };
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(publishRelayMetadataEvent),
   };
 }
