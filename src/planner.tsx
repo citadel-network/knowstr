@@ -41,7 +41,7 @@ export function PlanningContextProvider({
   addNewEvents: (events: List<UnsignedEvent>) => void;
 }): JSX.Element {
   const data = useData();
-  const { relayPool } = useApis();
+  const { relayPool, finalizeEvent } = useApis();
   const writeRelays = data.relays.filter((r) => r.write === true);
 
   const executePlan = async (plan: Plan): Promise<void> => {
@@ -51,6 +51,7 @@ export function PlanningContextProvider({
       plan,
       relayPool,
       relays: writeRelays,
+      finalizeEvent,
     });
   };
 

@@ -9,9 +9,21 @@ import {
   RenderResult,
 } from "@testing-library/react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Event, Filter, UnsignedEvent, matchFilter } from "nostr-tools";
+import {
+  Event,
+  EventTemplate,
+  Filter,
+  UnsignedEvent,
+  VerifiedEvent,
+  getPublicKey,
+  matchFilter,
+  serializeEvent,
+  verifiedSymbol,
+} from "nostr-tools";
 import userEvent from "@testing-library/user-event";
-import { hexToBytes } from "@noble/hashes/utils";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { sha256 } from "@noble/hashes/sha256";
+import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { DEFAULT_RELAYS, KIND_CONTACTLIST } from "./nostr";
 import { RequireLogin } from "./AppState";
@@ -25,7 +37,7 @@ import {
   planUpsertRelations,
 } from "./planner";
 import { execute } from "./executor";
-import { ApiProvider, Apis } from "./Apis";
+import { ApiProvider, Apis, FinalizeEvent } from "./Apis";
 import { App } from "./App";
 import { DataContextProps } from "./DataContext";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
@@ -111,6 +123,30 @@ function mockFileStore(): MockFileStore {
   };
 }
 
+function finalizeEventWithoutWasm(
+  t: EventTemplate,
+  secretKey: Uint8Array
+): VerifiedEvent {
+  const pubkey = getPublicKey(secretKey);
+  const eventHash = sha256(
+    new Uint8Array(Buffer.from(serializeEvent({ ...t, pubkey }), "utf8"))
+  );
+  const id = bytesToHex(eventHash);
+  const sig = bytesToHex(schnorr.sign(eventHash, secretKey));
+  return {
+    ...t,
+    id,
+    sig,
+    pubkey,
+    [verifiedSymbol]: true,
+  };
+}
+
+export function mockFinalizeEvent(): FinalizeEvent {
+  return (t: EventTemplate, secretKey: Uint8Array): VerifiedEvent =>
+    finalizeEventWithoutWasm(t, secretKey);
+}
+
 type TestApis = Omit<Apis, "fileStore" | "relayPool"> & {
   fileStore: MockFileStore;
   relayPool: MockRelayPool;
@@ -120,6 +156,7 @@ function applyApis(props?: Partial<TestApis>): TestApis {
   return {
     fileStore: mockFileStore(),
     relayPool: mockRelayPool(),
+    finalizeEvent: mockFinalizeEvent(),
     ...props,
   };
 }
@@ -134,7 +171,7 @@ function renderApis(
   children: React.ReactElement,
   options?: RenderApis
 ): TestApis & RenderResult {
-  const { fileStore, relayPool } = applyApis(options);
+  const { fileStore, relayPool, finalizeEvent } = applyApis(options);
   // If user is explicity undefined it will be overwritten, if not set default Alice is used
   const optionsWithDefaultUser = {
     user: ALICE,
@@ -153,6 +190,7 @@ function renderApis(
         apis={{
           fileStore,
           relayPool,
+          finalizeEvent,
         }}
       >
         <NostrAuthContext.Provider
@@ -181,6 +219,7 @@ function renderApis(
   return {
     fileStore,
     relayPool,
+    finalizeEvent,
     ...utils,
   };
 }
@@ -468,7 +507,11 @@ export async function setupTestDB(
         setNewWorkspace.id
       )
     : plan;
-  await execute({ ...appState, plan: planWithWorkspace });
+  await execute({
+    ...appState,
+    plan: planWithWorkspace,
+    finalizeEvent: mockFinalizeEvent(),
+  });
   return planWithWorkspace;
 }
 
