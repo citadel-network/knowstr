@@ -167,7 +167,7 @@ function getSuggestedRelay(
   );
 }
 
-function mergeRelays(relays: Relays, relaysToMerge: Relays): Relays {
+export function mergeRelays(relays: Relays, relaysToMerge: Relays): Relays {
   const combinedRelays = [...relays, ...relaysToMerge];
   return combinedRelays.reduce((rdx: Relays, current: Relay): Relays => {
     if (!rdx.some((relay) => relay.url === current.url)) {
@@ -175,6 +175,18 @@ function mergeRelays(relays: Relays, relaysToMerge: Relays): Relays {
     }
     return rdx;
   }, []);
+}
+
+export function sanitizeRelayUrl(url: string): string | undefined {
+  const trimmedUrl = url.trim();
+  const noAddWS =
+    trimmedUrl.startsWith("wss://") || trimmedUrl.startsWith("ws://");
+  const urlWithWS = noAddWS ? trimmedUrl : `wss://${trimmedUrl}`;
+  try {
+    return new URL(urlWithWS).toString();
+  } catch {
+    return undefined;
+  }
 }
 
 export function EditRelays(): JSX.Element {
@@ -249,8 +261,9 @@ export function EditRelays(): JSX.Element {
               relay={relay.url}
               onDelete={() => deleteRelay(index)}
               onSave={(newRelay) => {
-                if (newRelay !== relay.url) {
-                  saveRelay(newRelay, index);
+                const sanitizedRelay = sanitizeRelayUrl(newRelay);
+                if (sanitizedRelay && sanitizedRelay !== relay.url) {
+                  saveRelay(sanitizedRelay, index);
                 }
               }}
             />

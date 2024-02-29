@@ -14,13 +14,13 @@ test("Remove a Nostr Relay", async () => {
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {
     screen.getByText("Set Nostr Relays");
-    screen.getByDisplayValue("wss://relay.damus.io");
-    screen.getByDisplayValue("wss://relay.snort.social");
-    screen.getByDisplayValue("wss://nos.lol");
-    screen.getByDisplayValue("wss://nostr.wine");
+    screen.getByDisplayValue("wss://relay.damus.io/");
+    screen.getByDisplayValue("wss://relay.snort.social/");
+    screen.getByDisplayValue("wss://nos.lol/");
+    screen.getByDisplayValue("wss://nostr.wine/");
   });
-  fireEvent.click(screen.getByLabelText("remove wss://nos.lol"));
-  screen.getByDisplayValue("wss://nostr.wine");
+  fireEvent.click(screen.getByLabelText("remove wss://nos.lol/"));
+  screen.getByDisplayValue("wss://nostr.wine/");
   fireEvent.click(screen.getByText("Save"));
 
   await waitFor(() =>
@@ -35,9 +35,9 @@ test("Remove a Nostr Relay", async () => {
       pubkey:
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
       tags: [
-        ["r", "wss://relay.damus.io"],
-        ["r", "wss://relay.snort.social"],
-        ["r", "wss://nostr.wine"],
+        ["r", "wss://relay.damus.io/"],
+        ["r", "wss://relay.snort.social/"],
+        ["r", "wss://nostr.wine/"],
       ],
       content: "",
     })
@@ -51,21 +51,21 @@ test("Edit an existing Nostr Relay", async () => {
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {
     screen.getByText("Set Nostr Relays");
-    screen.getByDisplayValue("wss://relay.damus.io");
-    screen.getByDisplayValue("wss://relay.snort.social");
-    screen.getByDisplayValue("wss://nos.lol");
-    screen.getByDisplayValue("wss://nostr.wine");
+    screen.getByDisplayValue("wss://relay.damus.io/");
+    screen.getByDisplayValue("wss://relay.snort.social/");
+    screen.getByDisplayValue("wss://nos.lol/");
+    screen.getByDisplayValue("wss://nostr.wine/");
   });
-  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine"));
-  const inputRelay = await screen.findByDisplayValue("wss://nostr.wine");
+  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine/"));
+  const inputRelay = await screen.findByDisplayValue("wss://nostr.wine/");
   userEvent.type(inputRelay, ".edited");
 
   // undo edit
   fireEvent.click(screen.getByLabelText("undo edit relay"));
-  const inputRelaySecond = await screen.findByDisplayValue("wss://nostr.wine");
+  const inputRelaySecond = await screen.findByDisplayValue("wss://nostr.wine/");
 
-  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine"));
-  userEvent.type(inputRelaySecond, ".second.edit");
+  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine/"));
+  userEvent.type(inputRelaySecond, "second.edit");
   fireEvent.click(screen.getByLabelText("save edit relay"));
   fireEvent.click(screen.getByText("Save"));
 
@@ -82,10 +82,10 @@ test("Edit an existing Nostr Relay", async () => {
       pubkey:
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
       tags: [
-        ["r", "wss://relay.damus.io"],
-        ["r", "wss://relay.snort.social"],
-        ["r", "wss://nos.lol"],
-        ["r", "wss://nostr.wine.second.edit"],
+        ["r", "wss://relay.damus.io/"],
+        ["r", "wss://relay.snort.social/"],
+        ["r", "wss://nos.lol/"],
+        ["r", "wss://nostr.wine/second.edit"],
       ],
       content: "",
     })

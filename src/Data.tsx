@@ -36,6 +36,7 @@ import { newDB } from "./knowledge";
 import { PlanningContextProvider } from "./planner";
 import { RootViewContextProvider } from "./ViewContext";
 import { joinID } from "./connections";
+import { mergeRelays, sanitizeRelayUrl } from "./components/EditRelays";
 
 type DataProps = {
   user: KeyPair;
@@ -141,8 +142,19 @@ function Data({ user, children }: DataProps): JSX.Element {
     true,
     DEFAULT_RELAYS
   );
-  const relays = myRelays.length === 0 ? DEFAULT_RELAYS : myRelays;
-  const readFromRelays = relays.filter((r) => r.read === true);
+  const relays = mergeRelays(DEFAULT_RELAYS, myRelays);
+  const sanitizedRelays = relays
+    .map((relay) => {
+      const sanitizedRelayUrl = sanitizeRelayUrl(relay.url);
+      return sanitizedRelayUrl
+        ? {
+            ...relay,
+            url: sanitizedRelayUrl,
+          }
+        : undefined;
+    })
+    .filter((r) => r !== undefined) as Array<Relay>;
+  const readFromRelays = sanitizedRelays.filter((r) => r.read === true);
   const { events: sentEventsFromQuery, eose: sentEventsEose } = useEventQuery(
     relayPool,
     [
@@ -198,7 +210,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       user={user}
       sentEvents={sentEvents.toList()}
       settings={processedEvents.get(myPublicKey)?.settings || DEFAULT_SETTINGS}
-      relays={relays}
+      relays={sanitizedRelays}
       knowledgeDBs={knowledgeDBs}
     >
       <PlanningContextProvider addNewEvents={addNewEvents}>
