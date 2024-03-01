@@ -7,6 +7,8 @@ import { useData } from "../DataContext";
 import { DEFAULT_RELAYS } from "../nostr";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { planPublishRelayMetadata, usePlanner } from "../planner";
+import { execute } from "../executor";
+import { useApis } from "../Apis";
 
 type RelayButtonProps = {
   onClick: () => void;
@@ -179,6 +181,7 @@ export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
   const { relays, sentEvents } = useData();
   const { createPlan, executePlan } = usePlanner();
+  const { relayPool } = useApis();
   const [relayState, setRelayState] = useState<Relays>(relays);
 
   const deleteRelay = (index: number): void => {
@@ -204,22 +207,31 @@ export function EditRelays(): JSX.Element {
       DEFAULT_RELAYS,
       mergeRelays(relays, relayState)
     );
-
-    await executePlan(
-      planPublishRelayMetadata(
-        { ...createPlan(), relays: allRelays },
-        relayState
-      )
+    const plan = planPublishRelayMetadata(
+      { ...createPlan(), relays: allRelays },
+      relayState
     );
+    await execute({
+      plan,
+      relayPool,
+      relays: allRelays.filter((r) => r.write === true),
+    });
+
     const newRelays = relayState.filter(
       (newrel) => !relays.some((r) => r.url === newrel.url)
     );
     if (newRelays.length > 0) {
-      await executePlan({
-        ...createPlan(),
-        publishEvents: sentEvents,
-        relays: relayState,
-      });
+      // TODO: for now we just fire and forget, but we should track republishing status in the loading spinner button
+      try {
+        executePlan({
+          ...createPlan(),
+          publishEvents: sentEvents,
+          relays: relayState,
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      }
     }
     navigate("/");
   };
