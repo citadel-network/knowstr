@@ -1,4 +1,5 @@
 import { Event, SimplePool } from "nostr-tools";
+import { Map } from "immutable";
 import { Plan } from "./planner";
 import { FinalizeEvent } from "./Apis";
 
@@ -6,7 +7,7 @@ async function publishEvent(
   relayPool: SimplePool,
   event: Event,
   writeToRelays: Relays
-): Promise<void> {
+): Promise<PublishResultsOfEvent> {
   const writeRelayUrls = writeToRelays.map((r) => r.url);
 
   if (writeRelayUrls.length === 0) {
@@ -28,6 +29,13 @@ async function publishEvent(
         .join(".")}`
     );
   }
+  return writeRelayUrls.reduce((rdx, url, index) => {
+    const res = results[index];
+    return rdx.set(url, {
+      status: res.status,
+      reason: res.status === "rejected" ? (res.reason as string) : undefined,
+    });
+  }, Map<string, PublishStatus>());
 }
 
 export async function execute({
@@ -40,16 +48,17 @@ export async function execute({
   relayPool: SimplePool;
   relays: Relays;
   finalizeEvent: FinalizeEvent;
-}): Promise<void> {
+}): Promise<Array<PublishResultsOfEvent>> {
   if (plan.publishEvents.size === 0) {
     // eslint-disable-next-line no-console
     console.warn("Won't execute Noop plan");
-    return;
+    return Promise.resolve([Map()]);
   }
   const finalizedEvents = plan.publishEvents.map((e) =>
     finalizeEvent(e, plan.user.privateKey)
   );
-  await Promise.all(
+
+  return Promise.all(
     finalizedEvents
       .toArray()
       .map((event) => publishEvent(relayPool, event, relays))

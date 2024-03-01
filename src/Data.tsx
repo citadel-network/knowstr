@@ -169,9 +169,26 @@ export function useRelaysInfo(
   return infos;
 }
 
+function mergePublishResults(
+  existing: PublishResults,
+  newResult: PublishResultsOfEvent
+): PublishResults {
+  const updatedResults = newResult.map((value, key) => {
+    const existingValue = existing.get(key);
+    if (!existingValue) {
+      return [value];
+    }
+    return [...existingValue, value];
+  });
+  return existing.merge(updatedResults);
+}
+
 function Data({ user, children }: DataProps): JSX.Element {
   const myPublicKey = user.publicKey;
-  const [newEvents, setNewEvents] = useState<List<UnsignedEvent>>(List());
+  const [newEventsAndPublishResults, setNewEventsAndPublishResults] = useState<{
+    events: List<UnsignedEvent>;
+    results: PublishResults;
+  }>({ events: List(), results: Map() });
   const { relayPool } = useApis();
   const { relays: myRelays, eose: relaysEose } = useRelaysQuery(
     relayPool,
@@ -197,7 +214,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     { readFromRelays }
   );
   const metaEvents = createDefaultEvents(user).merge(
-    mE.valueSeq().toList().merge(newEvents)
+    mE.valueSeq().toList().merge(newEventsAndPublishResults.events)
   );
 
   const processedMetaEvents = useEventProcessor(metaEvents).get(myPublicKey, {
@@ -261,7 +278,10 @@ function Data({ user, children }: DataProps): JSX.Element {
 
   // process events
   const initialDataEventsProcessed = useEventProcessor(
-    initialDataEvents.valueSeq().toList().merge(newEvents)
+    initialDataEvents
+      .valueSeq()
+      .toList()
+      .merge(newEventsAndPublishResults.events)
   );
   const primaryKnowledgeDBs = initialDataEventsProcessed.map(
     (data) => data.knowledgeDB
@@ -286,7 +306,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       .merge(contactMetaEvents.valueSeq().toList())
       .merge(initialDataEvents.valueSeq().toList())
       .merge(secondaryDataEvents.valueSeq().toList())
-      .merge(newEvents)
+      .merge(newEventsAndPublishResults.events)
   );
   const knowledgeDBsSeondLevel = dataEventsProcessed.map(
     (data) => data.knowledgeDB
@@ -342,7 +362,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       .merge(initialDataEvents.valueSeq().toList())
       .merge(secondaryDataEvents.valueSeq().toList())
       .merge(tertiaryDataEvents.valueSeq().toList())
-      .merge(newEvents)
+      .merge(newEventsAndPublishResults.events)
   );
   const knowledgeDBs = tDataEventsProcessed.map((data) => data.knowledgeDB);
 
@@ -352,7 +372,26 @@ function Data({ user, children }: DataProps): JSX.Element {
   }
 
   const addNewEvents = (events: List<UnsignedEvent>): void => {
-    setNewEvents((prev) => prev.merge(events));
+    setNewEventsAndPublishResults((prev) => {
+      return {
+        events: prev.events.merge(events),
+        results: prev.results,
+      };
+    });
+  };
+
+  const updatePublishResults = (
+    results: Array<PublishResultsOfEvent>
+  ): void => {
+    setNewEventsAndPublishResults((prev) => {
+      return {
+        events: prev.events,
+        results: results.reduce(
+          (rdx, res) => mergePublishResults(rdx, res),
+          prev.results
+        ),
+      };
+    });
   };
 
   return (
@@ -363,8 +402,12 @@ function Data({ user, children }: DataProps): JSX.Element {
       relays={mergedRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
+      publishResults={newEventsAndPublishResults.results}
     >
-      <PlanningContextProvider addNewEvents={addNewEvents}>
+      <PlanningContextProvider
+        addNewEvents={addNewEvents}
+        updatePublishResults={updatePublishResults}
+      >
         <RootViewContextProvider root={activeWorkspace}>
           {children}
         </RootViewContextProvider>

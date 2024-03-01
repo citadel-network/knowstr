@@ -9,6 +9,7 @@ import { DeleteNode } from "./DeleteNode";
 import { NotificationCenter } from "./NotificationCenter";
 import { useData } from "../DataContext";
 import { planPublishSettings, usePlanner } from "../planner";
+import { PublishingStatus } from "./PublishingStatus";
 
 type NavBarProps = {
   logout: () => void;
@@ -64,6 +65,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
           </div>
         )}
         <div className="navbar-right">
+          <PublishingStatus />
           <NotificationCenter />
           <Dropdown className="options-dropdown">
             <Dropdown.Toggle

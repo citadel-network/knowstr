@@ -38,12 +38,13 @@ async function broadcastEvent(
 async function broadcastEvents(
   subs: Map<string, Subscription>,
   events: Array<Event>
-): Promise<void> {
+): Promise<string> {
   await Promise.all(
     events.map(async (event) => {
       await broadcastEvent(subs, event);
     })
   );
+  return "";
 }
 
 export function mockRelayPool(): MockRelayPool {
@@ -76,10 +77,10 @@ export function mockRelayPool(): MockRelayPool {
         close: () => subs.remove(id),
       };
     },
-    publish: (relays: string[], event: Event): Promise<void>[] => {
+    publish: (relays: string[], event: Event): Promise<string>[] => {
       // eslint-disable-next-line functional/immutable-data
       events.push(event);
-      return [broadcastEvents(subs, [event])];
+      return relays.map(() => broadcastEvents(subs, [event]));
     },
     getEvents: () => events,
   } as unknown as MockRelayPool;

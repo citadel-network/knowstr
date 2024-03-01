@@ -264,6 +264,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   relays: DEFAULT_RELAYS,
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
   relaysInfos: Map<string, RelayInformation | undefined>(),
+  publishResults: Map<string, Array<PublishStatus>>(),
 };
 
 type TestAppState = DataContextProps & TestApis;

@@ -32,6 +32,13 @@ declare global {
 
   type Relays = Array<Relay>;
 
+  type PublishStatus = {
+    status: "rejected" | "fulfilled";
+    reason?: string;
+  };
+  type PublishResultsOfEvent = Map<string, PublishStatus>;
+  type PublishResults = Map<string, Array<PublishStatus>>;
+
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
   type Data = {
@@ -41,6 +48,7 @@ declare global {
     relays: Relays;
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
+    publishResults: PublishResults;
   };
 
   type LocalStorage = {

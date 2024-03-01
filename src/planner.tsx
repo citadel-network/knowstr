@@ -36,21 +36,24 @@ export type Plan = Data & {
 export function PlanningContextProvider({
   children,
   addNewEvents,
+  updatePublishResults,
 }: {
   children: React.ReactNode;
   addNewEvents: (events: List<UnsignedEvent>) => void;
+  updatePublishResults: (results: Array<PublishResultsOfEvent>) => void;
 }): JSX.Element {
   const { relayPool, finalizeEvent } = useApis();
 
   const executePlan = async (plan: Plan): Promise<void> => {
     // TODO: this needs a lot of error handling etc...
     addNewEvents(plan.publishEvents);
-    return execute({
+    const results = await execute({
       plan,
       relayPool,
       relays: plan.relays.filter((r) => r.write === true),
       finalizeEvent,
     });
+    updatePublishResults(results);
   };
 
   return (
