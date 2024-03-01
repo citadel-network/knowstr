@@ -22,7 +22,9 @@ import { useData } from "../DataContext";
 function DetailView(): JSX.Element | null {
   return (
     <div className="detail-view border-bottom-light">
-      <Node />
+      <div className="font-size-big">
+        <Node />
+      </div>
       <div className="border-bottom-light">
         <DetailViewMenu />
       </div>
