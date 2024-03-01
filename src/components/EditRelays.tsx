@@ -7,8 +7,6 @@ import { useData } from "../DataContext";
 import { DEFAULT_RELAYS } from "../nostr";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { planPublishRelayMetadata, usePlanner } from "../planner";
-import { execute } from "../executor";
-import { useApis } from "../Apis";
 
 type RelayButtonProps = {
   onClick: () => void;
@@ -193,7 +191,6 @@ export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
   const { relays, sentEvents } = useData();
   const { createPlan, executePlan } = usePlanner();
-  const { relayPool, finalizeEvent } = useApis();
   const [relayState, setRelayState] = useState<Relays>(relays);
 
   const deleteRelay = (index: number): void => {
@@ -223,12 +220,7 @@ export function EditRelays(): JSX.Element {
       { ...createPlan(), relays: allRelays },
       relayState
     );
-    await execute({
-      plan,
-      relayPool,
-      relays: allRelays.filter((r) => r.write === true),
-      finalizeEvent,
-    });
+    await executePlan(plan);
 
     const newRelays = relayState.filter(
       (newrel) => !relays.some((r) => r.url === newrel.url)

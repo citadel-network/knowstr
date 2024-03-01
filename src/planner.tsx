@@ -40,9 +40,7 @@ export function PlanningContextProvider({
   children: React.ReactNode;
   addNewEvents: (events: List<UnsignedEvent>) => void;
 }): JSX.Element {
-  const data = useData();
   const { relayPool, finalizeEvent } = useApis();
-  const writeRelays = data.relays.filter((r) => r.write === true);
 
   const executePlan = async (plan: Plan): Promise<void> => {
     // TODO: this needs a lot of error handling etc...
@@ -50,7 +48,7 @@ export function PlanningContextProvider({
     return execute({
       plan,
       relayPool,
-      relays: writeRelays,
+      relays: plan.relays.filter((r) => r.write === true),
       finalizeEvent,
     });
   };
