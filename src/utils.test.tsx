@@ -1,4 +1,6 @@
 import React from "react";
+// eslint-disable-next-line import/no-unresolved
+import { RelayInformation } from "nostr-tools/lib/types/nip11";
 import { List, Map } from "immutable";
 import {
   render,
@@ -157,6 +159,14 @@ function applyApis(props?: Partial<TestApis>): TestApis {
     fileStore: mockFileStore(),
     relayPool: mockRelayPool(),
     finalizeEvent: mockFinalizeEvent(),
+    nip11: {
+      searchDebounce: 0,
+      fetchRelayInformation: jest.fn().mockReturnValue(
+        Promise.resolve({
+          suppported_nips: [],
+        })
+      ),
+    },
     ...props,
   };
 }
@@ -171,7 +181,7 @@ function renderApis(
   children: React.ReactElement,
   options?: RenderApis
 ): TestApis & RenderResult {
-  const { fileStore, relayPool, finalizeEvent } = applyApis(options);
+  const { fileStore, relayPool, finalizeEvent, nip11 } = applyApis(options);
   // If user is explicity undefined it will be overwritten, if not set default Alice is used
   const optionsWithDefaultUser = {
     user: ALICE,
@@ -191,6 +201,7 @@ function renderApis(
           fileStore,
           relayPool,
           finalizeEvent,
+          nip11,
         }}
       >
         <NostrAuthContext.Provider
@@ -220,6 +231,7 @@ function renderApis(
     fileStore,
     relayPool,
     finalizeEvent,
+    nip11,
     ...utils,
   };
 }
@@ -253,6 +265,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   settings: DEFAULT_SETTINGS,
   relays: DEFAULT_RELAYS,
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
+  relaysInfos: Map<string, RelayInformation | undefined>(),
 };
 
 type TestAppState = DataContextProps & TestApis;

@@ -1,5 +1,7 @@
 import React from "react";
 import { EventTemplate, SimplePool, VerifiedEvent } from "nostr-tools";
+// eslint-disable-next-line import/no-unresolved
+import { RelayInformation } from "nostr-tools/lib/types/nip11";
 
 export type FinalizeEvent = (
   t: EventTemplate,
@@ -10,6 +12,10 @@ export type Apis = {
   fileStore: LocalStorage;
   relayPool: SimplePool;
   finalizeEvent: FinalizeEvent;
+  nip11: {
+    fetchRelayInformation: (url: string) => Promise<RelayInformation>;
+    searchDebounce: number;
+  };
 };
 
 const ApiContext = React.createContext<Apis | undefined>(undefined);

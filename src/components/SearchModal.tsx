@@ -1,8 +1,14 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
-import { Map } from "immutable";
+import { List, Map } from "immutable";
+import { useEventQuery } from "citadel-commons";
+import { useDebounce } from "use-debounce";
 import { ModalNode, ModalNodeBody, ModalNodeTitle } from "./Ui";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
+import { useApis } from "../Apis";
+import { KIND_SEARCH } from "../Data";
+import { findNodes } from "../knowledgeEvents";
+import { KIND_KNOWLEDGE_NODE, KIND_KNOWLEDGE_NODE_COLLECTION } from "../nostr";
 
 const KEY_DOWN = 40;
 const KEY_UP = 38;
@@ -42,6 +48,65 @@ type SearchModalProps = {
   onHide: () => void;
 };
 
+function filterForKeyword(
+  nodes: Map<string, KnowNode>,
+  filter: string
+): Map<string, KnowNode> {
+  return filter === ""
+    ? Map<string, KnowNode>()
+    : nodes
+        .filter((node) => {
+          return isMatch(filter, node.text);
+        })
+        .slice(0, 25);
+}
+
+function useSearchQuery(
+  query: string,
+  relays: Relays,
+  nip50: boolean
+): [Map<string, KnowNode>, boolean] {
+  const { relayPool, nip11 } = useApis();
+  const { contacts, user } = useData();
+  const authors = contacts.keySeq().toSet().add(user.publicKey).toArray();
+  const [search] = useDebounce(query, nip11.searchDebounce);
+  const enabled = search !== "";
+
+  const basicFilter = {
+    authors,
+    kinds: KIND_SEARCH,
+    limit: 3000,
+  };
+  const filter = nip50
+    ? {
+        ...basicFilter,
+        search,
+      }
+    : basicFilter;
+  const { events, eose } = useEventQuery(relayPool, [filter], {
+    enabled,
+    readFromRelays: relays,
+    discardOld: true,
+    filter: nip50 ? undefined : (event) => isMatch(search, event.content),
+  });
+  const groupByKind = events.groupBy((event) => event.kind);
+  const collectionEvents = groupByKind.get(KIND_KNOWLEDGE_NODE_COLLECTION);
+  const knowledgeEvents = groupByKind.get(KIND_KNOWLEDGE_NODE);
+
+  const nodesFromKnowledgeEvents = findNodes(
+    knowledgeEvents?.toList() || List()
+  );
+  // Filter node from collection events
+  const nodeFromCollectionEvents = findNodes(
+    collectionEvents?.toList() || List()
+  ).filter((event) => isMatch(search, event.text));
+
+  // If the search !== query debounce will trigger a filter change soon
+  const isQueryFinished = eose && query === search;
+  const isEose = isQueryFinished || relays.length === 0;
+  return [nodesFromKnowledgeEvents.merge(nodeFromCollectionEvents), isEose];
+}
+
 function Search({
   onAddExistingNode,
   onHide,
@@ -53,19 +118,29 @@ function Search({
   const [selectedSuggestion, setSelectedSuggestion] = useState<number>(0);
   const ref = React.createRef<HTMLInputElement>();
   const searchResultRef = useRef<HTMLDivElement>(null);
+  const { relaysInfos, relays } = useData();
 
-  const filteredSuggestions =
-    filter === ""
-      ? Map<string, KnowNode>()
-      : nodes
-          .filter((node) => {
-            return isMatch(filter, node.text);
-          })
-          .slice(0, 25);
+  const nip50Relays = relays.filter((r) => {
+    return relaysInfos.get(r.url)?.supported_nips?.includes(50);
+  });
+
+  const [searchResults, searchEose] = useSearchQuery(filter, nip50Relays, true);
+  const [slowSearchResults, slowSearchEose] = useSearchQuery(
+    filter,
+    relays,
+    false
+  );
+
+  const searchResultsLocalCache = filterForKeyword(nodes, filter);
+  const allSearchResults = slowSearchResults.merge(
+    searchResultsLocalCache.merge(searchResults)
+  );
+  const isSerachEose = searchEose && slowSearchEose;
+  const showSpinner = filter !== "" && !isSerachEose;
 
   const suggestionIndex = Math.min(
     selectedSuggestion,
-    filteredSuggestions.size - 1
+    allSearchResults.size - 1
   );
 
   useEffect(() => {
@@ -100,21 +175,20 @@ function Search({
           }}
           onFocus={() => setSelectedSuggestion(0)}
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-            if (e.keyCode === KEY_UP && filteredSuggestions.size > 0) {
+            if (e.keyCode === KEY_UP && allSearchResults.size > 0) {
               e.preventDefault();
               setSelectedSuggestion(Math.max(suggestionIndex - 1, -1));
             }
-            if (e.keyCode === KEY_DOWN && filteredSuggestions.size > 0) {
+            if (e.keyCode === KEY_DOWN && allSearchResults.size > 0) {
               e.preventDefault();
               setSelectedSuggestion(
-                Math.min(suggestionIndex + 1, filteredSuggestions.size - 1)
+                Math.min(suggestionIndex + 1, allSearchResults.size - 1)
               );
             }
             if (e.keyCode === ENTER && suggestionIndex >= 0) {
               e.preventDefault();
               onAddExistingNode(
-                (filteredSuggestions.toList().get(suggestionIndex) as KnowNode)
-                  .id
+                (allSearchResults.toList().get(suggestionIndex) as KnowNode).id
               );
               onHide();
             }
@@ -128,11 +202,12 @@ function Search({
             }
           }}
         />
+        {showSpinner && <div className="spinner-border mt-2" />}
       </ModalNodeTitle>
       {suggestionIndex >= 0 && (
         <ModalNodeBody>
           <div className="border-top-strong mb-2" />
-          {filteredSuggestions.toList().map((node, i) => {
+          {allSearchResults.toList().map((node, i) => {
             return (
               <div
                 key={node.id}

@@ -1,8 +1,18 @@
+import React from "react";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+// eslint-disable-next-line import/no-unresolved
+import { BasicRelayInformation } from "nostr-tools/lib/types/nip11";
+import { SearchModal } from "./SearchModal";
 import { newNode } from "../connections";
-import { ALICE, matchSplitText, renderApp, setup } from "../utils.test";
-import { createPlan, planUpsertNode } from "../planner";
+import {
+  ALICE,
+  matchSplitText,
+  renderApp,
+  renderWithTestData,
+  setup,
+} from "../utils.test";
+import { createPlan, planBulkUpsertNodes, planUpsertNode } from "../planner";
 import { execute } from "../executor";
 
 test("Search works like spotlight", async () => {
@@ -87,9 +97,57 @@ test("On Fullscreen, search also starts with press on slash key", async () => {
   userEvent.type(await screen.findByText("My first Workspace"), "/");
   screen.getByPlaceholderText("Search");
   const searchInput = await screen.findByLabelText("search input");
+  userEvent.type(searchInput, "My s{enter}");
   await waitFor(() => {
-    userEvent.type(searchInput, "My s{enter}");
     screen.getByText("My source");
   });
   expect(screen.queryByPlaceholderText("Search")).toBeNull();
+});
+
+test("Results from relays with nip-50 support will be shown unfiltered", async () => {
+  const [alice] = setup([ALICE]);
+  await execute({
+    ...alice(),
+    plan: planUpsertNode(
+      createPlan(alice()),
+      newNode("Bitcoin", alice().user.publicKey)
+    ),
+  });
+  renderWithTestData(
+    <SearchModal onAddExistingNode={jest.fn()} onHide={jest.fn()} />,
+    {
+      ...alice(),
+      nip11: {
+        searchDebounce: 0,
+        fetchRelayInformation: () => {
+          return Promise.resolve({
+            supported_nips: [50],
+          } as BasicRelayInformation);
+        },
+      },
+    }
+  );
+  const searchInput = await screen.findByLabelText("search input");
+  // The mock relay pool ignores the search parameter completely
+  userEvent.type(searchInput, "Bitcorn");
+  await screen.findByText("Bitcoin");
+});
+
+test("Client side filtering when relay does not support nip-50", async () => {
+  const [alice] = setup([ALICE]);
+  await execute({
+    ...alice(),
+    plan: planBulkUpsertNodes(createPlan(alice()), [
+      newNode("Bitcoin", alice().user.publicKey),
+      newNode("Ethereum", alice().user.publicKey),
+    ]),
+  });
+  renderWithTestData(
+    <SearchModal onAddExistingNode={jest.fn()} onHide={jest.fn()} />,
+    alice()
+  );
+  const searchInput = await screen.findByLabelText("search input");
+  userEvent.type(searchInput, "Bitcoin");
+  await screen.findByText("Bitcoin");
+  expect(screen.queryByText("Ethereum")).toBeNull();
 });

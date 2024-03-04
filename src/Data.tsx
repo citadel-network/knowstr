@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import {
   GroupedByAuthorFilter,
@@ -6,9 +6,12 @@ import {
   useEventQuery,
   useEventQueryByAuthor,
   useRelaysQuery,
+  getReadRelays,
 } from "citadel-commons";
 import { List, Map } from "immutable";
 import { Event, UnsignedEvent } from "nostr-tools";
+// eslint-disable-next-line import/no-unresolved
+import { RelayInformation } from "nostr-tools/lib/types/nip11";
 import { DataContextProvider } from "./DataContext";
 import { findContacts } from "./contacts";
 import {
@@ -61,6 +64,11 @@ const KINDS_CONTACTS = [
 ];
 
 const KINDS_MYSELF = [...KINDS_CONTACTS, KIND_VIEWS];
+
+export const KIND_SEARCH = [
+  KIND_KNOWLEDGE_NODE_COLLECTION,
+  KIND_KNOWLEDGE_NODE,
+];
 
 function createContactsEventsQueries(): GroupedByAuthorFilter {
   return {
@@ -132,11 +140,43 @@ function createDefaultEvents(user: KeyPair): List<UnsignedEvent> {
   return List<UnsignedEvent>([createWorkspaceNodeEvent, writeWorkspacesEvent]);
 }
 
+export function useRelaysInfo(
+  relays: Array<Relay>,
+  eose: boolean
+): Map<string, RelayInformation | undefined> {
+  const { nip11 } = useApis();
+  const [infos, setInfos] = useState<Map<string, RelayInformation | undefined>>(
+    Map<string, RelayInformation | undefined>()
+  );
+  useEffect(() => {
+    if (!eose) {
+      return;
+    }
+
+    (async () => {
+      const fetchedInfos = await Promise.all(
+        relays.map(
+          async (relay): Promise<[string, RelayInformation | undefined]> => {
+            try {
+              const info = await nip11.fetchRelayInformation(relay.url);
+              return [relay.url, info];
+            } catch {
+              return [relay.url, undefined];
+            }
+          }
+        )
+      );
+      setInfos(Map(fetchedInfos));
+    })();
+  }, [JSON.stringify(relays.map((r) => r.url)), eose]);
+  return infos;
+}
+
 function Data({ user, children }: DataProps): JSX.Element {
   const myPublicKey = user.publicKey;
   const [newEvents, setNewEvents] = useState<List<UnsignedEvent>>(List());
   const { relayPool } = useApis();
-  const { relays: myRelays } = useRelaysQuery(
+  const { relays: myRelays, eose: relaysEose } = useRelaysQuery(
     relayPool,
     [myPublicKey],
     true,
@@ -154,7 +194,8 @@ function Data({ user, children }: DataProps): JSX.Element {
         : undefined;
     })
     .filter((r) => r !== undefined) as Array<Relay>;
-  const readFromRelays = sanitizedRelays.filter((r) => r.read === true);
+  const readFromRelays = getReadRelays(sanitizedRelays);
+  const relaysInfo = useRelaysInfo(sanitizedRelays, relaysEose);
   const { events: sentEventsFromQuery, eose: sentEventsEose } = useEventQuery(
     relayPool,
     [
@@ -212,6 +253,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       settings={processedEvents.get(myPublicKey)?.settings || DEFAULT_SETTINGS}
       relays={sanitizedRelays}
       knowledgeDBs={knowledgeDBs}
+      relaysInfos={relaysInfo}
     >
       <PlanningContextProvider addNewEvents={addNewEvents}>
         <RootViewContextProvider root={myDB.activeWorkspace}>
