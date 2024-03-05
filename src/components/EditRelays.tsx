@@ -189,7 +189,7 @@ export function sanitizeRelayUrl(url: string): string | undefined {
 
 export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
-  const { relays, sentEvents } = useData();
+  const { relays } = useData();
   const { createPlan, executePlan } = usePlanner();
   const [relayState, setRelayState] = useState<Relays>(relays);
 
@@ -221,23 +221,9 @@ export function EditRelays(): JSX.Element {
       relayState
     );
     await executePlan(plan);
-
     const newRelays = relayState.filter(
       (newrel) => !relays.some((r) => r.url === newrel.url)
     );
-    if (newRelays.length > 0) {
-      // TODO: for now we just fire and forget, but we should track republishing status in the loading spinner button
-      try {
-        executePlan({
-          ...createPlan(),
-          publishEvents: sentEvents,
-          relays: relayState,
-        });
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-      }
-    }
     navigate("/");
   };
   return (

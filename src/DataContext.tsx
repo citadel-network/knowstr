@@ -18,7 +18,6 @@ export function DataContextProvider({
   children,
   contacts,
   user,
-  sentEvents,
   settings,
   relays,
   knowledgeDBs,
@@ -31,7 +30,6 @@ export function DataContextProvider({
       value={{
         contacts,
         user,
-        sentEvents,
         settings,
         relays,
         knowledgeDBs,

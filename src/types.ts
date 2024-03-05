@@ -38,7 +38,6 @@ declare global {
   type Data = {
     contacts: Contacts;
     user: KeyPair;
-    sentEvents: List<UnsignedEvent>;
     settings: Settings;
     relays: Relays;
     knowledgeDBs: KnowledgeDBs;

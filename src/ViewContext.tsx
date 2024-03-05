@@ -496,7 +496,6 @@ export function upsertRelations(
     "" // TODO: relation type?
   );
 
-  // TODO: check if this is different than the default
   const didViewChange = nodeView.relations !== relations.id;
   const planWithUpdatedView = didViewChange
     ? planUpdateViews(
