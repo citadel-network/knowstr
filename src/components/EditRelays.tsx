@@ -221,9 +221,6 @@ export function EditRelays(): JSX.Element {
       relayState
     );
     await executePlan(plan);
-    const newRelays = relayState.filter(
-      (newrel) => !relays.some((r) => r.url === newrel.url)
-    );
     navigate("/");
   };
   return (

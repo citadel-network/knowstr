@@ -249,7 +249,6 @@ function Data({ user, children }: DataProps): JSX.Element {
     <DataContextProvider
       contacts={processedEvents.get(myPublicKey)?.contacts || Map()}
       user={user}
-      sentEvents={sentEvents.toList()}
       settings={processedEvents.get(myPublicKey)?.settings || DEFAULT_SETTINGS}
       relays={sanitizedRelays}
       knowledgeDBs={knowledgeDBs}

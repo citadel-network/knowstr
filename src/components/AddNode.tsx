@@ -12,6 +12,10 @@ import {
   getParentView,
   useViewKey,
   upsertRelations,
+  addNodeToPath,
+  getRelationsFromView,
+  updateView,
+  getViewFromPath,
 } from "../ViewContext";
 import { useInputElementFocus } from "../FocusContextProvider";
 import { Button, CloseButton, NodeCard } from "./Ui";
@@ -26,8 +30,9 @@ import {
   useTemporaryView,
   useIsEditorOpen,
 } from "./TemporaryViewContext";
-import { Plan, planUpsertNode, usePlanner } from "../planner";
+import { Plan, planUpdateViews, planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
+import { newDB } from "../knowledge";
 
 function AddNodeButton({
   onClick,
@@ -240,7 +245,38 @@ export function AddColumn(): JSX.Element {
         items: relations.items.push(nodeID),
       })
     );
-    executePlan(updateRelationsPlan);
+    const myself = updateRelationsPlan.user.publicKey;
+    const rels = getRelationsFromView(
+      updateRelationsPlan.knowledgeDBs,
+      myself,
+      viewPath
+    );
+    if (!rels) {
+      // If this happens something went wrong
+      throw new Error("No relations found to add column");
+    }
+    const viewPathOfChild = addNodeToPath(
+      updateRelationsPlan.knowledgeDBs,
+      myself,
+      viewPath,
+      rels.items.size - 1
+    );
+    const { views } = updateRelationsPlan.knowledgeDBs.get(myself, newDB());
+    // Explicitly write this views into the dashboard as we are gonna use this to determine which
+    // nodes we need to fetch
+    const updateViewsPlan = planUpdateViews(
+      updateRelationsPlan,
+      updateView(views, viewPathOfChild, {
+        ...getViewFromPath(
+          updateRelationsPlan.knowledgeDBs,
+          myself,
+          views,
+          viewPathOfChild
+        ),
+        expanded: true,
+      })
+    );
+    executePlan(updateViewsPlan);
   };
 
   const onCreateNewNode = (text: string): void => {

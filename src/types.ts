@@ -1,5 +1,4 @@
 import { Map, OrderedMap, List } from "immutable";
-import { UnsignedEvent } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
 

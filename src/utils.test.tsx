@@ -15,7 +15,6 @@ import {
   Event,
   EventTemplate,
   Filter,
-  UnsignedEvent,
   VerifiedEvent,
   getPublicKey,
   matchFilter,
@@ -261,7 +260,6 @@ export function waitForLoadingToBeNull(): Promise<void> {
 const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
-  sentEvents: List<UnsignedEvent>(),
   settings: DEFAULT_SETTINGS,
   relays: DEFAULT_RELAYS,
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
