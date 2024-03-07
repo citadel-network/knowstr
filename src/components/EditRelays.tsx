@@ -175,7 +175,7 @@ export function mergeRelays(relays: Relays, relaysToMerge: Relays): Relays {
   }, []);
 }
 
-export function sanitizeRelayUrl(url: string): string | undefined {
+function sanitizeRelayUrl(url: string): string | undefined {
   const trimmedUrl = url.trim();
   const noAddWS =
     trimmedUrl.startsWith("wss://") || trimmedUrl.startsWith("ws://");
@@ -185,6 +185,20 @@ export function sanitizeRelayUrl(url: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+export function sanitizeRelays(relays: Array<Relay>): Array<Relay> {
+  return relays
+    .map((relay) => {
+      const sanitizedRelayUrl = sanitizeRelayUrl(relay.url);
+      return sanitizedRelayUrl
+        ? {
+            ...relay,
+            url: sanitizedRelayUrl,
+          }
+        : undefined;
+    })
+    .filter((r) => r !== undefined) as Array<Relay>;
 }
 
 export function EditRelays(): JSX.Element {
