@@ -161,7 +161,10 @@ export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
     kind: KIND_KNOWLEDGE_LIST,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [["d", shortID(relations.id)]],
+    tags: [
+      ["d", shortID(relations.id)],
+      ["k", shortID(relations.head)],
+    ],
     content: JSON.stringify(relationsToJSON(relations)),
   };
   return {

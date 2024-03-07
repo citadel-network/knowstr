@@ -180,7 +180,7 @@ function NodeAutoLink({
   return isMainNodeInFullscreenView ? (
     <>{children}</>
   ) : (
-    <Link className="no-underline" to={`/d/${node.id}`}>
+    <Link className="no-underline" to={`/d/${escape(node.id)}`}>
       {children}
     </Link>
   );

@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import {
-  GroupedByAuthorFilter,
   sortEventsDescending,
   useEventQuery,
-  useEventQueryByAuthor,
   useRelaysQuery,
   getReadRelays,
 } from "citadel-commons";
@@ -16,14 +14,12 @@ import { DataContextProvider } from "./DataContext";
 import { findContacts } from "./contacts";
 import {
   DEFAULT_RELAYS,
-  KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
   KIND_WORKSPACES,
   KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_SETTINGS,
-  KIND_DELETE,
   KIND_KNOWLEDGE_NODE_COLLECTION,
 } from "./nostr";
 import { useApis } from "./Apis";
@@ -40,6 +36,16 @@ import { PlanningContextProvider } from "./planner";
 import { RootViewContextProvider } from "./ViewContext";
 import { joinID } from "./connections";
 import { mergeRelays, sanitizeRelays } from "./components/EditRelays";
+import {
+  addNodeToFilters,
+  adddWorkspacesToFilter,
+  buildPrimaryDataQueryFromViews,
+  buildSecondaryDataQuery,
+  filtersToFiterArray,
+  sanitizeFilter,
+} from "./dataQuery";
+import { useWorkspaceFromURL } from "./KnowledgeDataContext";
+import { useNodeIDFromURL } from "./components/FullScreenViewWrapper";
 
 type DataProps = {
   user: KeyPair;
@@ -52,29 +58,20 @@ type ProcessedEvents = {
   contacts: Contacts;
 };
 
-const KINDS_CONTACTS = [
-  KIND_SETTINGS,
-  KIND_CONTACTLIST,
-  KIND_WORKSPACES,
-  KIND_RELATION_TYPES,
-  KIND_KNOWLEDGE_LIST,
-  KIND_KNOWLEDGE_NODE,
-  KIND_KNOWLEDGE_NODE_COLLECTION,
-  KIND_DELETE,
-];
-
-const KINDS_MYSELF = [...KINDS_CONTACTS, KIND_VIEWS];
-
 export const KIND_SEARCH = [
   KIND_KNOWLEDGE_NODE_COLLECTION,
   KIND_KNOWLEDGE_NODE,
 ];
 
-function createContactsEventsQueries(): GroupedByAuthorFilter {
-  return {
-    kinds: KINDS_CONTACTS,
-  };
-}
+const KINDS_CONTACTS_META = [KIND_WORKSPACES, KIND_RELATION_TYPES];
+
+const KINDS_META = [
+  KIND_SETTINGS,
+  KIND_CONTACTLIST,
+  KIND_WORKSPACES,
+  KIND_RELATION_TYPES,
+  KIND_VIEWS,
+];
 
 function processEventsByAuthor(
   authorEvents: List<UnsignedEvent | Event>
@@ -182,56 +179,177 @@ function Data({ user, children }: DataProps): JSX.Element {
     true,
     DEFAULT_RELAYS
   );
+
   const mergedRelays = mergeRelays(
     sanitizeRelays(DEFAULT_RELAYS),
     sanitizeRelays(myRelays)
   );
   const readFromRelays = getReadRelays(mergedRelays);
   const relaysInfo = useRelaysInfo(mergedRelays, relaysEose);
-  const { events: sentEventsFromQuery, eose: sentEventsEose } = useEventQuery(
+  const { events: mE, eose: metaEventsEose } = useEventQuery(
     relayPool,
     [
       {
         authors: [myPublicKey],
-        kinds: KINDS_MYSELF,
+        kinds: KINDS_META,
       },
     ],
     { readFromRelays }
   );
-  const sentEvents = createDefaultEvents(user).merge(
-    sentEventsFromQuery.valueSeq().toList().merge(newEvents)
+  const metaEvents = createDefaultEvents(user).merge(
+    mE.valueSeq().toList().merge(newEvents)
   );
-  const processedEvents = useEventProcessor(sentEvents);
-  const myProcessedEvents = processedEvents.get(myPublicKey, {
+
+  const processedMetaEvents = useEventProcessor(metaEvents).get(myPublicKey, {
     contacts: Map<PublicKey, Contact>(),
     settings: DEFAULT_SETTINGS,
     knowledgeDB: newDB(),
   });
-  const contacts = myProcessedEvents.contacts.filter(
+  const contacts = processedMetaEvents.contacts.filter(
     (_, k) => k !== myPublicKey
   );
-  const contactsQueryResult = useEventQueryByAuthor(
+
+  const { events: contactMetaEvents, eose: contactsMetaEventsEose } =
+    useEventQuery(
+      relayPool,
+      [{ authors: contacts.keySeq().toArray(), kinds: KINDS_CONTACTS_META }],
+      { readFromRelays, enabled: metaEventsEose }
+    );
+
+  const processedContactMetaEvents = useEventProcessor(
+    contactMetaEvents.valueSeq().toList()
+  );
+
+  const myViews = processedMetaEvents.knowledgeDB.views;
+
+  const activeWorkspace =
+    useWorkspaceFromURL() || processedMetaEvents.knowledgeDB.activeWorkspace;
+
+  // Workspaces, relations of activeWorkspace and nodes and relations marked as expanded in views
+  const initialFilters = buildPrimaryDataQueryFromViews(
+    myViews,
+    myPublicKey,
+    contacts,
+    activeWorkspace
+  );
+
+  // Might be a duplicate, but duplicates will get removed anyway
+  const nodeFromURL = useNodeIDFromURL();
+  const filterWithRoot = nodeFromURL
+    ? addNodeToFilters(initialFilters, nodeFromURL)
+    : initialFilters;
+
+  const initialFiltersWithMyWorkspaces = adddWorkspacesToFilter(
+    filterWithRoot,
+    processedMetaEvents.knowledgeDB.workspaces as List<LongID>
+  );
+
+  const initialFiltersWithWorkspaces = processedContactMetaEvents.reduce(
+    (rdx, p) =>
+      adddWorkspacesToFilter(rdx, p.knowledgeDB.workspaces as List<LongID>),
+    initialFiltersWithMyWorkspaces
+  );
+
+  const { events: initialDataEvents, eose: dataEventsEose } = useEventQuery(
     relayPool,
-    [createContactsEventsQueries()],
-    contacts.keySeq().toArray(),
-    { readFromRelays }
+    filtersToFiterArray(initialFiltersWithWorkspaces),
+    {
+      readFromRelays,
+      enabled: metaEventsEose && contactsMetaEventsEose,
+    }
   );
-  const contactsEvents = contactsQueryResult.reduce(
-    (rdx, result) => rdx.merge(result.events),
-    Map<string, Event>()
+
+  // process events
+  const initialDataEventsProcessed = useEventProcessor(
+    initialDataEvents.valueSeq().toList().merge(newEvents)
   );
-  const contactsData = useEventProcessor(contactsEvents.valueSeq().toList());
+  const primaryKnowledgeDBs = initialDataEventsProcessed.map(
+    (data) => data.knowledgeDB
+  );
 
-  const contactsKnowledgeDBs = contactsData.map((data) => data.knowledgeDB);
+  // Nodes, and lists attached in Relations fetched in primary query
+  const secondaryDataQuery = buildSecondaryDataQuery(
+    primaryKnowledgeDBs,
+    contacts,
+    myPublicKey,
+    initialFiltersWithWorkspaces
+  );
 
-  if (!sentEventsEose) {
+  const { events: secondaryDataEvents, eose: secondaryDataEventsEose } =
+    useEventQuery(relayPool, filtersToFiterArray(secondaryDataQuery), {
+      readFromRelays,
+      enabled: dataEventsEose,
+    });
+
+  const dataEventsProcessed = useEventProcessor(
+    metaEvents
+      .merge(contactMetaEvents.valueSeq().toList())
+      .merge(initialDataEvents.valueSeq().toList())
+      .merge(secondaryDataEvents.valueSeq().toList())
+      .merge(newEvents)
+  );
+  const knowledgeDBsSeondLevel = dataEventsProcessed.map(
+    (data) => data.knowledgeDB
+  );
+
+  const tertiaryDataQuery = buildSecondaryDataQuery(
+    knowledgeDBsSeondLevel,
+    contacts,
+    myPublicKey,
+    {
+      knowledgeListbyID: {
+        ...secondaryDataQuery.knowledgeListbyID,
+        "#d": [
+          ...(initialFiltersWithWorkspaces.knowledgeListbyID["#d"] || []),
+          ...(secondaryDataQuery.knowledgeListbyID["#d"] || []),
+        ],
+      },
+      knowledgeNodesByID: {
+        ...secondaryDataQuery.knowledgeNodesByID,
+        "#d": [
+          ...(initialFiltersWithWorkspaces.knowledgeNodesByID["#d"] || []),
+          ...(secondaryDataQuery.knowledgeNodesByID["#d"] || []),
+        ],
+      },
+      knowledgeListByHead: {
+        ...secondaryDataQuery.knowledgeListByHead,
+        "#k": [
+          ...(initialFiltersWithWorkspaces.knowledgeListByHead["#k"] || []),
+          ...(secondaryDataQuery.knowledgeListByHead["#k"] || []),
+        ],
+      },
+      deleteFilter: secondaryDataQuery.deleteFilter,
+    }
+  );
+
+  const enableTertiary =
+    sanitizeFilter(tertiaryDataQuery.knowledgeListbyID, "#d") !== undefined ||
+    sanitizeFilter(tertiaryDataQuery.knowledgeListByHead, "#k") !== undefined ||
+    sanitizeFilter(tertiaryDataQuery.knowledgeNodesByID, "#d") !== undefined;
+
+  const { events: tertiaryDataEvents } = useEventQuery(
+    relayPool,
+    filtersToFiterArray(tertiaryDataQuery),
+    {
+      readFromRelays,
+      enabled: secondaryDataEventsEose && enableTertiary,
+    }
+  );
+
+  const tDataEventsProcessed = useEventProcessor(
+    metaEvents
+      .merge(contactMetaEvents.valueSeq().toList())
+      .merge(initialDataEvents.valueSeq().toList())
+      .merge(secondaryDataEvents.valueSeq().toList())
+      .merge(tertiaryDataEvents.valueSeq().toList())
+      .merge(newEvents)
+  );
+  const knowledgeDBs = tDataEventsProcessed.map((data) => data.knowledgeDB);
+
+  // TODO: change back to metaEventsEose
+  if (!secondaryDataEventsEose) {
     return <div className="loading" aria-label="loading" />;
   }
-  const myDB = processedEvents.get(myPublicKey)?.knowledgeDB || newDB();
-
-  const knowledgeDBs = Map<PublicKey, KnowledgeData>({
-    [myPublicKey]: myDB,
-  }).merge(contactsKnowledgeDBs);
 
   const addNewEvents = (events: List<UnsignedEvent>): void => {
     setNewEvents((prev) => prev.merge(events));
@@ -239,15 +357,15 @@ function Data({ user, children }: DataProps): JSX.Element {
 
   return (
     <DataContextProvider
-      contacts={processedEvents.get(myPublicKey)?.contacts || Map()}
+      contacts={contacts}
       user={user}
-      settings={processedEvents.get(myPublicKey)?.settings || DEFAULT_SETTINGS}
+      settings={processedMetaEvents.settings}
       relays={mergedRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
     >
       <PlanningContextProvider addNewEvents={addNewEvents}>
-        <RootViewContextProvider root={myDB.activeWorkspace}>
+        <RootViewContextProvider root={activeWorkspace}>
           {children}
         </RootViewContextProvider>
       </PlanningContextProvider>

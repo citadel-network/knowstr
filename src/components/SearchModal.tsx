@@ -70,7 +70,7 @@ function useSearchQuery(
   const { contacts, user } = useData();
   const authors = contacts.keySeq().toSet().add(user.publicKey).toArray();
   const [search] = useDebounce(query, nip11.searchDebounce);
-  const enabled = search !== "";
+  const enabled = search !== "" && relays.length > 0;
 
   const basicFilter = {
     authors,

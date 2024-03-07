@@ -21,6 +21,12 @@ type SubPathWithRelations = SubPath & {
   relationsID: ID;
 };
 
+export function isSubPathWithRelations(
+  path: SubPath | SubPathWithRelations
+): path is SubPathWithRelations {
+  return "relationsID" in path;
+}
+
 export type ViewPath =
   | readonly [SubPath]
   | readonly [...SubPathWithRelations[], SubPath];

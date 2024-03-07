@@ -33,7 +33,7 @@ test("Multiple connections to same node", async () => {
 
   const searchInput = await screen.findByLabelText("search input");
   userEvent.type(searchInput, "Jav");
-  userEvent.click(screen.getByText(matchSplitText("Java")));
+  userEvent.click(await screen.findByText(matchSplitText("Java")));
 
   fireEvent.click(searchButton);
   const searchInput2 = await screen.findByLabelText("search input");

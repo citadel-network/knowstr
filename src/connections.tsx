@@ -19,6 +19,13 @@ export function shortID(id: ID): string {
   return splitID(id)[1];
 }
 
+export function stripIndex(id: string): string {
+  if (id.includes("#")) {
+    return id.split("#")[0];
+  }
+  return id;
+}
+
 export function getRelationsNoSocial(
   knowledgeDBs: KnowledgeDBs,
   relationID: ID | undefined,

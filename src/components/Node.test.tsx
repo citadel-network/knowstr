@@ -1,16 +1,22 @@
 import React from "react";
 import { fireEvent, screen } from "@testing-library/react";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import userEvent from "@testing-library/user-event";
 import { addRelationToRelations, newNode } from "../connections";
 import { DND } from "../dnd";
 import { ALICE, renderWithTestData, setup } from "../utils.test";
-import { RootViewContextProvider, newRelations } from "../ViewContext";
+import {
+  NodeIndex,
+  RootViewContextProvider,
+  newRelations,
+  viewPathToString,
+} from "../ViewContext";
 import { Column } from "./Column";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import {
   createPlan,
   planBulkUpsertNodes,
+  planUpdateViews,
   planUpsertNode,
   planUpsertRelations,
 } from "../planner";
@@ -42,7 +48,10 @@ test("Render non existing Node", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/w/${pl.id}`,
+    }
   );
   await screen.findByText("Programming Languages");
   screen.getByText("Error: Node not found");
@@ -64,7 +73,10 @@ test("Edit node via Column Menu", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/w/${note.id}`,
+    }
   );
   await screen.findByText("My Note");
   fireEvent.click(screen.getByLabelText("edit My Note"));
@@ -98,7 +110,10 @@ test("Edit node inline", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/d/${note.id}`,
+    }
   );
   await screen.findByText("My Note");
   fireEvent.click(screen.getByLabelText("edit My Note"));
@@ -124,9 +139,23 @@ test("Edited node is shown in Tree View", async () => {
     ),
     addRelationToRelations(newRelations(oop.id, "", publicKey), java.id)
   );
+  const planWithViews = planUpdateViews(
+    plan,
+    Map({
+      [viewPathToString([
+        { nodeID: pl.id, nodeIndex: 0 as NodeIndex, relationsID: "" as LongID },
+        { nodeID: oop.id, nodeIndex: 0 as NodeIndex },
+      ])]: {
+        expanded: true,
+        displaySubjects: false,
+        width: 1,
+        relations: "" as LongID,
+      },
+    })
+  );
   await execute({
     ...alice(),
-    plan: planBulkUpsertNodes(plan, [pl, oop, java]),
+    plan: planBulkUpsertNodes(planWithViews, [pl, oop, java]),
   });
   renderWithTestData(
     <RootViewContextProvider root={pl.id} indices={List([0])}>
@@ -136,7 +165,10 @@ test("Edited node is shown in Tree View", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/w/${pl.id}`,
+    }
   );
   fireEvent.click(await screen.findByLabelText("edit Java"));
   userEvent.keyboard("{backspace}{backspace}{backspace}{backspace}C++{enter}");
@@ -162,7 +194,10 @@ test("Delete node", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/d/${note.id}`,
+    }
   );
   await screen.findByText("My Note");
   userEvent.click(screen.getByLabelText("edit My Note"));

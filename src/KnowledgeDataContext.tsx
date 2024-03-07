@@ -1,4 +1,5 @@
 import { List } from "immutable";
+import { useParams } from "react-router-dom";
 import { newDB } from "./knowledge";
 import { shortID } from "./connections";
 import { useData } from "./DataContext";
@@ -23,10 +24,17 @@ export function getWorkspaces(
     .filter((n) => n !== undefined) as List<KnowNode>;
 }
 
+export function useWorkspaceFromURL(): LongID | undefined {
+  const params = useParams<{
+    workspaceID?: LongID;
+  }>();
+  return params.workspaceID;
+}
+
 export function useWorkspace(): string {
   const { knowledgeDBs, user } = useData();
   const myDB = knowledgeDBs.get(user.publicKey, newDB());
-  const { activeWorkspace } = myDB;
+  const activeWorkspace = useWorkspaceFromURL() || myDB.activeWorkspace;
   const node = getNodeFromID(knowledgeDBs, activeWorkspace, user.publicKey);
   if (!node) {
     return "New Workspace";

@@ -97,11 +97,11 @@ test("On Fullscreen, search also starts with press on slash key", async () => {
   userEvent.type(await screen.findByText("My first Workspace"), "/");
   screen.getByPlaceholderText("Search");
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "My s{enter}");
-  await waitFor(() => {
-    screen.getByText("My source");
-  });
+  userEvent.type(searchInput, "My s");
+  await screen.findByText(matchSplitText("My source"));
+  userEvent.type(searchInput, "{enter}");
   expect(screen.queryByPlaceholderText("Search")).toBeNull();
+  await screen.findByText("My source");
 });
 
 test("Results from relays with nip-50 support will be shown unfiltered", async () => {
@@ -149,5 +149,7 @@ test("Client side filtering when relay does not support nip-50", async () => {
   const searchInput = await screen.findByLabelText("search input");
   userEvent.type(searchInput, "Bitcoin");
   await screen.findByText("Bitcoin");
-  expect(screen.queryByText("Ethereum")).toBeNull();
+  await waitFor(() => {
+    expect(screen.queryByText("Ethereum")).toBeNull();
+  });
 });

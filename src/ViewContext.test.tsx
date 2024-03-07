@@ -182,7 +182,10 @@ test("Contact reorders list", async () => {
         <TreeView />
       </RootViewContextProvider>
     </Data>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/w/${root}`,
+    }
   );
   await screen.findByText("FPL");
   expect(extractNodes(utils.container)).toEqual(["OOP", "FPL"]);
@@ -202,7 +205,10 @@ test("Contact reorders list", async () => {
         <TreeView />
       </RootViewContextProvider>
     </Data>,
-    bob()
+    {
+      ...bob(),
+      initialRoute: `/w/${bobsWorkspace.id}`,
+    }
   );
   userEvent.click(await screen.findByLabelText("edit OOP"));
   userEvent.click(screen.getByLabelText("delete node"));
@@ -214,7 +220,10 @@ test("Contact reorders list", async () => {
         <TreeView />
       </RootViewContextProvider>
     </Data>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/w/${root}`,
+    }
   );
   // OOP is gone, so are it's children
   await screen.findByText("FPL");

@@ -3,16 +3,22 @@ import { useParams } from "react-router-dom";
 import { RootViewContextProvider, useNode } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
+export function useNodeIDFromURL(): LongID | undefined {
+  const params = useParams<{
+    openNodeID?: LongID;
+  }>();
+  return params.openNodeID;
+}
+
 export function FullScreenViewWrapper({
   children,
 }: {
   children: React.ReactNode;
 }): JSX.Element | null {
-  const { openNodeID: id } = useParams<{
-    openNodeID: string;
-  }>() as { openNodeID: string };
+  // The ID is part of this route, so it will always be defined
+  const id = useNodeIDFromURL();
   const [node] = useNode();
-  const root = (id as LongID) || node?.id;
+  const root = id || node?.id;
   if (!root) {
     return null;
   }

@@ -10,7 +10,6 @@ export function RequireLogin(): JSX.Element {
   if (!user) {
     return <SignInFullScreen />;
   }
-  // TODO: not ideal that we automatically start fetching in Require login
   return (
     <Data user={user}>
       <Outlet />
