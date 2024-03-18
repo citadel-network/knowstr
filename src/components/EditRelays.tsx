@@ -82,6 +82,32 @@ function EditableFormControl({
   );
 }
 
+function sanitizeRelayUrl(url: string): string | undefined {
+  const trimmedUrl = url.trim();
+  const noAddWS =
+    trimmedUrl.startsWith("wss://") || trimmedUrl.startsWith("ws://");
+  const urlWithWS = noAddWS ? trimmedUrl : `wss://${trimmedUrl}`;
+  try {
+    return new URL(urlWithWS).toString();
+  } catch {
+    return undefined;
+  }
+}
+
+export function sanitizeRelays(relays: Array<Relay>): Array<Relay> {
+  return relays
+    .map((relay) => {
+      const sanitizedRelayUrl = sanitizeRelayUrl(relay.url);
+      return sanitizedRelayUrl
+        ? {
+            ...relay,
+            url: sanitizedRelayUrl,
+          }
+        : undefined;
+    })
+    .filter((r) => r !== undefined) as Array<Relay>;
+}
+
 type RelayFormGroupProps = {
   relay: string;
   onDelete: () => void;
@@ -94,18 +120,23 @@ function RelayFormGroup({
   onSave,
 }: RelayFormGroupProps): JSX.Element {
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const isDefault = DEFAULT_RELAYS.some(
+    (r) => sanitizeRelayUrl(r.url) === sanitizeRelayUrl(relay)
+  );
 
   return (
     <Form.Group className="d-flex align-items-center mb-2">
-      <RelayButton
-        ariaLabel={`remove ${relay}`}
-        onClick={() => {
-          setIsEdit(false);
-          onDelete();
-        }}
-      >
-        <span className="simple-icon-minus" />
-      </RelayButton>
+      {!isDefault && (
+        <RelayButton
+          ariaLabel={`remove ${relay}`}
+          onClick={() => {
+            setIsEdit(false);
+            onDelete();
+          }}
+        >
+          <span className="simple-icon-minus" />
+        </RelayButton>
+      )}
 
       <EditableFormControl
         isEdit={isEdit}
@@ -114,7 +145,7 @@ function RelayFormGroup({
         relay={relay}
       />
 
-      {!isEdit && (
+      {!isEdit && !isDefault && (
         <RelayButton
           ariaLabel={`edit relay ${relay}`}
           onClick={() => setIsEdit(true)}
@@ -175,32 +206,6 @@ export function mergeRelays(relays: Relays, relaysToMerge: Relays): Relays {
   }, []);
 }
 
-function sanitizeRelayUrl(url: string): string | undefined {
-  const trimmedUrl = url.trim();
-  const noAddWS =
-    trimmedUrl.startsWith("wss://") || trimmedUrl.startsWith("ws://");
-  const urlWithWS = noAddWS ? trimmedUrl : `wss://${trimmedUrl}`;
-  try {
-    return new URL(urlWithWS).toString();
-  } catch {
-    return undefined;
-  }
-}
-
-export function sanitizeRelays(relays: Array<Relay>): Array<Relay> {
-  return relays
-    .map((relay) => {
-      const sanitizedRelayUrl = sanitizeRelayUrl(relay.url);
-      return sanitizedRelayUrl
-        ? {
-            ...relay,
-            url: sanitizedRelayUrl,
-          }
-        : undefined;
-    })
-    .filter((r) => r !== undefined) as Array<Relay>;
-}
-
 export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
   const { relays } = useData();
@@ -227,12 +232,12 @@ export function EditRelays(): JSX.Element {
   const submit = async (): Promise<void> => {
     // publish on old and new relays as well as default relays
     const allRelays = mergeRelays(
-      DEFAULT_RELAYS,
-      mergeRelays(relays, relayState)
+      sanitizeRelays(DEFAULT_RELAYS),
+      mergeRelays(sanitizeRelays(relays), sanitizeRelays(relayState))
     );
     const plan = planPublishRelayMetadata(
       { ...createPlan(), relays: allRelays },
-      relayState
+      sanitizeRelays(relayState)
     );
     await executePlan(plan);
     navigate("/");
