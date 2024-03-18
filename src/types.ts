@@ -49,6 +49,7 @@ declare global {
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
     publishResults: PublishResults;
+    loadingResults: boolean;
   };
 
   type LocalStorage = {

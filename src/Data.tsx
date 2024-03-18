@@ -189,6 +189,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     events: List<UnsignedEvent>;
     results: PublishResults;
   }>({ events: List(), results: Map() });
+  const [loadingResults, setLoadingResults] = useState<boolean>(false);
   const { relayPool } = useApis();
   const { relays: myRelays, eose: relaysEose } = useRelaysQuery(
     relayPool,
@@ -372,6 +373,7 @@ function Data({ user, children }: DataProps): JSX.Element {
   }
 
   const addNewEvents = (events: List<UnsignedEvent>): void => {
+    setLoadingResults(true);
     setNewEventsAndPublishResults((prev) => {
       return {
         events: prev.events.merge(events),
@@ -392,6 +394,7 @@ function Data({ user, children }: DataProps): JSX.Element {
         ),
       };
     });
+    setLoadingResults(false);
   };
 
   return (
@@ -403,6 +406,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
       publishResults={newEventsAndPublishResults.results}
+      loadingResults={loadingResults}
     >
       <PlanningContextProvider
         addNewEvents={addNewEvents}

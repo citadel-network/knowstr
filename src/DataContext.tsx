@@ -23,6 +23,7 @@ export function DataContextProvider({
   knowledgeDBs,
   relaysInfos,
   publishResults,
+  loadingResults,
 }: DataContextProps & {
   children: React.ReactNode;
 }): JSX.Element {
@@ -36,6 +37,7 @@ export function DataContextProvider({
         knowledgeDBs,
         relaysInfos,
         publishResults,
+        loadingResults,
       }}
     >
       {children}

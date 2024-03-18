@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dropdown } from "react-bootstrap";
+import { Dropdown, Spinner } from "react-bootstrap";
 import { useData } from "../DataContext";
 
 function getStatusCount(status: Array<PublishStatus>, type: string): number {
@@ -70,7 +70,14 @@ function RelayPublishStatus({
 }
 
 export function PublishingStatus(): JSX.Element | null {
-  const { publishResults } = useData();
+  const { publishResults, loadingResults } = useData();
+  if (loadingResults === true) {
+    return (
+      <div style={{ paddingTop: "6px", paddingBottom: "4px" }}>
+        <Spinner animation="border" role="status" />
+      </div>
+    );
+  }
   if (publishResults.size === 0) {
     return null;
   }
@@ -89,7 +96,7 @@ export function PublishingStatus(): JSX.Element | null {
         <span className="simple-icon-info" />
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        <Dropdown.Item key="publishing-status-header" disabled>
+        <Dropdown.Item key="publishing-status-header" className="black-muted">
           <div className="bold">
             <h3>Publishing Status</h3>
           </div>
