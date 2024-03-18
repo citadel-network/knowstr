@@ -56,7 +56,6 @@ function asArray(obj: Serializable | undefined): Array<Serializable> {
 
 function viewToJSON(attributes: View): Serializable {
   return {
-    s: attributes.displaySubjects,
     o: attributes.relations,
     w: attributes.width,
     e: attributes.expanded !== undefined ? attributes.expanded : undefined,
@@ -69,7 +68,6 @@ function jsonToView(view: Serializable): View | undefined {
   }
   const a = asObject(view);
   return {
-    displaySubjects: asBoolean(a.s),
     relations: a.o !== undefined ? (asString(a.o) as LongID) : undefined,
     width: asNumber(a.w),
     expanded: a.e !== undefined ? asBoolean(a.e) : undefined,
