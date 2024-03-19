@@ -155,10 +155,10 @@ type TestApis = Omit<Apis, "fileStore" | "relayPool"> & {
 
 function applyApis(props?: Partial<TestApis>): TestApis {
   return {
-    fileStore: mockFileStore(),
-    relayPool: mockRelayPool(),
-    finalizeEvent: mockFinalizeEvent(),
-    nip11: {
+    fileStore: props?.fileStore || mockFileStore(),
+    relayPool: props?.relayPool || mockRelayPool(),
+    finalizeEvent: props?.finalizeEvent || mockFinalizeEvent(),
+    nip11: props?.nip11 || {
       searchDebounce: 0,
       fetchRelayInformation: jest.fn().mockReturnValue(
         Promise.resolve({
