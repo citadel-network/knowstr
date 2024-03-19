@@ -46,8 +46,9 @@ function getAllRelationsForNode(
   knowledgeDB: KnowledgeData,
   nodeID: LongID
 ): Set<LongID> {
+  const localID = shortID(nodeID);
   return knowledgeDB.relations.reduce((rdx, relations) => {
-    if (relations.head === nodeID) {
+    if (relations.head === localID) {
       return rdx.merge(relations.items);
     }
     return rdx;
