@@ -151,7 +151,7 @@ export function jsonToRelations(
   const items = List(asArray(r.l)).map((i) => asString(i) as LongID);
   return {
     items,
-    head: asString(r.h) as LongID,
+    head: asString(r.h),
     type: asString(r.t),
     updated,
   };

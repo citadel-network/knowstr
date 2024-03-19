@@ -1,7 +1,13 @@
 import React from "react";
 import { List, Set, Map } from "immutable";
 import { v4 } from "uuid";
-import { getRelations, isRemote, joinID, splitID } from "./connections";
+import {
+  getRelations,
+  isRemote,
+  joinID,
+  shortID,
+  splitID,
+} from "./connections";
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
 import { Plan, planUpsertRelations, planUpdateViews } from "./planner";
@@ -102,21 +108,21 @@ export function getAvailableRelationsForNode(
   id: LongID
 ): List<Relations> {
   const myRelations = knowledgeDBs.get(myself, newDB()).relations;
-  const [remote] = splitID(id);
+  const [remote, localID] = splitID(id);
   const relations: List<Relations> = myRelations
-    .filter((r) => r.head === id)
+    .filter((r) => r.head === localID)
     .toList();
 
   const preferredRemoterelations: List<Relations> =
     remote && isRemote(remote, myself)
       ? knowledgeDBs
           .get(remote, newDB())
-          .relations.filter((r) => r.head === id)
+          .relations.filter((r) => r.head === localID)
           .toList()
       : List<Relations>();
   const otherRelations: List<Relations> = knowledgeDBs
     .filter((_, k) => k !== myself && k !== remote)
-    .map((db) => db.relations.filter((r) => r.head === id).toList())
+    .map((db) => db.relations.filter((r) => r.head === localID).toList())
     .toList()
     .flatten(1) as List<Relations>;
   return relations.concat(preferredRemoterelations).concat(otherRelations);
@@ -145,7 +151,7 @@ function getDefaultView(
 
 export function getNodeFromID(
   knowledgeDBs: KnowledgeDBs,
-  id: ID,
+  id: ID | LongID,
   myself: PublicKey
 ): KnowNode | undefined {
   const [remote, knowID] = splitID(id);
@@ -433,7 +439,7 @@ export function newRelations(
   myself: PublicKey
 ): Relations {
   return {
-    head,
+    head: shortID(head),
     items: List<LongID>(),
     id: joinID(myself, v4()),
     type,
