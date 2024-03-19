@@ -5,11 +5,7 @@ import crypto from "crypto";
 import { useData } from "./DataContext";
 import { execute } from "./executor";
 import { useApis } from "./Apis";
-import {
-  relationTypesToJson,
-  relationsToJSON,
-  viewsToJSON,
-} from "./serializer";
+import { relationTypesToJson, viewsToJSON } from "./serializer";
 import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
@@ -160,6 +156,7 @@ export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
     ...userDB,
     relations: updatedRelations,
   };
+  const itemsAsTags = relations.items.toArray().map((i) => ["i", i]);
   const updateRelationsEvent = {
     kind: KIND_KNOWLEDGE_LIST,
     pubkey: plan.user.publicKey,
@@ -167,8 +164,10 @@ export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
     tags: [
       ["d", shortID(relations.id)],
       ["k", shortID(relations.head)],
+      ["rel_type", relations.type],
+      ...itemsAsTags,
     ],
-    content: JSON.stringify(relationsToJSON(relations)),
+    content: "",
   };
   return {
     ...plan,

@@ -1,5 +1,8 @@
 import { Map, List, OrderedMap } from "immutable";
+import { UnsignedEvent } from "nostr-tools";
+import { findAllTags, findTag } from "citadel-commons";
 import { parseViewPath } from "./ViewContext";
+import { joinID } from "./connections";
 
 export type Serializable =
   | string
@@ -132,27 +135,21 @@ export function viewsToJSON(views: Map<string, View>): Serializable {
   return views.map((v) => viewToJSON(v)).toJSON();
 }
 
-export function relationsToJSON(relations: Relations): Serializable {
-  return {
-    l: relations.items.toArray(),
-    h: relations.head,
-    t: relations.type,
-  };
-}
-
-export function jsonToRelations(
-  s: Serializable | undefined,
-  updated: number
-): Omit<Relations, "id"> | undefined {
-  if (!s) {
+export function eventToRelations(e: UnsignedEvent): Relations | undefined {
+  const id = findTag(e, "d");
+  const head = findTag(e, "k") as ID;
+  const type = findTag(e, "rel_type");
+  const updated = e.created_at;
+  if (id === undefined || head === undefined || type === undefined) {
     return undefined;
   }
-  const r = asObject(s);
-  const items = List(asArray(r.l)).map((i) => asString(i) as LongID);
+  const itemsAsTags = findAllTags(e, "i") || [];
+  const items = List(itemsAsTags.map((i) => i[0] as LongID));
   return {
-    items,
-    head: asString(r.h),
-    type: asString(r.t),
+    id: joinID(e.pubkey, id),
+    head,
+    type,
     updated,
+    items,
   };
 }
