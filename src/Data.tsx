@@ -402,7 +402,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       contacts={contacts}
       user={user}
       settings={processedMetaEvents.settings}
-      relays={mergedRelays}
+      relays={myRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
       publishResults={newEventsAndPublishResults.results}
