@@ -1,7 +1,8 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Dropdown, Spinner } from "react-bootstrap";
+import React, { useState } from "react";
+import { Dropdown, Spinner, ProgressBar, Collapse } from "react-bootstrap";
+import { useMediaQuery } from "react-responsive";
 import { useData } from "../DataContext";
+import { IS_MOBILE } from "./responsive";
 
 function getStatusCount(status: Array<PublishStatus>, type: string): number {
   return status.filter((s) => s.status === type).length;
@@ -23,34 +24,67 @@ function RelayPublishStatus({
   status: Array<PublishStatus>;
   relayUrl: string;
 }): JSX.Element {
-  const navigate = useNavigate();
+  const isMobile = useMediaQuery(IS_MOBILE);
+  const [showDetails, setShowDetails] = useState<boolean>(false);
   const numberFulfilled = getStatusCount(status, "fulfilled");
   const numberRejected = getStatusCount(status, "rejected");
   const totalNumber = numberFulfilled + numberRejected;
   const percentage = Math.round((numberFulfilled / totalNumber) * 100);
-  const isWarning = percentage < 50;
+  const isWarning = percentage < 80;
+  const warningVariant = percentage < 50 ? "danger" : "warning";
   const lastRejectedReason = getLastRejectedReason(status);
   return (
-    <>
+    <div style={{ maxWidth: "100vw" }}>
       <Dropdown.Divider />
-      <Dropdown.Item tabIndex={0} onClick={() => navigate("/relays")}>
-        <div className="flex-row-space-between">
+      <Dropdown.Item tabIndex={0}>
+        <div
+          role="button"
+          className="flex-row-space-between"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDetails(!showDetails);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.stopPropagation();
+              setShowDetails(!showDetails);
+            }
+          }}
+        >
           <div className="me-2">
-            <div className="bold">{`Relay ${relayUrl}:`}</div>
-            <div className="mt-1">
-              {totalNumber > 0
-                ? `${
-                    totalNumber === 1
-                      ? `The last event ${
-                          numberFulfilled === 1 ? "could" : "could not"
-                        }`
-                      : `${percentage}% of the last ${totalNumber} events could`
-                  } be published on this relay`
-                : `No events were attempted to be published on this relay`}
-            </div>
-            {lastRejectedReason && (
-              <div>
-                {`The last event could not be published because: ${lastRejectedReason}`}
+            <div className="bold break-word">{`Relay ${relayUrl}:`}</div>
+            <ProgressBar
+              now={percentage}
+              label={`${percentage}%`}
+              variant={isWarning ? warningVariant : "success"}
+              style={{
+                width: "30rem",
+                maxWidth: isMobile ? "70vw" : "30rem",
+                height: "1.5rem",
+              }}
+            />
+            {showDetails && (
+              <Collapse in={showDetails}>
+                <div className="mt-1">
+                  {totalNumber > 0
+                    ? `${
+                        totalNumber === 1
+                          ? `The last event ${
+                              numberFulfilled === 1 ? "has" : "has not"
+                            }`
+                          : `${numberFulfilled} of the last ${totalNumber} events have`
+                      } been published on this relay`
+                    : `No events were attempted to be published on this relay`}
+                </div>
+              </Collapse>
+            )}
+            {showDetails && lastRejectedReason && (
+              <div
+                className="break-word"
+                style={{ maxWidth: isMobile ? "70vw" : "30rem" }}
+              >
+                {`The last event was not published because: ${lastRejectedReason}`}
               </div>
             )}
           </div>
@@ -65,7 +99,7 @@ function RelayPublishStatus({
           </div>
         </div>
       </Dropdown.Item>
-    </>
+    </div>
   );
 }
 
@@ -97,8 +131,8 @@ export function PublishingStatus(): JSX.Element | null {
       </Dropdown.Toggle>
       <Dropdown.Menu>
         <Dropdown.Item key="publishing-status-header" className="black-muted">
-          <div className="bold">
-            <h3>Publishing Status</h3>
+          <div className="project-selection">
+            <h2>Publishing Status</h2>
           </div>
         </Dropdown.Item>
         {publishResults
