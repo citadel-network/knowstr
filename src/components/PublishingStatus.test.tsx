@@ -13,21 +13,18 @@ import { PublishingStatus } from "./PublishingStatus";
 import { WorkspaceView } from "./Workspace";
 import { MockRelayPool, mockRelayPool } from "../nostrMock.test";
 
-test("Publishing Status is shown per relay", async () => {
+test("Publishing Status", async () => {
   const [alice] = setup([ALICE]);
   const view = renderApp(alice());
   await typeNewNode(view, "New Note");
   userEvent.click(screen.getByLabelText("publishing status"));
   await screen.findByText("Publishing Status");
-  screen.getByText("Relay wss://relay.damus.io/:");
-  expect(
-    screen.getAllByText(
-      "100% of the last 3 events could be published on this relay"
-    )
-  ).toHaveLength(4);
+  expect(await screen.findAllByText("100%")).toHaveLength(4);
+  userEvent.click(screen.getByText("Relay wss://relay.damus.io/:"));
+  screen.getByText("3 of the last 3 events have been published on this relay");
 });
 
-test("Publishing Status is shown as failed", async () => {
+test("Details of Publishing Status", async () => {
   const [alice] = setup([ALICE]);
   const utils = alice();
   const view = renderWithTestData(
@@ -62,28 +59,47 @@ test("Publishing Status is shown as failed", async () => {
 
   userEvent.click(screen.getByLabelText("publishing status"));
   await screen.findByText("Publishing Status");
-  screen.getByText("Relay wss://relay.damus.io/:");
-  screen.getByText("67% of the last 3 events could be published on this relay");
+  userEvent.click(screen.getByText("Relay wss://relay.damus.io/:"));
+  screen.getByText("2 of the last 3 events have been published on this relay");
   screen.getByText(
-    "The last event could not be published because: Error: too many requests"
+    "The last event was not published because: Error: too many requests"
   );
-  screen.getByText("Relay wss://relay.snort.social/:");
-  screen.getByText("Relay wss://nostr.wine/:");
+  userEvent.click(screen.getByText("Relay wss://relay.snort.social/:"));
   expect(
     screen.getAllByText(
-      "0% of the last 3 events could be published on this relay"
+      "0 of the last 3 events have been published on this relay"
+    )
+  ).toHaveLength(1);
+  expect(
+    screen.getAllByText(
+      "The last event was not published because: Error: paid relay"
+    )
+  ).toHaveLength(1);
+  userEvent.click(screen.getByText("Relay wss://nostr.wine/:"));
+  expect(
+    screen.getAllByText(
+      "0 of the last 3 events have been published on this relay"
     )
   ).toHaveLength(2);
   expect(
     screen.getAllByText(
-      "The last event could not be published because: Error: paid relay"
+      "The last event was not published because: Error: paid relay"
     )
   ).toHaveLength(2);
-  screen.getByText("Relay wss://nos.lol/:");
+  userEvent.click(screen.getByText("Relay wss://relay.snort.social/:"));
+  expect(
+    screen.getAllByText(
+      "0 of the last 3 events have been published on this relay"
+    )
+  ).toHaveLength(1);
+  expect(
+    screen.getAllByText(
+      "The last event was not published because: Error: paid relay"
+    )
+  ).toHaveLength(1);
+  userEvent.click(screen.getByText("Relay wss://nos.lol/:"));
+  screen.getByText("3 of the last 3 events have been published on this relay");
   screen.getByText(
-    "100% of the last 3 events could be published on this relay"
-  );
-  screen.getByText(
-    "The last event could not be published because: Error: too many requests"
+    "The last event was not published because: Error: too many requests"
   );
 });
