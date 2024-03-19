@@ -15,13 +15,13 @@ import {
   KIND_WORKSPACES,
 } from "./nostr";
 import {
-  jsonToRelations,
   Serializable,
   jsonToViews,
   jsonToWorkspace,
   jsonToRelationTypes,
+  eventToRelations,
 } from "./serializer";
-import { joinID, shortID } from "./connections";
+import { joinID, shortID, splitID } from "./connections";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
 import { createNodesFromMarkdown } from "./components/FileDropZone";
 
@@ -101,21 +101,12 @@ export function findRelations(
       }
       return rdx;
     }
-    const id = findTag(event, "d");
-    if (!id) {
-      return rdx;
-    }
-    const relations = jsonToRelations(
-      JSON.parse(event.content) as Serializable,
-      event.created_at
-    );
+    const relations = eventToRelations(event);
     if (!relations) {
       return rdx;
     }
-    return rdx.set(id, {
-      ...relations,
-      id: joinID(event.pubkey, id),
-    });
+    const id = splitID(relations.id)[1];
+    return rdx.set(id, relations);
   }, Map<string, Relations>());
 }
 
