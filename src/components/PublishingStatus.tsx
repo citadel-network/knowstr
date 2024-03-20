@@ -17,6 +17,21 @@ function getLastRejectedReason(
   return lastRejected ? lastRejected.reason : undefined;
 }
 
+function getPublishingDetails(
+  totalNumber: number,
+  numberFulfilled: number
+): string {
+  if (totalNumber === 0) {
+    return "No events were attempted to be published";
+  }
+  if (totalNumber === 1) {
+    return `The last event ${
+      numberFulfilled === 1 ? "has" : "has not"
+    } been published`;
+  }
+  return `${numberFulfilled} of the last ${totalNumber} events have been published`;
+}
+
 function RelayPublishStatus({
   status,
   relayUrl,
@@ -63,15 +78,8 @@ function RelayPublishStatus({
             />
             {showDetails && (
               <div className="mt-1">
-                {totalNumber > 0
-                  ? `${
-                      totalNumber === 1
-                        ? `The last event ${
-                            numberFulfilled === 1 ? "has" : "has not"
-                          }`
-                        : `${numberFulfilled} of the last ${totalNumber} events have`
-                    } been published`
-                  : `No events were attempted to be published`}
+                {" "}
+                {getPublishingDetails(totalNumber, numberFulfilled)}{" "}
               </div>
             )}
             {showDetails && lastRejectedReason && (
