@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dropdown, Spinner, ProgressBar, Collapse } from "react-bootstrap";
+import { Dropdown, Spinner, ProgressBar } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
 import { useData } from "../DataContext";
 import { IS_MOBILE } from "./responsive";
@@ -24,7 +24,6 @@ function RelayPublishStatus({
   status: Array<PublishStatus>;
   relayUrl: string;
 }): JSX.Element {
-  const isMobile = useMediaQuery(IS_MOBILE);
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const numberFulfilled = getStatusCount(status, "fulfilled");
   const numberRejected = getStatusCount(status, "rejected");
@@ -34,7 +33,7 @@ function RelayPublishStatus({
   const warningVariant = percentage < 50 ? "danger" : "warning";
   const lastRejectedReason = getLastRejectedReason(status);
   return (
-    <div style={{ maxWidth: "100vw" }}>
+    <>
       <Dropdown.Divider />
       <Dropdown.Item tabIndex={0}>
         <div
@@ -52,40 +51,31 @@ function RelayPublishStatus({
             }
           }}
         >
-          <div className="me-2">
-            <div className="bold break-word">{`Relay ${relayUrl}:`}</div>
+          <div className="w-80 break-word" style={{ whiteSpace: "normal" }}>
+            <div className="bold">{`Relay ${relayUrl}:`}</div>
             <ProgressBar
               now={percentage}
               label={`${percentage}%`}
               variant={isWarning ? warningVariant : "success"}
               style={{
-                width: "30rem",
-                maxWidth: isMobile ? "70vw" : "30rem",
                 height: "1.5rem",
               }}
             />
             {showDetails && (
-              <Collapse in={showDetails}>
-                <div className="mt-1">
-                  {totalNumber > 0
-                    ? `${
-                        totalNumber === 1
-                          ? `The last event ${
-                              numberFulfilled === 1 ? "has" : "has not"
-                            }`
-                          : `${numberFulfilled} of the last ${totalNumber} events have`
-                      } been published on this relay`
-                    : `No events were attempted to be published on this relay`}
-                </div>
-              </Collapse>
+              <div className="mt-1">
+                {totalNumber > 0
+                  ? `${
+                      totalNumber === 1
+                        ? `The last event ${
+                            numberFulfilled === 1 ? "has" : "has not"
+                          }`
+                        : `${numberFulfilled} of the last ${totalNumber} events have`
+                    } been published`
+                  : `No events were attempted to be published`}
+              </div>
             )}
             {showDetails && lastRejectedReason && (
-              <div
-                className="break-word"
-                style={{ maxWidth: isMobile ? "70vw" : "30rem" }}
-              >
-                {`The last event was not published because: ${lastRejectedReason}`}
-              </div>
+              <div>{`Last rejection reason: ${lastRejectedReason}`}</div>
             )}
           </div>
           <div className="ms-2 flex-row-center align-center icon-large">
@@ -99,11 +89,12 @@ function RelayPublishStatus({
           </div>
         </div>
       </Dropdown.Item>
-    </div>
+    </>
   );
 }
 
 export function PublishingStatus(): JSX.Element | null {
+  const isMobile = useMediaQuery(IS_MOBILE);
   const { publishResults, loadingResults } = useData();
   if (loadingResults === true) {
     return (
@@ -129,7 +120,13 @@ export function PublishingStatus(): JSX.Element | null {
       >
         <span className="simple-icon-info" />
       </Dropdown.Toggle>
-      <Dropdown.Menu>
+      <Dropdown.Menu
+        style={
+          isMobile
+            ? { position: "absolute", width: "100vw" }
+            : { width: "30rem" }
+        }
+      >
         <Dropdown.Item key="publishing-status-header" className="black-muted">
           <div className="project-selection">
             <h2>Publishing Status</h2>

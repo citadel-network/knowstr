@@ -21,7 +21,7 @@ test("Publishing Status", async () => {
   await screen.findByText("Publishing Status");
   expect(await screen.findAllByText("100%")).toHaveLength(4);
   userEvent.click(screen.getByText("Relay wss://relay.damus.io/:"));
-  screen.getByText("3 of the last 3 events have been published on this relay");
+  screen.getByText("3 of the last 3 events have been published");
 });
 
 test("Details of Publishing Status", async () => {
@@ -60,46 +60,30 @@ test("Details of Publishing Status", async () => {
   userEvent.click(screen.getByLabelText("publishing status"));
   await screen.findByText("Publishing Status");
   userEvent.click(screen.getByText("Relay wss://relay.damus.io/:"));
-  screen.getByText("2 of the last 3 events have been published on this relay");
-  screen.getByText(
-    "The last event was not published because: Error: too many requests"
-  );
+  screen.getByText("2 of the last 3 events have been published");
+  screen.getByText("Last rejection reason: Error: too many requests");
   userEvent.click(screen.getByText("Relay wss://relay.snort.social/:"));
   expect(
-    screen.getAllByText(
-      "0 of the last 3 events have been published on this relay"
-    )
+    screen.getAllByText("0 of the last 3 events have been published")
   ).toHaveLength(1);
   expect(
-    screen.getAllByText(
-      "The last event was not published because: Error: paid relay"
-    )
+    screen.getAllByText("Last rejection reason: Error: paid relay")
   ).toHaveLength(1);
   userEvent.click(screen.getByText("Relay wss://nostr.wine/:"));
   expect(
-    screen.getAllByText(
-      "0 of the last 3 events have been published on this relay"
-    )
+    screen.getAllByText("0 of the last 3 events have been published")
   ).toHaveLength(2);
   expect(
-    screen.getAllByText(
-      "The last event was not published because: Error: paid relay"
-    )
+    screen.getAllByText("Last rejection reason: Error: paid relay")
   ).toHaveLength(2);
   userEvent.click(screen.getByText("Relay wss://relay.snort.social/:"));
   expect(
-    screen.getAllByText(
-      "0 of the last 3 events have been published on this relay"
-    )
+    screen.getAllByText("0 of the last 3 events have been published")
   ).toHaveLength(1);
   expect(
-    screen.getAllByText(
-      "The last event was not published because: Error: paid relay"
-    )
+    screen.getAllByText("Last rejection reason: Error: paid relay")
   ).toHaveLength(1);
   userEvent.click(screen.getByText("Relay wss://nos.lol/:"));
-  screen.getByText("3 of the last 3 events have been published on this relay");
-  screen.getByText(
-    "The last event was not published because: Error: too many requests"
-  );
+  screen.getByText("3 of the last 3 events have been published");
+  screen.getByText("Last rejection reason: Error: too many requests");
 });
