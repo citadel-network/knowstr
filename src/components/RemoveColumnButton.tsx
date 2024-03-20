@@ -57,7 +57,7 @@ export function RemoveColumnButton(): JSX.Element | null {
     <button
       type="button"
       aria-label="close"
-      className="outer-node-extras-close-btn"
+      className="outer-node-extras-close-btn close"
       onClick={onClick}
     >
       <span>×</span>
