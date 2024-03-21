@@ -40,8 +40,10 @@ import {
   addNodeToFilters,
   adddWorkspacesToFilter,
   buildPrimaryDataQueryFromViews,
+  buildReferencedByListsQuery,
   buildSecondaryDataQuery,
-  filtersToFiterArray,
+  filtersToFilterArray,
+  merge,
   sanitizeFilter,
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
@@ -270,7 +272,7 @@ function Data({ user, children }: DataProps): JSX.Element {
 
   const { events: initialDataEvents, eose: dataEventsEose } = useEventQuery(
     relayPool,
-    filtersToFiterArray(initialFiltersWithWorkspaces),
+    filtersToFilterArray(initialFiltersWithWorkspaces),
     {
       readFromRelays,
       enabled: metaEventsEose && contactsMetaEventsEose,
@@ -297,7 +299,7 @@ function Data({ user, children }: DataProps): JSX.Element {
   );
 
   const { events: secondaryDataEvents, eose: secondaryDataEventsEose } =
-    useEventQuery(relayPool, filtersToFiterArray(secondaryDataQuery), {
+    useEventQuery(relayPool, filtersToFilterArray(secondaryDataQuery), {
       readFromRelays,
       enabled: dataEventsEose,
     });
@@ -317,30 +319,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     knowledgeDBsSeondLevel,
     contacts,
     myPublicKey,
-    {
-      knowledgeListbyID: {
-        ...secondaryDataQuery.knowledgeListbyID,
-        "#d": [
-          ...(initialFiltersWithWorkspaces.knowledgeListbyID["#d"] || []),
-          ...(secondaryDataQuery.knowledgeListbyID["#d"] || []),
-        ],
-      },
-      knowledgeNodesByID: {
-        ...secondaryDataQuery.knowledgeNodesByID,
-        "#d": [
-          ...(initialFiltersWithWorkspaces.knowledgeNodesByID["#d"] || []),
-          ...(secondaryDataQuery.knowledgeNodesByID["#d"] || []),
-        ],
-      },
-      knowledgeListByHead: {
-        ...secondaryDataQuery.knowledgeListByHead,
-        "#k": [
-          ...(initialFiltersWithWorkspaces.knowledgeListByHead["#k"] || []),
-          ...(secondaryDataQuery.knowledgeListByHead["#k"] || []),
-        ],
-      },
-      deleteFilter: secondaryDataQuery.deleteFilter,
-    }
+    merge(initialFiltersWithWorkspaces, secondaryDataQuery)
   );
 
   const enableTertiary =
@@ -348,14 +327,11 @@ function Data({ user, children }: DataProps): JSX.Element {
     sanitizeFilter(tertiaryDataQuery.knowledgeListByHead, "#k") !== undefined ||
     sanitizeFilter(tertiaryDataQuery.knowledgeNodesByID, "#d") !== undefined;
 
-  const { events: tertiaryDataEvents } = useEventQuery(
-    relayPool,
-    filtersToFiterArray(tertiaryDataQuery),
-    {
+  const { events: tertiaryDataEvents, eose: tertiaryEventsEose } =
+    useEventQuery(relayPool, filtersToFilterArray(tertiaryDataQuery), {
       readFromRelays,
       enabled: secondaryDataEventsEose && enableTertiary,
-    }
-  );
+    });
 
   const tDataEventsProcessed = useEventProcessor(
     metaEvents
@@ -365,9 +341,49 @@ function Data({ user, children }: DataProps): JSX.Element {
       .merge(tertiaryDataEvents.valueSeq().toList())
       .merge(newEventsAndPublishResults.events)
   );
-  const knowledgeDBs = tDataEventsProcessed.map((data) => data.knowledgeDB);
+  const tknowledgeDBs = tDataEventsProcessed.map((data) => data.knowledgeDB);
 
-  // TODO: change back to metaEventsEose
+  const referencedByListsQuery = buildReferencedByListsQuery(
+    tknowledgeDBs,
+    contacts,
+    myPublicKey
+  );
+  const { events: referencedByListsEvents, eose: referencedByListsEose } =
+    useEventQuery(relayPool, [referencedByListsQuery], {
+      readFromRelays,
+      enabled:
+        tertiaryEventsEose || (!enableTertiary && secondaryDataEventsEose),
+    });
+  const referencedListsQueryResult = useEventProcessor(
+    referencedByListsEvents.valueSeq().toList()
+  );
+  const referencedNodesQuery = buildSecondaryDataQuery(
+    referencedListsQueryResult.map((data) => data.knowledgeDB),
+    contacts,
+    myPublicKey,
+    merge(initialFiltersWithWorkspaces, secondaryDataQuery)
+  );
+
+  const { events: referencedNodes } = useEventQuery(
+    relayPool,
+    [referencedNodesQuery],
+    {
+      readFromRelays,
+      enabled: referencedByListsEose,
+    }
+  );
+  const rDataEventsProcessed = useEventProcessor(
+    metaEvents
+      .merge(contactMetaEvents.valueSeq().toList())
+      .merge(initialDataEvents.valueSeq().toList())
+      .merge(secondaryDataEvents.valueSeq().toList())
+      .merge(tertiaryDataEvents.valueSeq().toList())
+      .merge(referencedByListsEvents.valueSeq().toList())
+      .merge(referencedNodes.valueSeq().toList())
+      .merge(newEventsAndPublishResults.events)
+  );
+  const knowledgeDBs = rDataEventsProcessed.map((data) => data.knowledgeDB);
+
   if (!secondaryDataEventsEose) {
     return <div className="loading" aria-label="loading" />;
   }

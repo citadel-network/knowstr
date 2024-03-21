@@ -4,9 +4,11 @@ import {
   addRelationToRelations,
   bulkAddRelations,
   newNode,
+  getReferencedByRelations,
 } from "./connections";
-import { ALICE } from "./utils.test";
+import { ALICE, BOB } from "./utils.test";
 import { newRelations } from "./ViewContext";
+import { newDB } from "./knowledge";
 
 function sampleNodes(): {
   nodes: Map<ID, KnowNode>;
@@ -60,4 +62,42 @@ test("Reorder existing connections", () => {
   expect(moveRelations(relations, [2], 0).items).toEqual(
     List([d.id, b.id, c.id, e.id])
   );
+});
+
+test("get referenced by relations", () => {
+  const aliceDB = newDB();
+  const bobsDB = newDB();
+  const btc = newNode("Bitcoin", ALICE.publicKey);
+  const money = newNode("Money", ALICE.publicKey);
+  const crypto = newNode("Crypto", BOB.publicKey);
+
+  const moneyRelations = addRelationToRelations(
+    newRelations(money.id, "", ALICE.publicKey),
+    btc.id
+  );
+  const cryptoRelations = addRelationToRelations(
+    newRelations(crypto.id, "", BOB.publicKey),
+    btc.id
+  );
+  const aliceDBWithRelations = {
+    ...aliceDB,
+    relations: Map({ [money.id]: moneyRelations }),
+    nodes: Map({ [btc.id]: btc, [money.id]: money }),
+  };
+  const bobDBWithRelations = {
+    ...bobsDB,
+    relations: Map({ [crypto.id]: cryptoRelations }),
+    nodes: Map({ [crypto.id]: crypto }),
+  };
+  const dbs = Map({
+    [ALICE.publicKey]: aliceDBWithRelations,
+    [BOB.publicKey]: bobDBWithRelations,
+  });
+
+  const referencedBy = getReferencedByRelations(
+    dbs as KnowledgeDBs,
+    ALICE.publicKey,
+    btc.id
+  );
+  expect(referencedBy?.items).toEqual(List([money.id, crypto.id]));
 });

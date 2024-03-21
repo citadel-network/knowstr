@@ -8,6 +8,7 @@ import {
   getDefaultRelationForNode,
   updateView,
   useNode,
+  useParentNode,
   useViewKey,
   useViewPath,
   viewPathToString,
@@ -17,7 +18,7 @@ import {
   useDeselectAllInView,
   useTemporaryView,
 } from "./TemporaryViewContext";
-import { getRelations, isRemote, splitID } from "../connections";
+import { REFERENCED_BY, getRelations, isRemote, splitID } from "../connections";
 import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import { newDB } from "../knowledge";
@@ -177,6 +178,7 @@ function EditRelationsDropdown({
 
   const isDeleteAvailable =
     view.relations !== "social" &&
+    view.relations !== REFERENCED_BY &&
     !isRemote(splitID(view.relations)[0], user.publicKey);
   if (!isDeleteAvailable && otherRelations.size === 0) {
     return null;
@@ -242,37 +244,35 @@ function useOnToggleExpanded(): (expand: boolean) => void {
   };
 }
 
-function SocialRelationsButton({
+function AutomaticRelationsButton({
   alwaysOneSelected,
   currentRelations,
   readonly,
+  relations,
+  hideShowLabel,
+  children,
+  label,
 }: {
+  hideShowLabel: string;
+  relations: Relations;
   readonly?: boolean;
   alwaysOneSelected?: boolean;
   currentRelations?: Relations;
+  children: React.ReactNode;
+  label: string;
 }): JSX.Element | null {
-  const [node, view] = useNode();
-  const { knowledgeDBs, user } = useData();
+  const view = useNode()[1];
   const onChangeRelations = useOnChangeRelations();
   const onToggleExpanded = useOnToggleExpanded();
-  if (!node || !onChangeRelations || !onToggleExpanded) {
+  if (!view || !onChangeRelations || !onToggleExpanded) {
     return null;
   }
-  const socialRelations = getRelations(
-    knowledgeDBs,
-    "social",
-    user.publicKey,
-    node.id
-  );
-  if (!socialRelations || socialRelations.items.size === 0) {
-    return null;
-  }
-  const isSelected = currentRelations?.id === "social";
+  const isSelected = currentRelations?.id === relations.id;
   const isExpanded = view.expanded === true;
   const ariaLabel =
     isExpanded && isSelected
-      ? `hide items created by contacts of ${node.text}`
-      : `show items created by contacts of ${node.text}`;
+      ? `hide ${hideShowLabel}`
+      : `show ${hideShowLabel}`;
   const isActive = (isExpanded || alwaysOneSelected) && isSelected;
   const className = `btn select-relation ${
     isActive ? "opacity-none" : "deselected"
@@ -289,16 +289,13 @@ function SocialRelationsButton({
   const onClick = preventDeselect
     ? undefined
     : () => {
-        if (view.relations === socialRelations.id) {
+        if (view.relations === relations.id) {
           onToggleExpanded(!isExpanded);
         } else {
-          onChangeRelations(socialRelations, true);
+          onChangeRelations(relations, true);
         }
       };
-  const label = isActive
-    ? `By Contacts (${socialRelations.items.size})`
-    : socialRelations.items.size;
-
+  const lbl = isActive ? label : relations.items.size;
   return (
     <div className="btn-group select-relation">
       <button
@@ -309,10 +306,95 @@ function SocialRelationsButton({
         style={style}
         onClick={onClick}
       >
-        <span className="iconsminds-conference" />
-        <span>{label}</span>
+        {children}
+        <span>{lbl}</span>
       </button>
     </div>
+  );
+}
+
+function ReferencedByRelationsButton({
+  alwaysOneSelected,
+  currentRelations,
+  readonly,
+}: {
+  readonly?: boolean;
+  alwaysOneSelected?: boolean;
+  currentRelations?: Relations;
+}): JSX.Element | null {
+  const [node] = useNode();
+  const [parentNode] = useParentNode();
+  const { knowledgeDBs, user } = useData();
+  if (!node) {
+    return null;
+  }
+  const referencedByRelations = getRelations(
+    knowledgeDBs,
+    REFERENCED_BY,
+    user.publicKey,
+    node.id
+  );
+  if (!referencedByRelations) {
+    return null;
+  }
+  // Don't show this button if the only reference is the parent
+  const haveParent = parentNode !== undefined;
+  const showBtn =
+    (haveParent && referencedByRelations.items.size > 1) ||
+    (!haveParent && referencedByRelations.items.size > 0);
+  if (!showBtn) {
+    return null;
+  }
+  return (
+    <AutomaticRelationsButton
+      hideShowLabel={`references to ${node.text}`}
+      relations={referencedByRelations}
+      readonly={readonly}
+      alwaysOneSelected={alwaysOneSelected}
+      currentRelations={currentRelations}
+      label={`Referenced By (${referencedByRelations.items.size})`}
+    >
+      <span className="iconsminds-link" />
+    </AutomaticRelationsButton>
+  );
+}
+
+function SocialRelationsButton({
+  alwaysOneSelected,
+  currentRelations,
+  readonly,
+}: {
+  readonly?: boolean;
+  alwaysOneSelected?: boolean;
+  currentRelations?: Relations;
+}): JSX.Element | null {
+  const [node] = useNode();
+  const { knowledgeDBs, user } = useData();
+  const onChangeRelations = useOnChangeRelations();
+  const onToggleExpanded = useOnToggleExpanded();
+  if (!node || !onChangeRelations || !onToggleExpanded) {
+    return null;
+  }
+  const socialRelations = getRelations(
+    knowledgeDBs,
+    "social",
+    user.publicKey,
+    node.id
+  );
+  if (!socialRelations || socialRelations.items.size === 0) {
+    return null;
+  }
+  return (
+    <AutomaticRelationsButton
+      hideShowLabel={`items created by contacts of ${node.text}`}
+      relations={socialRelations}
+      readonly={readonly}
+      alwaysOneSelected={alwaysOneSelected}
+      currentRelations={currentRelations}
+      label={`By Contacts (${socialRelations.items.size})`}
+    >
+      <span className="iconsminds-conference" />
+    </AutomaticRelationsButton>
   );
 }
 
@@ -461,6 +543,11 @@ export function SelectRelations({
         />
       ))}
       <SocialRelationsButton
+        readonly={readonly}
+        alwaysOneSelected={alwaysOneSelected}
+        currentRelations={currentRelations}
+      />
+      <ReferencedByRelationsButton
         readonly={readonly}
         alwaysOneSelected={alwaysOneSelected}
         currentRelations={currentRelations}

@@ -1,4 +1,4 @@
-import { Filter } from "nostr-tools";
+import { Filter, mergeFilters } from "nostr-tools";
 import { List, Set } from "immutable";
 import {
   KIND_DELETE,
@@ -87,7 +87,7 @@ export function sanitizeFilter(
   };
 }
 
-export function filtersToFiterArray(filters: Filters): Filter[] {
+export function filtersToFilterArray(filters: Filters): Filter[] {
   return [
     sanitizeFilter(filters.knowledgeListbyID, "#d"),
     sanitizeFilter(filters.knowledgeNodesByID, "#d"),
@@ -223,5 +223,48 @@ export function buildSecondaryDataQuery(
       "#k"
     ),
     deleteFilter: filters.deleteFilter,
+  };
+}
+
+function addRelationsToFilter(data: KnowledgeData, filter: Filter): Filter {
+  return data.nodes.reduce((rdx, node) => {
+    const d = rdx["#i"] || [];
+    return {
+      ...rdx,
+      "#i": [...d, node.id],
+    };
+  }, filter);
+}
+
+export function buildReferencedByListsQuery(
+  knowledgeDBs: KnowledgeDBs,
+  contacts: Contacts,
+  myself: PublicKey
+): Filter {
+  const authors = [...contacts.keySeq().toArray(), myself] as string[];
+  return knowledgeDBs.reduce(
+    (rdx: Filter, db) => {
+      return addRelationsToFilter(db, rdx);
+    },
+    {
+      kinds: [KIND_KNOWLEDGE_LIST],
+      authors,
+      "#i": [],
+    }
+  );
+}
+
+export function merge(a: Filters, b: Filters): Filters {
+  return {
+    knowledgeListbyID: mergeFilters(a.knowledgeListbyID, b.knowledgeListbyID),
+    knowledgeNodesByID: mergeFilters(
+      a.knowledgeNodesByID,
+      b.knowledgeNodesByID
+    ),
+    knowledgeListByHead: mergeFilters(
+      a.knowledgeListByHead,
+      b.knowledgeListByHead
+    ),
+    deleteFilter: mergeFilters(a.deleteFilter, b.deleteFilter),
   };
 }

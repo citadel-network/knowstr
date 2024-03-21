@@ -1,7 +1,7 @@
 import { Set } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
-import { getNodeFromID } from "./ViewContext";
+import { newRelations } from "./ViewContext";
 
 export function splitID(id: ID): [PublicKey | undefined, string] {
   const split = id.split("_");
@@ -84,6 +84,29 @@ export function getSocialRelations(
   };
 }
 
+export const REFERENCED_BY = "referenced_by" as ID;
+
+export function getReferencedByRelations(
+  knowledgeDBs: KnowledgeDBs,
+  myself: PublicKey,
+  nodeID: LongID
+): Relations | undefined {
+  const rel = newRelations(nodeID, REFERENCED_BY, myself);
+  const items = knowledgeDBs.reduce((r, knowledgeDB, author) => {
+    return knowledgeDB.relations.reduce((rdx, relations) => {
+      if (relations.items.includes(nodeID)) {
+        return rdx.push(joinID(author, relations.head));
+      }
+      return rdx;
+    }, r);
+  }, rel.items);
+  return {
+    ...rel,
+    id: REFERENCED_BY as LongID,
+    items,
+  };
+}
+
 export function getRelations(
   knowledgeDBs: KnowledgeDBs,
   relationID: ID | undefined,
@@ -93,21 +116,10 @@ export function getRelations(
   if (relationID === "social") {
     return getSocialRelations(knowledgeDBs, myself, nodeID);
   }
+  if (relationID === REFERENCED_BY) {
+    return getReferencedByRelations(knowledgeDBs, myself, nodeID);
+  }
   return getRelationsNoSocial(knowledgeDBs, relationID, myself);
-}
-
-// TODO: So far we only support local subjects
-export function getSubjects(
-  knowledgeDBs: KnowledgeDBs,
-  nodeID: LongID,
-  myself: PublicKey
-): Nodes {
-  const db = knowledgeDBs.get(myself, newDB());
-  const relations = db.relations.filter((r) => r.items.includes(nodeID));
-  const nodes = relations.map((r) =>
-    getNodeFromID(knowledgeDBs, r.head, myself)
-  );
-  return nodes.filter((n) => n !== undefined) as Nodes;
 }
 
 export function deleteRelations(

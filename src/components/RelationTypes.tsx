@@ -11,7 +11,7 @@ import {
 } from "../planner";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
-import { getRelationsNoSocial, splitID } from "../connections";
+import { REFERENCED_BY, getRelationsNoSocial, splitID } from "../connections";
 import {
   ViewPath,
   newRelations,
@@ -146,7 +146,7 @@ export function getRelationTypeByRelationsID(
   relationsID: ID
 ): [RelationType, ID] | [undefined, undefined] {
   const relations = getRelationsNoSocial(knowledgeDBs, relationsID, myself);
-  if (!relations || relationsID === "social") {
+  if (!relations || relationsID === "social" || relationsID === REFERENCED_BY) {
     return [undefined, undefined];
   }
   const [remote] = splitID(relationsID);
@@ -164,7 +164,7 @@ export function planCopyRelationsTypeIfNecessary(
   plan: Plan,
   relationsID: ID
 ): Plan {
-  if (relationsID === "social") {
+  if (relationsID === "social" || relationsID === REFERENCED_BY) {
     return plan;
   }
   const [relationType, relationTypeID] = getRelationTypeByRelationsID(

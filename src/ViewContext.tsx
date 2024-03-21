@@ -265,13 +265,10 @@ export function addAddToNodeToPath(
   path: ViewPath
 ): ViewPath {
   const relations = getRelationsFromView(knowledgeDBs, myself, path);
-  if (!relations) {
-    throw new Error("Parent doesn't have relations, cannot add to path");
-  }
   // Assume there is only one Add to node per parent
   const nodeIndex = 0 as NodeIndex;
   return [
-    ...addRelationsToLastElement(path, relations.id),
+    ...addRelationsToLastElement(path, relations?.id || ("" as LongID)),
     { nodeID: ADD_TO_NODE, nodeIndex },
   ];
 }
