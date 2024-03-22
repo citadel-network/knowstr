@@ -9,6 +9,7 @@ export const KIND_KNOWLEDGE_NODE = 34751;
 // Essentially a markdown which is not editable
 export const KIND_KNOWLEDGE_NODE_COLLECTION = 2945;
 
+export const KIND_NIP05 = 0;
 export const KIND_CONTACTLIST = 3;
 export const KIND_DELETE = 5;
 

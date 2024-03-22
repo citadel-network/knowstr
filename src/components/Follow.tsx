@@ -1,16 +1,64 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Form, InputGroup, Modal } from "react-bootstrap";
-import { nip19, nip05 } from "nostr-tools";
+import { Map, OrderedMap } from "immutable";
+import { nip19, nip05, Filter, SimplePool, Event } from "nostr-tools";
+import { useDebounce } from "use-debounce";
+import { getReadRelays, useEventQuery } from "citadel-commons";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
+import { KIND_NIP05 } from "../nostr";
+import { useApis } from "../Apis";
+
+function createNip05Query(publicKey: PublicKey): Filter {
+  return {
+    kinds: [KIND_NIP05],
+    authors: [publicKey],
+  };
+}
+
+function useNip05Query(
+  simplePool: SimplePool,
+  author: PublicKey,
+  relays: Array<Relay>
+): {
+  events: OrderedMap<string, Event>;
+  eose: boolean;
+} {
+  const { events, eose } = useEventQuery(
+    simplePool,
+    [createNip05Query(author)],
+    {
+      readFromRelays: relays,
+    }
+  );
+  return { events, eose };
+}
+
+type Nip05EventContent = {
+  nip05?: string;
+};
+
+function lookupNip05PublicKey(
+  events: Map<string, Event>,
+  nip05Identifier: string
+): boolean {
+  const islookupSuccessful = events
+    .valueSeq()
+    .toArray()
+    .some((event) => {
+      const content = JSON.parse(event.content) as Nip05EventContent;
+      return content.nip05 === nip05Identifier;
+    });
+  return islookupSuccessful;
+}
 
 async function decodeInput(
   input: string | undefined
-): Promise<PublicKey | undefined> {
+): Promise<{ publicKey: PublicKey; isNip05: boolean } | undefined> {
   if (!input) {
     return undefined;
   }
@@ -18,28 +66,34 @@ async function decodeInput(
     const decodedInput = nip19.decode(input);
     const inputType = decodedInput.type;
     if (inputType === "npub") {
-      return decodedInput.data as PublicKey;
+      return { publicKey: decodedInput.data as PublicKey, isNip05: false };
     }
     if (inputType === "nprofile") {
-      return decodedInput.data.pubkey as PublicKey;
+      return {
+        publicKey: decodedInput.data.pubkey as PublicKey,
+        isNip05: false,
+      };
     }
     // eslint-disable-next-line no-empty
   } catch (e) {}
   const publicKeyRegex = /^[a-fA-F0-9]{64}$/;
   if (publicKeyRegex.test(input)) {
-    return input as PublicKey;
+    return { publicKey: input as PublicKey, isNip05: false };
   }
   const nip05Regex = /^[a-z0-9-_.]+@[a-z0-9-_.]+\.[a-z0-9-_.]+$/i;
   if (nip05Regex.test(input)) {
     const profile = await nip05.queryProfile(input);
-    return profile !== null ? (profile.pubkey as PublicKey) : undefined;
+    return profile !== null
+      ? { publicKey: profile.pubkey as PublicKey, isNip05: true }
+      : undefined;
   }
   return undefined;
 }
 
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
-  const { user, contacts } = useData();
+  const { relayPool } = useApis();
+  const { user, contacts, relays } = useData();
   const { createPlan, executePlan } = usePlanner();
   const { search } = useLocation();
   const params = new URLSearchParams(search);
@@ -47,6 +101,31 @@ export function Follow(): JSX.Element {
   const publicKey = rawPublicKey ? (rawPublicKey as PublicKey) : undefined;
   const [input, setInput] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  const [lookupPublicKey, setLookupPublicKey] = useState<PublicKey | undefined>(
+    undefined
+  );
+  const [debouncedInput] = useDebounce(input, 500);
+  const { events: nip05Events, eose: nip05Eose } = useNip05Query(
+    relayPool,
+    lookupPublicKey || ("" as PublicKey),
+    getReadRelays(relays)
+  );
+
+  useEffect((): void => {
+    if (lookupPublicKey !== undefined && nip05Events.size > 0 && input) {
+      const isLookupError = !lookupNip05PublicKey(nip05Events, input);
+      if (isLookupError) {
+        setError("Lookup of nip-05 identifier failed");
+        setLookupPublicKey(undefined);
+      } else {
+        navigate(
+          lookupPublicKey === user.publicKey
+            ? "/profile"
+            : `/follow?publicKey=${lookupPublicKey}`
+        );
+      }
+    }
+  }, [nip05Eose, nip05Events, lookupPublicKey, debouncedInput]);
 
   const pasteFromClipboard = async (): Promise<void> => {
     const text = await navigator.clipboard.readText();
@@ -79,11 +158,13 @@ export function Follow(): JSX.Element {
     const decodedInput = await decodeInput(input);
     if (!decodedInput) {
       setError("Invalid publicKey, npub, nprofile or nip-05 identifier");
+    } else if (decodedInput && decodedInput.isNip05) {
+      setLookupPublicKey(decodedInput.publicKey);
     } else {
       navigate(
-        decodedInput === user.publicKey
+        decodedInput.publicKey === user.publicKey
           ? "/profile"
-          : `/follow?publicKey=${decodedInput}`
+          : `/follow?publicKey=${decodedInput.publicKey}`
       );
     }
   };
@@ -200,7 +281,9 @@ export function Follow(): JSX.Element {
           <Button
             onClick={() => {
               setInput(undefined);
-              navigate("follow user");
+              setLookupPublicKey(undefined);
+              setError(null);
+              navigate("/follow");
             }}
             className="btn"
           >
