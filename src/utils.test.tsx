@@ -100,6 +100,8 @@ export const CAROL: KeyPair = {
   privateKey: hexToBytes(CAROL_PRIVATE_KEY),
 };
 
+export const bobsNip05Identifier = "bob@bobsdomain.com";
+
 export const TEST_WORKSPACE_ID = "my-first-workspace-id";
 
 type MockFileStore = LocalStorage & {
@@ -124,7 +126,7 @@ function mockFileStore(): MockFileStore {
   };
 }
 
-function finalizeEventWithoutWasm(
+export function finalizeEventWithoutWasm(
   t: EventTemplate,
   secretKey: Uint8Array
 ): VerifiedEvent {
