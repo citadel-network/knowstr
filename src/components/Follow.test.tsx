@@ -1,7 +1,7 @@
 import React from "react";
 import { Map } from "immutable";
 import { screen, waitFor, fireEvent, act } from "@testing-library/react";
-import { Event, SimplePool, nip05, nip19 } from "nostr-tools";
+import { Event, nip05, nip19 } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import {
   renderWithTestData,
@@ -16,6 +16,7 @@ import {
 } from "../utils.test";
 import { KIND_CONTACTLIST, newTimestamp } from "../nostr";
 import { Follow } from "./Follow";
+import { mockNip05Query } from "../nostrMock.test";
 
 afterEach(() => {
   jest.useRealTimers();
@@ -87,111 +88,65 @@ test("find a user by nprofile", async () => {
   screen.getByDisplayValue(npub);
 });
 
-const bobsNip05Event = finalizeEventWithoutWasm(
-  {
-    kind: 0,
-    tags: [],
-    content: JSON.stringify({ nip05: bobsNip05Identifier }),
-    created_at: newTimestamp(),
-  },
-  BOB.privateKey
-);
+test("find a user by nip-05 identifier", async () => {
+  nip05.useFetchImplementation(async () =>
+    Promise.resolve({
+      json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
+    })
+  );
 
-/* eslint-disable functional/no-let */
-let shouldMock = false;
-let mockEvents: Array<Event> = [];
-/* eslint-disable functional/no-let */
+  const [alice] = setup([ALICE]);
 
-jest.mock("./useNip05Query", () => ({
-  useNip05Query: (
-    simplePool: SimplePool,
-    author: PublicKey,
-    relays: Array<Relay>
-  ) => {
-    if (shouldMock) {
-      const events = Map(
-        mockEvents.reduce(
-          (acc, event) => ({ ...acc, [event.id]: event }),
-          Map<string, Event>()
-        )
-      );
-      return {
-        events,
-        eose: true,
-      };
-    }
-    // Call the actual implementation
-    const actualModule = jest.requireActual("./useNip05Query");
-    return actualModule.useNip05Query(simplePool, author, relays);
-  },
-}));
-
-describe("tests with mocked useNip05Query", () => {
-  beforeAll(() => {
-    shouldMock = true;
+  const bobsNip05Event = finalizeEventWithoutWasm(
+    {
+      kind: 0,
+      tags: [],
+      content: JSON.stringify({ nip05: bobsNip05Identifier }),
+      created_at: newTimestamp(),
+    },
+    BOB.privateKey
+  );
+  renderWithTestData(<Follow />, {
+    ...alice(),
+    nip05Query: mockNip05Query(Map({ [bobsNip05Event.id]: bobsNip05Event })),
   });
-  afterAll(() => {
-    shouldMock = false;
+  const input = await screen.findByLabelText("find user");
+  userEvent.type(input, bobsNip05Identifier);
+
+  const findButton = screen.getByText("Find");
+  await waitFor(() => {
+    expect(findButton.ariaDisabled).toBe(undefined);
   });
+  fireEvent.click(findButton);
 
-  describe("mocked useNip05Query returning bobs nip05 event", () => {
-    beforeEach(() => {
-      mockEvents = [bobsNip05Event];
-    });
+  await screen.findByLabelText("follow user");
+  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
+  screen.getByDisplayValue(npub);
+});
 
-    test("find a user by nip-05 identifier", async () => {
-      nip05.useFetchImplementation(async () =>
-        Promise.resolve({
-          json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
-        })
-      );
+test("cannot find a user by nip-05 identifier", async () => {
+  jest.useFakeTimers();
+  nip05.useFetchImplementation(async () =>
+    Promise.resolve({
+      json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
+    })
+  );
 
-      const [alice] = setup([ALICE]);
-      renderWithTestData(<Follow />, alice());
-      const input = await screen.findByLabelText("find user");
-      userEvent.type(input, bobsNip05Identifier);
+  const [alice] = setup([ALICE]);
+  renderWithTestData(<Follow />, alice());
+  const input = await screen.findByLabelText("find user");
+  userEvent.type(input, bobsNip05Identifier);
 
-      const findButton = screen.getByText("Find");
-      await waitFor(() => {
-        expect(findButton.ariaDisabled).toBe(undefined);
-      });
-      fireEvent.click(findButton);
-
-      await screen.findByLabelText("follow user");
-      const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
-      screen.getByDisplayValue(npub);
-    });
+  const findButton = screen.getByText("Find");
+  await waitFor(() => {
+    expect(findButton.ariaDisabled).toBe(undefined);
   });
+  fireEvent.click(findButton);
 
-  describe("mocked useNip05Query not returning any events", () => {
-    beforeEach(() => {
-      mockEvents = [];
-    });
-    test("cannot find a user by nip-05 identifier", async () => {
-      jest.useFakeTimers();
-      nip05.useFetchImplementation(async () =>
-        Promise.resolve({
-          json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
-        })
-      );
-
-      const [alice] = setup([ALICE]);
-      renderWithTestData(<Follow />, alice());
-      const input = await screen.findByLabelText("find user");
-      userEvent.type(input, bobsNip05Identifier);
-
-      const findButton = screen.getByText("Find");
-      await waitFor(() => {
-        expect(findButton.ariaDisabled).toBe(undefined);
-      });
-      fireEvent.click(findButton);
-
-      act(() => {
-        jest.runAllTimers(); // Advance timers
-      });
-      await screen.findByText("No Nip05 Events found");
-    });
+  act(() => {
+    jest.runAllTimers(); // Advance timers
   });
+  await screen.findByText("No Nip05 Events found");
 });
 
 test("follow a new user", async () => {

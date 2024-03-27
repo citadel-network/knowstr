@@ -11,7 +11,6 @@ import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
 import { useApis } from "../Apis";
-import { useNip05Query } from "./useNip05Query";
 
 type Nip05EventContent = {
   nip05?: string;
@@ -73,7 +72,7 @@ async function decodeInput(
 
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
-  const { relayPool } = useApis();
+  const { nip05Query } = useApis();
   const { user, contacts, relays } = useData();
   const { createPlan, executePlan } = usePlanner();
   const { search } = useLocation();
@@ -87,8 +86,7 @@ export function Follow(): JSX.Element {
   );
   const [debouncedInput] = useDebounce(input, 500);
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
-  const { events: nip05Events, eose: nip05Eose } = useNip05Query(
-    relayPool,
+  const { events: nip05Events, eose: nip05Eose } = nip05Query.query(
     lookupPublicKey || ("" as PublicKey),
     getReadRelays(relays)
   );
@@ -113,7 +111,7 @@ export function Follow(): JSX.Element {
       // eslint-disable-next-line functional/immutable-data
       timeoutId.current = setTimeout(() => {
         setError("No Nip05 Events found");
-      }, 500);
+      }, nip05Query.timeout);
     }
     return () => {
       if (timeoutId.current) {

@@ -86,5 +86,26 @@ export function mockRelayPool(): MockRelayPool {
   } as unknown as MockRelayPool;
 }
 
+export function mockNip05Query(events: Map<string, Event>): {
+  query: (
+    author: PublicKey,
+    relays: Array<Relay>
+  ) => {
+    events: Map<string, Event>;
+    eose: boolean;
+  };
+  timeout: number;
+} {
+  return {
+    query: () => {
+      return {
+        events,
+        eose: true,
+      };
+    },
+    timeout: 0,
+  };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
