@@ -16,7 +16,6 @@ import {
 } from "../utils.test";
 import { KIND_CONTACTLIST, newTimestamp } from "../nostr";
 import { Follow } from "./Follow";
-// import { useNip05Query } from "./useNip05Query";
 
 afterEach(() => {
   jest.useRealTimers();
