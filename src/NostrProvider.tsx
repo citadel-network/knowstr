@@ -16,7 +16,7 @@ export function NostrProvider({
   apis,
 }: {
   children: React.ReactNode;
-  apis: Omit<Apis, "relayPool" | "finalizeEvent" | "nip11" | "nip05">;
+  apis: Omit<Apis, "relayPool" | "finalizeEvent" | "nip11" | "nip05Query">;
 }): JSX.Element {
   const [pool, setPool] = useState<AbstractSimplePool | undefined>(undefined);
 
