@@ -13,7 +13,7 @@ import "./App.css";
 import "react-quill/dist/quill.bubble.css";
 import { App } from "./App";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
-import { NostrProvider } from "./NostrWasmProvider";
+import { NostrProvider } from "./NostrProvider";
 import { FocusContextProvider } from "./FocusContextProvider";
 
 const defaultRelayUrls = process.env.DEFAULT_RELAYS?.split(",");
