@@ -32,6 +32,20 @@ function getPublishingDetails(
   return `${numberFulfilled} of the last ${totalNumber} events have been published`;
 }
 
+function getWarningDetails(status: Array<PublishStatus>): {
+  percentage: number;
+  isWarning: boolean;
+  warningVariant: "danger" | "warning";
+} {
+  const numberFulfilled = getStatusCount(status, "fulfilled");
+  const numberRejected = getStatusCount(status, "rejected");
+  const totalNumber = numberFulfilled + numberRejected;
+  const percentage = Math.round((numberFulfilled / totalNumber) * 100);
+  const isWarning = percentage < 80;
+  const warningVariant = percentage < 50 ? "danger" : "warning";
+  return { percentage, isWarning, warningVariant };
+}
+
 function RelayPublishStatus({
   status,
   relayUrl,
@@ -43,9 +57,8 @@ function RelayPublishStatus({
   const numberFulfilled = getStatusCount(status, "fulfilled");
   const numberRejected = getStatusCount(status, "rejected");
   const totalNumber = numberFulfilled + numberRejected;
-  const percentage = Math.round((numberFulfilled / totalNumber) * 100);
-  const isWarning = percentage < 80;
-  const warningVariant = percentage < 50 ? "danger" : "warning";
+  const publishingDetails = getPublishingDetails(totalNumber, numberFulfilled);
+  const { percentage, isWarning, warningVariant } = getWarningDetails(status);
   const lastRejectedReason = getLastRejectedReason(status);
   return (
     <>
@@ -76,12 +89,7 @@ function RelayPublishStatus({
                 height: "1.5rem",
               }}
             />
-            {showDetails && (
-              <div className="mt-1">
-                {" "}
-                {getPublishingDetails(totalNumber, numberFulfilled)}{" "}
-              </div>
-            )}
+            {showDetails && <div className="mt-1"> {publishingDetails} </div>}
             {showDetails && lastRejectedReason && (
               <div>{`Last rejection reason: ${lastRejectedReason}`}</div>
             )}
@@ -101,9 +109,29 @@ function RelayPublishStatus({
   );
 }
 
+type StatusColor = "red" | "brown" | "green";
+
+function getStatusColor(publishResults: PublishResults): StatusColor {
+  const isDanger = publishResults.some(
+    (status) =>
+      getWarningDetails(status).isWarning &&
+      getWarningDetails(status).warningVariant === "danger"
+  );
+  if (isDanger) {
+    return "red";
+  }
+  const isWarning = publishResults.some(
+    (status) => getWarningDetails(status).isWarning
+  );
+  if (isWarning) {
+    return "brown";
+  }
+  return "green";
+}
+
 export function PublishingStatus(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const { publishResults, loadingResults } = useData();
+  const { publishResults, loadingResults, relays } = useData();
   if (loadingResults === true) {
     return (
       <div style={{ paddingTop: "6px", paddingBottom: "4px" }}>
@@ -114,7 +142,11 @@ export function PublishingStatus(): JSX.Element | null {
   if (publishResults.size === 0) {
     return null;
   }
-
+  const publishResultsForActiveWriteRelays = publishResults.filter(
+    (_, relayUrl) =>
+      relays.some((relay) => relay.write === true && relay.url === relayUrl)
+  );
+  const warningColor = getStatusColor(publishResultsForActiveWriteRelays);
   return (
     <Dropdown>
       <Dropdown.Toggle
@@ -126,7 +158,7 @@ export function PublishingStatus(): JSX.Element | null {
         aria-label="publishing status"
         tabIndex={0}
       >
-        <span className="simple-icon-info" />
+        <span className="simple-icon-info" style={{ color: warningColor }} />
       </Dropdown.Toggle>
       <Dropdown.Menu
         style={
@@ -140,7 +172,7 @@ export function PublishingStatus(): JSX.Element | null {
             <h2>Publishing Status</h2>
           </div>
         </Dropdown.Item>
-        {publishResults
+        {publishResultsForActiveWriteRelays
           .map((status, relayUrl) => {
             return (
               <RelayPublishStatus
