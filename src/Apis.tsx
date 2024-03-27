@@ -1,5 +1,6 @@
 import React from "react";
-import { EventTemplate, SimplePool, VerifiedEvent } from "nostr-tools";
+import { Map } from "immutable";
+import { EventTemplate, SimplePool, VerifiedEvent, Event } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
 
@@ -15,6 +16,16 @@ export type Apis = {
   nip11: {
     fetchRelayInformation: (url: string) => Promise<RelayInformation>;
     searchDebounce: number;
+  };
+  nip05Query: {
+    query: (
+      author: PublicKey,
+      relays: Array<Relay>
+    ) => {
+      events: Map<string, Event>;
+      eose: boolean;
+    };
+    timeout: number;
   };
 };
 

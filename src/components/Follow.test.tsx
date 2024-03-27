@@ -1,5 +1,6 @@
 import React from "react";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+import { Map } from "immutable";
+import { screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { Event, nip05, nip19 } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import {
@@ -10,17 +11,21 @@ import {
   BOB_PUBLIC_KEY,
   setup,
   follow,
+  bobsNip05Identifier,
+  finalizeEventWithoutWasm,
 } from "../utils.test";
-import { KIND_CONTACTLIST } from "../nostr";
+import { KIND_CONTACTLIST, newTimestamp } from "../nostr";
 import { Follow } from "./Follow";
+import { mockNip05Query } from "../nostrMock.test";
+
+afterEach(() => {
+  jest.useRealTimers();
+});
 
 test("find a user", async () => {
   const [alice] = setup([ALICE]);
 
-  renderWithTestData(<Follow />, {
-    ...alice(),
-    initialRoute: "follow user",
-  });
+  renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
   userEvent.type(input, BOB_PUBLIC_KEY);
   fireEvent.click(screen.getByText("Find"));
@@ -32,10 +37,7 @@ test("find a user", async () => {
 test("search for an invalid user", async () => {
   const [alice] = setup([ALICE]);
 
-  renderWithTestData(<Follow />, {
-    ...alice(),
-    initialRoute: "follow user",
-  });
+  renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
   userEvent.type(input, "invalidPublicKey");
   fireEvent.click(screen.getByText("Find"));
@@ -63,10 +65,7 @@ test("find a user by npub", async () => {
   const [alice] = setup([ALICE]);
   const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
 
-  renderWithTestData(<Follow />, {
-    ...alice(),
-    initialRoute: "follow user",
-  });
+  renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
   userEvent.type(input, npub);
   fireEvent.click(screen.getByText("Find"));
@@ -80,10 +79,7 @@ test("find a user by nprofile", async () => {
   const nprofile = nip19.nprofileEncode({ pubkey: BOB_PUBLIC_KEY });
   const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
 
-  renderWithTestData(<Follow />, {
-    ...alice(),
-    initialRoute: "follow user",
-  });
+  renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
   userEvent.type(input, nprofile);
   fireEvent.click(screen.getByText("Find"));
@@ -93,7 +89,6 @@ test("find a user by nprofile", async () => {
 });
 
 test("find a user by nip-05 identifier", async () => {
-  const bobsIdentifier = "bob@bobsdomain.com";
   nip05.useFetchImplementation(async () =>
     Promise.resolve({
       json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
@@ -101,12 +96,22 @@ test("find a user by nip-05 identifier", async () => {
   );
 
   const [alice] = setup([ALICE]);
+
+  const bobsNip05Event = finalizeEventWithoutWasm(
+    {
+      kind: 0,
+      tags: [],
+      content: JSON.stringify({ nip05: bobsNip05Identifier }),
+      created_at: newTimestamp(),
+    },
+    BOB.privateKey
+  );
   renderWithTestData(<Follow />, {
     ...alice(),
-    initialRoute: "follow user",
+    nip05Query: mockNip05Query(Map({ [bobsNip05Event.id]: bobsNip05Event })),
   });
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, bobsIdentifier);
+  userEvent.type(input, bobsNip05Identifier);
 
   const findButton = screen.getByText("Find");
   await waitFor(() => {
@@ -117,6 +122,31 @@ test("find a user by nip-05 identifier", async () => {
   await screen.findByLabelText("follow user");
   const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
   screen.getByDisplayValue(npub);
+});
+
+test("cannot find a user by nip-05 identifier", async () => {
+  jest.useFakeTimers();
+  nip05.useFetchImplementation(async () =>
+    Promise.resolve({
+      json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
+    })
+  );
+
+  const [alice] = setup([ALICE]);
+  renderWithTestData(<Follow />, alice());
+  const input = await screen.findByLabelText("find user");
+  userEvent.type(input, bobsNip05Identifier);
+
+  const findButton = screen.getByText("Find");
+  await waitFor(() => {
+    expect(findButton.ariaDisabled).toBe(undefined);
+  });
+  fireEvent.click(findButton);
+
+  act(() => {
+    jest.runAllTimers(); // Advance timers
+  });
+  await screen.findByText("No Nip05 Events found");
 });
 
 test("follow a new user", async () => {
