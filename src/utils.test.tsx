@@ -26,7 +26,8 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
-import { KIND_CONTACTLIST } from "./nostr";
+import { VirtuosoMockContext } from "react-virtuoso";
+import { KIND_CONTACTLIST, DEFAULT_RELAYS } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
   Plan,
@@ -228,7 +229,11 @@ function renderApis(
                 setIsInputElementInFocus: jest.fn(),
               }}
             >
-              {children}
+              <VirtuosoMockContext.Provider
+                value={{ viewportHeight: 10000, itemHeight: 100 }}
+              >
+                {children}
+              </VirtuosoMockContext.Provider>
             </FocusContext.Provider>
           )}
         </NostrAuthContext.Provider>

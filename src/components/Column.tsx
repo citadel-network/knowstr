@@ -34,26 +34,24 @@ export function Column(): JSX.Element | null {
   return (
     <UIColumn>
       <FileDropZone onDrop={onDropFiles}>
-        <UIColumnBody>
-          <UIColumnHeader>
-            <div className="position-relative">
-              <div className="outer-node-extras">
-                <RemoveColumnButton />
-              </div>
+        <UIColumnHeader>
+          <div className="position-relative">
+            <div className="outer-node-extras">
+              <RemoveColumnButton />
             </div>
-            <Droppable isDropDisabled droppableId={`head:${viewKey}`}>
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  <DraggableNode dndIndex={0} sticky />
-                </div>
-              )}
-            </Droppable>
-            <Card.Body className="p-0">
-              <ColumnMenu />
-            </Card.Body>
-          </UIColumnHeader>
-          <TreeView />
-        </UIColumnBody>
+          </div>
+          <Droppable isDropDisabled droppableId={`head:${viewKey}`}>
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                <DraggableNode dndIndex={0} sticky />
+              </div>
+            )}
+          </Droppable>
+          <Card.Body className="p-0">
+            <ColumnMenu />
+          </Card.Body>
+        </UIColumnHeader>
+        <TreeView />
         <Droppable droppableId={`bottom:${viewKey}`}>
           {(provided, snapshot) => (
             <div

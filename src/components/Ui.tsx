@@ -74,14 +74,16 @@ export function UIColumn({
 }): JSX.Element {
   return (
     <div className="mb-2 outer-node flex-col" key={keyString || "outer-node"}>
-      <div className="flex-col-100">{children}</div>
+      <div className="flex-col max-100">{children}</div>
     </div>
   );
 }
 
 export function UIColumnBody({ children }: Children): JSX.Element {
   return (
-    <div className="flex-col overflow-y-auto overflow-x-hidden">{children}</div>
+    <div className="flex-col overflow-y-auto overflow-x-hidden height-100">
+      {children}
+    </div>
   );
 }
 
