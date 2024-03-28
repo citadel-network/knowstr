@@ -26,7 +26,7 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
-import { DEFAULT_RELAYS, KIND_CONTACTLIST } from "./nostr";
+import { KIND_CONTACTLIST } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
   Plan,
@@ -101,6 +101,13 @@ export const CAROL: KeyPair = {
 };
 
 export const TEST_WORKSPACE_ID = "my-first-workspace-id";
+
+export const TEST_RELAYS = [
+  { url: "wss://relay.test.first.success/", read: true, write: true },
+  { url: "wss://relay.test.second.fail/", read: true, write: true },
+  { url: "wss://relay.test.third.rand/", read: true, write: true },
+  { url: "wss://relay.test.fourth.success/", read: true, write: true },
+];
 
 type MockFileStore = LocalStorage & {
   getLocalStorageData: () => Map<string, string>;
@@ -208,7 +215,7 @@ function renderApis(
           value={{
             user,
             setBlockstackUser: jest.fn(),
-            defaultRelays: options?.defaultRelays || DEFAULT_RELAYS,
+            defaultRelays: options?.defaultRelays || TEST_RELAYS,
           }}
         >
           {" "}
@@ -263,7 +270,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
   settings: DEFAULT_SETTINGS,
-  relays: DEFAULT_RELAYS,
+  relays: TEST_RELAYS,
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
   relaysInfos: Map<string, RelayInformation | undefined>(),
   publishResults: Map<string, Array<PublishStatus>>(),

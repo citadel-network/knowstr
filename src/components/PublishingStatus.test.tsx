@@ -8,6 +8,7 @@ import {
   renderApp,
   typeNewNode,
   renderWithTestData,
+  TEST_RELAYS,
 } from "../utils.test";
 import { PublishingStatus } from "./PublishingStatus";
 import { WorkspaceView } from "./Workspace";
@@ -20,12 +21,12 @@ test("Publishing Status", async () => {
   userEvent.click(screen.getByLabelText("publishing status"));
   await screen.findByText("Publishing Status");
   expect(await screen.findAllByText("100%")).toHaveLength(4);
-  userEvent.click(screen.getByText("Relay wss://relay.damus.io/:"));
+  userEvent.click(screen.getByText("Relay wss://relay.test.first.success/:"));
   screen.getByText("3 of the last 3 events have been published");
 });
 
 test("Details of Publishing Status", async () => {
-  const [alice] = setup([ALICE]);
+  const [alice] = setup([ALICE], { relays: TEST_RELAYS });
   const utils = alice();
   const view = renderWithTestData(
     <>
@@ -39,51 +40,39 @@ test("Details of Publishing Status", async () => {
         publish: (relays: Array<string>, event: Event): Promise<string>[] => {
           if (event.kind === 34751) {
             return [
-              Promise.reject(new Error("too many requests")),
-              Promise.reject(new Error("paid relay")),
               Promise.resolve("fulfilled"),
               Promise.reject(new Error("paid relay")),
+              Promise.reject(new Error("too many requests")),
+              Promise.resolve("fulfilled"),
             ];
           }
           return [
             Promise.resolve("fulfilled"),
             Promise.reject(new Error("paid relay")),
             Promise.resolve("fulfilled"),
-            Promise.reject(new Error("paid relay")),
+            Promise.resolve("fulfilled"),
           ];
         },
       } as unknown as MockRelayPool,
+      relays: TEST_RELAYS,
     }
   );
   await typeNewNode(view, "Hello World");
-
-  userEvent.click(screen.getByLabelText("publishing status"));
+  userEvent.click(await screen.findByLabelText("publishing status"));
   await screen.findByText("Publishing Status");
-  userEvent.click(screen.getByText("Relay wss://relay.damus.io/:"));
+  userEvent.click(screen.getByText("Relay wss://relay.test.first.success/:"));
+  userEvent.click(screen.getByText("Relay wss://relay.test.fourth.success/:"));
+  expect(
+    screen.getAllByText("3 of the last 3 events have been published")
+  ).toHaveLength(2);
+
+  userEvent.click(screen.getByText("Relay wss://relay.test.third.rand/:"));
   screen.getByText("2 of the last 3 events have been published");
   screen.getByText("Last rejection reason: Error: too many requests");
-  userEvent.click(screen.getByText("Relay wss://relay.snort.social/:"));
-  expect(
-    screen.getAllByText("0 of the last 3 events have been published")
-  ).toHaveLength(1);
-  expect(
-    screen.getAllByText("Last rejection reason: Error: paid relay")
-  ).toHaveLength(1);
-  userEvent.click(screen.getByText("Relay wss://nostr.wine/:"));
-  expect(
-    screen.getAllByText("0 of the last 3 events have been published")
-  ).toHaveLength(2);
-  expect(
-    screen.getAllByText("Last rejection reason: Error: paid relay")
-  ).toHaveLength(2);
-  userEvent.click(screen.getByText("Relay wss://relay.snort.social/:"));
-  expect(
-    screen.getAllByText("0 of the last 3 events have been published")
-  ).toHaveLength(1);
-  expect(
-    screen.getAllByText("Last rejection reason: Error: paid relay")
-  ).toHaveLength(1);
-  userEvent.click(screen.getByText("Relay wss://nos.lol/:"));
-  screen.getByText("3 of the last 3 events have been published");
-  screen.getByText("Last rejection reason: Error: too many requests");
+
+  userEvent.click(
+    await screen.findByText("Relay wss://relay.test.second.fail/:")
+  );
+  screen.getByText("0 of the last 3 events have been published");
+  screen.getAllByText("Last rejection reason: Error: paid relay");
 });

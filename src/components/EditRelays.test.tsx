@@ -1,11 +1,15 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Event } from "nostr-tools";
-import { ALICE, setup, renderApp } from "../utils.test";
+import { ALICE, setup, renderApp, TEST_RELAYS } from "../utils.test";
 import { KIND_RELAY_METADATA_EVENT } from "../nostr";
 
 const filterRelayMetadataEvents = (event: Event): boolean =>
   event.kind === KIND_RELAY_METADATA_EVENT;
+
+function relayTags(relays: Relays): string[][] {
+  return relays.map((r) => ["r", r.url]);
+}
 
 test("Remove a Nostr Relay", async () => {
   const [alice] = setup([ALICE]);
@@ -14,13 +18,12 @@ test("Remove a Nostr Relay", async () => {
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {
     screen.getByText("Set Nostr Relays");
-    screen.getByDisplayValue("wss://relay.damus.io/");
-    screen.getByDisplayValue("wss://relay.snort.social/");
-    screen.getByDisplayValue("wss://nos.lol/");
-    screen.getByDisplayValue("wss://nostr.wine/");
+    screen.getByDisplayValue("wss://relay.test.first.success/");
+    screen.getByDisplayValue("wss://relay.test.second.fail/");
   });
-  fireEvent.click(screen.getByLabelText("remove wss://nos.lol/"));
-  screen.getByDisplayValue("wss://nostr.wine/");
+  fireEvent.click(
+    screen.getByLabelText("remove wss://relay.test.second.fail/")
+  );
   fireEvent.click(screen.getByText("Save"));
 
   await waitFor(() =>
@@ -28,17 +31,18 @@ test("Remove a Nostr Relay", async () => {
       relayPool.getEvents().filter(filterRelayMetadataEvents)
     ).toHaveLength(1)
   );
+  const tags = relayTags(
+    TEST_RELAYS.filter(
+      (r) => r.url !== "wss://relay.test.second.fail/"
+    ) as unknown as Relays
+  );
   const event = relayPool.getEvents().filter(filterRelayMetadataEvents)[0];
   expect(event).toEqual(
     expect.objectContaining({
       kind: 10002,
       pubkey:
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
-      tags: [
-        ["r", "wss://relay.damus.io/"],
-        ["r", "wss://relay.snort.social/"],
-        ["r", "wss://nostr.wine/"],
-      ],
+      tags,
       content: "",
     })
   );
@@ -51,20 +55,26 @@ test("Edit an existing Nostr Relay", async () => {
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {
     screen.getByText("Set Nostr Relays");
-    screen.getByDisplayValue("wss://relay.damus.io/");
-    screen.getByDisplayValue("wss://relay.snort.social/");
-    screen.getByDisplayValue("wss://nos.lol/");
-    screen.getByDisplayValue("wss://nostr.wine/");
+    screen.getByDisplayValue("wss://relay.test.first.success/");
+    screen.getByDisplayValue("wss://relay.test.second.fail/");
   });
-  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine/"));
-  const inputRelay = await screen.findByDisplayValue("wss://nostr.wine/");
+  fireEvent.click(
+    screen.getByLabelText("edit relay wss://relay.test.second.fail/")
+  );
+  const inputRelay = await screen.findByDisplayValue(
+    "wss://relay.test.second.fail/"
+  );
   userEvent.type(inputRelay, ".edited");
 
   // undo edit
   fireEvent.click(screen.getByLabelText("undo edit relay"));
-  const inputRelaySecond = await screen.findByDisplayValue("wss://nostr.wine/");
+  const inputRelaySecond = await screen.findByDisplayValue(
+    "wss://relay.test.second.fail/"
+  );
 
-  fireEvent.click(screen.getByLabelText("edit relay wss://nostr.wine/"));
+  fireEvent.click(
+    screen.getByLabelText("edit relay wss://relay.test.second.fail/")
+  );
   userEvent.type(inputRelaySecond, "second.edit");
   fireEvent.click(screen.getByLabelText("save edit relay"));
   fireEvent.click(screen.getByText("Save"));
@@ -76,17 +86,19 @@ test("Edit an existing Nostr Relay", async () => {
     ).toHaveLength(1)
   );
   const event = relayPool.getEvents().filter(filterRelayMetadataEvents)[0];
+  const tags = relayTags(
+    TEST_RELAYS.map((r) =>
+      r.url === "wss://relay.test.second.fail/"
+        ? { ...r, url: "wss://relay.test.second.fail/second.edit" }
+        : r
+    ) as Relays
+  );
   expect(event).toEqual(
     expect.objectContaining({
       kind: 10002,
       pubkey:
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
-      tags: [
-        ["r", "wss://relay.damus.io/"],
-        ["r", "wss://relay.snort.social/"],
-        ["r", "wss://nos.lol/"],
-        ["r", "wss://nostr.wine/second.edit"],
-      ],
+      tags,
       content: "",
     })
   );
