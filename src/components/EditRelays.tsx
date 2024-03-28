@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./Ui";
 import ModalForm from "./ModalForm";
 import { useData } from "../DataContext";
-import { DEFAULT_RELAYS } from "../nostr";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { planPublishRelayMetadata, usePlanner } from "../planner";
+import { useDefaultRelays } from "../NostrAuthContext";
 
 type RelayButtonProps = {
   onClick: () => void;
@@ -203,6 +203,7 @@ export function sanitizeRelays(relays: Array<Relay>): Array<Relay> {
 
 export function EditRelays(): JSX.Element {
   const navigate = useNavigate();
+  const defaultRelays = useDefaultRelays();
   const { relays } = useData();
   const { createPlan, executePlan } = usePlanner();
   const [relayState, setRelayState] = useState<Relays>(relays);
@@ -227,7 +228,7 @@ export function EditRelays(): JSX.Element {
   const submit = async (): Promise<void> => {
     // publish on old and new relays as well as default relays
     const allRelays = mergeRelays(
-      DEFAULT_RELAYS,
+      defaultRelays,
       mergeRelays(relays, relayState)
     );
     const plan = planPublishRelayMetadata(
@@ -261,7 +262,7 @@ export function EditRelays(): JSX.Element {
         );
       })}
       <NewRelayFormGroup
-        defaultValue={getSuggestedRelay(relayState, DEFAULT_RELAYS)?.url}
+        defaultValue={getSuggestedRelay(relayState, defaultRelays)?.url}
         onSave={(newRelay) => saveRelay(newRelay, relayState.length)}
       />
     </ModalForm>

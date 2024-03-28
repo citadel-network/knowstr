@@ -13,7 +13,6 @@ import { RelayInformation } from "nostr-tools/lib/types/nip11";
 import { DataContextProvider } from "./DataContext";
 import { findContacts } from "./contacts";
 import {
-  DEFAULT_RELAYS,
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
   KIND_WORKSPACES,
@@ -48,6 +47,7 @@ import {
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useNodeIDFromURL } from "./components/FullScreenViewWrapper";
+import { useDefaultRelays } from "./NostrAuthContext";
 
 type DataProps = {
   user: KeyPair;
@@ -186,6 +186,7 @@ function mergePublishResults(
 }
 
 function Data({ user, children }: DataProps): JSX.Element {
+  const defaultRelays = useDefaultRelays();
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] = useState<{
     events: List<UnsignedEvent>;
@@ -197,11 +198,11 @@ function Data({ user, children }: DataProps): JSX.Element {
     relayPool,
     [myPublicKey],
     true,
-    DEFAULT_RELAYS
+    defaultRelays
   );
 
   const mergedRelays = mergeRelays(
-    sanitizeRelays(DEFAULT_RELAYS),
+    sanitizeRelays(defaultRelays),
     sanitizeRelays(myRelays)
   );
   const readFromRelays = getReadRelays(mergedRelays);

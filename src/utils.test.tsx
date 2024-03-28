@@ -174,6 +174,7 @@ type RenderApis = Partial<TestApis> & {
   initialRoute?: string;
   includeFocusContext?: boolean;
   user?: KeyPair;
+  defaultRelays?: Relays;
 };
 
 function renderApis(
@@ -207,6 +208,7 @@ function renderApis(
           value={{
             user,
             setBlockstackUser: jest.fn(),
+            defaultRelays: options?.defaultRelays || DEFAULT_RELAYS,
           }}
         >
           {" "}

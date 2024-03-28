@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { getPublicKey } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 import { useApis } from "./Apis";
+import { DEFAULT_RELAYS } from "./nostr";
+import { sanitizeRelays } from "./components/EditRelays";
 
 type Context = {
   user: KeyPair | undefined;
   setBlockstackUser: (user: KeyPair | undefined) => void;
+  defaultRelays: Relays;
 };
 
 export const NostrAuthContext = React.createContext<Context | undefined>(
@@ -25,6 +28,14 @@ export function useUser(): KeyPair | undefined {
     throw new Error("NostrAuthContext missing");
   }
   return context.user;
+}
+
+export function useDefaultRelays(): Relays {
+  const context = React.useContext(NostrAuthContext);
+  if (!context) {
+    throw new Error("NostrAuthContext missing");
+  }
+  return context.defaultRelays;
 }
 
 function userFromPrivateKey(privateKey: string): KeyPair {
@@ -68,8 +79,10 @@ export function useLogout(): () => void {
 }
 
 export function NostrAuthContextProvider({
+  defaultRelayUrls,
   children,
 }: {
+  defaultRelayUrls?: Array<string>;
   children: React.ReactNode;
 }): JSX.Element {
   const { fileStore } = useApis();
@@ -77,12 +90,20 @@ export function NostrAuthContextProvider({
   const [user, setUser] = useState<KeyPair | undefined>(
     keyFromStorage !== null ? userFromPrivateKey(keyFromStorage) : undefined
   );
+  const relays = defaultRelayUrls
+    ? sanitizeRelays(
+        defaultRelayUrls?.map((url) => {
+          return { url, read: true, write: true };
+        })
+      )
+    : DEFAULT_RELAYS;
 
   return (
     <NostrAuthContext.Provider
       value={{
         setBlockstackUser: setUser,
         user,
+        defaultRelays: relays,
       }}
     >
       {children}
