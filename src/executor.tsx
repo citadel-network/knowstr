@@ -3,6 +3,9 @@ import { Map } from "immutable";
 import { Plan } from "./planner";
 import { FinalizeEvent } from "./Apis";
 
+// Timeout in ms for pulish() on a relay
+export const RELAY_TIMEOUT = 2000;
+
 async function publishEvent(
   relayPool: SimplePool,
   event: Event,
@@ -13,8 +16,14 @@ async function publishEvent(
   if (writeRelayUrls.length === 0) {
     throw new Error("No relays to publish on");
   }
+  const timeout = (ms: number): Promise<unknown> =>
+    new Promise((_, reject): void => {
+      setTimeout(() => reject(new Error("Timeout")), ms);
+    });
   const results = await Promise.allSettled(
-    relayPool.publish(writeRelayUrls, event)
+    relayPool.publish(writeRelayUrls, event).map((promise) => {
+      return Promise.race([promise, timeout(RELAY_TIMEOUT)]);
+    })
   );
   // If one message can be sent publish is a success,
   // otherwise it's a failure
