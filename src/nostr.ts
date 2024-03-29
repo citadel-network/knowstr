@@ -16,9 +16,13 @@ export const KIND_RELAY_METADATA_EVENT = 10002;
 
 export const DEFAULT_RELAYS: Relays = [
   { url: "wss://relay.damus.io/", read: true, write: true },
-  { url: "wss://relay.snort.social/", read: true, write: true },
   { url: "wss://nos.lol/", read: true, write: true },
-  { url: "wss://nostr.wine/", read: true, write: true },
+  { url: "wss://relay.nostr.band/", read: true, write: true },
+  { url: "wss://nostr-01.bolt.observer/", read: true, write: true },
+  { url: "wss://nostr.cercatrova.me/", read: true, write: true },
+  { url: "wss://nostr.fmt.wiz.biz/", read: true, write: true },
+  { url: "wss://nostr.mom/", read: true, write: true },
+  { url: "wss://nostr.noones.com/", read: true, write: true },
 ];
 
 // eslint-disable-next-line functional/no-let
