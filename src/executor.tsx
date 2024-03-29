@@ -4,7 +4,7 @@ import { Plan } from "./planner";
 import { FinalizeEvent } from "./Apis";
 
 // Timeout in ms for pulish() on a relay
-export const RELAY_TIMEOUT = 2000;
+export const PUBLISH_TIMEOUT = 5000;
 
 async function publishEvent(
   relayPool: SimplePool,
@@ -22,7 +22,7 @@ async function publishEvent(
     });
   const results = await Promise.allSettled(
     relayPool.publish(writeRelayUrls, event).map((promise) => {
-      return Promise.race([promise, timeout(RELAY_TIMEOUT)]);
+      return Promise.race([promise, timeout(PUBLISH_TIMEOUT)]);
     })
   );
   // If one message can be sent publish is a success,
