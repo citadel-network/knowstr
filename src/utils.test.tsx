@@ -100,8 +100,6 @@ export const CAROL: KeyPair = {
   privateKey: hexToBytes(CAROL_PRIVATE_KEY),
 };
 
-export const TEST_WORKSPACE_ID = "my-first-workspace-id";
-
 export const TEST_RELAYS = [
   { url: "wss://relay.test.first.success/", read: true, write: true },
   { url: "wss://relay.test.second.fail/", read: true, write: true },

@@ -42,8 +42,8 @@ import {
   buildReferencedByListsQuery,
   buildSecondaryDataQuery,
   filtersToFilterArray,
+  isFiltersQueryEnabled,
   merge,
-  sanitizeFilter,
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useNodeIDFromURL } from "./components/FullScreenViewWrapper";
@@ -323,10 +323,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     merge(initialFiltersWithWorkspaces, secondaryDataQuery)
   );
 
-  const enableTertiary =
-    sanitizeFilter(tertiaryDataQuery.knowledgeListbyID, "#d") !== undefined ||
-    sanitizeFilter(tertiaryDataQuery.knowledgeListByHead, "#k") !== undefined ||
-    sanitizeFilter(tertiaryDataQuery.knowledgeNodesByID, "#d") !== undefined;
+  const enableTertiary = isFiltersQueryEnabled(tertiaryDataQuery);
 
   const { events: tertiaryDataEvents, eose: tertiaryEventsEose } =
     useEventQuery(relayPool, filtersToFilterArray(tertiaryDataQuery), {
@@ -365,12 +362,14 @@ function Data({ user, children }: DataProps): JSX.Element {
     merge(initialFiltersWithWorkspaces, secondaryDataQuery)
   );
 
+  const enableReferencedNodesQuery =
+    isFiltersQueryEnabled(referencedNodesQuery);
   const { events: referencedNodes } = useEventQuery(
     relayPool,
-    [referencedNodesQuery],
+    filtersToFilterArray(referencedNodesQuery),
     {
       readFromRelays,
-      enabled: referencedByListsEose,
+      enabled: referencedByListsEose && enableReferencedNodesQuery,
     }
   );
   const rDataEventsProcessed = useEventProcessor(

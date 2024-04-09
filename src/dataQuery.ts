@@ -96,6 +96,14 @@ export function filtersToFilterArray(filters: Filters): Filter[] {
   ].filter((f) => f !== undefined) as Filter[];
 }
 
+export function isFiltersQueryEnabled(filtersQuery: Filters): boolean {
+  return (
+    sanitizeFilter(filtersQuery.knowledgeListbyID, "#d") !== undefined ||
+    sanitizeFilter(filtersQuery.knowledgeListByHead, "#k") !== undefined ||
+    sanitizeFilter(filtersQuery.knowledgeNodesByID, "#d") !== undefined
+  );
+}
+
 export function addNodeToFilters(filters: Filters, id: LongID): Filters {
   return {
     ...filters,
