@@ -171,8 +171,8 @@ export function buildPrimaryDataQueryFromViews(
   }, baseFilterWithActiveWS);
 }
 
-// Go through all relations and add all the items in them to the filter and also look for relations
-// for those nodes
+// Go through all relations and add all the items in them to the filter
+// Also add the relation head to the filter to get the referencedBy node
 function addItemsFilter(data: KnowledgeData, filters: Filters): Filters {
   return data.relations.reduce((rdx, relation) => {
     const relationHeadLongId = joinID(
