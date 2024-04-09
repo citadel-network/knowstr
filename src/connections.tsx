@@ -84,7 +84,7 @@ export function getSocialRelations(
   };
 }
 
-export const REFERENCED_BY = "referenced_by" as ID;
+export const REFERENCED_BY = "referencedby" as ID;
 
 export function getReferencedByRelations(
   knowledgeDBs: KnowledgeDBs,

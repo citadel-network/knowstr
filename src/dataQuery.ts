@@ -6,7 +6,7 @@ import {
   KIND_KNOWLEDGE_NODE,
   KIND_KNOWLEDGE_NODE_COLLECTION,
 } from "./nostr";
-import { splitID, stripIndex } from "./connections";
+import { joinID, splitID, stripIndex } from "./connections";
 import { ViewPath, isSubPathWithRelations, parseViewPath } from "./ViewContext";
 
 function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
@@ -175,6 +175,23 @@ export function buildPrimaryDataQueryFromViews(
 // for those nodes
 function addItemsFilter(data: KnowledgeData, filters: Filters): Filters {
   return data.relations.reduce((rdx, relation) => {
+    const relationHeadLongId = joinID(
+      splitID(relation.id)[0] || "",
+      relation.head
+    );
+    const filtersWithReferencedNodesFilter = {
+      ...rdx,
+      knowledgeNodesByID: addIDToFilter(
+        rdx.knowledgeNodesByID,
+        relationHeadLongId,
+        "#d"
+      ),
+      knowledgeListByHead: addIDToFilter(
+        rdx.knowledgeListByHead,
+        relationHeadLongId,
+        "#k"
+      ),
+    };
     return relation.items.reduce((rd, item) => {
       return {
         knowledgeListbyID: rd.knowledgeListbyID,
@@ -182,7 +199,7 @@ function addItemsFilter(data: KnowledgeData, filters: Filters): Filters {
         knowledgeListByHead: addIDToFilter(rd.knowledgeListByHead, item, "#k"),
         deleteFilter: rd.deleteFilter,
       };
-    }, rdx);
+    }, filtersWithReferencedNodesFilter);
   }, filters);
 }
 

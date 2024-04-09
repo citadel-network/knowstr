@@ -79,9 +79,8 @@ test("Show Referenced By", async () => {
   const [alice] = setup([ALICE]);
   const aliceKnowledgeDB = await setupTestDB(alice(), [["Money", ["Bitcoin"]]]);
   const btc = findNodeByText(aliceKnowledgeDB, "Bitcoin") as KnowNode;
-  const money = findNodeByText(aliceKnowledgeDB, "Money") as KnowNode;
   const db = await setupTestDB(alice(), [
-    ["Alice Workspace", [[btc], ["P2P Apps", [btc]], [money]]],
+    ["Alice Workspace", [[btc], ["P2P Apps", [btc]]]],
   ]);
   const aliceWs = findNodeByText(db, "Alice Workspace") as KnowNode;
   renderWithTestData(
@@ -106,7 +105,7 @@ test("Show Referenced By", async () => {
     "Money1",
     "+Default",
     "New Relation Type",
-    "Alice Workspace3",
+    "Alice Workspace2",
     "+Default",
     "New Relation Type",
     "P2P Apps1",
@@ -148,8 +147,6 @@ test("If Node is the root we always show references when there are more than 0",
   const [alice] = setup([ALICE]);
   const db = await setupTestDB(alice(), [["Money", ["Bitcoin"]]]);
   const bitcoin = findNodeByText(db, "Bitcoin") as KnowNode;
-  const money = findNodeByText(db, "Money") as KnowNode;
-  await setupTestDB(alice(), [[money], [bitcoin, [money]]]);
   renderWithTestData(
     <Data user={alice().user}>
       <RootViewContextProvider root={bitcoin.id}>
