@@ -1,42 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Form, InputGroup, Modal } from "react-bootstrap";
-import { Map, OrderedMap } from "immutable";
-import { nip19, nip05, Filter, SimplePool, Event } from "nostr-tools";
+import { Map } from "immutable";
+import { nip19, nip05, Event } from "nostr-tools";
 import { useDebounce } from "use-debounce";
-import { getReadRelays, useEventQuery } from "citadel-commons";
+import { getReadRelays } from "citadel-commons";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
-import { KIND_NIP05 } from "../nostr";
 import { useApis } from "../Apis";
-
-function createNip05Query(publicKey: PublicKey): Filter {
-  return {
-    kinds: [KIND_NIP05],
-    authors: [publicKey],
-  };
-}
-
-function useNip05Query(
-  simplePool: SimplePool,
-  author: PublicKey,
-  relays: Array<Relay>
-): {
-  events: OrderedMap<string, Event>;
-  eose: boolean;
-} {
-  const { events, eose } = useEventQuery(
-    simplePool,
-    [createNip05Query(author)],
-    {
-      readFromRelays: relays,
-    }
-  );
-  return { events, eose };
-}
 
 type Nip05EventContent = {
   nip05?: string;
@@ -46,10 +20,16 @@ function lookupNip05PublicKey(
   events: Map<string, Event>,
   nip05Identifier: string
 ): boolean {
+  if (events.size === 0) {
+    return false;
+  }
   const islookupSuccessful = events
     .valueSeq()
     .toArray()
     .some((event) => {
+      if (!event?.content) {
+        return false;
+      }
       const content = JSON.parse(event.content) as Nip05EventContent;
       return content.nip05 === nip05Identifier;
     });
@@ -92,7 +72,7 @@ async function decodeInput(
 
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
-  const { relayPool } = useApis();
+  const { nip05Query } = useApis();
   const { user, contacts, relays } = useData();
   const { createPlan, executePlan } = usePlanner();
   const { search } = useLocation();
@@ -105,26 +85,39 @@ export function Follow(): JSX.Element {
     undefined
   );
   const [debouncedInput] = useDebounce(input, 500);
-  const { events: nip05Events, eose: nip05Eose } = useNip05Query(
-    relayPool,
+  const timeoutId = useRef<NodeJS.Timeout | null>(null);
+  const { events: nip05Events, eose: nip05Eose } = nip05Query.query(
     lookupPublicKey || ("" as PublicKey),
     getReadRelays(relays)
   );
 
-  useEffect((): void => {
+  useEffect(() => {
     if (lookupPublicKey !== undefined && nip05Events.size > 0 && input) {
       const isLookupError = !lookupNip05PublicKey(nip05Events, input);
       if (isLookupError) {
         setError("Lookup of nip-05 identifier failed");
         setLookupPublicKey(undefined);
       } else {
+        if (timeoutId.current) {
+          clearTimeout(timeoutId.current);
+        }
         navigate(
           lookupPublicKey === user.publicKey
             ? "/profile"
             : `/follow?publicKey=${lookupPublicKey}`
         );
       }
+    } else if (lookupPublicKey !== undefined && nip05Events.size === 0) {
+      // eslint-disable-next-line functional/immutable-data
+      timeoutId.current = setTimeout(() => {
+        setError("No Nip05 Events found");
+      }, nip05Query.timeout);
     }
+    return () => {
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current);
+      }
+    };
   }, [nip05Eose, nip05Events, lookupPublicKey, debouncedInput]);
 
   const pasteFromClipboard = async (): Promise<void> => {
