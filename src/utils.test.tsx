@@ -41,7 +41,7 @@ import { execute } from "./executor";
 import { ApiProvider, Apis, FinalizeEvent } from "./Apis";
 import { App } from "./App";
 import { DataContextProps } from "./DataContext";
-import { MockRelayPool, mockNip05Query, mockRelayPool } from "./nostrMock.test";
+import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
 import { NostrAuthContext } from "./NostrAuthContext";
 import { FocusContext, FocusContextProvider } from "./FocusContextProvider";
@@ -173,7 +173,6 @@ function applyApis(props?: Partial<TestApis>): TestApis {
         })
       ),
     },
-    nip05Query: props?.nip05Query || mockNip05Query(Map()),
     ...props,
   };
 }
@@ -189,8 +188,7 @@ function renderApis(
   children: React.ReactElement,
   options?: RenderApis
 ): TestApis & RenderResult {
-  const { fileStore, relayPool, finalizeEvent, nip11, nip05Query } =
-    applyApis(options);
+  const { fileStore, relayPool, finalizeEvent, nip11 } = applyApis(options);
   // If user is explicity undefined it will be overwritten, if not set default Alice is used
   const optionsWithDefaultUser = {
     user: ALICE,
@@ -211,7 +209,6 @@ function renderApis(
           relayPool,
           finalizeEvent,
           nip11,
-          nip05Query,
         }}
       >
         <NostrAuthContext.Provider
@@ -243,7 +240,6 @@ function renderApis(
     relayPool,
     finalizeEvent,
     nip11,
-    nip05Query,
     ...utils,
   };
 }

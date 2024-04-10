@@ -9,14 +9,13 @@ import {
 } from "nostr-tools";
 import { initNostrWasm } from "nostr-wasm";
 import { ApiProvider, Apis } from "./Apis";
-import { useNip05Query } from "./components/useNip05Query";
 
 export function NostrProvider({
   children,
   apis,
 }: {
   children: React.ReactNode;
-  apis: Omit<Apis, "relayPool" | "finalizeEvent" | "nip11" | "nip05Query">;
+  apis: Omit<Apis, "relayPool" | "finalizeEvent" | "nip11">;
 }): JSX.Element {
   const [pool, setPool] = useState<AbstractSimplePool | undefined>(undefined);
 
@@ -38,11 +37,6 @@ export function NostrProvider({
         nip11: {
           ...nip11,
           searchDebounce: 500,
-        },
-        nip05Query: {
-          query: (author: PublicKey, relays: Relays) =>
-            useNip05Query(pool, author, relays),
-          timeout: 500,
         },
       }}
     >

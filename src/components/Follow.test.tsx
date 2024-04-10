@@ -1,5 +1,4 @@
 import React from "react";
-import { Map } from "immutable";
 import { screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { Event, nip05, nip19 } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
@@ -13,10 +12,10 @@ import {
   follow,
   bobsNip05Identifier,
   finalizeEventWithoutWasm,
+  TEST_RELAYS,
 } from "../utils.test";
 import { KIND_CONTACTLIST, newTimestamp } from "../nostr";
 import { Follow } from "./Follow";
-import { mockNip05Query } from "../nostrMock.test";
 
 afterEach(() => {
   jest.useRealTimers();
@@ -106,10 +105,14 @@ test("find a user by nip-05 identifier", async () => {
     },
     BOB.privateKey
   );
-  renderWithTestData(<Follow />, {
+  const utils = renderWithTestData(<Follow />, {
     ...alice(),
-    nip05Query: mockNip05Query(Map({ [bobsNip05Event.id]: bobsNip05Event })),
   });
+  utils.relayPool.publish(
+    TEST_RELAYS.map((r) => r.url),
+    bobsNip05Event
+  );
+
   const input = await screen.findByLabelText("find user");
   userEvent.type(input, bobsNip05Identifier);
 
