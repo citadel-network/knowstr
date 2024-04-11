@@ -1,5 +1,5 @@
 import React from "react";
-import { screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { screen, waitFor, fireEvent } from "@testing-library/react";
 import { Event, nip05, nip19 } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
 import {
@@ -16,10 +16,6 @@ import {
 } from "../utils.test";
 import { KIND_CONTACTLIST, newTimestamp } from "../nostr";
 import { Follow } from "./Follow";
-
-afterEach(() => {
-  jest.useRealTimers();
-});
 
 test("find a user", async () => {
   const [alice] = setup([ALICE]);
@@ -128,13 +124,6 @@ test("find a user by nip-05 identifier", async () => {
 });
 
 test("cannot find a user by nip-05 identifier", async () => {
-  jest.useFakeTimers();
-  nip05.useFetchImplementation(async () =>
-    Promise.resolve({
-      json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
-    })
-  );
-
   const [alice] = setup([ALICE]);
   renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
@@ -146,9 +135,6 @@ test("cannot find a user by nip-05 identifier", async () => {
   });
   fireEvent.click(findButton);
 
-  act(() => {
-    jest.runAllTimers(); // Advance timers
-  });
   await screen.findByText("No Nip05 Events found");
 });
 

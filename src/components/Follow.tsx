@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Form, InputGroup, Modal } from "react-bootstrap";
 import { Map } from "immutable";
@@ -16,7 +16,6 @@ import { useNip05Query } from "./useNip05Query";
 type Nip05EventContent = {
   nip05?: string;
 };
-const NIP05QUERY_TIMEOUT = 500;
 
 function lookupNip05PublicKey(
   events: Map<string, Event>,
@@ -74,7 +73,7 @@ async function decodeInput(
 
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
-  const { /* nip05Query */ relayPool } = useApis();
+  const { relayPool } = useApis();
   const { user, contacts, relays } = useData();
   const { createPlan, executePlan } = usePlanner();
   const { search } = useLocation();
@@ -87,7 +86,6 @@ export function Follow(): JSX.Element {
     undefined
   );
   const [debouncedInput] = useDebounce(input, 500);
-  const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const { events: nip05Events, eose: nip05Eose } = useNip05Query(
     relayPool,
     lookupPublicKey || ("" as PublicKey),
@@ -101,9 +99,6 @@ export function Follow(): JSX.Element {
         setError("Lookup of nip-05 identifier failed");
         setLookupPublicKey(undefined);
       } else {
-        if (timeoutId.current) {
-          clearTimeout(timeoutId.current);
-        }
         navigate(
           lookupPublicKey === user.publicKey
             ? "/profile"
@@ -111,16 +106,8 @@ export function Follow(): JSX.Element {
         );
       }
     } else if (lookupPublicKey !== undefined && nip05Events.size === 0) {
-      // eslint-disable-next-line functional/immutable-data
-      timeoutId.current = setTimeout(() => {
-        setError("No Nip05 Events found");
-      }, NIP05QUERY_TIMEOUT);
+      setError("No Nip05 Events found");
     }
-    return () => {
-      if (timeoutId.current) {
-        clearTimeout(timeoutId.current);
-      }
-    };
   }, [nip05Eose, nip05Events, lookupPublicKey, debouncedInput]);
 
   const pasteFromClipboard = async (): Promise<void> => {
