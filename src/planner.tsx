@@ -17,6 +17,7 @@ import {
   newTimestamp,
   KIND_SETTINGS,
   KIND_RELAY_METADATA_EVENT,
+  KIND_NIP05,
 } from "./nostr";
 import { newDB } from "./knowledge";
 import { shortID } from "./connections";
@@ -143,6 +144,32 @@ export function planRemoveContact(plan: Plan, publicKey: PublicKey): Plan {
   return {
     ...plan,
     publishEvents: plan.publishEvents.push(contactListEvent),
+  };
+}
+
+export function planUpdateNip05Identifier(
+  plan: Plan,
+  nip05Identifier: string
+): Plan {
+  const split = nip05Identifier.split("@");
+  if (split.length !== 2) {
+    return plan;
+  }
+  const nip05Name = split[0];
+  const content = JSON.stringify({
+    name: nip05Name,
+    nip05: nip05Identifier,
+  });
+  const updateNip05IdentifierEvent = {
+    kind: KIND_NIP05,
+    pubkey: plan.user.publicKey,
+    created_at: newTimestamp(),
+    tags: [],
+    content,
+  };
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(updateNip05IdentifierEvent),
   };
 }
 

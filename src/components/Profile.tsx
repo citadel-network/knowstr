@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { InputGroup, Modal } from "react-bootstrap";
-import { nip19 } from "nostr-tools";
+import { InputGroup, Modal, Form } from "react-bootstrap";
+import { nip05, nip19 } from "nostr-tools";
 import QRCode from "react-qr-code";
 import { useData } from "../DataContext";
 import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
+import { planUpdateNip05Identifier, usePlanner } from "../planner";
+import { nip05Regex, pasteFromClipboard } from "./Follow";
+import ErrorMessage from "./ErrorMessage";
 
 type Identifier = "none" | "npub" | "nprofile" | "invite";
 
@@ -70,6 +73,92 @@ function UserPublicIdentifier({
         </div>
       </InputGroup>
     </div>
+  );
+}
+
+function UpdateNip05Identifier(): JSX.Element {
+  const { user } = useData();
+  const { createPlan, executePlan } = usePlanner();
+  const [input, setInput] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const changedInput = e.target.value;
+    if (changedInput === input) {
+      return;
+    }
+    setInput(!changedInput ? undefined : changedInput);
+  };
+
+  const onSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    e.preventDefault();
+    if (!input || !nip05Regex.test(input)) {
+      setError("Invalid nip-05 identifier");
+      return;
+    }
+    const profile = await nip05.queryProfile(input);
+    const publicKeyFoundOnDomain =
+      profile !== null ? (profile.pubkey as PublicKey) : undefined;
+    if (!publicKeyFoundOnDomain) {
+      setError("This nip-05 identifier is not registered");
+      return;
+    }
+    if (publicKeyFoundOnDomain !== user.publicKey) {
+      setError("This nip-05 identifier is not registered to your PublicKey");
+      return;
+    }
+    await executePlan(planUpdateNip05Identifier(createPlan(), input));
+  };
+
+  const inputElementAriaLabel = "update nip05 identifier";
+
+  return (
+    <Form onSubmit={onSubmit}>
+      <div className="d-flex m-2 align-items-center">
+        <InputGroup>
+          <div style={{ position: "relative", flexGrow: 1 }}>
+            <FormControlWrapper
+              aria-label={inputElementAriaLabel}
+              defaultValue=""
+              onChange={onChange}
+              placeholder="Enter nostr address"
+              className="p-2 w-100"
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "15%",
+              }}
+            >
+              <Button
+                className="btn-borderless background-transparent"
+                onClick={() =>
+                  pasteFromClipboard(inputElementAriaLabel, setInput)
+                }
+              >
+                <span className="iconsminds-file-clipboard" />
+              </Button>
+            </div>
+          </div>
+        </InputGroup>
+        <div className="ms-4">
+          <Button
+            type="submit"
+            className="btn btn-primary"
+            ariaLabel="submit nip05 identifier"
+            disabled={!input}
+          >
+            Submit
+          </Button>
+        </div>
+      </div>
+      <div className="m-2">
+        <ErrorMessage error={error} setError={setError} />
+      </div>
+    </Form>
   );
 }
 
@@ -174,6 +263,7 @@ export function Profile(): JSX.Element {
             </div>
           )}
         </div>
+        <UpdateNip05Identifier />
       </Modal.Body>
     </Modal>
   );

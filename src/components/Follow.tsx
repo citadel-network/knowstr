@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { SetStateAction, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Form, InputGroup, Modal } from "react-bootstrap";
 import { Map } from "immutable";
@@ -7,7 +7,7 @@ import { useDebounce } from "use-debounce";
 import { getReadRelays } from "citadel-commons";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
-import { FormControlWrapper, pasteFromClipboard } from "./FormControlWrapper";
+import { FormControlWrapper } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
 import { useApis } from "../Apis";
@@ -37,6 +37,20 @@ function lookupNip05PublicKey(
   return islookupSuccessful;
 }
 
+export const nip05Regex = /^[a-z0-9-_.]+@[a-z0-9-_.]+\.[a-z0-9-_.]+$/i;
+
+export async function pasteFromClipboard(inputElementAriaLabel: string, setInput: React.Dispatch<SetStateAction<string | undefined>>): Promise<void> {
+  const text = await navigator.clipboard.readText();
+  const inputElement = document.querySelector(
+    `input[aria-label=${inputElementAriaLabel}]`
+  );
+  if (inputElement) {
+    // eslint-disable-next-line functional/immutable-data
+    (inputElement as HTMLInputElement).value = text;
+  }
+  setInput(text);
+};
+
 async function decodeInput(
   input: string | undefined
 ): Promise<{ publicKey: PublicKey; isNip05: boolean } | undefined> {
@@ -61,7 +75,6 @@ async function decodeInput(
   if (publicKeyRegex.test(input)) {
     return { publicKey: input as PublicKey, isNip05: false };
   }
-  const nip05Regex = /^[a-z0-9-_.]+@[a-z0-9-_.]+\.[a-z0-9-_.]+$/i;
   if (nip05Regex.test(input)) {
     const profile = await nip05.queryProfile(input);
     return profile !== null
