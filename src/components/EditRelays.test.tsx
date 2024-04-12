@@ -17,7 +17,7 @@ test("Remove a Nostr Relay", async () => {
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {
-    screen.getByText("Set Nostr Relays");
+    screen.getByText("Edit Nostr Relays");
     screen.getByDisplayValue("wss://relay.test.first.success/");
     screen.getByDisplayValue("wss://relay.test.second.fail/");
   });
@@ -54,7 +54,7 @@ test("Edit an existing Nostr Relay", async () => {
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(await screen.findByLabelText("edit relays"));
   await waitFor(() => {
-    screen.getByText("Set Nostr Relays");
+    screen.getByText("Edit Nostr Relays");
     screen.getByDisplayValue("wss://relay.test.first.success/");
     screen.getByDisplayValue("wss://relay.test.second.fail/");
   });

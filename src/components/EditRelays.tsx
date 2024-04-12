@@ -242,7 +242,7 @@ export function EditRelays(): JSX.Element {
     <ModalForm
       submit={submit}
       onHide={() => navigate("/")}
-      title="Set Nostr Relays"
+      title="Edit Nostr Relays"
     >
       {relayState.map((relay: Relay, index: number) => {
         const key = `relay${relay.url}`;
