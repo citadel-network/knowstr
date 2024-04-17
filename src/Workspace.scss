@@ -26,6 +26,10 @@ body {
   line-height: 1.5rem;
 }
 
+.border-strong {
+  border: $border-strong
+}
+
 .border-top-strong {
   border-top: $border-strong;
 }
@@ -87,6 +91,12 @@ body {
   border: $border-strong;
 }
 
+.pressed {
+  box-shadow: inset 3px rgba(0, 0, 0, 0.125);
+  background-color: rgba(200, 200, 200, 0.5);
+  border: inset 1px black;
+}
+
 .close:focus,
 .input-group:focus-within,
 .dropdown-toggle:focus,
@@ -143,6 +153,12 @@ body {
 .flex-col {
   display: flex;
   flex-direction: column;
+}
+
+.flex-col-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .flex-row-space-between {

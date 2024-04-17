@@ -337,8 +337,8 @@ export function planPublishSettings(plan: Plan, settings: Settings): Plan {
   };
 }
 
-export function planPublishRelayMetadata(plan: Plan, relays: Relays): Plan {
-  const tags = relays.map((r) => {
+export function relayTags(relays: Relays): string[][] {
+  return relays.map((r) => {
     if (r.read && r.write) {
       return ["r", r.url];
     }
@@ -350,6 +350,10 @@ export function planPublishRelayMetadata(plan: Plan, relays: Relays): Plan {
     }
     return [];
   });
+}
+
+export function planPublishRelayMetadata(plan: Plan, relays: Relays): Plan {
+  const tags = relayTags(relays);
   const publishRelayMetadataEvent = {
     kind: KIND_RELAY_METADATA_EVENT,
     pubkey: plan.user.publicKey,
