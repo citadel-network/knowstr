@@ -1,6 +1,5 @@
 import { List } from "immutable";
 import React, { useContext, useEffect } from "react";
-import { Draggable } from "@hello-pangea/dnd";
 import { useMediaQuery } from "react-responsive";
 import { Link, matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
@@ -399,6 +398,12 @@ export function DraggableNode({
   const parentViewKey = getParentKey(viewKey);
   const isMobile = useMediaQuery(IS_MOBILE);
   return (
+    <div>
+      <Node />
+    </div>
+  );
+  /*
+  return (
     <Draggable draggableId={viewKey} index={dndIndex} isDragDisabled={isMobile}>
       {(providedDraggable, snapshot) => {
         return (
@@ -424,4 +429,5 @@ export function DraggableNode({
       }}
     </Draggable>
   );
+     */
 }

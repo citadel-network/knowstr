@@ -6,11 +6,6 @@ import React, {
   useState,
 } from "react";
 import { List } from "immutable";
-import {
-  Draggable,
-  Droppable,
-  DroppableStateSnapshot,
-} from "@hello-pangea/dnd";
 import { Virtuoso } from "react-virtuoso";
 import {
   useNode,
@@ -21,13 +16,7 @@ import {
   ViewContext,
   parseViewPath,
 } from "../ViewContext";
-import {
-  DraggableNode,
-  Node,
-  getNodesInTree,
-  useIsOpenInFullScreen,
-} from "./Node";
-import { ReadingStatus } from "./ReadingStatus";
+import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { useData } from "../DataContext";
 
 window.addEventListener("error", (e) => {
@@ -40,15 +29,9 @@ window.addEventListener("error", (e) => {
   }
 });
 
-function Item({ provided, path, isDragging }) {
+function Item({ path, isDragging }: { path: ViewPath; isDragging: boolean }) {
   return (
-    <div
-      {...provided.draggableProps}
-      {...provided.dragHandleProps}
-      ref={provided.innerRef}
-      style={provided.draggableProps.style}
-      className={`item ${isDragging ? "is-dragging" : ""}`}
-    >
+    <div className={`item ${isDragging ? "is-dragging" : ""}`}>
       <ViewContext.Provider value={path}>
         <Node />
       </ViewContext.Provider>
@@ -60,6 +43,7 @@ function Item({ provided, path, isDragging }) {
 //  - drag over doesn't scroll
 // - fix spaceholder
 
+/*
 function addDraggingCopy(
   snapshot: DroppableStateSnapshot,
   nodes: List<ViewPath>
@@ -80,7 +64,9 @@ function addDraggingCopy(
     `copy:${snapshot.draggingFromThisWith}`
   );
 }
+   */
 
+/*
 function calculateMaxHeight(
   listHeight: number,
   snapshot: DroppableStateSnapshot
@@ -97,6 +83,7 @@ function calculateMaxHeight(
   }
   return listHeight;
 }
+   */
 
 /* eslint-disable react/jsx-props-no-spreading */
 export function TreeView(): JSX.Element | null {
@@ -144,76 +131,43 @@ export function TreeView(): JSX.Element | null {
     []
   );
 
+  const maxHeight = totalListHeight; // calculateMaxHeight(totalListHeight || 0, snapshot);
+  const virtuosoStyle = totalListHeight
+    ? { maxHeight: "100%", height: `${maxHeight}px` }
+    : { height: "1px" };
+
+  // const nodesWithCopy = addDraggingCopy(snapshot, nodes);
+  const nodesWithCopy = nodes;
+
   return (
     <div
       className="max-100 overflow-y-hidden background-dark"
       aria-label={ariaLabel}
     >
-      <Droppable
-        droppableId={`tree:${viewKey}`}
-        mode="virtual"
-        renderClone={(provided, snapshot, rubric) => {
-          const path = parseViewPath(rubric.draggableId);
-          return (
-            <Item
-              provided={provided}
-              path={path}
-              isDragging={snapshot.isDragging}
-            />
-          );
+      <Virtuoso
+        data={nodesWithCopy.toArray()}
+        style={virtuosoStyle}
+        totalListHeightChanged={(height) => {
+          setTotalListHeight(height);
         }}
-      >
-        {(provided, snapshot) => {
-          const maxHeight = calculateMaxHeight(totalListHeight || 0, snapshot);
-          const virtuosoStyle = totalListHeight
-            ? { maxHeight: "100%", height: `${maxHeight}px` }
-            : { height: "1px" };
-
-          const nodesWithCopy = addDraggingCopy(snapshot, nodes);
+        components={{ Item: HeightPreservingItem }}
+        itemContent={(index, path) => {
+          if (typeof path === "string") {
+            const p = parseViewPath(path.substring(5));
+            return (
+              <ViewContext.Provider value={p} key={path}>
+                <Item path={p} isDragging={false} />
+              </ViewContext.Provider>
+            );
+          }
 
           return (
-            <Virtuoso
-              data={nodesWithCopy.toArray()}
-              style={virtuosoStyle}
-              totalListHeightChanged={(height) => {
-                setTotalListHeight(height);
-              }}
-              components={{ Item: HeightPreservingItem }}
-              scrollerRef={provided.innerRef}
-              itemContent={(index, path) => {
-                if (typeof path === "string") {
-                  const p = parseViewPath(path.substring(5));
-                  return (
-                    <ViewContext.Provider value={p} key={path}>
-                      <Draggable draggableId={path} index={index}>
-                        {(prov) => (
-                          <Item provided={prov} path={p} isDragging={false} />
-                        )}
-                      </Draggable>
-                    </ViewContext.Provider>
-                  );
-                }
-
-                return (
-                  <ViewContext.Provider
-                    value={path}
-                    key={viewPathToString(path)}
-                  >
-                    <Draggable
-                      draggableId={viewPathToString(path)}
-                      index={index}
-                    >
-                      {(prov) => (
-                        <Item provided={prov} path={path} isDragging={false} />
-                      )}
-                    </Draggable>
-                  </ViewContext.Provider>
-                );
-              }}
-            />
+            <ViewContext.Provider value={path} key={viewPathToString(path)}>
+              <Item path={path} isDragging={false} />
+            </ViewContext.Provider>
           );
         }}
-      </Droppable>
+      />
     </div>
   );
 }

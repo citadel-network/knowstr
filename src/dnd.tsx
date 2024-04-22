@@ -1,12 +1,6 @@
 import React, { createContext, useState } from "react";
 import { List, OrderedSet } from "immutable";
 import {
-  DragDropContext,
-  DragUpdate,
-  DropResult,
-  ResponderProvided,
-} from "@hello-pangea/dnd";
-import {
   deselectAllChildren,
   getSelectedInView,
   useTemporaryView,
@@ -205,8 +199,8 @@ export function dnd(
 }
 
 type DragUpdateState = {
-  initial: DragUpdate | undefined;
-  provided: ResponderProvided | undefined;
+  initial: undefined; // DragUpdate | undefined;
+  provided: undefined;
 };
 
 export const DragUpdateStateContext = createContext<
@@ -220,7 +214,9 @@ export function DND({ children }: { children: React.ReactNode }): JSX.Element {
     initial: undefined,
     provided: undefined,
   });
+  return <>{children}</>;
 
+  /*
   const onDragEnd = (result: DropResult): void => {
     if (result.destination) {
       executePlan(
@@ -254,4 +250,5 @@ export function DND({ children }: { children: React.ReactNode }): JSX.Element {
       </DragDropContext>
     </DragUpdateStateContext.Provider>
   );
+   */
 }

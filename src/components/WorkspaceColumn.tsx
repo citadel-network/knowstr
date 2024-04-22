@@ -1,5 +1,4 @@
 import React from "react";
-import { Droppable } from "@hello-pangea/dnd";
 import { useMediaQuery } from "react-responsive";
 import { AddColumn } from "./AddNode";
 import { FileDropZone } from "./FileDropZone";
@@ -42,6 +41,19 @@ export function EmptyColumn(): JSX.Element {
   };
   return (
     <WorkspaceColumn>
+      <div>
+        <div className="outer-node">
+          <FileDropZone onDrop={onDropFiles}>
+            <AddColumn />
+          </FileDropZone>
+        </div>
+      </div>
+    </WorkspaceColumn>
+  );
+}
+
+/*
+ *
       <Droppable droppableId={`new:${useViewKey()}`} key="new">
         {(provided, snapshot) => (
           <div
@@ -51,18 +63,11 @@ export function EmptyColumn(): JSX.Element {
           >
             {provided.placeholder}
             {!snapshot.isDraggingOver && (
-              <div className="outer-node">
-                <FileDropZone onDrop={onDropFiles}>
-                  <AddColumn />
-                </FileDropZone>
-              </div>
             )}
           </div>
         )}
       </Droppable>
-    </WorkspaceColumn>
-  );
-}
+ */
 
 /* eslint-enable react/jsx-props-no-spreading */
 /* eslint-enable @typescript-eslint/unbound-method */
