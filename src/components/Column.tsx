@@ -3,16 +3,18 @@ import { Card } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
 import { bulkAddRelations } from "../connections";
 import { FileDropZone } from "./FileDropZone";
-import { DraggableNode, Indent } from "./Node";
+import { Indent } from "./Node";
 import { ColumnMenu } from "./Menu";
 import { useDeselectAllInView } from "./TemporaryViewContext";
-import { NodeCard, UIColumn, UIColumnBody, UIColumnHeader } from "./Ui";
+import { NodeCard, UIColumn, UIColumnHeader } from "./Ui";
 import { RemoveColumnButton } from "./RemoveColumnButton";
 import { upsertRelations, useViewKey, useViewPath } from "../ViewContext";
 import { TreeView } from "./TreeView";
 import { AddNodeToNode } from "./AddNode";
 import { Plan, usePlanner } from "../planner";
 import { IS_MOBILE } from "./responsive";
+import { DraggableNote } from "./Draggable";
+import { DroppableContainer } from "./DroppableContainer";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -34,28 +36,32 @@ export function Column(): JSX.Element | null {
     <UIColumn>
       <FileDropZone onDrop={onDropFiles}>
         <UIColumnHeader>
-          <div className="position-relative">
-            <div className="outer-node-extras">
-              <RemoveColumnButton />
+          <DroppableContainer>
+            <div className="position-relative">
+              <div className="outer-node-extras">
+                <RemoveColumnButton />
+              </div>
             </div>
-          </div>
-          <div>
-            <DraggableNode dndIndex={0} sticky />
-          </div>
-          <Card.Body className="p-0">
-            <ColumnMenu />
-          </Card.Body>
+            <div>
+              <DraggableNote />
+            </div>
+            <Card.Body className="p-0">
+              <ColumnMenu />
+            </Card.Body>
+          </DroppableContainer>
         </UIColumnHeader>
         <TreeView />
         <div>
-          <NodeCard
-            className={
-              !isMobile ? "hover-light-bg border-top-strong" : undefined
-            }
-          >
-            <Indent levels={1} />
-            <AddNodeToNode />
-          </NodeCard>
+          <DroppableContainer>
+            <NodeCard
+              className={
+                !isMobile ? "hover-light-bg border-top-strong" : undefined
+              }
+            >
+              <Indent levels={1} />
+              <AddNodeToNode />
+            </NodeCard>
+          </DroppableContainer>
         </div>
       </FileDropZone>
     </UIColumn>

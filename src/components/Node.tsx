@@ -1,31 +1,24 @@
 import { List } from "immutable";
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
 import { Link, matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import { textVide } from "text-vide";
 import DOMPurify from "dompurify";
 import { FULL_SCREEN_PATH } from "../App";
-import { DragUpdateStateContext, getDropDestinationFromTreeView } from "../dnd";
 import { getRelations } from "../connections";
 import {
   getNodeFromView,
-  getParentKey,
-  popPrefix,
-  updateView,
   useNode,
   useViewKey,
   useViewPath,
   ViewPath,
-  parseViewPath,
   useIsAddToNode,
   getRoot,
   addNodeToPath,
   addAddToNodeToPath,
 } from "../ViewContext";
 import {
-  useGetSelectedInView,
-  useIsSelected,
   NodeSelectbox,
   toggleEditing,
   useTemporaryView,
@@ -299,58 +292,11 @@ export function getNodesInTree(
     : nodesInTree.push(addNodePath);
 }
 
-function DraggingNode(): JSX.Element {
-  const viewKey = useViewKey();
-  const findSelected = useGetSelectedInView();
-  const parentViewKey = getParentKey(viewKey);
-  const checked = useIsSelected();
-  const badgeCounter = checked ? findSelected(parentViewKey).size : undefined;
-  const dragUpdateState = useContext(DragUpdateStateContext);
-  const viewPath = useViewPath();
-  const { knowledgeDBs, user } = useData();
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
-  const view = getNodeFromView(
-    knowledgeDBs,
-    views,
-    user.publicKey,
-    viewPath
-  )[1];
-  const isOpenInFullScreen = useIsOpenInFullScreen();
-
-  const dropDestination =
-    dragUpdateState &&
-    dragUpdateState.initial &&
-    dragUpdateState.initial.destination &&
-    dragUpdateState.initial.destination;
-
-  const viewsWithCollapsedSource = view
-    ? updateView(views, viewPath, {
-        ...view,
-        expanded: false,
-      })
-    : undefined;
-
-  const levels =
-    dropDestination && viewsWithCollapsedSource
-      ? getDropDestinationFromTreeView(
-          knowledgeDBs,
-          user.publicKey,
-          viewsWithCollapsedSource,
-          parseViewPath(popPrefix(dropDestination.droppableId)[1]),
-          dropDestination.index
-          // this will be the new parent, therefore no -1
-        )[0].length - 1
-      : getLevels(viewPath, isOpenInFullScreen);
-
-  return (
-    <NodeCard badgeValue={badgeCounter}>
-      {levels > 0 && <Indent levels={levels} />}
-      <NodeContent />
-    </NodeCard>
-  );
-}
-
-export function Node(): JSX.Element | null {
+export function Node({
+  className,
+}: {
+  className?: string;
+}): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
@@ -359,9 +305,10 @@ export function Node(): JSX.Element | null {
   const isNodeBeingEdited = useIsEditingOn();
   const isMultiselect = useIsParentMultiselectBtnOn();
   const displayMenu = levels > 0;
+  const cls = !isMobile ? `${className || ""} hover-light-bg` : className;
   return (
     <NodeCard
-      className={!isMobile ? "hover-light-bg" : undefined}
+      className={cls}
       cardBodyClassName={
         !isMobile && isOpenInFullScreen ? "ps-2 pt-2 pb-2" : undefined
       }
@@ -386,48 +333,4 @@ export function Node(): JSX.Element | null {
   );
 }
 
-/* eslint-disable react/jsx-props-no-spreading */
-export function DraggableNode({
-  dndIndex,
-  sticky,
-}: {
-  dndIndex: number;
-  sticky?: boolean;
-}): JSX.Element | null {
-  const viewKey = useViewKey();
-  const parentViewKey = getParentKey(viewKey);
-  const isMobile = useMediaQuery(IS_MOBILE);
-  return (
-    <div>
-      <Node />
-    </div>
-  );
-  /*
-  return (
-    <Draggable draggableId={viewKey} index={dndIndex} isDragDisabled={isMobile}>
-      {(providedDraggable, snapshot) => {
-        return (
-          <>
-            <div
-              id={viewKey}
-              ref={providedDraggable.innerRef}
-              {...providedDraggable.draggableProps}
-              {...providedDraggable.dragHandleProps}
-              style={providedDraggable.draggableProps.style}
-            >
-              {snapshot.isDragging && <DraggingNode />}
-              {!snapshot.isDragging && <Node />}
-            </div>
-            {snapshot.isDragging &&
-              (sticky ||
-                (snapshot.draggingOver &&
-                  popPrefix(snapshot.draggingOver)[1] !== parentViewKey)) && (
-                <Node />
-              )}
-          </>
-        );
-      }}
-    </Draggable>
-  );
-     */
-}
+export const NOTE_TYPE = "note";

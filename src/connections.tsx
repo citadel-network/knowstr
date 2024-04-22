@@ -152,9 +152,10 @@ export function moveRelations(
   startPosition: number
 ): Relations {
   const itemsToMove = relations.items.filter((_, i) => indices.includes(i));
+  const itemsBeforeStartPos = indices.filter((i) => i < startPosition).length;
   const updatedItems = relations.items
     .filterNot((_, i) => indices.includes(i))
-    .splice(startPosition, 0, ...itemsToMove.toArray());
+    .splice(startPosition - itemsBeforeStartPos, 0, ...itemsToMove.toArray());
   return {
     ...relations,
     items: updatedItems,

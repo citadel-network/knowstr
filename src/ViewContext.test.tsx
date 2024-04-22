@@ -21,9 +21,6 @@ import {
   setup,
   setupTestDB,
   findNodeByText,
-  startDragging,
-  dragUp,
-  drop,
   extractNodes,
   BOB,
   follow,
@@ -36,8 +33,6 @@ import {
   parseViewPath,
   updateViewPathsAfterDisconnect,
   NodeIndex,
-  addNodeToPath,
-  viewPathToString,
 } from "./ViewContext";
 import { WorkspaceView } from "./components/Workspace";
 import { TreeView } from "./components/TreeView";
@@ -129,22 +124,11 @@ test("Move Node Up", async () => {
   userEvent.click(screen.getByLabelText("show Default items of OOP"));
   expect(extractNodes(utils.container)).toEqual(["FPL", "OOP", "C++", "Java"]);
 
-  const draggableID = viewPathToString(
-    addNodeToPath(
-      executedPlan.knowledgeDBs,
-      executedPlan.user.publicKey,
-      addNodeToPath(
-        executedPlan.knowledgeDBs,
-        executedPlan.user.publicKey,
-        [{ nodeID: root, nodeIndex: 0 as NodeIndex }],
-        0
-      ),
-      1
-    )
-  );
-  const el = startDragging(utils.container, draggableID);
-  dragUp(el);
-  drop(el);
+  const oop = screen.getByText("OOP");
+  const fpl = screen.getByText("FPL");
+
+  fireEvent.dragStart(oop);
+  fireEvent.drop(fpl);
   expect(extractNodes(utils.container)).toEqual(["OOP", "C++", "Java", "FPL"]);
   cleanup();
 

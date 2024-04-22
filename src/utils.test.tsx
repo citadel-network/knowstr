@@ -4,7 +4,6 @@ import { RelayInformation } from "nostr-tools/lib/types/nip11";
 import { List, Map } from "immutable";
 import {
   render,
-  fireEvent,
   screen,
   waitFor,
   MatcherFunction,
@@ -27,7 +26,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
-import { KIND_CONTACTLIST, DEFAULT_RELAYS } from "./nostr";
+import { KIND_CONTACTLIST } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
   Plan,
@@ -219,23 +218,23 @@ function renderApis(
             defaultRelays: options?.defaultRelays || TEST_RELAYS,
           }}
         >
-          {" "}
-          {options?.includeFocusContext === true ? (
-            <FocusContextProvider>{children}</FocusContextProvider>
-          ) : (
-            <FocusContext.Provider
-              value={{
-                isInputElementInFocus: true,
-                setIsInputElementInFocus: jest.fn(),
-              }}
-            >
-              <VirtuosoMockContext.Provider
-                value={{ viewportHeight: 10000, itemHeight: 100 }}
+          <VirtuosoMockContext.Provider
+            value={{ viewportHeight: 10000, itemHeight: 100 }}
+          >
+            {" "}
+            {options?.includeFocusContext === true ? (
+              <FocusContextProvider>{children}</FocusContextProvider>
+            ) : (
+              <FocusContext.Provider
+                value={{
+                  isInputElementInFocus: true,
+                  setIsInputElementInFocus: jest.fn(),
+                }}
               >
                 {children}
-              </VirtuosoMockContext.Provider>
-            </FocusContext.Provider>
-          )}
+              </FocusContext.Provider>
+            )}
+          </VirtuosoMockContext.Provider>
         </NostrAuthContext.Provider>
       </ApiProvider>
     </BrowserRouter>
@@ -546,38 +545,9 @@ export async function setupTestDB(
   return planWithWorkspace;
 }
 
-export function startDragging(
-  container: Container,
-  draggableID: string
-): Element {
-  const el = container.querySelector(
-    `div[data-rfd-draggable-id="${draggableID}"]`
-  );
-  if (!el) {
-    throw new Error(`Element with drag id ${draggableID} not found`);
-  }
-  // User event doesn't work to activate dragging on a specific event, the only way to use
-  // user event is to cycle through by pressing tab until the element is in focus which is
-  // very slow
-
-  // eslint-disable-next-line testing-library/prefer-user-event
-  fireEvent.keyDown(el, { keyCode: 32 });
-  return el;
-}
-
-export function dragUp(el: Element): void {
-  // eslint-disable-next-line testing-library/prefer-user-event
-  fireEvent.keyDown(el, { keyCode: 38 });
-}
-
-export function drop(el: Element): void {
-  // eslint-disable-next-line testing-library/prefer-user-event
-  fireEvent.keyDown(el, { keyCode: 32 });
-}
-
 export function extractNodes(container: Container): Array<string | null> {
   const allDraggables = container.querySelectorAll(
-    "[data-rfd-draggable-id] .inner-node .break-word"
+    "[data-item-index] .inner-node .break-word"
   );
   return Array.from(allDraggables).map((el) => el.textContent);
 }

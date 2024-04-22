@@ -74,7 +74,7 @@ export function UIColumn({
 }): JSX.Element {
   return (
     <div className="mb-2 outer-node flex-col" key={keyString || "outer-node"}>
-      <div className="flex-col max-100">{children}</div>
+      <div className="flex-col max-height-100">{children}</div>
     </div>
   );
 }

@@ -6,17 +6,10 @@ import { Column } from "./Column";
 import { IS_MOBILE } from "./responsive";
 import { WorkspaceColumn } from "./Ui";
 import { addRelationToRelations } from "../connections";
-import {
-  useViewPath,
-  useViewKey,
-  useNode,
-  upsertRelations,
-} from "../ViewContext";
+import { useViewPath, useNode, upsertRelations } from "../ViewContext";
 import { Plan, usePlanner } from "../planner";
+import { DroppableContainer } from "./DroppableContainer";
 
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable react/no-array-index-key */
 export function WorkspaceColumnView(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
   const view = useNode()[1];
@@ -40,34 +33,16 @@ export function EmptyColumn(): JSX.Element {
     executePlan(addTopNodesPlan);
   };
   return (
-    <WorkspaceColumn>
-      <div>
-        <div className="outer-node">
-          <FileDropZone onDrop={onDropFiles}>
-            <AddColumn />
-          </FileDropZone>
-        </div>
-      </div>
-    </WorkspaceColumn>
+    <DroppableContainer>
+      <FileDropZone onDrop={onDropFiles}>
+        <WorkspaceColumn>
+          <div>
+            <div className="outer-node">
+              <AddColumn />
+            </div>
+          </div>
+        </WorkspaceColumn>
+      </FileDropZone>
+    </DroppableContainer>
   );
 }
-
-/*
- *
-      <Droppable droppableId={`new:${useViewKey()}`} key="new">
-        {(provided, snapshot) => (
-          <div
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-            className={`${snapshot.isDraggingOver ? "dragging-over" : ""}`}
-          >
-            {provided.placeholder}
-            {!snapshot.isDraggingOver && (
-            )}
-          </div>
-        )}
-      </Droppable>
- */
-
-/* eslint-enable react/jsx-props-no-spreading */
-/* eslint-enable @typescript-eslint/unbound-method */

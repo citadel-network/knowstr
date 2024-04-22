@@ -1,10 +1,8 @@
-import React, { createContext, useState } from "react";
+import React from "react";
 import { List, OrderedSet } from "immutable";
-import {
-  deselectAllChildren,
-  getSelectedInView,
-  useTemporaryView,
-} from "./components/TemporaryViewContext";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { getSelectedInView } from "./components/TemporaryViewContext";
 import { bulkAddRelations, getRelations, moveRelations } from "./connections";
 import { newDB } from "./knowledge";
 import {
@@ -12,17 +10,15 @@ import {
   getNodeFromView,
   upsertRelations,
   getParentNode,
-  popPrefix,
   getParentKey,
   ViewPath,
   getParentView,
-  updateView,
   bulkUpdateViewPathsAfterAddRelation,
   updateViewPathsAfterMoveRelations,
   getRelationIndex,
 } from "./ViewContext";
 import { getNodesInTree } from "./components/Node";
-import { Plan, planUpdateViews, usePlanner } from "./planner";
+import { Plan, planUpdateViews } from "./planner";
 
 function getDropDestinationEndOfRoot(
   knowledgeDBs: KnowledgeDBs,
@@ -91,16 +87,15 @@ export function dnd(
   plan: Plan,
   selection: OrderedSet<string>,
   source: string,
-  to: string,
-  toIndex: number
+  to: ViewPath,
+  indexTo: number | undefined
 ): Plan {
   const { knowledgeDBs } = plan;
   const myself = plan.user.publicKey;
   const myDB = knowledgeDBs.get(myself, newDB());
   const { views } = myDB;
   // remove the prefix
-  const [prefix, toKey] = popPrefix(to);
-  const rootView = parseViewPath(toKey);
+  const rootView = to;
   const [knowNode] = getNodeFromView(knowledgeDBs, views, myself, rootView);
   if (!knowNode) {
     return plan;
@@ -118,9 +113,6 @@ export function dnd(
   }
   const selectedSources = getSelectedInView(selection, getParentKey(source));
   const sources = selection.contains(source) ? selectedSources : List([source]);
-
-  const isTreeView = prefix === "tree";
-  const indexTo = isTreeView ? toIndex : undefined;
 
   const sourceNodes = List(
     sources.map((s) => {
@@ -140,20 +132,13 @@ export function dnd(
     sourceViewPath
   );
 
-  // While we are dragging the source will always be collapsed, therefore
-  // we need to calculate the new destination with the view collapsed
-  const viewsWithCollapsedSource = updateView(views, sourceViewPath, {
-    ...sourceView,
-    expanded: false,
-  });
-
   const [toView, dropIndex] =
     indexTo === undefined
       ? [rootView, undefined]
       : getDropDestinationFromTreeView(
           knowledgeDBs,
           myself,
-          viewsWithCollapsedSource,
+          views,
           rootView,
           indexTo
         );
@@ -198,57 +183,6 @@ export function dnd(
   return planUpdateViews(updatedRelationsPlan, updatedViews);
 }
 
-type DragUpdateState = {
-  initial: undefined; // DragUpdate | undefined;
-  provided: undefined;
-};
-
-export const DragUpdateStateContext = createContext<
-  DragUpdateState | undefined
->(undefined);
-
 export function DND({ children }: { children: React.ReactNode }): JSX.Element {
-  const { createPlan, executePlan } = usePlanner();
-  const { setState, selection, multiselectBtns } = useTemporaryView();
-  const [dragUpdateState, setDragUpdateState] = useState<DragUpdateState>({
-    initial: undefined,
-    provided: undefined,
-  });
-  return <>{children}</>;
-
-  /*
-  const onDragEnd = (result: DropResult): void => {
-    if (result.destination) {
-      executePlan(
-        dnd(
-          createPlan(),
-          selection,
-          result.draggableId,
-          result.destination.droppableId,
-          result.destination.index
-        )
-      );
-      const parentKey = getParentKey(result.draggableId);
-      setState({
-        selection: deselectAllChildren(selection, parentKey),
-        multiselectBtns: multiselectBtns.remove(parentKey),
-      });
-    }
-  };
-
-  const onDragUpdate = (
-    initial: DragUpdate,
-    provided: ResponderProvided
-  ): void => {
-    setDragUpdateState({ initial, provided });
-  };
-
-  return (
-    <DragUpdateStateContext.Provider value={dragUpdateState}>
-      <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate}>
-        {children}
-      </DragDropContext>
-    </DragUpdateStateContext.Provider>
-  );
-   */
+  return <DndProvider backend={HTML5Backend}>{children}</DndProvider>;
 }

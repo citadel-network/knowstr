@@ -66,6 +66,7 @@ module.exports = {
       assert: require.resolve("assert/"),
       stream: require.resolve("stream-browserify"),
       buffer: require.resolve("buffer"),
+      "process/browser": require.resolve("process/browser"),
     },
   },
   plugins: [

@@ -85,27 +85,44 @@ test("Edit Node uploaded from Markdown", async () => {
   await uploadAndRenderMarkdown(alice);
 
   userEvent.click(screen.getByLabelText("edit Programming Languages"));
-  userEvent.keyboard("{backspace}s OOP{enter}");
+  userEvent.keyboard("{backspace} OOP{enter}");
   userEvent.click(screen.getByText("Save"));
   await screen.findByText("Programming Languages OOP");
   expect(screen.queryByText("Programming Languages")).toBeNull();
 });
 
-/* eslint-disable no-console */
-const originalError = console.error.bind(console.error);
-// NostrQueryProvider has side effects which will lead to
-// An update to NostrQueryProvider inside a test... errors
+const originalRange = document.createRange;
+
+// Quill autofocus feature crashes if createRange doesn't return values
 beforeAll(() => {
   // eslint-disable-next-line functional/immutable-data
-  console.error = (msg, params) => {
-    if (!msg.toString().includes("getBoundingClientRect")) {
-      originalError(msg, params);
-    }
+  document.createRange = () => {
+    const range = new Range();
+
+    // eslint-disable-next-line functional/immutable-data
+    range.getBoundingClientRect = () =>
+      ({
+        height: 100,
+        width: 100,
+        x: 0,
+        y: 0,
+      } as DOMRect);
+
+    // eslint-disable-next-line functional/immutable-data
+    range.getClientRects = () => {
+      return {
+        item: () => null,
+        length: 0,
+        [Symbol.iterator]: jest.fn(),
+      };
+    };
+
+    return range;
   };
 });
 
 afterAll(() => {
   // eslint-disable-next-line functional/immutable-data
-  console.error = originalError;
+  document.createRange = originalRange;
 });
 /* eslint-enable no-console */

@@ -16,8 +16,8 @@ module.exports = {
       "<rootDir>/config/jest/fileTransform.js",
   },
   transformIgnorePatterns: [
-    "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|mjs|cjs|ts|tsx)$",
     "^.+\\.module\\.(css|sass|scss)$",
+    "<rootDir>[/\\\\]node_modules[/\\\\](?!react-dnd|dnd-core|@react-dnd|react-dnd-scrolling|react-dnd-html5-backend)",
   ],
   modulePaths: ["<rootDir>/src"],
   moduleNameMapper: {
