@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Dropdown, Spinner, ProgressBar } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
+import { getWriteRelays } from "citadel-commons";
 import { useData } from "../DataContext";
 import { IS_MOBILE } from "./responsive";
 
@@ -142,9 +143,10 @@ export function PublishingStatus(): JSX.Element | null {
   if (publishResults.size === 0) {
     return null;
   }
+  const writeRelays = getWriteRelays(relays);
   const publishResultsForActiveWriteRelays = publishResults.filter(
     (_, relayUrl) =>
-      relays.some((relay) => relay.write === true && relay.url === relayUrl)
+      writeRelays.filter((relay) => relay.url === relayUrl).length > 0
   );
   const warningColor = getStatusColor(publishResultsForActiveWriteRelays);
   return (
