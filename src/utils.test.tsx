@@ -271,6 +271,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   contacts: Map<PublicKey, Contact>(),
   settings: DEFAULT_SETTINGS,
   relays: TEST_RELAYS,
+  contactsRelays: Map<PublicKey, Relays>(),
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
   relaysInfos: Map<string, RelayInformation | undefined>(),
   publishResults: Map<string, Array<PublishStatus>>(),

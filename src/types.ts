@@ -46,6 +46,7 @@ declare global {
     user: KeyPair;
     settings: Settings;
     relays: Relays;
+    contactsRelays: Map<PublicKey, Relays>;
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
     publishResults: PublishResults;

@@ -419,6 +419,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       user={user}
       settings={processedMetaEvents.settings}
       relays={sanitizeRelays(myRelays)}
+      contactsRelays={Map<PublicKey, Relays>()}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
       publishResults={newEventsAndPublishResults.results}
