@@ -7,6 +7,7 @@ import {
   getReadRelays,
   getMostRecentReplacableEvent,
   findAllRelays,
+  KIND_RELAY_METADATA_EVENT,
 } from "citadel-commons";
 import { List, Map } from "immutable";
 import { Event, UnsignedEvent } from "nostr-tools";
@@ -36,7 +37,7 @@ import { newDB } from "./knowledge";
 import { PlanningContextProvider } from "./planner";
 import { RootViewContextProvider } from "./ViewContext";
 import { joinID } from "./connections";
-import { mergeRelays, sanitizeRelays } from "./components/EditRelays";
+import { sanitizeRelays } from "./components/EditRelays";
 import {
   addNodeToFilters,
   adddWorkspacesToFilter,
@@ -50,6 +51,7 @@ import {
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useNodeIDFromURL } from "./components/FullScreenViewWrapper";
 import { useDefaultRelays } from "./NostrAuthContext";
+import { findRelays, mergeRelays } from "./relays";
 
 type DataProps = {
   user: KeyPair;
@@ -60,6 +62,7 @@ type ProcessedEvents = {
   settings: Settings;
   knowledgeDB: KnowledgeData;
   contacts: Contacts;
+  relays: Relays;
 };
 
 export const KIND_SEARCH = [
@@ -67,7 +70,11 @@ export const KIND_SEARCH = [
   KIND_KNOWLEDGE_NODE,
 ];
 
-const KINDS_CONTACTS_META = [KIND_WORKSPACES, KIND_RELATION_TYPES];
+const KINDS_CONTACTS_META = [
+  KIND_WORKSPACES,
+  KIND_RELATION_TYPES,
+  KIND_RELAY_METADATA_EVENT,
+];
 
 const KINDS_META = [
   KIND_SETTINGS,
@@ -97,10 +104,12 @@ function processEventsByAuthor(
     views,
     relationTypes,
   };
+  const relays = findRelays(authorEvents);
   return {
     settings,
     contacts,
     knowledgeDB,
+    relays,
   };
 }
 
@@ -229,6 +238,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     contacts: Map<PublicKey, Contact>(),
     settings: DEFAULT_SETTINGS,
     knowledgeDB: newDB(),
+    relays: [],
   });
   const contacts = processedMetaEvents.contacts.filter(
     (_, k) => k !== myPublicKey
@@ -274,6 +284,10 @@ function Data({ user, children }: DataProps): JSX.Element {
       adddWorkspacesToFilter(rdx, p.knowledgeDB.workspaces as List<LongID>),
     initialFiltersWithMyWorkspaces
   );
+
+  const contactsRelays = processedContactMetaEvents.reduce((rdx, p, key) => {
+    return rdx.set(key, p.relays);
+  }, Map<PublicKey, Relays>());
 
   const { events: initialDataEvents, eose: dataEventsEose } = useEventQuery(
     relayPool,
@@ -423,7 +437,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       user={user}
       settings={processedMetaEvents.settings}
       relays={sanitizeRelays(myRelays)}
-      contactsRelays={Map<PublicKey, Relays>()}
+      contactsRelays={contactsRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
       publishResults={newEventsAndPublishResults.results}

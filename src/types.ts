@@ -30,7 +30,13 @@ declare global {
     write: boolean;
   };
 
+  type SuggestedRelay = Relay & {
+    numberOfContacts: number;
+  };
+
   type Relays = Array<Relay>;
+
+  type SuggestedRelays = Array<SuggestedRelay>;
 
   type PublishStatus = {
     status: "rejected" | "fulfilled";
