@@ -3,8 +3,10 @@ import "./App.css";
 import {
   sortEventsDescending,
   useEventQuery,
-  useRelaysQuery,
+  createRelaysQuery,
   getReadRelays,
+  getMostRecentReplacableEvent,
+  findAllRelays,
 } from "citadel-commons";
 import { List, Map } from "immutable";
 import { Event, UnsignedEvent } from "nostr-tools";
@@ -194,12 +196,14 @@ function Data({ user, children }: DataProps): JSX.Element {
   }>({ events: List(), results: Map() });
   const [loadingResults, setLoadingResults] = useState<boolean>(false);
   const { relayPool } = useApis();
-  const { relays: myRelays, eose: relaysEose } = useRelaysQuery(
+  const { events: relaysEvents, eose: relaysEose } = useEventQuery(
     relayPool,
-    [myPublicKey],
-    true,
-    defaultRelays
+    [createRelaysQuery([myPublicKey])],
+    { enabled: true, readFromRelays: defaultRelays }
   );
+
+  const newestEvent = getMostRecentReplacableEvent(relaysEvents);
+  const myRelays = newestEvent ? findAllRelays(newestEvent) : defaultRelays;
 
   const mergedRelays = mergeRelays(
     sanitizeRelays(defaultRelays),
