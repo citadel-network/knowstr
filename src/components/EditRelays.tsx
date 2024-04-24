@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./Ui";
 import ModalForm from "./ModalForm";
 import { useData } from "../DataContext";
-import { InputElementWrapper } from "./FormControlWrapper";
+import { InputElementWrapper, pasteFromClipboard } from "./FormControlWrapper";
 import { planPublishRelayMetadata, usePlanner } from "../planner";
 import { useDefaultRelays } from "../NostrAuthContext";
 import ErrorMessage from "./ErrorMessage";
@@ -210,18 +210,6 @@ function NewRelay({ onSave }: NewRelayProps): JSX.Element {
     setInput(!changedInput ? undefined : changedInput);
   };
 
-  const pasteFromClipboard = async (): Promise<void> => {
-    const text = await navigator.clipboard.readText();
-    const inputElement = document.querySelector(
-      'input[aria-label="add new relay"]'
-    );
-    if (inputElement) {
-      // eslint-disable-next-line functional/immutable-data
-      (inputElement as HTMLInputElement).value = text;
-    }
-    setInput(text);
-  };
-
   const onSubmit = (): void => {
     if (!input) {
       setError("Undefined relay");
@@ -243,13 +231,15 @@ function NewRelay({ onSave }: NewRelayProps): JSX.Element {
     setInput(undefined);
   };
 
+  const inputElementAriaLabel = "add new relay";
+
   return (
     <RelayCard className="black-dimmed">
       <div className="m-1 mt-2 w-90">
         <InputGroup>
           <div style={{ position: "relative", flexGrow: 1 }}>
             <InputElementWrapper
-              aria-label="add new relay"
+              aria-label={inputElementAriaLabel}
               onChange={onChange}
               placeholder="wss://"
               className="p-2 w-100"
@@ -263,7 +253,9 @@ function NewRelay({ onSave }: NewRelayProps): JSX.Element {
             >
               <Button
                 className="btn-borderless background-transparent"
-                onClick={pasteFromClipboard}
+                onClick={() =>
+                  pasteFromClipboard(inputElementAriaLabel, setInput)
+                }
               >
                 <span className="iconsminds-file-clipboard" />
               </Button>

@@ -7,7 +7,7 @@ import { useDebounce } from "use-debounce";
 import { getReadRelays } from "citadel-commons";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
-import { FormControlWrapper } from "./FormControlWrapper";
+import { FormControlWrapper, pasteFromClipboard } from "./FormControlWrapper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
 import { useApis } from "../Apis";
@@ -110,18 +110,6 @@ export function Follow(): JSX.Element {
     }
   }, [nip05Eose, nip05Events, lookupPublicKey, debouncedInput]);
 
-  const pasteFromClipboard = async (): Promise<void> => {
-    const text = await navigator.clipboard.readText();
-    const inputElement = document.querySelector(
-      'input[aria-label="find user"]'
-    );
-    if (inputElement) {
-      // eslint-disable-next-line functional/immutable-data
-      (inputElement as HTMLInputElement).value = text;
-    }
-    setInput(text);
-  };
-
   const onHide = (): void => {
     navigate("/");
   };
@@ -152,6 +140,8 @@ export function Follow(): JSX.Element {
     }
   };
 
+  const inputElementAriaLabel = "find user";
+
   if (!publicKey) {
     return (
       <Modal show onHide={onHide} size="xl">
@@ -164,7 +154,7 @@ export function Follow(): JSX.Element {
               <InputGroup>
                 <div style={{ position: "relative", flexGrow: 1 }}>
                   <FormControlWrapper
-                    aria-label="find user"
+                    aria-label={inputElementAriaLabel}
                     defaultValue=""
                     onChange={onChange}
                     placeholder="Enter npub, nprofile or nostr address"
@@ -179,7 +169,9 @@ export function Follow(): JSX.Element {
                   >
                     <Button
                       className="btn-borderless background-transparent"
-                      onClick={pasteFromClipboard}
+                      onClick={() =>
+                        pasteFromClipboard(inputElementAriaLabel, setInput)
+                      }
                     >
                       <span className="iconsminds-file-clipboard" />
                     </Button>

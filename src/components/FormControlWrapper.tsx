@@ -1,4 +1,4 @@
-import React from "react";
+import React, { SetStateAction } from "react";
 import { FormControl } from "react-bootstrap";
 import { useInputElementFocus } from "../FocusContextProvider";
 
@@ -51,4 +51,19 @@ export function InputElementWrapper(
       {...otherProps}
     />
   );
+}
+
+export async function pasteFromClipboard(
+  inputElementAriaLabel: string,
+  setInput: React.Dispatch<SetStateAction<string | undefined>>
+): Promise<void> {
+  const text = await navigator.clipboard.readText();
+  const inputElement = document.querySelector(
+    `input[aria-label="${inputElementAriaLabel}"]`
+  );
+  if (inputElement) {
+    // eslint-disable-next-line functional/immutable-data
+    (inputElement as HTMLInputElement).value = text;
+  }
+  setInput(text);
 }
