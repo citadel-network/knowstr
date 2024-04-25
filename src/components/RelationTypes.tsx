@@ -19,7 +19,7 @@ import {
   useNode,
   useViewPath,
 } from "../ViewContext";
-import { FormControlWrapper } from "./FormControlWrapper";
+import { FormControlWrapper } from "./InputElementHelper";
 
 export const DEFAULT_COLOR = "#027d86";
 

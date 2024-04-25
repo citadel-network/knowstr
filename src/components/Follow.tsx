@@ -7,7 +7,7 @@ import { useDebounce } from "use-debounce";
 import { getReadRelays } from "citadel-commons";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
-import { FormControlWrapper, pasteFromClipboard } from "./FormControlWrapper";
+import { FormControlWrapper, pasteFromClipboard } from "./InputElementHelper";
 import { Button } from "./Ui";
 import ErrorMessage from "./ErrorMessage";
 import { useApis } from "../Apis";

@@ -14,7 +14,7 @@ import {
 } from "../utils.test";
 import { KIND_RELAY_METADATA_EVENT } from "../nostr";
 import { relayTags } from "../planner";
-import { RelayManager, addRelayWarningText } from "./EditRelays";
+import { Relays, addRelayWarningText } from "./Relays";
 
 const filterRelayMetadataEvents = (event: Event): boolean =>
   event.kind === KIND_RELAY_METADATA_EVENT;
@@ -147,7 +147,7 @@ test("Stop writing to an existing Nostr Relay", async () => {
 test("Suggest Relays of a contact", async () => {
   const [alice] = setup([ALICE], {});
   renderWithTestData(
-    <RelayManager
+    <Relays
       defaultRelays={TEST_RELAYS}
       relays={TEST_RELAYS}
       contactsRelays={Map<PublicKey, Relays>({
@@ -161,6 +161,7 @@ test("Suggest Relays of a contact", async () => {
           { url: "wss://relay.test.contact.third/", read: true, write: false },
         ],
       })}
+      onSubmit={jest.fn()}
     />,
     alice()
   );

@@ -5,7 +5,7 @@ import Dashboard from "./components/Dashboard";
 import { Follow } from "./components/Follow";
 import { IS_MOBILE } from "./components/responsive";
 import { DesktopView, MobileView } from "./components/FullScreenViews";
-import { EditRelays } from "./components/EditRelays";
+import { RelaysWrapper } from "./components/RelaysWrapper";
 import { RequireLogin } from "./AppState";
 import { SignUp } from "./SignUp";
 import { SignInFullScreen } from "./SignIn";
@@ -23,7 +23,7 @@ export function App(): JSX.Element {
         <Route path="/" element={<Dashboard />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/follow" element={<Follow />} />
-          <Route path="/relays" element={<EditRelays />} />
+          <Route path="/relays" element={<RelaysWrapper />} />
           <Route path={FULL_SCREEN_PATH} element={<DesktopView />} />
         </Route>
       </Route>

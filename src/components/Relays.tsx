@@ -4,42 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { Map } from "immutable";
 import { Button } from "./Ui";
 import ModalForm from "./ModalForm";
-import { useData } from "../DataContext";
-import { InputElementWrapper, pasteFromClipboard } from "./FormControlWrapper";
-import { planPublishRelayMetadata, usePlanner } from "../planner";
+import { InputElementWrapper, pasteFromClipboard } from "./InputElementHelper";
 import ErrorMessage from "./ErrorMessage";
 import {
   mergeRelays,
   getSuggestedRelays,
   getIsNecessaryReadRelays,
+  sanitizeRelayUrl,
 } from "../relays";
-import { useDefaultRelays } from "../NostrAuthContext";
-
-function sanitizeRelayUrl(url: string): string | undefined {
-  const trimmedUrl = url.trim();
-  const noAddWS =
-    trimmedUrl.startsWith("wss://") || trimmedUrl.startsWith("ws://");
-  const urlWithWS = noAddWS ? trimmedUrl : `wss://${trimmedUrl}`;
-  try {
-    return new URL(urlWithWS).toString();
-  } catch {
-    return undefined;
-  }
-}
-
-export function sanitizeRelays(relays: Array<Relay>): Array<Relay> {
-  return relays
-    .map((relay) => {
-      const sanitizedRelayUrl = sanitizeRelayUrl(relay.url);
-      return sanitizedRelayUrl
-        ? {
-            ...relay,
-            url: sanitizedRelayUrl,
-          }
-        : undefined;
-    })
-    .filter((r) => r !== undefined) as Array<Relay>;
-}
 
 type ReadWriteButtonProps = {
   isPressed: boolean;
@@ -307,16 +279,17 @@ function NewRelay({ onSave }: NewRelayProps): JSX.Element {
   );
 }
 
-export function RelayManager({
+export function Relays({
   defaultRelays,
   relays,
   contactsRelays,
+  onSubmit,
 }: {
   defaultRelays: Relays;
   relays: Relays;
   contactsRelays: Map<PublicKey, Relays>;
+  onSubmit: (relayState: Relays) => Promise<void>;
 }): JSX.Element {
-  const { createPlan, executePlan } = usePlanner();
   const navigate = useNavigate();
   const suggestedRelays = getSuggestedRelays(contactsRelays);
   const isNecessaryReadRelays = getIsNecessaryReadRelays(contactsRelays);
@@ -372,23 +345,9 @@ export function RelayManager({
     });
   };
 
-  const submit = async (): Promise<void> => {
-    // publish on old and new relays as well as default relays
-    const allRelays = mergeRelays(
-      defaultRelays,
-      mergeRelays(relays, relayState.myRelays)
-    );
-    const plan = planPublishRelayMetadata(
-      { ...createPlan(), relays: allRelays },
-      relayState.myRelays
-    );
-    await executePlan(plan);
-    navigate("/");
-  };
-
   return (
     <ModalForm
-      submit={submit}
+      submit={() => onSubmit(relayState.myRelays)}
       onHide={() => navigate("/")}
       title="Edit Nostr Relays"
     >
@@ -429,17 +388,5 @@ export function RelayManager({
         <NewRelay onSave={(newRelay) => addRelay(newRelay)} />
       </div>
     </ModalForm>
-  );
-}
-
-export function EditRelays(): JSX.Element {
-  const defaultRelays = useDefaultRelays();
-  const { relays, contactsRelays } = useData();
-  return (
-    <RelayManager
-      defaultRelays={defaultRelays}
-      relays={relays}
-      contactsRelays={contactsRelays}
-    />
   );
 }

@@ -5,7 +5,7 @@ import { getWorkspaces } from "../KnowledgeDataContext";
 import { isIDRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
-import { FormControlWrapper } from "./FormControlWrapper";
+import { FormControlWrapper } from "./InputElementHelper";
 
 type NewWorkspaceProps = {
   onHide: () => void;

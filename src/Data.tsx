@@ -37,7 +37,6 @@ import { newDB } from "./knowledge";
 import { PlanningContextProvider } from "./planner";
 import { RootViewContextProvider } from "./ViewContext";
 import { joinID } from "./connections";
-import { sanitizeRelays } from "./components/EditRelays";
 import {
   addNodeToFilters,
   adddWorkspacesToFilter,
@@ -51,7 +50,7 @@ import {
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useNodeIDFromURL } from "./components/FullScreenViewWrapper";
 import { useDefaultRelays } from "./NostrAuthContext";
-import { findRelays, mergeRelays } from "./relays";
+import { findRelays, mergeRelays, sanitizeRelays } from "./relays";
 
 type DataProps = {
   user: KeyPair;

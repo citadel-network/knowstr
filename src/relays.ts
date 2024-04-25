@@ -7,7 +7,32 @@ import {
 } from "citadel-commons";
 import { List, Map } from "immutable";
 import { KIND_RELAY_METADATA_EVENT } from "./nostr";
-import { sanitizeRelays } from "./components/EditRelays";
+
+export function sanitizeRelayUrl(url: string): string | undefined {
+  const trimmedUrl = url.trim();
+  const noAddWS =
+    trimmedUrl.startsWith("wss://") || trimmedUrl.startsWith("ws://");
+  const urlWithWS = noAddWS ? trimmedUrl : `wss://${trimmedUrl}`;
+  try {
+    return new URL(urlWithWS).toString();
+  } catch {
+    return undefined;
+  }
+}
+
+export function sanitizeRelays(relays: Array<Relay>): Array<Relay> {
+  return relays
+    .map((relay) => {
+      const sanitizedRelayUrl = sanitizeRelayUrl(relay.url);
+      return sanitizedRelayUrl
+        ? {
+            ...relay,
+            url: sanitizedRelayUrl,
+          }
+        : undefined;
+    })
+    .filter((r) => r !== undefined) as Array<Relay>;
+}
 
 export function findRelays(events: List<UnsignedEvent>): Relays {
   const relaysEvent = getMostRecentReplacableEvent(

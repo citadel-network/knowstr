@@ -4,7 +4,7 @@ import { InputGroup, Modal } from "react-bootstrap";
 import { nip19 } from "nostr-tools";
 import QRCode from "react-qr-code";
 import { useData } from "../DataContext";
-import { FormControlWrapper } from "./FormControlWrapper";
+import { FormControlWrapper } from "./InputElementHelper";
 import { Button } from "./Ui";
 
 type Identifier = "none" | "npub" | "nprofile" | "invite";
