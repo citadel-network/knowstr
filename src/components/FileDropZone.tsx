@@ -5,7 +5,7 @@ import MarkdownIt from "markdown-it";
 import { v4 } from "uuid";
 import { Map } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
-import { KIND_KNOWLEDGE_NODE_COLLECTION, newTimestamp } from "../nostr";
+import { KIND_KNOWLEDGE_NODE_COLLECTION, newTimestamp } from "citadel-commons";
 import { newNode, bulkAddRelations, shortID } from "../connections";
 import { newRelations } from "../ViewContext";
 import { Plan, planUpsertRelations, usePlanner } from "../planner";

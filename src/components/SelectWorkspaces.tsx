@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Dropdown, Modal, Form, InputGroup, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { FormControlWrapper } from "citadel-commons";
 import { getWorkspaces } from "../KnowledgeDataContext";
 import { isIDRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
-import { FormControlWrapper } from "./InputElementHelper";
 
 type NewWorkspaceProps = {
   onHide: () => void;

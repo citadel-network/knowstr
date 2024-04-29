@@ -1,12 +1,12 @@
 import React from "react";
 import { Card } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
+import { NodeCard, UIColumn, UIColumnHeader } from "citadel-commons";
 import { bulkAddRelations } from "../connections";
 import { FileDropZone } from "./FileDropZone";
 import { Indent } from "./Node";
 import { ColumnMenu } from "./Menu";
 import { useDeselectAllInView } from "./TemporaryViewContext";
-import { NodeCard, UIColumn, UIColumnHeader } from "./Ui";
 import { RemoveColumnButton } from "./RemoveColumnButton";
 import { upsertRelations, useViewKey, useViewPath } from "../ViewContext";
 import { TreeView } from "./TreeView";

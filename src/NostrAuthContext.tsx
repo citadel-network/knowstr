@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { getPublicKey } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
+import { DEFAULT_RELAYS, sanitizeRelays } from "citadel-commons";
 import { useApis } from "./Apis";
-import { DEFAULT_RELAYS } from "./nostr";
-import { sanitizeRelays } from "./relays";
 
 type Context = {
   user: KeyPair | undefined;

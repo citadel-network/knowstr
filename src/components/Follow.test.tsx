@@ -2,6 +2,7 @@ import React from "react";
 import { screen, waitFor, fireEvent } from "@testing-library/react";
 import { Event, nip05, nip19 } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
+import { KIND_CONTACTLIST, newTimestamp } from "citadel-commons";
 import {
   renderWithTestData,
   renderApp,
@@ -14,7 +15,6 @@ import {
   finalizeEventWithoutWasm,
   TEST_RELAYS,
 } from "../utils.test";
-import { KIND_CONTACTLIST, newTimestamp } from "../nostr";
 import { Follow } from "./Follow";
 
 test("find a user", async () => {

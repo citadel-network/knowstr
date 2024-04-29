@@ -4,18 +4,13 @@ import {
   sortEventsDescending,
   useEventQuery,
   createRelaysQuery,
+  findRelays,
+  mergeRelays,
+  sanitizeRelays,
   getReadRelays,
   getMostRecentReplacableEvent,
   findAllRelays,
   KIND_RELAY_METADATA_EVENT,
-} from "citadel-commons";
-import { List, Map } from "immutable";
-import { Event, UnsignedEvent } from "nostr-tools";
-// eslint-disable-next-line import/no-unresolved
-import { RelayInformation } from "nostr-tools/lib/types/nip11";
-import { DataContextProvider } from "./DataContext";
-import { findContacts } from "./contacts";
-import {
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
   KIND_WORKSPACES,
@@ -23,7 +18,13 @@ import {
   KIND_VIEWS,
   KIND_SETTINGS,
   KIND_KNOWLEDGE_NODE_COLLECTION,
-} from "./nostr";
+} from "citadel-commons";
+import { List, Map } from "immutable";
+import { Event, UnsignedEvent } from "nostr-tools";
+// eslint-disable-next-line import/no-unresolved
+import { RelayInformation } from "nostr-tools/lib/types/nip11";
+import { DataContextProvider } from "./DataContext";
+import { findContacts } from "./contacts";
 import { useApis } from "./Apis";
 import {
   findNodes,
@@ -50,7 +51,6 @@ import {
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useNodeIDFromURL } from "./components/FullScreenViewWrapper";
 import { useDefaultRelays } from "./NostrAuthContext";
-import { findRelays, mergeRelays, sanitizeRelays } from "./relays";
 
 type DataProps = {
   user: KeyPair;

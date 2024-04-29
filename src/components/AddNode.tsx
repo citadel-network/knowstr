@@ -2,6 +2,12 @@ import React, { useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
 import { matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
+import {
+  useInputElementFocus,
+  Button,
+  CloseButton,
+  NodeCard,
+} from "citadel-commons";
 import { shorten } from "../KnowledgeDataContext";
 import { newNode } from "../connections";
 import {
@@ -17,8 +23,6 @@ import {
   updateView,
   getViewFromPath,
 } from "../ViewContext";
-import { useInputElementFocus } from "../FocusContextProvider";
-import { Button, CloseButton, NodeCard } from "./Ui";
 import useModal from "./useModal";
 import { ESC, SearchModal } from "./SearchModal";
 import { IS_MOBILE } from "./responsive";

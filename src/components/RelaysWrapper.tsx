@@ -1,9 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Relays, mergeRelays } from "citadel-commons";
 import { useData } from "../DataContext";
 import { useDefaultRelays } from "../NostrAuthContext";
-import { Relays } from "./Relays";
-import { mergeRelays } from "../relays";
 import { planPublishRelayMetadata, usePlanner } from "../planner";
 
 export function RelaysWrapper(): JSX.Element {

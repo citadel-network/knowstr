@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Dropdown, Form, InputGroup, Modal } from "react-bootstrap";
 import { CirclePicker } from "react-color";
 import { v4 } from "uuid";
+import { FormControlWrapper } from "citadel-commons";
 import {
   Plan,
   planUpdateRelationTypes,
@@ -19,7 +20,6 @@ import {
   useNode,
   useViewPath,
 } from "../ViewContext";
-import { FormControlWrapper } from "./InputElementHelper";
 
 export const DEFAULT_COLOR = "#027d86";
 

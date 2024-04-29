@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { OrderedSet, Set } from "immutable";
-import { Selectbox } from "./Ui";
+import { Selectbox } from "citadel-commons";
 import {
   parseViewPath,
   useViewKey,

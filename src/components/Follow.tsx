@@ -4,12 +4,15 @@ import { Form, InputGroup, Modal } from "react-bootstrap";
 import { Map } from "immutable";
 import { nip19, nip05, Event } from "nostr-tools";
 import { useDebounce } from "use-debounce";
-import { getReadRelays } from "citadel-commons";
+import {
+  ErrorMessage,
+  FormControlWrapper,
+  pasteFromClipboard,
+  Button,
+  getReadRelays,
+} from "citadel-commons";
 import { usePlanner, planAddContact, planRemoveContact } from "../planner";
 import { useData } from "../DataContext";
-import { FormControlWrapper, pasteFromClipboard } from "./InputElementHelper";
-import { Button } from "./Ui";
-import ErrorMessage from "./ErrorMessage";
 import { useApis } from "../Apis";
 import { useNip05Query } from "./useNip05Query";
 

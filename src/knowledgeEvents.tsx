@@ -1,11 +1,6 @@
 import { List, Map, OrderedMap } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
 import {
-  findTag,
-  getMostRecentReplacableEvent,
-  sortEvents,
-} from "citadel-commons";
-import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
@@ -13,7 +8,10 @@ import {
   KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_WORKSPACES,
-} from "./nostr";
+  findTag,
+  getMostRecentReplacableEvent,
+  sortEvents,
+} from "citadel-commons";
 import {
   Serializable,
   jsonToViews,

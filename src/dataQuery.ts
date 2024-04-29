@@ -5,7 +5,7 @@ import {
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_KNOWLEDGE_NODE_COLLECTION,
-} from "./nostr";
+} from "citadel-commons";
 import { joinID, splitID, stripIndex } from "./connections";
 import { ViewPath, isSubPathWithRelations, parseViewPath } from "./ViewContext";
 

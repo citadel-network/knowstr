@@ -4,6 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { Map } from "immutable";
 import { Event } from "nostr-tools";
 import {
+  KIND_RELAY_METADATA_EVENT,
+  Relays,
+  addRelayWarningText,
+} from "citadel-commons";
+import {
   ALICE,
   setup,
   renderApp,
@@ -12,9 +17,7 @@ import {
   renderWithTestData,
   CAROL,
 } from "../utils.test";
-import { KIND_RELAY_METADATA_EVENT } from "../nostr";
 import { relayTags } from "../planner";
-import { Relays, addRelayWarningText } from "./Relays";
 
 const filterRelayMetadataEvents = (event: Event): boolean =>
   event.kind === KIND_RELAY_METADATA_EVENT;

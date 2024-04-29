@@ -5,7 +5,7 @@ import { getPublicKey, nip19 } from "nostr-tools";
 import * as nip06 from "nostr-tools/nip06";
 import { Link, useLocation } from "react-router-dom";
 import { hexToBytes } from "@noble/hashes/utils";
-import { StandaloneCard } from "./components/Ui";
+import { StandaloneCard } from "citadel-commons";
 
 type LocationState = {
   referrer?: string;

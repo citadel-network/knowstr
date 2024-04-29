@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { FocusContextProvider } from "citadel-commons";
 import * as serviceWorker from "./serviceWorker";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./assets/css/sass/themes/gogo.light.blue.scss";
@@ -14,7 +15,6 @@ import "react-quill/dist/quill.bubble.css";
 import { App } from "./App";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
 import { NostrProvider } from "./NostrProvider";
-import { FocusContextProvider } from "./FocusContextProvider";
 
 const defaultRelayUrls = process.env.DEFAULT_RELAYS?.split(",");
 

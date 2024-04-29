@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { List } from "immutable";
+import { ModalNode, ModalNodeBody } from "citadel-commons";
 import {
   ViewContext,
   ViewPath,
@@ -12,7 +13,6 @@ import { NavBar } from "./Navbar";
 import { DetailViewMenu } from "./Menu";
 import { AddNodeToNode } from "./AddNode";
 import { ReadingStatus } from "./ReadingStatus";
-import { ModalNode, ModalNodeBody } from "./Ui";
 import { TreeView } from "./TreeView";
 import { DND } from "../dnd";
 import { FullScreenViewWrapper } from "./FullScreenViewWrapper";

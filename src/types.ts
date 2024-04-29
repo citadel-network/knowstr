@@ -24,20 +24,6 @@ declare global {
 
   type Contacts = Map<PublicKey, Contact>;
 
-  type Relay = {
-    url: string;
-    read: boolean;
-    write: boolean;
-  };
-
-  type SuggestedRelay = Relay & {
-    numberOfContacts: number;
-  };
-
-  type Relays = Array<Relay>;
-
-  type SuggestedRelays = Array<SuggestedRelay>;
-
   type PublishStatus = {
     status: "rejected" | "fulfilled";
     reason?: string;
@@ -65,13 +51,6 @@ declare global {
     deleteLocalStorage: (key: string) => void;
   };
 
-  type NotificationMessage = {
-    title: string;
-    message: string;
-    date?: Date;
-    navigateToLink?: string;
-  };
-
   type Settings = {
     bionicReading: boolean;
   };
@@ -87,8 +66,6 @@ declare global {
     v: string;
     n: string;
   };
-
-  type PublicKey = string & { readonly "": unique symbol };
 
   type NodeType = "NOTE" | "TOPIC" | "URL" | "TITLE" | "QUOTE" | "WORKSPACE";
 

@@ -1,10 +1,10 @@
 import React from "react";
 import { useMediaQuery } from "react-responsive";
+import { WorkspaceColumn } from "citadel-commons";
 import { AddColumn } from "./AddNode";
 import { FileDropZone } from "./FileDropZone";
 import { Column } from "./Column";
 import { IS_MOBILE } from "./responsive";
-import { WorkspaceColumn } from "./Ui";
 import { addRelationToRelations } from "../connections";
 import { useViewPath, useNode, upsertRelations } from "../ViewContext";
 import { Plan, usePlanner } from "../planner";

@@ -2,10 +2,10 @@ import { Set } from "immutable";
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { Button } from "citadel-commons";
 import { deleteRelations, isRemote, joinID, splitID } from "../connections";
 import { getWorkspaces } from "../KnowledgeDataContext";
 import { updateViewPathsAfterDeleteNode, useNode } from "../ViewContext";
-import { Button } from "./Ui";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import {

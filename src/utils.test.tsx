@@ -26,7 +26,11 @@ import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
-import { KIND_CONTACTLIST } from "./nostr";
+import {
+  KIND_CONTACTLIST,
+  FocusContext,
+  FocusContextProvider,
+} from "citadel-commons";
 import { RequireLogin } from "./AppState";
 import {
   Plan,
@@ -44,7 +48,6 @@ import { DataContextProps } from "./DataContext";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
 import { NostrAuthContext } from "./NostrAuthContext";
-import { FocusContext, FocusContextProvider } from "./FocusContextProvider";
 import {
   addRelationToRelations,
   getRelationsNoSocial,

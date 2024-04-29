@@ -1,14 +1,19 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { List, Map } from "immutable";
-import { useEventQuery } from "citadel-commons";
+import {
+  KIND_KNOWLEDGE_NODE,
+  KIND_KNOWLEDGE_NODE_COLLECTION,
+  useEventQuery,
+  ModalNode,
+  ModalNodeBody,
+  ModalNodeTitle,
+} from "citadel-commons";
 import { useDebounce } from "use-debounce";
-import { ModalNode, ModalNodeBody, ModalNodeTitle } from "./Ui";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { useApis } from "../Apis";
 import { KIND_SEARCH } from "../Data";
 import { findNodes } from "../knowledgeEvents";
-import { KIND_KNOWLEDGE_NODE, KIND_KNOWLEDGE_NODE_COLLECTION } from "../nostr";
 
 const KEY_DOWN = 40;
 const KEY_UP = 38;

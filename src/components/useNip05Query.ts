@@ -1,7 +1,6 @@
 import { Map } from "immutable";
 import { Filter, SimplePool, Event } from "nostr-tools";
-import { useEventQuery } from "citadel-commons";
-import { KIND_NIP05 } from "../nostr";
+import { KIND_NIP05, useEventQuery } from "citadel-commons";
 
 function createNip05Query(publicKey: PublicKey): Filter {
   return {

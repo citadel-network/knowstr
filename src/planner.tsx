@@ -2,10 +2,6 @@ import React from "react";
 import { List } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
 import crypto from "crypto";
-import { useData } from "./DataContext";
-import { execute } from "./executor";
-import { useApis } from "./Apis";
-import { relationTypesToJson, viewsToJSON } from "./serializer";
 import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
@@ -17,7 +13,11 @@ import {
   newTimestamp,
   KIND_SETTINGS,
   KIND_RELAY_METADATA_EVENT,
-} from "./nostr";
+} from "citadel-commons";
+import { useData } from "./DataContext";
+import { execute } from "./executor";
+import { useApis } from "./Apis";
+import { relationTypesToJson, viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
 import { shortID } from "./connections";
 

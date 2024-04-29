@@ -5,10 +5,13 @@ import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import { Button, StandaloneCard } from "./components/Ui";
+import {
+  ErrorMessage,
+  createSubmitHandler,
+  Button,
+  StandaloneCard,
+} from "citadel-commons";
 import { useLogin } from "./NostrAuthContext";
-import createSubmitHandler from "./components/modalFormSubmitHandler";
-import ErrorMessage from "./components/ErrorMessage";
 
 /* eslint-disable no-empty */
 function convertInputToPrivateKey(input: string): string | undefined {

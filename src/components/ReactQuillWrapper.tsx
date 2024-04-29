@@ -1,6 +1,6 @@
 import React from "react";
 import ReactQuill, { ReactQuillProps } from "react-quill";
-import { useInputElementFocus } from "../FocusContextProvider";
+import { useInputElementFocus } from "citadel-commons";
 
 export const ReactQuillWrapper = React.forwardRef(
   (props: ReactQuillProps, ref: React.ForwardedRef<ReactQuill>) => {

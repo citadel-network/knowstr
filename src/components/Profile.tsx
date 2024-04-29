@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { InputGroup, Modal } from "react-bootstrap";
 import { nip19 } from "nostr-tools";
 import QRCode from "react-qr-code";
+import { Button, FormControlWrapper } from "citadel-commons";
 import { useData } from "../DataContext";
-import { FormControlWrapper } from "./InputElementHelper";
-import { Button } from "./Ui";
 
 type Identifier = "none" | "npub" | "nprofile" | "invite";
 
