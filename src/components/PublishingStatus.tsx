@@ -1,9 +1,35 @@
 import React, { useState } from "react";
+import { Map } from "immutable";
 import { Dropdown, Spinner, ProgressBar } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
 import { getWriteRelays } from "citadel-commons";
 import { useData } from "../DataContext";
 import { IS_MOBILE } from "./responsive";
+
+function mergePublishResults(
+  existing: PublishResultsOfRelays,
+  newResult: PublishResultsOfEvent
+): PublishResultsOfRelays {
+  const updatedResults = newResult.map((value, key) => {
+    const existingValue = existing.get(key);
+    if (!existingValue) {
+      return [value];
+    }
+    return [...existingValue, value];
+  });
+  return existing.merge(updatedResults);
+}
+
+function transformPublishResults(
+  results: PublishResults
+): PublishResultsOfRelays {
+  return results
+    .valueSeq()
+    .reduce(
+      (rdx, res) => mergePublishResults(rdx, res),
+      Map<string, Array<PublishStatus>>()
+    );
+}
 
 function getStatusCount(status: Array<PublishStatus>, type: string): number {
   return status.filter((s) => s.status === type).length;
@@ -112,7 +138,7 @@ function RelayPublishStatus({
 
 type StatusColor = "red" | "brown" | "green";
 
-function getStatusColor(publishResults: PublishResults): StatusColor {
+function getStatusColor(publishResults: PublishResultsOfRelays): StatusColor {
   const isDanger = publishResults.some(
     (status) =>
       getWarningDetails(status).isWarning &&
@@ -143,8 +169,9 @@ export function PublishingStatus(): JSX.Element | null {
   if (publishResults.size === 0) {
     return null;
   }
+  const publishResultsOfRelays = transformPublishResults(publishResults);
   const writeRelays = getWriteRelays(relays);
-  const publishResultsForActiveWriteRelays = publishResults.filter(
+  const publishResultsForActiveWriteRelays = publishResultsOfRelays.filter(
     (_, relayUrl) =>
       writeRelays.filter((relay) => relay.url === relayUrl).length > 0
   );

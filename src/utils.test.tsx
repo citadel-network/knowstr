@@ -281,7 +281,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   contactsRelays: Map<PublicKey, Relays>(),
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
   relaysInfos: Map<string, RelayInformation | undefined>(),
-  publishResults: Map<string, Array<PublishStatus>>(),
+  publishResults: Map<string, PublishResultsOfEvent>(),
   loadingResults: false,
 };
 

@@ -194,20 +194,6 @@ function mergePublishResultsOfEvents(
   }, existing);
 }
 
-function mergePublishResults(
-  existing: PublishResults,
-  newResult: PublishResultsOfEvent
-): PublishResults {
-  const updatedResults = newResult.map((value, key) => {
-    const existingValue = existing.get(key);
-    if (!existingValue) {
-      return [value];
-    }
-    return [...existingValue, value];
-  });
-  return existing.merge(updatedResults);
-}
-
 function Data({ user, children }: DataProps): JSX.Element {
   const defaultRelays = useDefaultRelays();
   const myPublicKey = user.publicKey;
@@ -428,9 +414,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     });
   };
 
-  const updatePublishResults = (
-    results: Map<string, PublishResultsOfEvent>
-  ): void => {
+  const updatePublishResults = (results: PublishResults): void => {
     setNewEventsAndPublishResults((prev) => {
       return {
         events: prev.events,
@@ -438,17 +422,6 @@ function Data({ user, children }: DataProps): JSX.Element {
       };
     });
     setLoadingResults(false);
-  };
-
-  const transformPublishResults = (
-    results: Map<string, PublishResultsOfEvent>
-  ): PublishResults => {
-    return results
-      .valueSeq()
-      .reduce(
-        (rdx, res) => mergePublishResults(rdx, res),
-        Map<string, Array<PublishStatus>>()
-      );
   };
 
   return (
@@ -460,9 +433,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       contactsRelays={contactsRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
-      publishResults={transformPublishResults(
-        newEventsAndPublishResults.results
-      )}
+      publishResults={newEventsAndPublishResults.results}
       loadingResults={loadingResults}
     >
       <PlanningContextProvider

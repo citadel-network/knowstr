@@ -29,7 +29,8 @@ declare global {
     reason?: string;
   };
   type PublishResultsOfEvent = Map<string, PublishStatus>;
-  type PublishResults = Map<string, Array<PublishStatus>>;
+  type PublishResults = Map<string, PublishResultsOfEvent>;
+  type PublishResultsOfRelays = Map<string, Array<PublishStatus>>;
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
