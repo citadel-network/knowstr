@@ -181,6 +181,19 @@ export function useRelaysInfo(
   return infos;
 }
 
+function mergePublishResultsOfEvents(
+  existing: Map<string, PublishResultsOfEvent>,
+  newResults: Map<string, PublishResultsOfEvent>
+): Map<string, PublishResultsOfEvent> {
+  return newResults.reduce((rdx, results, eventID) => {
+    const existingResults = rdx.get(eventID);
+    if (!existingResults) {
+      return rdx.set(eventID, results);
+    }
+    return rdx.set(eventID, existingResults.merge(results));
+  }, existing);
+}
+
 function mergePublishResults(
   existing: PublishResults,
   newResult: PublishResultsOfEvent
@@ -200,7 +213,7 @@ function Data({ user, children }: DataProps): JSX.Element {
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] = useState<{
     events: List<UnsignedEvent>;
-    results: PublishResults;
+    results: Map<string, PublishResultsOfEvent>;
   }>({ events: List(), results: Map() });
   const [loadingResults, setLoadingResults] = useState<boolean>(false);
   const { relayPool } = useApis();
@@ -416,18 +429,26 @@ function Data({ user, children }: DataProps): JSX.Element {
   };
 
   const updatePublishResults = (
-    results: Array<PublishResultsOfEvent>
+    results: Map<string, PublishResultsOfEvent>
   ): void => {
     setNewEventsAndPublishResults((prev) => {
       return {
         events: prev.events,
-        results: results.reduce(
-          (rdx, res) => mergePublishResults(rdx, res),
-          prev.results
-        ),
+        results: mergePublishResultsOfEvents(prev.results, results),
       };
     });
     setLoadingResults(false);
+  };
+
+  const transformPublishResults = (
+    results: Map<string, PublishResultsOfEvent>
+  ): PublishResults => {
+    return results
+      .valueSeq()
+      .reduce(
+        (rdx, res) => mergePublishResults(rdx, res),
+        Map<string, Array<PublishStatus>>()
+      );
   };
 
   return (
@@ -439,7 +460,9 @@ function Data({ user, children }: DataProps): JSX.Element {
       contactsRelays={contactsRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
-      publishResults={newEventsAndPublishResults.results}
+      publishResults={transformPublishResults(
+        newEventsAndPublishResults.results
+      )}
       loadingResults={loadingResults}
     >
       <PlanningContextProvider

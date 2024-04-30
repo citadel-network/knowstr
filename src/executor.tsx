@@ -57,19 +57,24 @@ export async function execute({
   relayPool: SimplePool;
   relays: Relays;
   finalizeEvent: FinalizeEvent;
-}): Promise<Array<PublishResultsOfEvent>> {
+}): Promise<Map<string, PublishResultsOfEvent>> {
   if (plan.publishEvents.size === 0) {
     // eslint-disable-next-line no-console
     console.warn("Won't execute Noop plan");
-    return Promise.resolve([Map()]);
+    return Map();
   }
   const finalizedEvents = plan.publishEvents.map((e) =>
     finalizeEvent(e, plan.user.privateKey)
   );
 
-  return Promise.all(
+  const results = await Promise.all(
     finalizedEvents
       .toArray()
       .map((event) => publishEvent(relayPool, event, relays))
   );
+
+  return results.reduce((rdx, result, index) => {
+    const eventId = finalizedEvents.get(index)?.id;
+    return eventId ? rdx.set(eventId, result) : rdx;
+  }, Map<string, PublishResultsOfEvent>());
 }
