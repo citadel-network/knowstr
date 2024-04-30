@@ -7,6 +7,7 @@ import { DND } from "../dnd";
 import { ALICE, renderWithTestData, setup } from "../utils.test";
 import {
   NodeIndex,
+  PushNode,
   RootViewContextProvider,
   newRelations,
   viewPathToString,
@@ -23,6 +24,7 @@ import {
 import { execute } from "../executor";
 import { Node } from "./Node";
 import { TreeView } from "./TreeView";
+import { LoadNode } from "../dataQuery";
 
 test("Render non existing Node", async () => {
   const [alice] = setup([ALICE]);
@@ -44,7 +46,9 @@ test("Render non existing Node", async () => {
     <RootViewContextProvider root={pl.id}>
       <TemporaryViewProvider>
         <DND>
-          <Column />
+          <LoadNode>
+            <Column />
+          </LoadNode>
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
@@ -67,11 +71,13 @@ test("Edit node via Column Menu", async () => {
   });
   renderWithTestData(
     <RootViewContextProvider root={note.id}>
-      <TemporaryViewProvider>
-        <DND>
-          <Column />
-        </DND>
-      </TemporaryViewProvider>
+      <LoadNode>
+        <TemporaryViewProvider>
+          <DND>
+            <Column />
+          </DND>
+        </TemporaryViewProvider>
+      </LoadNode>
     </RootViewContextProvider>,
     {
       ...alice(),
@@ -103,12 +109,22 @@ test("Edit node inline", async () => {
     plan: planUpsertNode(plan, note),
   });
   renderWithTestData(
-    <RootViewContextProvider root={note.id} indices={List([0, 0])}>
-      <TemporaryViewProvider>
-        <DND>
-          <Node />
-        </DND>
-      </TemporaryViewProvider>
+    <RootViewContextProvider root={note.id}>
+      <LoadNode waitForEose>
+        <PushNode push={List([0])}>
+          <LoadNode waitForEose>
+            <PushNode push={List([0])}>
+              <TemporaryViewProvider>
+                <DND>
+                  <LoadNode>
+                    <Node />
+                  </LoadNode>
+                </DND>
+              </TemporaryViewProvider>
+            </PushNode>
+          </LoadNode>
+        </PushNode>
+      </LoadNode>
     </RootViewContextProvider>,
     {
       ...alice(),
@@ -158,13 +174,17 @@ test("Edited node is shown in Tree View", async () => {
     plan: planBulkUpsertNodes(planWithViews, [pl, oop, java]),
   });
   renderWithTestData(
-    <RootViewContextProvider root={pl.id} indices={List([0])}>
-      <TemporaryViewProvider>
-        <DND>
-          <TreeView />
-        </DND>
-      </TemporaryViewProvider>
-    </RootViewContextProvider>,
+    <LoadNode waitForEose>
+      <RootViewContextProvider root={pl.id} indices={List([0])}>
+        <TemporaryViewProvider>
+          <DND>
+            <LoadNode>
+              <TreeView />
+            </LoadNode>
+          </DND>
+        </TemporaryViewProvider>
+      </RootViewContextProvider>
+    </LoadNode>,
     {
       ...alice(),
       initialRoute: `/w/${pl.id}`,
@@ -190,7 +210,9 @@ test("Delete node", async () => {
     <RootViewContextProvider root={note.id}>
       <TemporaryViewProvider>
         <DND>
-          <Column />
+          <LoadNode>
+            <Column />
+          </LoadNode>
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,

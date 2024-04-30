@@ -27,12 +27,6 @@ type SubPathWithRelations = SubPath & {
   relationsID: ID;
 };
 
-export function isSubPathWithRelations(
-  path: SubPath | SubPathWithRelations
-): path is SubPathWithRelations {
-  return "relationsID" in path;
-}
-
 export type ViewPath =
   | readonly [SubPath]
   | readonly [...SubPathWithRelations[], SubPath];
@@ -180,14 +174,29 @@ export function getViewFromPath(
   );
 }
 
+export function getNodeIDFromView(
+  knowledgeDBs: KnowledgeDBs,
+  views: Views,
+  myself: PublicKey,
+  viewContext: ViewPath
+): [LongID, View] {
+  const view = getViewFromPath(knowledgeDBs, myself, views, viewContext);
+  const { nodeID } = getLast(viewContext);
+  return [nodeID, view];
+}
+
 export function getNodeFromView(
   knowledgeDBs: KnowledgeDBs,
   views: Views,
   myself: PublicKey,
   viewContext: ViewPath
 ): [KnowNode, View] | [undefined, undefined] {
-  const view = getViewFromPath(knowledgeDBs, myself, views, viewContext);
-  const { nodeID } = getLast(viewContext);
+  const [nodeID, view] = getNodeIDFromView(
+    knowledgeDBs,
+    views,
+    myself,
+    viewContext
+  );
   const node = getNodeFromID(knowledgeDBs, nodeID, myself);
   if (!node) {
     return [undefined, undefined];
@@ -335,7 +344,7 @@ export function useRelationIndex(): number | undefined {
 export function RootViewContextProvider({
   children,
   root,
-  indices,
+  indices, // TODO: only used in tests, get rid of it
 }: {
   children: React.ReactNode;
   root: LongID;
@@ -368,6 +377,13 @@ export function PushNode({
   return (
     <ViewContext.Provider value={finalPath}>{children}</ViewContext.Provider>
   );
+}
+
+export function useNodeID(): [LongID, View] {
+  const viewContext = useViewPath();
+  const { knowledgeDBs, user } = useData();
+  const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  return getNodeIDFromView(knowledgeDBs, views, user.publicKey, viewContext);
 }
 
 export function useNode(): [KnowNode, View] | [undefined, undefined] {
@@ -412,13 +428,6 @@ export function getParentKey(viewKey: string): string {
 
 export function getParentView(viewContext: ViewPath): ViewPath | undefined {
   return popPath(viewContext);
-}
-
-export function popPrefix(viewKey: string): [string, string] {
-  const prefix = viewKey.split(":")[0];
-  // eslint-disable-next-line functional/immutable-data
-  const key = viewKey.split(":").splice(1).join(":");
-  return [prefix, key];
 }
 
 export function updateView(views: Views, path: ViewPath, view: View): Views {

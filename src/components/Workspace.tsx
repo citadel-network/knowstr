@@ -6,23 +6,20 @@ import { EmptyColumn, WorkspaceColumnView } from "./WorkspaceColumn";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 
 import { getRelations } from "../connections";
-import { PushNode, useNode } from "../ViewContext";
+import { PushNode, useNodeID } from "../ViewContext";
 import { DND } from "../dnd";
 import { useData } from "../DataContext";
 
 export function WorkspaceView(): JSX.Element | null {
-  const [workspace, view] = useNode();
+  const [workspaceID, view] = useNodeID();
   const { knowledgeDBs, user } = useData();
-  if (!workspace) {
-    return null;
-  }
 
   /* eslint-disable react/no-array-index-key */
   const relations = getRelations(
     knowledgeDBs,
     view.relations,
     user.publicKey,
-    workspace.id
+    workspaceID
   );
   const columns = relations ? relations.items.toArray() : [];
   return (

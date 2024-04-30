@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { List } from "immutable";
 import Data from "../Data";
@@ -21,7 +21,8 @@ import { WorkspaceView } from "./Workspace";
 import { RootViewContextProvider } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import { DND } from "../dnd";
-import { Column } from "./Column";
+import { WorkspaceColumnView } from "./WorkspaceColumn";
+import { LoadNode } from "../dataQuery";
 
 test("Multiple connections to same node", async () => {
   const [alice] = setup([ALICE]);
@@ -45,6 +46,9 @@ test("Multiple connections to same node", async () => {
   fireEvent.click(searchButton);
   const searchInput2 = await screen.findByLabelText("search input");
   userEvent.type(searchInput2, "Jav");
+  await waitFor(() => {
+    expect(screen.getAllByText(matchSplitText("Java"))).toHaveLength(2);
+  });
   userEvent.click(screen.getAllByText(matchSplitText("Java"))[1]);
 
   expectTextContent(
@@ -85,13 +89,15 @@ test("Show Referenced By", async () => {
   const aliceWs = findNodeByText(db, "Alice Workspace") as KnowNode;
   renderWithTestData(
     <Data user={alice().user}>
-      <RootViewContextProvider root={aliceWs.id} indices={List([0])}>
-        <TemporaryViewProvider>
-          <DND>
-            <Column />
-          </DND>
-        </TemporaryViewProvider>
-      </RootViewContextProvider>
+      <LoadNode waitForEose>
+        <RootViewContextProvider root={aliceWs.id} indices={List([0])}>
+          <TemporaryViewProvider>
+            <DND>
+              <WorkspaceColumnView />
+            </DND>
+          </TemporaryViewProvider>
+        </RootViewContextProvider>
+      </LoadNode>
     </Data>,
     {
       ...alice(),
@@ -102,10 +108,10 @@ test("Show Referenced By", async () => {
   const references = await screen.findByLabelText("show references to Bitcoin");
   userEvent.click(references);
   expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
-    "Money1",
+    "Alice Workspace2",
     "+Default",
     "New Relation Type",
-    "Alice Workspace2",
+    "Money1",
     "+Default",
     "New Relation Type",
     "P2P Apps1",
@@ -125,7 +131,7 @@ test("Don't show Referenced By if parent relation is the only reference", async 
       <RootViewContextProvider root={money.id}>
         <TemporaryViewProvider>
           <DND>
-            <Column />
+            <WorkspaceColumnView />
           </DND>
         </TemporaryViewProvider>
       </RootViewContextProvider>
@@ -152,7 +158,7 @@ test("If Node is the root we always show references when there are more than 0",
       <RootViewContextProvider root={bitcoin.id}>
         <TemporaryViewProvider>
           <DND>
-            <Column />
+            <WorkspaceColumnView />
           </DND>
         </TemporaryViewProvider>
       </RootViewContextProvider>

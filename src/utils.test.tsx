@@ -14,6 +14,7 @@ import {
   Event,
   EventTemplate,
   Filter,
+  UnsignedEvent,
   VerifiedEvent,
   getPublicKey,
   matchFilter,
@@ -282,6 +283,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
   relaysInfos: Map<string, RelayInformation | undefined>(),
   publishResults: Map<string, PublishResultsOfEvent>(),
+  unpublishedEvents: List<UnsignedEvent>(),
   loadingResults: false,
 };
 

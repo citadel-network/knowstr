@@ -7,7 +7,6 @@ import { bulkAddRelations, getRelations, moveRelations } from "./connections";
 import { newDB } from "./knowledge";
 import {
   parseViewPath,
-  getNodeFromView,
   upsertRelations,
   getParentNode,
   getParentKey,
@@ -16,6 +15,7 @@ import {
   bulkUpdateViewPathsAfterAddRelation,
   updateViewPathsAfterMoveRelations,
   getRelationIndex,
+  getNodeIDFromView,
 } from "./ViewContext";
 import { getNodesInTree } from "./components/Node";
 import { Plan, planUpdateViews } from "./planner";
@@ -27,28 +27,17 @@ function getDropDestinationEndOfRoot(
   root: ViewPath
 ): [ViewPath, number] {
   // TODO: Replace everything here with getRelationsFromView
-  const [rootNode, rootView] = getNodeFromView(
+  const [rootNodeID, rootView] = getNodeIDFromView(
     knowledgeDBs,
     views,
     myself,
     root
   );
-  if (!rootView) {
-    // eslint-disable-next-line no-console
-    console.error(
-      "root node does not exist",
-      rootView,
-      root,
-      knowledgeDBs.toJSON(),
-      views.toJSON()
-    );
-    throw new Error("Root repo doesn't exist");
-  }
   const relations = getRelations(
     knowledgeDBs,
     rootView.relations,
     myself,
-    rootNode.id
+    rootNodeID
   );
   return [root, relations?.items.size || 0];
 }
@@ -96,31 +85,18 @@ export function dnd(
   const { views } = myDB;
   // remove the prefix
   const rootView = to;
-  const [knowNode] = getNodeFromView(knowledgeDBs, views, myself, rootView);
-  if (!knowNode) {
-    return plan;
-  }
 
   const sourceViewPath = parseViewPath(source);
-  const sourceView = getNodeFromView(
-    knowledgeDBs,
-    views,
-    myself,
-    sourceViewPath
-  )[1];
-  if (!sourceView) {
-    return plan;
-  }
   const selectedSources = getSelectedInView(selection, getParentKey(source));
   const sources = selection.contains(source) ? selectedSources : List([source]);
 
   const sourceNodes = List(
     sources.map((s) => {
       const path = parseViewPath(s);
-      const [node] = getNodeFromView(knowledgeDBs, views, myself, path);
-      return node ? node.id : undefined;
+      const [nodeID] = getNodeIDFromView(knowledgeDBs, views, myself, path);
+      return nodeID;
     })
-  ).filter((n) => n !== undefined) as List<LongID>;
+  );
   const sourceIndices = List(
     sources.map((n) => getRelationIndex(knowledgeDBs, myself, parseViewPath(n)))
   ).filter((n) => n !== undefined) as List<number>;
@@ -143,16 +119,18 @@ export function dnd(
           indexTo
         );
 
-  const [toRepo, toV] = getNodeFromView(knowledgeDBs, views, myself, toView);
-  if (!toRepo) {
-    return plan;
-  }
+  const [toNodeID, toV] = getNodeIDFromView(
+    knowledgeDBs,
+    views,
+    myself,
+    toView
+  );
 
   // TODO: this can be optimized
   const move =
     dropIndex !== undefined &&
     fromRepo !== undefined &&
-    toRepo.id === fromRepo.id &&
+    toNodeID === fromRepo.id &&
     fromView.relations === toV.relations;
 
   const updatedRelationsPlan = upsertRelations(

@@ -14,7 +14,6 @@ import {
 import { FULL_SCREEN_PATH } from "../App";
 import { getRelations } from "../connections";
 import {
-  getNodeFromView,
   useNode,
   useViewKey,
   useViewPath,
@@ -23,6 +22,7 @@ import {
   getRoot,
   addNodeToPath,
   addAddToNodeToPath,
+  getNodeIDFromView,
 } from "../ViewContext";
 import {
   NodeSelectbox,
@@ -245,20 +245,17 @@ export function getNodesInTree(
   noExpansion?: boolean
 ): List<ViewPath> {
   const { views } = knowledgeDBs.get(myself, newDB());
-  const [parentNode, parentView] = getNodeFromView(
+  const [parentNodeID, parentView] = getNodeIDFromView(
     knowledgeDBs,
     views,
     myself,
     parentPath
   );
-  if (!parentNode) {
-    return ctx;
-  }
   const relations = getRelations(
     knowledgeDBs,
     parentView.relations,
     myself,
-    parentNode.id
+    parentNodeID
   );
   if (!relations) {
     return ctx;
@@ -269,13 +266,13 @@ export function getNodesInTree(
   const addNodePath = addAddToNodeToPath(knowledgeDBs, myself, parentPath);
   const nodesInTree = childPaths.reduce(
     (nodesList: List<ViewPath>, childPath: ViewPath) => {
-      const [childRepo, childView] = getNodeFromView(
+      const childView = getNodeIDFromView(
         knowledgeDBs,
         views,
         myself,
         childPath
-      );
-      if (!childRepo || noExpansion) {
+      )[1];
+      if (noExpansion) {
         return nodesList.push(childPath);
       }
       if (childView.expanded) {

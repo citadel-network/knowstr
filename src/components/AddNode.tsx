@@ -233,12 +233,8 @@ function AddNode({
 
 export function AddColumn(): JSX.Element {
   const isOpenInFullScreen = useIsOpenInFullScreen();
-  const [workspace, workspaceBranch] = useNode();
   const viewPath = useViewPath();
   const { createPlan, executePlan } = usePlanner();
-  if (!workspace || !workspaceBranch) {
-    return <div />;
-  }
 
   const onAddNode = (plan: Plan, nodeID: LongID): void => {
     const updateRelationsPlan = upsertRelations(

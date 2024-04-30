@@ -1,4 +1,6 @@
 import React from "react";
+import { Map } from "immutable";
+import { newDB } from "./knowledge";
 
 export type DataContextProps = Data;
 
@@ -25,6 +27,7 @@ export function DataContextProvider({
   relaysInfos,
   publishResults,
   loadingResults,
+  unpublishedEvents,
 }: DataContextProps & {
   children: React.ReactNode;
 }): JSX.Element {
@@ -40,8 +43,60 @@ export function DataContextProvider({
         relaysInfos,
         publishResults,
         loadingResults,
+        unpublishedEvents,
       }}
     >
+      {children}
+    </DataContext.Provider>
+  );
+}
+
+function mergeDBNodesAndRelations(
+  a: KnowledgeData | undefined,
+  b: KnowledgeData | undefined
+): KnowledgeData {
+  const existing = a || newDB();
+  if (b === undefined) {
+    return existing;
+  }
+  return {
+    nodes: existing.nodes.merge(b.nodes),
+    relations: existing.relations.merge(b.relations),
+    views: existing.views,
+    workspaces: existing.workspaces,
+    activeWorkspace: existing.activeWorkspace,
+    relationTypes: existing.relationTypes,
+  };
+}
+
+export function MergeKnowledgeDB({
+  children,
+  knowledgeDBs,
+}: {
+  children: React.ReactNode;
+  knowledgeDBs: KnowledgeDBs;
+}): JSX.Element {
+  const data = useData();
+
+  const existingDBs = data.knowledgeDBs;
+  const allUsers = knowledgeDBs
+    .keySeq()
+    .toSet()
+    .union(existingDBs.keySeq().toSet());
+
+  const mergedDBs = Map<PublicKey, KnowledgeData>(
+    allUsers.toArray().map((userPK) => {
+      return [
+        userPK,
+        mergeDBNodesAndRelations(
+          existingDBs.get(userPK),
+          knowledgeDBs.get(userPK)
+        ),
+      ];
+    })
+  );
+  return (
+    <DataContext.Provider value={{ ...data, knowledgeDBs: mergedDBs }}>
       {children}
     </DataContext.Provider>
   );

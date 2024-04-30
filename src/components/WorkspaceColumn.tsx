@@ -6,19 +6,20 @@ import { FileDropZone } from "./FileDropZone";
 import { Column } from "./Column";
 import { IS_MOBILE } from "./responsive";
 import { addRelationToRelations } from "../connections";
-import { useViewPath, useNode, upsertRelations } from "../ViewContext";
+import { useViewPath, upsertRelations, useNodeID } from "../ViewContext";
 import { Plan, usePlanner } from "../planner";
 import { DroppableContainer } from "./DroppableContainer";
+import { LoadNode } from "../dataQuery";
 
 export function WorkspaceColumnView(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const view = useNode()[1];
-  if (!view) {
-    return null;
-  }
+  const view = useNodeID()[1];
+
   return (
     <WorkspaceColumn columnSpan={isMobile ? 1 : view.width} dataTestId="ws-col">
-      <Column />
+      <LoadNode referencedBy>
+        <Column />
+      </LoadNode>
     </WorkspaceColumn>
   );
 }

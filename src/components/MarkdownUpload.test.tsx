@@ -1,14 +1,19 @@
 import React from "react";
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { List } from "immutable";
-import { RootViewContextProvider, newRelations } from "../ViewContext";
+import {
+  PushNode,
+  RootViewContextProvider,
+  newRelations,
+} from "../ViewContext";
 import { execute } from "../executor";
 import { createPlan, planUpsertRelations } from "../planner";
 import { ALICE, renderWithTestData, setup, UpdateState } from "../utils.test";
 import { planCreateNodesFromMarkdown } from "./FileDropZone";
 import { Column } from "./Column";
 import { addRelationToRelations, joinID } from "../connections";
+import { LoadNode } from "../dataQuery";
 
 const TEST_FILE = `# Programming Languages
 
@@ -40,8 +45,14 @@ async function uploadAndRenderMarkdown(alice: UpdateState): Promise<void> {
   });
 
   renderWithTestData(
-    <RootViewContextProvider root={wsID} indices={List([0])}>
-      <Column />
+    <RootViewContextProvider root={wsID}>
+      <LoadNode waitForEose>
+        <PushNode push={List([0])}>
+          <LoadNode>
+            <Column />
+          </LoadNode>
+        </PushNode>
+      </LoadNode>
     </RootViewContextProvider>,
     alice()
   );
@@ -71,8 +82,14 @@ test("Delete Node uploaded from Markdown", async () => {
   const wsID = joinID(alice().user.publicKey, "my-first-workspace");
   // Test after rerender
   renderWithTestData(
-    <RootViewContextProvider root={wsID} indices={List([0])}>
-      <Column />
+    <RootViewContextProvider root={wsID}>
+      <LoadNode waitForEose>
+        <PushNode push={List([0])}>
+          <LoadNode>
+            <Column />
+          </LoadNode>
+        </PushNode>
+      </LoadNode>
     </RootViewContextProvider>,
     alice()
   );
@@ -87,8 +104,10 @@ test("Edit Node uploaded from Markdown", async () => {
   userEvent.click(screen.getByLabelText("edit Programming Languages"));
   userEvent.keyboard("{backspace} OOP{enter}");
   userEvent.click(screen.getByText("Save"));
+  await waitFor(() => {
+    expect(screen.queryByText("Programming Languages")).toBeNull();
+  });
   await screen.findByText("Programming Languages OOP");
-  expect(screen.queryByText("Programming Languages")).toBeNull();
 });
 
 const originalRange = document.createRange;
