@@ -29,8 +29,10 @@ declare global {
     reason?: string;
   };
   type PublishResultsOfEvent = Map<string, PublishStatus>;
-  type PublishResults = Map<string, PublishResultsOfEvent>;
-  type PublishResultsOfRelays = Map<string, Array<PublishStatus>>;
+  type PublishResultsEventMap = Map<string, PublishResultsOfEvent>;
+
+  type PublishResultsOfRelay = Map<string, PublishStatus>;
+  type PublishResultsRelayMap = Map<string, PublishResultsOfRelay>;
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
@@ -42,7 +44,7 @@ declare global {
     contactsRelays: Map<PublicKey, Relays>;
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
-    publishResults: PublishResults;
+    publishResults: PublishResultsEventMap;
     loadingResults: boolean;
   };
 

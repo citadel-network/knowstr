@@ -6,39 +6,30 @@ import { getWriteRelays } from "citadel-commons";
 import { useData } from "../DataContext";
 import { IS_MOBILE } from "./responsive";
 
-function mergePublishResults(
-  existing: PublishResultsOfRelays,
-  newResult: PublishResultsOfEvent
-): PublishResultsOfRelays {
-  const updatedResults = newResult.map((value, key) => {
-    const existingValue = existing.get(key);
-    if (!existingValue) {
-      return [value];
-    }
-    return [...existingValue, value];
-  });
-  return existing.merge(updatedResults);
-}
-
 function transformPublishResults(
-  results: PublishResults
-): PublishResultsOfRelays {
-  return results
-    .valueSeq()
-    .reduce(
-      (rdx, res) => mergePublishResults(rdx, res),
-      Map<string, Array<PublishStatus>>()
-    );
+  results: PublishResultsEventMap
+): PublishResultsRelayMap {
+  return results.reduce((reducer, resultsOfEvents, eventId) => {
+    return resultsOfEvents.reduce((rdx, publishStatus, relayUrl) => {
+      return rdx.set(
+        relayUrl,
+        (rdx.get(relayUrl) || Map<string, PublishStatus>()).set(
+          eventId,
+          publishStatus
+        )
+      );
+    }, reducer);
+  }, Map<string, Map<string, PublishStatus>>());
 }
 
-function getStatusCount(status: Array<PublishStatus>, type: string): number {
-  return status.filter((s) => s.status === type).length;
+function getStatusCount(status: PublishResultsOfRelay, type: string): number {
+  return status.filter((s) => s.status === type).size;
 }
 function getLastRejectedReason(
-  status: Array<PublishStatus>
+  status: PublishResultsOfRelay
 ): string | undefined {
   const lastRejected = status
-    .slice()
+    .valueSeq()
     .reverse()
     .find((s) => s.status === "rejected");
   return lastRejected ? lastRejected.reason : undefined;
@@ -59,7 +50,7 @@ function getPublishingDetails(
   return `${numberFulfilled} of the last ${totalNumber} events have been published`;
 }
 
-function getWarningDetails(status: Array<PublishStatus>): {
+function getWarningDetails(status: PublishResultsOfRelay): {
   percentage: number;
   isWarning: boolean;
   warningVariant: "danger" | "warning";
@@ -77,7 +68,7 @@ function RelayPublishStatus({
   status,
   relayUrl,
 }: {
-  status: Array<PublishStatus>;
+  status: PublishResultsOfRelay;
   relayUrl: string;
 }): JSX.Element {
   const [showDetails, setShowDetails] = useState<boolean>(false);
@@ -138,7 +129,7 @@ function RelayPublishStatus({
 
 type StatusColor = "red" | "brown" | "green";
 
-function getStatusColor(publishResults: PublishResultsOfRelays): StatusColor {
+function getStatusColor(publishResults: PublishResultsRelayMap): StatusColor {
   const isDanger = publishResults.some(
     (status) =>
       getWarningDetails(status).isWarning &&
@@ -169,9 +160,9 @@ export function PublishingStatus(): JSX.Element | null {
   if (publishResults.size === 0) {
     return null;
   }
-  const publishResultsOfRelays = transformPublishResults(publishResults);
+  const publishResultsRelayMap = transformPublishResults(publishResults);
   const writeRelays = getWriteRelays(relays);
-  const publishResultsForActiveWriteRelays = publishResultsOfRelays.filter(
+  const publishResultsForActiveWriteRelays = publishResultsRelayMap.filter(
     (_, relayUrl) =>
       writeRelays.filter((relay) => relay.url === relayUrl).length > 0
   );

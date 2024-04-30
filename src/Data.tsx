@@ -414,7 +414,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     });
   };
 
-  const updatePublishResults = (results: PublishResults): void => {
+  const updatePublishResults = (results: PublishResultsEventMap): void => {
     setNewEventsAndPublishResults((prev) => {
       return {
         events: prev.events,
