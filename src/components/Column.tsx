@@ -45,7 +45,7 @@ export function Column(): JSX.Element | null {
             <div>
               <DraggableNote />
             </div>
-            <Card.Body className="p-0">
+            <Card.Body className="p-0 overflow-y-hidden">
               <ColumnMenu />
             </Card.Body>
           </DroppableContainer>
