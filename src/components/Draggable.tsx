@@ -1,8 +1,9 @@
 import React, { useRef } from "react";
 import { ConnectableElement, useDrag } from "react-dnd";
-import { ViewPath, useViewPath } from "../ViewContext";
+import { ViewPath, useIsAddToNode, useViewPath } from "../ViewContext";
 import { NOTE_TYPE, Node } from "./Node";
 import { useDroppable } from "./DroppableContainer";
+import { useIsEditingOn } from "./TemporaryViewContext";
 
 export type DragItemType = {
   path: ViewPath;
@@ -15,6 +16,10 @@ type DraggableProps = {
 const Draggable = React.forwardRef<HTMLDivElement, DraggableProps>(
   ({ className }: DraggableProps, ref): JSX.Element => {
     const path = useViewPath();
+    const isAddToNode = useIsAddToNode();
+    const isNodeBeeingEdited = useIsEditingOn();
+    const disableDrag = isAddToNode || isNodeBeeingEdited;
+
     const [{ isDragging }, drag] = useDrag({
       type: NOTE_TYPE,
       item: () => {
@@ -23,6 +28,7 @@ const Draggable = React.forwardRef<HTMLDivElement, DraggableProps>(
       collect: (monitor) => ({
         isDragging: !!monitor.isDragging(),
       }),
+      canDrag: () => !disableDrag,
     });
 
     drag(ref as ConnectableElement);
