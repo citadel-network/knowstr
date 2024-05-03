@@ -1,25 +1,28 @@
-import React, { useState } from "react";
-import { Map } from "immutable";
+import React from "react";
+import { List, Map } from "immutable";
 import { Dropdown, Spinner, ProgressBar } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
-import { getWriteRelays } from "citadel-commons";
+import { Event } from "nostr-tools";
+import { Button, getWriteRelays } from "citadel-commons";
 import { useData } from "../DataContext";
 import { IS_MOBILE } from "./responsive";
+import { useApis } from "../Apis";
+import { republishEvents } from "../executor";
 
 function transformPublishResults(
   results: PublishResultsEventMap
 ): PublishResultsRelayMap {
   return results.reduce((reducer, resultsOfEvents, eventId) => {
-    return resultsOfEvents.reduce((rdx, publishStatus, relayUrl) => {
+    return resultsOfEvents.results.reduce((rdx, publishStatus, relayUrl) => {
       return rdx.set(
         relayUrl,
-        (rdx.get(relayUrl) || Map<string, PublishStatus>()).set(
+        (rdx.get(relayUrl) || Map<string, Event & PublishStatus>()).set(
           eventId,
-          publishStatus
+          { ...resultsOfEvents.event, ...publishStatus }
         )
       );
     }, reducer);
-  }, Map<string, Map<string, PublishStatus>>());
+  }, Map<string, Map<string, Event & PublishStatus>>());
 }
 
 function getStatusCount(status: PublishResultsOfRelay, type: string): number {
@@ -71,32 +74,22 @@ function RelayPublishStatus({
   status: PublishResultsOfRelay;
   relayUrl: string;
 }): JSX.Element {
-  const [showDetails, setShowDetails] = useState<boolean>(false);
+  const { relayPool } = useApis();
   const numberFulfilled = getStatusCount(status, "fulfilled");
   const numberRejected = getStatusCount(status, "rejected");
   const totalNumber = numberFulfilled + numberRejected;
   const publishingDetails = getPublishingDetails(totalNumber, numberFulfilled);
   const { percentage, isWarning, warningVariant } = getWarningDetails(status);
   const lastRejectedReason = getLastRejectedReason(status);
+  const rejectedEvents = status
+    .filter((s) => s.status === "rejected")
+    .valueSeq()
+    .toList() as List<Event>;
   return (
     <>
       <Dropdown.Divider />
-      <Dropdown.Item tabIndex={0}>
-        <div
-          role="button"
-          className="flex-row-space-between"
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowDetails(!showDetails);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.stopPropagation();
-              setShowDetails(!showDetails);
-            }
-          }}
-        >
+      <Dropdown.Item>
+        <div className="flex-row-space-between">
           <div className="w-80 break-word" style={{ whiteSpace: "normal" }}>
             <div className="bold">{`Relay ${relayUrl}:`}</div>
             <ProgressBar
@@ -107,19 +100,36 @@ function RelayPublishStatus({
                 height: "1.5rem",
               }}
             />
-            {showDetails && <div className="mt-1"> {publishingDetails} </div>}
-            {showDetails && lastRejectedReason && (
+            <div className="mt-1"> {publishingDetails} </div>
+            {lastRejectedReason && (
               <div>{`Last rejection reason: ${lastRejectedReason}`}</div>
             )}
           </div>
           <div className="ms-2 flex-row-center align-center icon-large">
-            <div
-              className={
-                isWarning
-                  ? "simple-icon-exclamation danger"
-                  : "simple-icon-check success"
-              }
-            />
+            <div className="flex-col align-center">
+              <div
+                className={
+                  isWarning
+                    ? "simple-icon-exclamation danger"
+                    : "simple-icon-check success"
+                }
+              />
+              {numberRejected > 0 && (
+                <Button
+                  className="btn mt-2 font-size-small"
+                  ariaLabel={`resend rejected events to relay ${relayUrl}`}
+                  onClick={() =>
+                    republishEvents({
+                      relayPool,
+                      events: rejectedEvents,
+                      writeRelayUrl: relayUrl,
+                    })
+                  }
+                >
+                  Resend
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </Dropdown.Item>

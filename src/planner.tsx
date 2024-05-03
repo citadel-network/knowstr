@@ -1,5 +1,5 @@
 import React from "react";
-import { Map, List } from "immutable";
+import { List } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
 import crypto from "crypto";
 import {
@@ -36,7 +36,7 @@ export function PlanningContextProvider({
 }: {
   children: React.ReactNode;
   addNewEvents: (events: List<UnsignedEvent>) => void;
-  updatePublishResults: (results: Map<string, PublishResultsOfEvent>) => void;
+  updatePublishResults: (results: PublishResultsEventMap) => void;
 }): JSX.Element {
   const { relayPool, finalizeEvent } = useApis();
 

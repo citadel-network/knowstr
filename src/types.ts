@@ -1,5 +1,5 @@
 import { Map, OrderedMap, List } from "immutable";
-import { UnsignedEvent } from "nostr-tools";
+import { Event, UnsignedEvent } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
 
@@ -29,10 +29,13 @@ declare global {
     status: "rejected" | "fulfilled";
     reason?: string;
   };
-  type PublishResultsOfEvent = Map<string, PublishStatus>;
+  type PublishResultsOfEvent = {
+    event: Event;
+    results: Map<string, PublishStatus>;
+  };
   type PublishResultsEventMap = Map<string, PublishResultsOfEvent>;
 
-  type PublishResultsOfRelay = Map<string, PublishStatus>;
+  type PublishResultsOfRelay = Map<string, Event & PublishStatus>;
   type PublishResultsRelayMap = Map<string, PublishResultsOfRelay>;
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;

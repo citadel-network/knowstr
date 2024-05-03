@@ -1,5 +1,5 @@
 import { Event, SimplePool } from "nostr-tools";
-import { Map } from "immutable";
+import { List, Map } from "immutable";
 import { Plan } from "./planner";
 import { FinalizeEvent } from "./Apis";
 
@@ -9,10 +9,8 @@ export const PUBLISH_TIMEOUT = 5000;
 async function publishEvent(
   relayPool: SimplePool,
   event: Event,
-  writeToRelays: Relays
+  writeRelayUrls: Array<string>
 ): Promise<PublishResultsOfEvent> {
-  const writeRelayUrls = writeToRelays.map((r) => r.url);
-
   if (writeRelayUrls.length === 0) {
     throw new Error("No relays to publish on");
   }
@@ -33,18 +31,19 @@ async function publishEvent(
     // eslint-disable-next-line no-console
     failures.map((failure) => console.error(failure, event));
     throw new Error(
-      `Failed to publish on: ${failures
-        .map((failure) => failure.status)
-        .join(".")}`
+      `Failed to publish on: ${writeRelayUrls.map((url) => url).join(",")}`
     );
   }
-  return writeRelayUrls.reduce((rdx, url, index) => {
-    const res = results[index];
-    return rdx.set(url, {
-      status: res.status,
-      reason: res.status === "rejected" ? (res.reason as string) : undefined,
-    });
-  }, Map<string, PublishStatus>());
+  return {
+    event,
+    results: writeRelayUrls.reduce((rdx, url, index) => {
+      const res = results[index];
+      return rdx.set(url, {
+        status: res.status,
+        reason: res.status === "rejected" ? (res.reason as string) : undefined,
+      });
+    }, Map<string, PublishStatus>()),
+  };
 }
 
 export async function execute({
@@ -57,7 +56,7 @@ export async function execute({
   relayPool: SimplePool;
   relays: Relays;
   finalizeEvent: FinalizeEvent;
-}): Promise<Map<string, PublishResultsOfEvent>> {
+}): Promise<PublishResultsEventMap> {
   if (plan.publishEvents.size === 0) {
     // eslint-disable-next-line no-console
     console.warn("Won't execute Noop plan");
@@ -67,14 +66,42 @@ export async function execute({
     finalizeEvent(e, plan.user.privateKey)
   );
 
+  const writeRelayUrls = relays.map((r) => r.url);
   const results = await Promise.all(
     finalizedEvents
       .toArray()
-      .map((event) => publishEvent(relayPool, event, relays))
+      .map((event) => publishEvent(relayPool, event, writeRelayUrls))
   );
 
   return results.reduce((rdx, result, index) => {
     const eventId = finalizedEvents.get(index)?.id;
+    return eventId ? rdx.set(eventId, result) : rdx;
+  }, Map<string, PublishResultsOfEvent>());
+}
+
+export async function republishEvents({
+  events,
+  relayPool,
+  writeRelayUrl,
+}: {
+  events: List<Event>;
+  relayPool: SimplePool;
+  writeRelayUrl: string;
+}): Promise<PublishResultsEventMap> {
+  if (events.size === 0) {
+    // eslint-disable-next-line no-console
+    console.warn("Won't republish noop events");
+    return Map();
+  }
+
+  const results = await Promise.all(
+    events
+      .toArray()
+      .map((event) => publishEvent(relayPool, event, [writeRelayUrl]))
+  );
+
+  return results.reduce((rdx, result, index) => {
+    const eventId = events.get(index)?.id;
     return eventId ? rdx.set(eventId, result) : rdx;
   }, Map<string, PublishResultsOfEvent>());
 }

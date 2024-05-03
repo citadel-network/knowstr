@@ -176,15 +176,18 @@ export function useRelaysInfo(
 }
 
 function mergePublishResultsOfEvents(
-  existing: Map<string, PublishResultsOfEvent>,
-  newResults: Map<string, PublishResultsOfEvent>
-): Map<string, PublishResultsOfEvent> {
+  existing: PublishResultsEventMap,
+  newResults: PublishResultsEventMap
+): PublishResultsEventMap {
   return newResults.reduce((rdx, results, eventID) => {
     const existingResults = rdx.get(eventID);
     if (!existingResults) {
       return rdx.set(eventID, results);
     }
-    return rdx.set(eventID, existingResults.merge(results));
+    return rdx.set(eventID, {
+      ...existingResults,
+      results: existingResults.results.merge(results.results),
+    });
   }, existing);
 }
 
@@ -193,7 +196,7 @@ function Data({ user, children }: DataProps): JSX.Element {
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] = useState<{
     events: List<UnsignedEvent>;
-    results: Map<string, PublishResultsOfEvent>;
+    results: PublishResultsEventMap;
   }>({ events: List(), results: Map() });
   const [loadingResults, setLoadingResults] = useState<boolean>(false);
   const { relayPool } = useApis();
