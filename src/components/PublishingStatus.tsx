@@ -6,8 +6,7 @@ import { Event } from "nostr-tools";
 import { Button, getWriteRelays } from "citadel-commons";
 import { useData } from "../DataContext";
 import { IS_MOBILE } from "./responsive";
-import { useApis } from "../Apis";
-import { republishEvents } from "../executor";
+import { usePlanner } from "../planner";
 
 function transformPublishResults(
   results: PublishResultsEventMap
@@ -74,7 +73,7 @@ function RelayPublishStatus({
   status: PublishResultsOfRelay;
   relayUrl: string;
 }): JSX.Element {
-  const { relayPool } = useApis();
+  const { republishEvents } = usePlanner();
   const numberFulfilled = getStatusCount(status, "fulfilled");
   const numberRejected = getStatusCount(status, "rejected");
   const totalNumber = numberFulfilled + numberRejected;
@@ -88,7 +87,11 @@ function RelayPublishStatus({
   return (
     <>
       <Dropdown.Divider />
-      <Dropdown.Item>
+      <Dropdown.Item
+        onClick={(event) => {
+          event?.stopPropagation();
+        }}
+      >
         <div className="flex-row-space-between">
           <div className="w-80 break-word" style={{ whiteSpace: "normal" }}>
             <div className="bold">{`Relay ${relayUrl}:`}</div>
@@ -118,13 +121,7 @@ function RelayPublishStatus({
                 <Button
                   className="btn mt-2 font-size-small"
                   ariaLabel={`resend rejected events to relay ${relayUrl}`}
-                  onClick={() =>
-                    republishEvents({
-                      relayPool,
-                      events: rejectedEvents,
-                      writeRelayUrl: relayUrl,
-                    })
-                  }
+                  onClick={() => republishEvents(rejectedEvents, relayUrl)}
                 >
                   Resend
                 </Button>

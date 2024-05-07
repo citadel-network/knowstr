@@ -1,6 +1,6 @@
 import React from "react";
 import { List } from "immutable";
-import { UnsignedEvent } from "nostr-tools";
+import { UnsignedEvent, Event } from "nostr-tools";
 import crypto from "crypto";
 import {
   KIND_DELETE,
@@ -15,13 +15,19 @@ import {
   KIND_RELAY_METADATA_EVENT,
 } from "citadel-commons";
 import { useData } from "./DataContext";
-import { execute } from "./executor";
+import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";
 import { relationTypesToJson, viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
 import { shortID } from "./connections";
 
-type Context = (plan: Plan) => Promise<void>;
+type ExecutePlan = (plan: Plan) => Promise<void>;
+type RepublishEvents = (events: List<Event>, relayUrl: string) => Promise<void>;
+
+type Context = {
+  executePlan: ExecutePlan;
+  republishEvents: RepublishEvents;
+};
 
 const PlanningContext = React.createContext<Context | undefined>(undefined);
 
@@ -52,17 +58,26 @@ export function PlanningContextProvider({
     updatePublishResults(results);
   };
 
+  const republishEventsOnRelay = async (
+    events: List<Event>,
+    relayUrl: string
+  ): Promise<void> => {
+    const results = await republishEvents({
+      events,
+      relayPool,
+      writeRelayUrl: relayUrl,
+    });
+    updatePublishResults(results);
+  };
+
   return (
-    <PlanningContext.Provider value={executePlan}>
+    <PlanningContext.Provider
+      value={{ executePlan, republishEvents: republishEventsOnRelay }}
+    >
       {children}
     </PlanningContext.Provider>
   );
 }
-
-type Planner = {
-  createPlan: () => Plan;
-  executePlan: (plan: Plan) => Promise<void>;
-};
 
 export function createPlan(
   props: Data & {
@@ -75,6 +90,12 @@ export function createPlan(
   };
 }
 
+type Planner = {
+  createPlan: () => Plan;
+  executePlan: ExecutePlan;
+  republishEvents: RepublishEvents;
+};
+
 export function usePlanner(): Planner {
   const data = useData();
   const createPlanningContext = (): Plan => {
@@ -82,14 +103,15 @@ export function usePlanner(): Planner {
       ...data,
     });
   };
-  const executePlan = React.useContext(PlanningContext);
-  if (executePlan === undefined) {
+  const planningContext = React.useContext(PlanningContext);
+  if (planningContext === undefined) {
     throw new Error("PlanningContext not provided");
   }
 
   return {
     createPlan: createPlanningContext,
-    executePlan,
+    executePlan: planningContext.executePlan,
+    republishEvents: planningContext.republishEvents,
   };
 }
 
