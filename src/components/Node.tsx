@@ -23,6 +23,7 @@ import {
   addNodeToPath,
   addAddToNodeToPath,
   getNodeIDFromView,
+  useNodeID,
 } from "../ViewContext";
 import {
   NodeSelectbox,
@@ -39,6 +40,7 @@ import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
+import { useNodeIsLoading } from "../LoadingStatus";
 
 function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {
@@ -57,6 +59,21 @@ export function useIsOpenInFullScreen(): boolean {
     return false;
   }
   return !!(id !== undefined && id === getRoot(viewPath).nodeID);
+}
+
+export function LoadingNode(): JSX.Element {
+  return (
+    <div className="ph-item">
+      <div>
+        <div className="ph-row">
+          <div className="ph-col-12" />
+          <div className="ph-col-8" />
+          <div className="ph-col-12 " />
+          <div className="ph-col-4" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ErrorContent(): JSX.Element {
@@ -147,6 +164,10 @@ function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
 function NodeContent(): JSX.Element {
   const { settings } = useData();
   const [node] = useNode();
+  const isLoading = useNodeIsLoading();
+  if (isLoading) {
+    return <LoadingNode />;
+  }
   if (!node) {
     return <ErrorContent />;
   }
@@ -168,15 +189,12 @@ function NodeAutoLink({
   const { openNodeID: id } = useParams<{
     openNodeID: string;
   }>();
-  const [node] = useNode();
-  if (!node) {
-    return <ErrorContent />;
-  }
-  const isMainNodeInFullscreenView = id !== undefined && id === node.id;
+  const [nodeID] = useNodeID();
+  const isMainNodeInFullscreenView = id !== undefined && id === nodeID;
   return isMainNodeInFullscreenView ? (
     <>{children}</>
   ) : (
-    <Link className="no-underline" to={`/d/${escape(node.id)}`}>
+    <Link className="no-underline" to={`/d/${escape(nodeID)}`}>
       {children}
     </Link>
   );

@@ -19,9 +19,11 @@ import {
   addNodeToFilters,
   addReferencedByToFilters,
   createBaseFilter,
+  filtersToFilterArray,
   useQueryKnowledgeData,
 } from "../dataQuery";
 import { newDB } from "../knowledge";
+import { RegisterQuery } from "../LoadingStatus";
 
 /* eslint-disable react/jsx-props-no-spreading */
 function Tree(): JSX.Element | null {
@@ -61,7 +63,9 @@ function Tree(): JSX.Element | null {
     return filterWithNode;
   }, baseFilter);
 
-  const { knowledgeDBs: mergedDBs } = useQueryKnowledgeData(filter);
+  const finalFilter = filtersToFilterArray(filter);
+  const { knowledgeDBs: mergedDBs, allEventsProcessed } =
+    useQueryKnowledgeData(finalFilter);
 
   const Scroller = React.useCallback(
     React.forwardRef<HTMLDivElement, ScrollerProps>(
@@ -75,26 +79,31 @@ function Tree(): JSX.Element | null {
 
   return (
     <MergeKnowledgeDB knowledgeDBs={mergedDBs}>
-      <div
-        className="max-height-100 overflow-y-hidden background-dark"
-        aria-label={ariaLabel}
-        style={virtuosoStyle}
+      <RegisterQuery
+        filters={finalFilter}
+        allEventsProcessed={allEventsProcessed}
       >
-        <Virtuoso
-          data={nodes.toArray()}
-          totalListHeightChanged={(height) => {
-            setTotalListHeight(height);
-          }}
-          components={{ Scroller }}
-          itemContent={(index, path) => {
-            return (
-              <ViewContext.Provider value={path} key={viewPathToString(path)}>
-                <ListItem index={index} treeViewPath={viewPath} />
-              </ViewContext.Provider>
-            );
-          }}
-        />
-      </div>
+        <div
+          className="max-height-100 overfloallEventsProcessedhidden background-dark"
+          aria-label={ariaLabel}
+          style={virtuosoStyle}
+        >
+          <Virtuoso
+            data={nodes.toArray()}
+            totalListHeightChanged={(height) => {
+              setTotalListHeight(height);
+            }}
+            components={{ Scroller }}
+            itemContent={(index, path) => {
+              return (
+                <ViewContext.Provider value={path} key={viewPathToString(path)}>
+                  <ListItem index={index} treeViewPath={viewPath} />
+                </ViewContext.Provider>
+              );
+            }}
+          />
+        </div>
+      </RegisterQuery>
     </MergeKnowledgeDB>
   );
 }
@@ -119,7 +128,9 @@ export function TreeView(): JSX.Element {
     (rdx, listID) => addListToFilters(rdx, listID),
     filter
   );
-  const { knowledgeDBs: mergedDBs } = useQueryKnowledgeData(listsFilter);
+  const { knowledgeDBs: mergedDBs } = useQueryKnowledgeData(
+    filtersToFilterArray(listsFilter)
+  );
 
   return (
     <MergeKnowledgeDB knowledgeDBs={mergedDBs}>

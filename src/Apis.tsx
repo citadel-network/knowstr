@@ -16,6 +16,7 @@ export type Apis = {
     fetchRelayInformation: (url: string) => Promise<RelayInformation>;
     searchDebounce: number;
   };
+  eventLoadingTimeout: number;
 };
 
 const ApiContext = React.createContext<Apis | undefined>(undefined);

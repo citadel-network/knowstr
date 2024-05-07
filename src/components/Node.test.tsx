@@ -58,7 +58,7 @@ test("Render non existing Node", async () => {
     }
   );
   await screen.findByText("Programming Languages");
-  screen.getByText("Error: Node not found");
+  await screen.findByText("Error: Node not found");
 });
 
 test("Edit node via Column Menu", async () => {

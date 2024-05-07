@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Filter } from "nostr-tools";
 import { List, Set } from "immutable";
 import {
@@ -13,6 +13,7 @@ import { useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
+import { RegisterQuery } from "./LoadingStatus";
 
 function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
   const d = filter[tag] || [];
@@ -150,24 +151,54 @@ export function createBaseFilter(
   } as Filters;
 }
 
-export function useQueryKnowledgeData(filters: Filters): {
+function isOnlyDelete(filters: Filter[]): boolean {
+  return !!(
+    filters.length === 1 &&
+    filters[0].kinds?.includes(KIND_DELETE) &&
+    filters[0].kinds.length === 1
+  );
+}
+
+export function useQueryKnowledgeData(filters: Filter[]): {
   knowledgeDBs: KnowledgeDBs;
   eose: boolean;
+  allEventsProcessed: boolean;
 } {
   const { relays, unpublishedEvents } = useData();
-  const { relayPool } = useApis();
+  const { relayPool, eventLoadingTimeout } = useApis();
+  const [allEventsProcessed, setAllEventsProcessed] = useState(false);
+  const setAllEventsProcessedTimeout = useRef<number | undefined>(undefined);
 
-  const { events, eose } = useEventQuery(
-    relayPool,
-    filtersToFilterArray(filters),
-    { readFromRelays: relays }
-  );
-  // TODO: optimization to only process unpublishedEvents matching the filters
+  const disabled = isOnlyDelete(filters);
+  const { events, eose } = useEventQuery(relayPool, filters, {
+    readFromRelays: relays,
+    enabled: !disabled,
+  });
+
+  /**
+   * Sometimes eose gets fired before all events are processed.
+   *
+   * This is a workaround to wait for all events to be processed before setting allEventsProcessed to true.
+   * With dashboards with a lot of events a lot of time can pass between eose and the first
+   * event being processed, therefore we need to select a huge timeout. User will see an
+   * error message instead of the loading indicator if a note was not loaded by then.
+   */
+  useEffect(() => {
+    if (!eose || disabled) {
+      return;
+    }
+    clearTimeout(setAllEventsProcessedTimeout.current);
+    // eslint-disable-next-line functional/immutable-data
+    setAllEventsProcessedTimeout.current = setTimeout(() => {
+      setAllEventsProcessed(true);
+    }, eventLoadingTimeout) as unknown as number;
+  }, [events.size, eose, JSON.stringify(filters), disabled]);
+
   const processedEvents = useEventProcessor(
     events.valueSeq().toList().merge(unpublishedEvents)
   );
   const knowledgeDBs = processedEvents.map((data) => data.knowledgeDB);
-  return { knowledgeDBs, eose };
+  return { knowledgeDBs, eose, allEventsProcessed };
 }
 
 export function LoadNode({
@@ -189,12 +220,21 @@ export function LoadNode({
   const filter = referencedBy
     ? addReferencedByToFilters(nodeFilter, nodeID)
     : nodeFilter;
-  const { knowledgeDBs, eose } = useQueryKnowledgeData(filter);
+  const filterArray = filtersToFilterArray(filter);
+  const { knowledgeDBs, eose, allEventsProcessed } =
+    useQueryKnowledgeData(filterArray);
   if (waitForEose === true && !eose) {
     return <div className="loading" aria-label="loading" />;
   }
 
   return (
-    <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>{children}</MergeKnowledgeDB>
+    <RegisterQuery
+      filters={filterArray}
+      allEventsProcessed={allEventsProcessed}
+    >
+      <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>
+        {children}
+      </MergeKnowledgeDB>
+    </RegisterQuery>
   );
 }

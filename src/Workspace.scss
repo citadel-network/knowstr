@@ -12,6 +12,10 @@ $border-light: 1px solid $light-color;
 
 $font: "Nunito", sans-serif;
 
+$ph-gutter: 10;
+$ph-border: 0;
+@import "../node_modules/placeholder-loading/src/scss/placeholder-loading.scss";
+
 .no-underline {
   text-decoration: none;
 }
@@ -299,6 +303,10 @@ body {
 .hover-light-bg {
   &:hover {
     background: $light-color;
+
+    .ph-item {
+        background: $light-color;
+    }
   }
 }
 

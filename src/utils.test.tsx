@@ -166,6 +166,7 @@ type TestApis = Omit<Apis, "fileStore" | "relayPool"> & {
 
 function applyApis(props?: Partial<TestApis>): TestApis {
   return {
+    eventLoadingTimeout: 0,
     fileStore: props?.fileStore || mockFileStore(),
     relayPool: props?.relayPool || mockRelayPool(),
     finalizeEvent: props?.finalizeEvent || mockFinalizeEvent(),
@@ -213,6 +214,7 @@ function renderApis(
           relayPool,
           finalizeEvent,
           nip11,
+          eventLoadingTimeout: 0,
         }}
       >
         <NostrAuthContext.Provider
@@ -248,6 +250,7 @@ function renderApis(
     relayPool,
     finalizeEvent,
     nip11,
+    eventLoadingTimeout: 0,
     ...utils,
   };
 }
