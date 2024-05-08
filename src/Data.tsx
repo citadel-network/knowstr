@@ -277,10 +277,6 @@ function Data({ user, children }: DataProps): JSX.Element {
   );
   const knowledgeDBs = rDataEventsProcessed.map((data) => data.knowledgeDB);
 
-  if (!metaEventsEose) {
-    return <div className="loading" aria-label="loading" />;
-  }
-
   const addNewEvents = (events: List<UnsignedEvent>): void => {
     setLoadingResults(true);
     setNewEventsAndPublishResults((prev) => {
