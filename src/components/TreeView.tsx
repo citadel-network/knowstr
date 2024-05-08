@@ -25,30 +25,16 @@ import {
 import { newDB } from "../knowledge";
 import { RegisterQuery } from "../LoadingStatus";
 
-/* eslint-disable react/jsx-props-no-spreading */
-function Tree(): JSX.Element | null {
-  const { knowledgeDBs, user, contacts } = useData();
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
-  const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
-    undefined
-  );
-  const viewPath = useViewPath();
-  const isOpenInFullScreen = useIsOpenInFullScreen();
-  const nodes = getNodesInTree(
-    knowledgeDBs,
-    user.publicKey,
-    viewPath,
-    List<ViewPath>(),
-    isOpenInFullScreen
-  );
-  const [node] = useNode();
-  const ariaLabel = node ? `related to ${node.text}` : undefined;
-  const virtuosoStyle = totalListHeight
-    ? { maxHeight: "100%", height: `${totalListHeight}px` }
-    : { height: "1px" };
-
+export function TreeViewNodeLoader({
+  children,
+  nodes,
+}: {
+  children: React.ReactNode;
+  nodes: List<ViewPath>;
+}): JSX.Element {
+  const { user, contacts, knowledgeDBs } = useData();
   const baseFilter = createBaseFilter(contacts, user.publicKey);
-
+  const { views } = knowledgeDBs.get(user.publicKey, newDB());
   const filter = nodes.reduce((rdx, path) => {
     const [nodeID] = getNodeIDFromView(
       knowledgeDBs,
@@ -67,6 +53,39 @@ function Tree(): JSX.Element | null {
   const { knowledgeDBs: mergedDBs, allEventsProcessed } =
     useQueryKnowledgeData(finalFilter);
 
+  return (
+    <MergeKnowledgeDB knowledgeDBs={mergedDBs}>
+      <RegisterQuery
+        filters={finalFilter}
+        allEventsProcessed={allEventsProcessed}
+      >
+        {children}
+      </RegisterQuery>
+    </MergeKnowledgeDB>
+  );
+}
+
+/* eslint-disable react/jsx-props-no-spreading */
+function Tree(): JSX.Element | null {
+  const { knowledgeDBs, user } = useData();
+  const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
+    undefined
+  );
+  const viewPath = useViewPath();
+  const isOpenInFullScreen = useIsOpenInFullScreen();
+  const nodes = getNodesInTree(
+    knowledgeDBs,
+    user.publicKey,
+    viewPath,
+    List<ViewPath>(),
+    isOpenInFullScreen
+  );
+  const [node] = useNode();
+  const ariaLabel = node ? `related to ${node.text}` : undefined;
+  const virtuosoStyle = totalListHeight
+    ? { maxHeight: "100%", height: `${totalListHeight}px` }
+    : { height: "1px" };
+
   const Scroller = React.useCallback(
     React.forwardRef<HTMLDivElement, ScrollerProps>(
       ({ style, ...props }, ref) => {
@@ -78,33 +97,28 @@ function Tree(): JSX.Element | null {
   );
 
   return (
-    <MergeKnowledgeDB knowledgeDBs={mergedDBs}>
-      <RegisterQuery
-        filters={finalFilter}
-        allEventsProcessed={allEventsProcessed}
+    <TreeViewNodeLoader nodes={nodes}>
+      <div
+        className="max-height-100 overfloallEventsProcessedhidden background-dark"
+        aria-label={ariaLabel}
+        style={virtuosoStyle}
       >
-        <div
-          className="max-height-100 overfloallEventsProcessedhidden background-dark"
-          aria-label={ariaLabel}
-          style={virtuosoStyle}
-        >
-          <Virtuoso
-            data={nodes.toArray()}
-            totalListHeightChanged={(height) => {
-              setTotalListHeight(height);
-            }}
-            components={{ Scroller }}
-            itemContent={(index, path) => {
-              return (
-                <ViewContext.Provider value={path} key={viewPathToString(path)}>
-                  <ListItem index={index} treeViewPath={viewPath} />
-                </ViewContext.Provider>
-              );
-            }}
-          />
-        </div>
-      </RegisterQuery>
-    </MergeKnowledgeDB>
+        <Virtuoso
+          data={nodes.toArray()}
+          totalListHeightChanged={(height) => {
+            setTotalListHeight(height);
+          }}
+          components={{ Scroller }}
+          itemContent={(index, path) => {
+            return (
+              <ViewContext.Provider value={path} key={viewPathToString(path)}>
+                <ListItem index={index} treeViewPath={viewPath} />
+              </ViewContext.Provider>
+            );
+          }}
+        />
+      </div>
+    </TreeViewNodeLoader>
   );
 }
 

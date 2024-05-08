@@ -12,8 +12,7 @@ import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { NavBar } from "./Navbar";
 import { DetailViewMenu } from "./Menu";
 import { AddNodeToNode } from "./AddNode";
-import { ReadingStatus } from "./ReadingStatus";
-import { TreeView } from "./TreeView";
+import { TreeView, TreeViewNodeLoader } from "./TreeView";
 import { DND } from "../dnd";
 import { FullScreenViewWrapper } from "./FullScreenViewWrapper";
 import { useLogout } from "../NostrAuthContext";
@@ -47,7 +46,7 @@ function MobileViewNodes(): JSX.Element | null {
   );
 
   return (
-    <ReadingStatus nodes={nodes}>
+    <TreeViewNodeLoader nodes={nodes}>
       <DetailView />
       {nodes.map((path) => {
         return (
@@ -58,7 +57,7 @@ function MobileViewNodes(): JSX.Element | null {
           </ViewContext.Provider>
         );
       })}
-    </ReadingStatus>
+    </TreeViewNodeLoader>
   );
 }
 
