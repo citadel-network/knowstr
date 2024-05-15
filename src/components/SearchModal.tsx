@@ -2,7 +2,6 @@ import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { List, Map } from "immutable";
 import {
   KIND_KNOWLEDGE_NODE,
-  KIND_KNOWLEDGE_NODE_COLLECTION,
   useEventQuery,
   ModalNode,
   ModalNodeBody,
@@ -95,21 +94,16 @@ function useSearchQuery(
     filter: nip50 ? undefined : (event) => isMatch(search, event.content),
   });
   const groupByKind = events.groupBy((event) => event.kind);
-  const collectionEvents = groupByKind.get(KIND_KNOWLEDGE_NODE_COLLECTION);
   const knowledgeEvents = groupByKind.get(KIND_KNOWLEDGE_NODE);
 
   const nodesFromKnowledgeEvents = findNodes(
     knowledgeEvents?.toList() || List()
   );
-  // Filter node from collection events
-  const nodeFromCollectionEvents = findNodes(
-    collectionEvents?.toList() || List()
-  ).filter((event) => isMatch(search, event.text));
 
   // If the search !== query debounce will trigger a filter change soon
   const isQueryFinished = eose && query === search;
   const isEose = isQueryFinished || relays.length === 0;
-  return [nodesFromKnowledgeEvents.merge(nodeFromCollectionEvents), isEose];
+  return [nodesFromKnowledgeEvents, isEose];
 }
 
 function Search({

@@ -17,7 +17,6 @@ import {
   KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_SETTINGS,
-  KIND_KNOWLEDGE_NODE_COLLECTION,
 } from "citadel-commons";
 import { List, Map } from "immutable";
 import { Event, UnsignedEvent } from "nostr-tools";
@@ -58,10 +57,7 @@ type ProcessedEvents = {
   relays: Relays;
 };
 
-export const KIND_SEARCH = [
-  KIND_KNOWLEDGE_NODE_COLLECTION,
-  KIND_KNOWLEDGE_NODE,
-];
+export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE];
 
 const KINDS_CONTACTS_META = [
   KIND_WORKSPACES,

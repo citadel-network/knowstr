@@ -4,7 +4,6 @@ import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
-  KIND_KNOWLEDGE_NODE_COLLECTION,
   KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_WORKSPACES,
@@ -19,34 +18,14 @@ import {
   jsonToRelationTypes,
   eventToRelations,
 } from "./serializer";
-import { joinID, shortID, splitID } from "./connections";
+import { joinID, splitID } from "./connections";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
-import { createNodesFromMarkdown } from "./components/FileDropZone";
-
-function handleNodeCollection(
-  rdx: Map<string, KnowNode>,
-  event: UnsignedEvent
-): Map<string, KnowNode> {
-  const id = findTag(event, "d");
-  if (!id) {
-    return rdx;
-  }
-  const nodes = createNodesFromMarkdown(
-    event.content,
-    id,
-    event.pubkey as PublicKey
-  );
-  const nodesMap = Map(nodes.map((n) => [shortID(n.id), n]));
-  return rdx.merge(nodesMap);
-}
 
 export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
   const sorted = sortEvents(
     events.filter(
       (event) =>
-        event.kind === KIND_KNOWLEDGE_NODE ||
-        event.kind === KIND_DELETE ||
-        event.kind === KIND_KNOWLEDGE_NODE_COLLECTION
+        event.kind === KIND_KNOWLEDGE_NODE || event.kind === KIND_DELETE
     )
   );
   // use reduce in case of duplicate nodes, the newer version wins
@@ -62,9 +41,6 @@ export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
         return rdx.remove(eventToDelete);
       }
       return rdx;
-    }
-    if (event.kind === KIND_KNOWLEDGE_NODE_COLLECTION) {
-      return handleNodeCollection(rdx, event);
     }
     const id = findTag(event, "d");
     if (!id) {

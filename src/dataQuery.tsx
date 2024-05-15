@@ -6,9 +6,8 @@ import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
-  KIND_KNOWLEDGE_NODE_COLLECTION,
 } from "citadel-commons";
-import { splitID, stripIndex } from "./connections";
+import { splitID } from "./connections";
 import { useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
@@ -21,17 +20,12 @@ function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
   // TODO: Add unknown remotes? Or even better create a filter for each unknown remote to query specific ids
   // strip index from ID when we look for a node belonging to a collection
 
-  // If we look for a collection add node with collection stripped
-  const ids = filter.kinds?.includes(KIND_KNOWLEDGE_NODE_COLLECTION)
-    ? [local, stripIndex(local)]
-    : [local];
-  const filteredIDs = ids.filter((i) => !d.includes(i));
-  if (filteredIDs.length === 0) {
+  if (d.includes(local)) {
     return filter;
   }
   return {
     ...filter,
-    [tag]: [...d, ...filteredIDs],
+    [tag]: [...d, local],
   };
 }
 
@@ -40,7 +34,7 @@ function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
 //    #d: [relationID]
 // }
 // {
-//    KIND: [KIND_KNOWLEDGE_NODE, KIND_KNOWLEDGE_NODE_COLLECTION],
+//    KIND: [KIND_KNOWLEDGE_NODE],
 //    #d: [nodeID]
 // }
 // {
@@ -133,7 +127,7 @@ export function createBaseFilter(
       authors,
     },
     knowledgeNodesByID: {
-      kinds: [KIND_KNOWLEDGE_NODE, KIND_KNOWLEDGE_NODE_COLLECTION],
+      kinds: [KIND_KNOWLEDGE_NODE],
       authors,
     },
     knowledgeListByHead: {

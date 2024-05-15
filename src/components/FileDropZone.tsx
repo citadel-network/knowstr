@@ -3,13 +3,14 @@ import { useDropzone } from "react-dropzone";
 import MarkdownIt from "markdown-it";
 
 import { v4 } from "uuid";
-import { Map } from "immutable";
-import { UnsignedEvent } from "nostr-tools";
-import { KIND_KNOWLEDGE_NODE_COLLECTION, newTimestamp } from "citadel-commons";
-import { newNode, bulkAddRelations, shortID } from "../connections";
+import { newNode, bulkAddRelations } from "../connections";
 import { newRelations } from "../ViewContext";
-import { Plan, planUpsertRelations, usePlanner } from "../planner";
-import { newDB } from "../knowledge";
+import {
+  Plan,
+  planBulkUpsertNodes,
+  planUpsertRelations,
+  usePlanner,
+} from "../planner";
 
 /* eslint-disable functional/immutable-data */
 function convertToPlainText(html: string): string {
@@ -34,7 +35,6 @@ function createRelationsFromParagraphNodes(
 
 export function createNodesFromMarkdown(
   markdown: string,
-  baseID: string,
   myself: PublicKey
 ): KnowNode[] {
   const markdownParagraphs = markdown.split("\n\n");
@@ -42,8 +42,8 @@ export function createNodesFromMarkdown(
     const md = new MarkdownIt();
     return convertToPlainText(md.render(paragraph));
   });
-  return plainTextParagraphs.map((paragraph, index) => {
-    return newNode(paragraph, myself, `${baseID}#${index}`);
+  return plainTextParagraphs.map((paragraph) => {
+    return newNode(paragraph, myself, v4());
   });
 }
 
@@ -67,50 +67,17 @@ export function planCreateNodesFromMarkdown(
   markdown: string
 ): [Plan, topNodeID: LongID] {
   const splittedMarkdown = splitMarkdownInChunkSizes(markdown);
-  const { events, nodes } = splittedMarkdown.reduce(
-    (rdx: { events: UnsignedEvent[]; nodes: KnowNode[] }, md: string) => {
-      const baseID = v4();
-      const mdNodes = createNodesFromMarkdown(md, baseID, plan.user.publicKey);
-      const publishNodeEvent = {
-        kind: KIND_KNOWLEDGE_NODE_COLLECTION,
-        pubkey: plan.user.publicKey,
-        created_at: newTimestamp(),
-        tags: [["d", baseID]],
-        content: md,
-      };
-      return {
-        events: [...rdx.events, publishNodeEvent],
-        nodes: [...rdx.nodes, ...mdNodes],
-      };
-    },
-    { events: [], nodes: [] }
-  );
+  const nodes = splittedMarkdown.reduce((rdx: KnowNode[], md: string) => {
+    const mdNodes = createNodesFromMarkdown(md, plan.user.publicKey);
+    return [...rdx, ...mdNodes];
+  }, []);
   const [relations, topNodeID] = createRelationsFromParagraphNodes(
     nodes,
     plan.user.publicKey
   );
-  const planWithRelations = planUpsertRelations(plan, relations);
-  const userDB = planWithRelations.knowledgeDBs.get(
-    plan.user.publicKey,
-    newDB()
-  );
-  const updatedNodes = userDB.nodes.merge(
-    Map(nodes.map((node) => [shortID(node.id), node]))
-  );
-  const updatedDB = {
-    ...userDB,
-    nodes: updatedNodes,
-  };
-
-  const finalPlan = {
-    ...planWithRelations,
-    knowledgeDBs: planWithRelations.knowledgeDBs.set(
-      plan.user.publicKey,
-      updatedDB
-    ),
-    publishEvents: planWithRelations.publishEvents.push(...events),
-  };
-  return [finalPlan, topNodeID];
+  const planWithNodes = planBulkUpsertNodes(plan, nodes);
+  const planWithRelations = planUpsertRelations(planWithNodes, relations);
+  return [planWithRelations, topNodeID];
 }
 
 type FileDropZoneProps = {
