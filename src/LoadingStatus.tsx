@@ -4,23 +4,29 @@ import { useNode, useNodeID } from "./ViewContext";
 import { shortID } from "./connections";
 
 const QueryContext = React.createContext<
-  { filters: Filter[]; allEventsProcessed: boolean } | undefined
+  { nodesBeeingQueried: string[]; allEventsProcessed: boolean } | undefined
 >(undefined);
 
 export function RegisterQuery({
   children,
-  filters,
+  nodesBeeingQueried,
   allEventsProcessed,
 }: {
   children: React.ReactNode;
-  filters: Filter[];
+  nodesBeeingQueried: string[];
   allEventsProcessed: boolean;
 }): JSX.Element {
   return (
-    <QueryContext.Provider value={{ filters, allEventsProcessed }}>
+    <QueryContext.Provider value={{ nodesBeeingQueried, allEventsProcessed }}>
       {children}
     </QueryContext.Provider>
   );
+}
+
+export function extractNodesFromQueries(filters: Filter[]): string[] {
+  return filters.reduce((acc, filter) => {
+    return acc.concat(filter["#d"] || []);
+  }, [] as string[]);
 }
 
 export function useNodeIsLoading(): boolean {
@@ -32,9 +38,5 @@ export function useNodeIsLoading(): boolean {
     return false;
   }
   const id = shortID(nodeID);
-  return (
-    context.filters.find((filter) => {
-      return (filter["#d"] || []).includes(id);
-    }) !== undefined
-  );
+  return context.nodesBeeingQueried.includes(id);
 }

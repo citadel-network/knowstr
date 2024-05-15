@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { List } from "immutable";
-import { ScrollerProps, Virtuoso } from "react-virtuoso";
+import { ListRange, ScrollerProps, Virtuoso } from "react-virtuoso";
 import { useDndScrolling } from "react-dnd-scrolling";
 import { ListItem } from "./Draggable";
 import {
@@ -24,27 +24,38 @@ import {
 } from "../dataQuery";
 import { newDB } from "../knowledge";
 import { RegisterQuery } from "../LoadingStatus";
+import { splitID } from "../connections";
+
+const LOAD_EXTRA = 10;
 
 export function TreeViewNodeLoader({
   children,
   nodes,
+  range,
 }: {
+  range?: ListRange;
   children: React.ReactNode;
   nodes: List<ViewPath>;
 }): JSX.Element {
   const { user, contacts, knowledgeDBs } = useData();
   const baseFilter = createBaseFilter(contacts, user.publicKey);
   const { views } = knowledgeDBs.get(user.publicKey, newDB());
-  const filter = nodes.reduce((rdx, path) => {
-    const [nodeID] = getNodeIDFromView(
-      knowledgeDBs,
-      views,
-      user.publicKey,
-      path
-    );
+
+  const nodeIDs = nodes.map(
+    (path) =>
+      splitID(
+        getNodeIDFromView(knowledgeDBs, views, user.publicKey, path)[0]
+      )[1]
+  );
+
+  const nodeIDsWithRange = range
+    ? nodeIDs.slice(range.startIndex, range.endIndex + 1 + LOAD_EXTRA) // +1 because slice doesn't include last element
+    : nodeIDs;
+
+  const filter = nodeIDsWithRange.reduce((rdx, nodeID) => {
     const filterWithNode = addReferencedByToFilters(
-      addNodeToFilters(rdx, nodeID),
-      nodeID
+      addNodeToFilters(rdx, nodeID as LongID),
+      nodeID as LongID
     );
     return filterWithNode;
   }, baseFilter);
@@ -56,7 +67,7 @@ export function TreeViewNodeLoader({
   return (
     <MergeKnowledgeDB knowledgeDBs={mergedDBs}>
       <RegisterQuery
-        filters={finalFilter}
+        nodesBeeingQueried={nodeIDs.toArray()}
         allEventsProcessed={allEventsProcessed}
       >
         {children}
@@ -71,6 +82,7 @@ function Tree(): JSX.Element | null {
   const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
     undefined
   );
+  const [range, setRange] = useState<ListRange>({ startIndex: 0, endIndex: 0 });
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const nodes = getNodesInTree(
@@ -97,7 +109,7 @@ function Tree(): JSX.Element | null {
   );
 
   return (
-    <TreeViewNodeLoader nodes={nodes}>
+    <TreeViewNodeLoader nodes={nodes} range={range}>
       <div
         className="max-height-100 overfloallEventsProcessedhidden background-dark"
         aria-label={ariaLabel}
@@ -107,6 +119,12 @@ function Tree(): JSX.Element | null {
           data={nodes.toArray()}
           totalListHeightChanged={(height) => {
             setTotalListHeight(height);
+          }}
+          rangeChanged={(r) => {
+            if (r.startIndex === 0 && r.endIndex === 0) {
+              return;
+            }
+            setRange(r);
           }}
           components={{ Scroller }}
           itemContent={(index, path) => {

@@ -13,7 +13,7 @@ import { useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
-import { RegisterQuery } from "./LoadingStatus";
+import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
 
 function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
   const d = filter[tag] || [];
@@ -229,7 +229,7 @@ export function LoadNode({
 
   return (
     <RegisterQuery
-      filters={filterArray}
+      nodesBeeingQueried={extractNodesFromQueries(filterArray)}
       allEventsProcessed={allEventsProcessed}
     >
       <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>
