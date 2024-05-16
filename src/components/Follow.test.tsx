@@ -17,7 +17,82 @@ import {
 } from "../utils.test";
 import { Follow } from "./Follow";
 
-test("find a user", async () => {
+beforeEach(() => {
+  nip05.useFetchImplementation(async () =>
+    Promise.resolve({
+      json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
+    })
+  );
+});
+
+test("find a user by nip-05 identifier", async () => {
+  const [alice] = setup([ALICE]);
+
+  const bobsNip05Event = finalizeEventWithoutWasm(
+    {
+      kind: 0,
+      tags: [],
+      content: JSON.stringify({ nip05: bobsNip05Identifier }),
+      created_at: newTimestamp(),
+    },
+    BOB.privateKey
+  );
+
+  await Promise.all(
+    alice().relayPool.publish(
+      TEST_RELAYS.map((r) => r.url),
+      bobsNip05Event
+    )
+  );
+
+  renderWithTestData(<Follow />, {
+    ...alice(),
+  });
+
+  const input = await screen.findByLabelText("find user");
+  userEvent.type(input, bobsNip05Identifier);
+
+  const findButton = screen.getByText("Find");
+  await waitFor(() => {
+    expect(findButton.ariaDisabled).toBe(undefined);
+  });
+  fireEvent.click(findButton);
+
+  await screen.findByLabelText("follow user");
+  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
+  screen.getByDisplayValue(npub);
+});
+
+test("find a user by nprofile", async () => {
+  const [alice] = setup([ALICE]);
+  const nprofile = nip19.nprofileEncode({ pubkey: BOB_PUBLIC_KEY });
+  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
+
+  renderWithTestData(<Follow />, alice());
+  const input = await screen.findByLabelText("find user");
+  userEvent.type(input, nprofile);
+  fireEvent.click(screen.getByText("Find"));
+
+  await screen.findByLabelText("follow user");
+  screen.getByDisplayValue(npub);
+});
+
+test("cannot find a user by nip-05 identifier", async () => {
+  const [alice] = setup([ALICE]);
+  renderWithTestData(<Follow />, alice());
+  const input = await screen.findByLabelText("find user");
+  userEvent.type(input, bobsNip05Identifier);
+
+  const findButton = screen.getByText("Find");
+  await waitFor(() => {
+    expect(findButton.ariaDisabled).toBe(undefined);
+  });
+  fireEvent.click(findButton);
+
+  await screen.findByText("No Nip05 Events found");
+});
+
+test("find a user x", async () => {
   const [alice] = setup([ALICE]);
 
   renderWithTestData(<Follow />, alice());
@@ -67,75 +142,6 @@ test("find a user by npub", async () => {
 
   await screen.findByLabelText("follow user");
   screen.getByDisplayValue(npub);
-});
-
-test("find a user by nprofile", async () => {
-  const [alice] = setup([ALICE]);
-  const nprofile = nip19.nprofileEncode({ pubkey: BOB_PUBLIC_KEY });
-  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
-
-  renderWithTestData(<Follow />, alice());
-  const input = await screen.findByLabelText("find user");
-  userEvent.type(input, nprofile);
-  fireEvent.click(screen.getByText("Find"));
-
-  await screen.findByLabelText("follow user");
-  screen.getByDisplayValue(npub);
-});
-
-test("find a user by nip-05 identifier", async () => {
-  nip05.useFetchImplementation(async () =>
-    Promise.resolve({
-      json: () => Promise.resolve({ names: { bob: BOB_PUBLIC_KEY } }),
-    })
-  );
-
-  const [alice] = setup([ALICE]);
-
-  const bobsNip05Event = finalizeEventWithoutWasm(
-    {
-      kind: 0,
-      tags: [],
-      content: JSON.stringify({ nip05: bobsNip05Identifier }),
-      created_at: newTimestamp(),
-    },
-    BOB.privateKey
-  );
-  const utils = renderWithTestData(<Follow />, {
-    ...alice(),
-  });
-  utils.relayPool.publish(
-    TEST_RELAYS.map((r) => r.url),
-    bobsNip05Event
-  );
-
-  const input = await screen.findByLabelText("find user");
-  userEvent.type(input, bobsNip05Identifier);
-
-  const findButton = screen.getByText("Find");
-  await waitFor(() => {
-    expect(findButton.ariaDisabled).toBe(undefined);
-  });
-  fireEvent.click(findButton);
-
-  await screen.findByLabelText("follow user");
-  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
-  screen.getByDisplayValue(npub);
-});
-
-test("cannot find a user by nip-05 identifier", async () => {
-  const [alice] = setup([ALICE]);
-  renderWithTestData(<Follow />, alice());
-  const input = await screen.findByLabelText("find user");
-  userEvent.type(input, bobsNip05Identifier);
-
-  const findButton = screen.getByText("Find");
-  await waitFor(() => {
-    expect(findButton.ariaDisabled).toBe(undefined);
-  });
-  fireEvent.click(findButton);
-
-  await screen.findByText("No Nip05 Events found");
 });
 
 test("follow a new user", async () => {
