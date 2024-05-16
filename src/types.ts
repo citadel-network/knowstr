@@ -75,8 +75,6 @@ declare global {
     n: string;
   };
 
-  type NodeType = "NOTE" | "TOPIC" | "URL" | "TITLE" | "QUOTE" | "WORKSPACE";
-
   type Hash = string;
   type ID = string;
   type LongID = string & { readonly "": unique symbol };

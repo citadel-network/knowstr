@@ -80,11 +80,7 @@ function SearchButton({ onClick }: { onClick: () => void }): JSX.Element {
 }
 
 type EditorProps = {
-  onCreateNode: (
-    text: string,
-    nodeType: NodeType,
-    relationType?: RelationType
-  ) => void;
+  onCreateNode: (text: string, relationType?: RelationType) => void;
   onClose: () => void;
 };
 
@@ -97,11 +93,11 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
     }
   }, []);
 
-  const onSave = (nodeType: NodeType, relationType?: RelationType): void => {
+  const onSave = (relationType?: RelationType): void => {
     if (!ref.current) {
       return;
     }
-    onCreateNode(ref.current.getEditor().getText(), nodeType, relationType);
+    onCreateNode(ref.current.getEditor().getText(), relationType);
   };
 
   return (
@@ -118,7 +114,7 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
         />
       </div>
       <div>
-        <Button onClick={() => onSave("NOTE")}>Add Note</Button>
+        <Button onClick={() => onSave()}>Add Note</Button>
         <CloseButton
           onClose={() => {
             onClose();
