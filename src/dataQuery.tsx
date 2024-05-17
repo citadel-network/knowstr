@@ -12,6 +12,7 @@ import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
+import { getNodeFromDB } from "./connections";
 
 function addIDToFilter(filter: Filter, id: ID, tag: `#${string}`): Filter {
   const d = filter[tag] || [];
@@ -210,7 +211,10 @@ export function LoadNode({
   const { knowledgeDBs, eose, allEventsProcessed } =
     useQueryKnowledgeData(filterArray);
   if (waitForEose === true && !eose) {
-    return <div className="loading" aria-label="loading" />;
+    const haveNode = getNodeFromDB(knowledgeDBs, nodeID);
+    if (!haveNode) {
+      return <div className="loading" aria-label="loading" />;
+    }
   }
 
   return (
