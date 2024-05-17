@@ -14,7 +14,6 @@ import {
 } from "../ViewContext";
 import { switchOffMultiselect, useTemporaryView } from "./TemporaryViewContext";
 import { planUpdateViews, usePlanner } from "../planner";
-import { newDB } from "../knowledge";
 
 export function RemoveColumnButton(): JSX.Element | null {
   const { deleteLocalStorage } = useApis().fileStore;
@@ -37,10 +36,7 @@ export function RemoveColumnButton(): JSX.Element | null {
       parentViewPath,
       (relations) => deleteRelations(relations, Set<number>([index]))
     );
-    const { views } = updateRelationsPlan.knowledgeDBs.get(
-      updateRelationsPlan.user.publicKey,
-      newDB()
-    );
+    const { views } = updateRelationsPlan;
     const { nodeID, nodeIndex } = getLast(viewPath);
     const updatedViews = updateViewPathsAfterDisconnect(
       views,

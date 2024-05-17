@@ -37,7 +37,6 @@ import { AddNodeToNode } from "./AddNode";
 import { NodeMenu } from "./Menu";
 import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
-import { newDB } from "../knowledge";
 import { planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
 import { useNodeIsLoading } from "../LoadingStatus";
@@ -255,48 +254,35 @@ export function Indent({ levels }: { levels: number }): JSX.Element {
 }
 
 export function getNodesInTree(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
+  data: Data,
   parentPath: ViewPath,
   ctx: List<ViewPath>,
   isOpenInFullScreen?: boolean,
   noExpansion?: boolean
 ): List<ViewPath> {
-  const { views } = knowledgeDBs.get(myself, newDB());
-  const [parentNodeID, parentView] = getNodeIDFromView(
-    knowledgeDBs,
-    views,
-    myself,
-    parentPath
-  );
+  const [parentNodeID, parentView] = getNodeIDFromView(data, parentPath);
   const relations = getRelations(
-    knowledgeDBs,
+    data.knowledgeDBs,
     parentView.relations,
-    myself,
+    data.user.publicKey,
     parentNodeID
   );
   if (!relations) {
     return ctx;
   }
   const childPaths = relations.items.map((_, i) =>
-    addNodeToPath(knowledgeDBs, myself, parentPath, i)
+    addNodeToPath(data, parentPath, i)
   );
-  const addNodePath = addAddToNodeToPath(knowledgeDBs, myself, parentPath);
+  const addNodePath = addAddToNodeToPath(data, parentPath);
   const nodesInTree = childPaths.reduce(
     (nodesList: List<ViewPath>, childPath: ViewPath) => {
-      const childView = getNodeIDFromView(
-        knowledgeDBs,
-        views,
-        myself,
-        childPath
-      )[1];
+      const childView = getNodeIDFromView(data, childPath)[1];
       if (noExpansion) {
         return nodesList.push(childPath);
       }
       if (childView.expanded) {
         return getNodesInTree(
-          knowledgeDBs,
-          myself,
+          data,
           childPath,
           nodesList.push(childPath),
           isOpenInFullScreen

@@ -22,7 +22,6 @@ import {
   filtersToFilterArray,
   useQueryKnowledgeData,
 } from "../dataQuery";
-import { newDB } from "../knowledge";
 import { RegisterQuery } from "../LoadingStatus";
 import { splitID } from "../connections";
 
@@ -37,15 +36,11 @@ export function TreeViewNodeLoader({
   children: React.ReactNode;
   nodes: List<ViewPath>;
 }): JSX.Element {
-  const { user, contacts, knowledgeDBs } = useData();
-  const baseFilter = createBaseFilter(contacts, user.publicKey);
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  const data = useData();
+  const baseFilter = createBaseFilter(data.contacts, data.user.publicKey);
 
   const nodeIDs = nodes.map(
-    (path) =>
-      splitID(
-        getNodeIDFromView(knowledgeDBs, views, user.publicKey, path)[0]
-      )[1]
+    (path) => splitID(getNodeIDFromView(data, path)[0])[1]
   );
 
   const nodeIDsWithRange = range
@@ -78,7 +73,7 @@ export function TreeViewNodeLoader({
 
 /* eslint-disable react/jsx-props-no-spreading */
 function Tree(): JSX.Element | null {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
     undefined
   );
@@ -86,8 +81,7 @@ function Tree(): JSX.Element | null {
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const nodes = getNodesInTree(
-    knowledgeDBs,
-    user.publicKey,
+    data,
     viewPath,
     List<ViewPath>(),
     isOpenInFullScreen
@@ -141,14 +135,12 @@ function Tree(): JSX.Element | null {
 }
 
 export function TreeView(): JSX.Element {
-  const { user, contacts, knowledgeDBs } = useData();
+  const data = useData();
   const key = useViewKey();
-  const filter = createBaseFilter(contacts, user.publicKey);
-  const myDB = knowledgeDBs.get(user.publicKey, newDB());
-  const { views } = myDB;
+  const filter = createBaseFilter(data.contacts, data.user.publicKey);
 
   // Find all Lists attached to all Nodes and subnodes of this tree
-  const lists = views
+  const lists = data.views
     .filter(
       (view, path) => path.startsWith(key) && view.expanded && path !== key
     )
@@ -160,12 +152,12 @@ export function TreeView(): JSX.Element {
     (rdx, listID) => addListToFilters(rdx, listID),
     filter
   );
-  const { knowledgeDBs: mergedDBs } = useQueryKnowledgeData(
+  const { knowledgeDBs } = useQueryKnowledgeData(
     filtersToFilterArray(listsFilter)
   );
 
   return (
-    <MergeKnowledgeDB knowledgeDBs={mergedDBs}>
+    <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>
       <Tree />
     </MergeKnowledgeDB>
   );

@@ -2,14 +2,12 @@ import React from "react";
 import { useMediaQuery } from "react-responsive";
 import { updateView, useNode, useViewPath } from "../ViewContext";
 import { IS_MOBILE } from "./responsive";
-import { newDB } from "../knowledge";
 import { useData } from "../DataContext";
 import { planUpdateViews, usePlanner } from "../planner";
 
 export function ChangeColumnWidth(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const { knowledgeDBs, user } = useData();
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
+  const { knowledgeDBs, views } = useData();
   const { createPlan, executePlan } = usePlanner();
   const viewContext = useViewPath();
   const view = useNode()[1];

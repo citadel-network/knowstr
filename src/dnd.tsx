@@ -4,7 +4,6 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getSelectedInView } from "./components/TemporaryViewContext";
 import { bulkAddRelations, getRelations, moveRelations } from "./connections";
-import { newDB } from "./knowledge";
 import {
   parseViewPath,
   upsertRelations,
@@ -21,45 +20,36 @@ import { getNodesInTree } from "./components/Node";
 import { Plan, planUpdateViews } from "./planner";
 
 function getDropDestinationEndOfRoot(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  views: Views,
+  data: Data,
   root: ViewPath
 ): [ViewPath, number] {
   // TODO: Replace everything here with getRelationsFromView
-  const [rootNodeID, rootView] = getNodeIDFromView(
-    knowledgeDBs,
-    views,
-    myself,
-    root
-  );
+  const [rootNodeID, rootView] = getNodeIDFromView(data, root);
   const relations = getRelations(
-    knowledgeDBs,
+    data.knowledgeDBs,
     rootView.relations,
-    myself,
+    data.user.publicKey,
     rootNodeID
   );
   return [root, relations?.items.size || 0];
 }
 
 export function getDropDestinationFromTreeView(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  views: Views,
+  data: Data,
   root: ViewPath,
   destinationIndex: number
 ): [ViewPath, number] {
-  const nodes = getNodesInTree(knowledgeDBs, myself, root, List<ViewPath>());
+  const nodes = getNodesInTree(data, root, List<ViewPath>());
   const dropBefore = nodes.get(destinationIndex);
   if (!dropBefore) {
-    return getDropDestinationEndOfRoot(knowledgeDBs, myself, views, root);
+    return getDropDestinationEndOfRoot(data, root);
   }
   const parentView = getParentView(dropBefore);
   if (!parentView) {
-    return getDropDestinationEndOfRoot(knowledgeDBs, myself, views, root);
+    return getDropDestinationEndOfRoot(data, root);
   }
   // new index is the current index of the sibling
-  const index = getRelationIndex(knowledgeDBs, myself, dropBefore);
+  const index = getRelationIndex(data, dropBefore);
   return [parentView, index || 0];
 }
 
@@ -79,11 +69,6 @@ export function dnd(
   to: ViewPath,
   indexTo: number | undefined
 ): Plan {
-  const { knowledgeDBs } = plan;
-  const myself = plan.user.publicKey;
-  const myDB = knowledgeDBs.get(myself, newDB());
-  const { views } = myDB;
-  // remove the prefix
   const rootView = to;
 
   const sourceViewPath = parseViewPath(source);
@@ -93,38 +78,22 @@ export function dnd(
   const sourceNodes = List(
     sources.map((s) => {
       const path = parseViewPath(s);
-      const [nodeID] = getNodeIDFromView(knowledgeDBs, views, myself, path);
+      const [nodeID] = getNodeIDFromView(plan, path);
       return nodeID;
     })
   );
   const sourceIndices = List(
-    sources.map((n) => getRelationIndex(knowledgeDBs, myself, parseViewPath(n)))
+    sources.map((n) => getRelationIndex(plan, parseViewPath(n)))
   ).filter((n) => n !== undefined) as List<number>;
 
-  const [fromRepo, fromView] = getParentNode(
-    knowledgeDBs,
-    views,
-    myself,
-    sourceViewPath
-  );
+  const [fromRepo, fromView] = getParentNode(plan, sourceViewPath);
 
   const [toView, dropIndex] =
     indexTo === undefined
       ? [rootView, undefined]
-      : getDropDestinationFromTreeView(
-          knowledgeDBs,
-          myself,
-          views,
-          rootView,
-          indexTo
-        );
+      : getDropDestinationFromTreeView(plan, rootView, indexTo);
 
-  const [toNodeID, toV] = getNodeIDFromView(
-    knowledgeDBs,
-    views,
-    myself,
-    toView
-  );
+  const [toNodeID, toV] = getNodeIDFromView(plan, toView);
 
   // TODO: this can be optimized
   const move =
@@ -145,15 +114,13 @@ export function dnd(
   );
   const updatedViews = move
     ? updateViewPathsAfterMoveRelations(
-        updatedRelationsPlan.knowledgeDBs,
-        updatedRelationsPlan.user.publicKey,
+        updatedRelationsPlan,
         toView,
         sourceIndices.toArray(),
         dropIndex
       )
     : bulkUpdateViewPathsAfterAddRelation(
-        updatedRelationsPlan.knowledgeDBs,
-        updatedRelationsPlan.user.publicKey,
+        updatedRelationsPlan,
         toView,
         sourceNodes.size,
         dropIndex

@@ -18,7 +18,7 @@ import {
   KIND_VIEWS,
   KIND_SETTINGS,
 } from "citadel-commons";
-import { List, Map } from "immutable";
+import { List, Map, OrderedMap } from "immutable";
 import { Event, UnsignedEvent } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
@@ -44,6 +44,7 @@ import {
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useDefaultRelays } from "./NostrAuthContext";
+import { DEFAULT_COLOR } from "./components/RelationTypes";
 
 type DataProps = {
   user: KeyPair;
@@ -55,7 +56,30 @@ type ProcessedEvents = {
   knowledgeDB: KnowledgeData;
   contacts: Contacts;
   relays: Relays;
+
+  views: Views;
+  workspaces: List<ID>;
+  activeWorkspace: LongID;
+  relationTypes: RelationTypes;
 };
+
+export const DEFAULT_WORKSPACE = "my-first-workspace" as LongID;
+
+function newProcessedEvents(): ProcessedEvents {
+  return {
+    settings: DEFAULT_SETTINGS,
+    knowledgeDB: newDB(),
+    contacts: Map<PublicKey, Contact>(),
+    relays: [],
+    views: Map<string, View>(),
+    activeWorkspace: DEFAULT_WORKSPACE,
+    workspaces: List<ID>(),
+    relationTypes: OrderedMap<ID, RelationType>().set("" as ID, {
+      color: DEFAULT_COLOR,
+      label: "Default",
+    }),
+  };
+}
 
 export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE];
 
@@ -86,12 +110,6 @@ function processEventsByAuthor(
   const knowledgeDB = {
     nodes,
     relations,
-    workspaces: workspaces ? workspaces.workspaces : List<LongID>(),
-    activeWorkspace: workspaces
-      ? workspaces.activeWorkspace
-      : ("my-first-workspace" as LongID),
-    views,
-    relationTypes,
   };
   const relays = findRelays(authorEvents);
   return {
@@ -99,6 +117,12 @@ function processEventsByAuthor(
     contacts,
     knowledgeDB,
     relays,
+    views,
+    workspaces: workspaces ? workspaces.workspaces : List<ID>(),
+    activeWorkspace: workspaces
+      ? workspaces.activeWorkspace
+      : ("my-first-workspace" as LongID),
+    relationTypes,
   };
 }
 
@@ -225,12 +249,10 @@ function Data({ user, children }: DataProps): JSX.Element {
     mE.valueSeq().toList().merge(newEventsAndPublishResults.events)
   );
 
-  const processedMetaEvents = useEventProcessor(metaEvents).get(myPublicKey, {
-    contacts: Map<PublicKey, Contact>(),
-    settings: DEFAULT_SETTINGS,
-    knowledgeDB: newDB(),
-    relays: [],
-  });
+  const processedMetaEvents = useEventProcessor(metaEvents).get(
+    myPublicKey,
+    newProcessedEvents()
+  );
   const contacts = processedMetaEvents.contacts.filter(
     (_, k) => k !== myPublicKey
   );
@@ -251,11 +273,11 @@ function Data({ user, children }: DataProps): JSX.Element {
   }, Map<PublicKey, Relays>());
 
   const activeWorkspace =
-    useWorkspaceFromURL() || processedMetaEvents.knowledgeDB.activeWorkspace;
+    useWorkspaceFromURL() || processedMetaEvents.activeWorkspace;
 
   const workspaceFilters = processedContactMetaEvents.reduce((rdx, p) => {
-    return addWorkspacesToFilter(rdx, p.knowledgeDB.workspaces as List<LongID>);
-  }, addWorkspacesToFilter(createBaseFilter(contacts, myPublicKey), processedMetaEvents.knowledgeDB.workspaces as List<LongID>));
+    return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
+  }, addWorkspacesToFilter(createBaseFilter(contacts, myPublicKey), processedMetaEvents.workspaces as List<LongID>));
 
   const { events: workspaceEvents } = useEventQuery(
     relayPool,
@@ -272,6 +294,13 @@ function Data({ user, children }: DataProps): JSX.Element {
       .merge(workspaceEvents.valueSeq().toList())
   );
   const knowledgeDBs = rDataEventsProcessed.map((data) => data.knowledgeDB);
+
+  const contactsRelationTypes = rDataEventsProcessed
+    .map((data) => data.relationTypes)
+    .filter((_, k) => k !== myPublicKey);
+  const contactsWorkspaces = rDataEventsProcessed
+    .map((data) => data.workspaces)
+    .filter((_, k) => k !== myPublicKey);
 
   const addNewEvents = (events: List<UnsignedEvent>): void => {
     setLoadingResults(true);
@@ -305,6 +334,12 @@ function Data({ user, children }: DataProps): JSX.Element {
       publishResults={newEventsAndPublishResults.results}
       unpublishedEvents={newEventsAndPublishResults.events}
       loadingResults={loadingResults}
+      views={processedMetaEvents.views}
+      workspaces={processedMetaEvents.workspaces}
+      activeWorkspace={activeWorkspace}
+      relationTypes={processedMetaEvents.relationTypes}
+      contactsRelationTypes={contactsRelationTypes}
+      contactsWorkspaces={contactsWorkspaces}
     >
       <PlanningContextProvider
         addNewEvents={addNewEvents}

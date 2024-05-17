@@ -1,7 +1,7 @@
 import React from "react";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
-import { List, Map } from "immutable";
+import { List, Map, OrderedMap } from "immutable";
 import {
   render,
   screen,
@@ -59,6 +59,7 @@ import { newDB } from "./knowledge";
 import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 import { findContacts } from "./contacts";
+import { DEFAULT_WORKSPACE } from "./Data";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -288,6 +289,12 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   publishResults: Map<string, PublishResultsOfEvent>(),
   unpublishedEvents: List<UnsignedEvent>(),
   loadingResults: false,
+  views: Map<string, View>(),
+  workspaces: List<ID>(),
+  activeWorkspace: DEFAULT_WORKSPACE,
+  relationTypes: OrderedMap<ID, RelationType>(),
+  contactsRelationTypes: Map<PublicKey, RelationTypes>(),
+  contactsWorkspaces: Map<PublicKey, List<ID>>(),
 };
 
 type TestAppState = DataContextProps & TestApis;
@@ -539,9 +546,7 @@ export async function setupTestDB(
   const planWithWorkspace = setNewWorkspace
     ? planUpdateWorkspaces(
         plan,
-        plan.knowledgeDBs
-          .get(plan.user.publicKey, newDB())
-          .workspaces.push(setNewWorkspace.id),
+        plan.workspaces.push(setNewWorkspace.id),
         setNewWorkspace.id
       )
     : plan;

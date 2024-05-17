@@ -8,6 +8,7 @@ import {
   getDefaultRelationForNode,
   updateView,
   useNode,
+  useNodeID,
   useParentNode,
   useViewKey,
   useViewPath,
@@ -21,7 +22,6 @@ import {
 import { REFERENCED_BY, getRelations, isRemote, splitID } from "../connections";
 import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
-import { newDB } from "../knowledge";
 import {
   AddNewRelationsToNodeItem,
   NewRelationType,
@@ -30,11 +30,11 @@ import {
 } from "./RelationTypes";
 
 function AddRelationsButton(): JSX.Element {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const [newRelationType, setNewRelationType] = useState<boolean>(false);
   const [node] = useNode();
   const ariaLabel = `Add new Relations to ${node?.text || ""}`;
-  const relationTypes = getMyRelationTypes(knowledgeDBs, user.publicKey);
+  const relationTypes = getMyRelationTypes(data);
   return (
     <Dropdown>
       {newRelationType && (
@@ -65,15 +65,11 @@ function AddRelationsButton(): JSX.Element {
 
 function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
   const { createPlan, executePlan } = usePlanner();
-  const { knowledgeDBs, user } = useData();
+  const { user, views } = useData();
   const viewPath = useViewPath();
-  const [node, view] = useNode();
-  if (!view) {
-    return null;
-  }
+  const [nodeID, view] = useNodeID();
 
   const onClick = (): void => {
-    const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const deleteRelationsPlan = planDeleteRelations(createPlan(), id);
     // TODO: deleteChildViews should only be necessary for the deleted relation not the other
     const plan = planUpdateViews(
@@ -81,7 +77,7 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
       updateView(deleteChildViews(views, viewPath), viewPath, {
         ...view,
         relations: getDefaultRelationForNode(
-          node.id,
+          nodeID,
           deleteRelationsPlan.knowledgeDBs,
           user.publicKey
         ),
@@ -100,28 +96,19 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
 type ChangeRelation = (relations: Relations, expand: boolean) => void;
 
 function useOnChangeRelations(): undefined | ChangeRelation {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
   const viewPath = useViewPath();
   const { createPlan, executePlan } = usePlanner();
-  const view = useNode()[1];
+  const view = useNodeID()[1];
   const viewKey = useViewKey();
   const deselectAllInView = useDeselectAllInView();
-  if (!view) {
-    return undefined;
-  }
 
   return (relations: Relations, expand: boolean): void => {
-    const viewKeyOfAddToNode = addAddToNodeToPath(
-      knowledgeDBs,
-      user.publicKey,
-      viewPath
-    );
-
-    const { views } = knowledgeDBs.get(user.publicKey, newDB());
+    const viewKeyOfAddToNode = addAddToNodeToPath(data, viewPath);
     const plan = planUpdateViews(
       createPlan(),
-      updateView(views, viewPath, {
+      updateView(data.views, viewPath, {
         ...view,
         relations: relations.id,
         expanded: expand,
@@ -170,9 +157,9 @@ function EditRelationsDropdown({
   style: CSSProperties;
   otherRelations: List<Relations>;
 }): JSX.Element | null {
-  const view = useNode()[1];
+  const view = useNodeID()[1];
   const { user } = useData();
-  if (!view || !view.relations) {
+  if (!view.relations) {
     return null;
   }
 
@@ -217,22 +204,18 @@ type ShowRelationsButtonProps = {
 };
 
 function useOnToggleExpanded(): (expand: boolean) => void {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const { createPlan, executePlan } = usePlanner();
   const viewPath = useViewPath();
-  const view = useNode()[1];
+  const view = useNodeID()[1];
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
-  if (!view) {
-    return () => undefined;
-  }
   return (expand: boolean): void => {
     const viewKeyOfAddToNode = viewPathToString(
-      addAddToNodeToPath(knowledgeDBs, user.publicKey, viewPath)
+      addAddToNodeToPath(data, viewPath)
     );
-    const { views } = knowledgeDBs.get(user.publicKey, newDB());
     const plan = planUpdateViews(
       createPlan(),
-      updateView(views, viewPath, {
+      updateView(data.views, viewPath, {
         ...view,
         expanded: expand,
       })
@@ -421,7 +404,7 @@ function SelectRelationsButton({
   currentSelectedRelations,
 }: ShowRelationsButtonProps): JSX.Element | null {
   const [node, view] = useNode();
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const readonly = ro === true;
   const onChangeRelations = useOnChangeRelations();
   const onToggleExpanded = useOnToggleExpanded();
@@ -430,17 +413,13 @@ function SelectRelationsButton({
   }
   const isSelected =
     relationList.filter((r) => r.id === currentSelectedRelations?.id).size > 0;
-  const sorted = sortRelations(relationList, user.publicKey);
+  const sorted = sortRelations(relationList, data.user.publicKey);
   const topRelation = isSelected ? currentSelectedRelations : sorted.first();
   if (!topRelation) {
     return null;
   }
   const otherRelations = sorted.filter((r) => r.id !== topRelation.id);
-  const [relationType] = getRelationTypeByRelationsID(
-    knowledgeDBs,
-    user.publicKey,
-    topRelation.id
-  );
+  const [relationType] = getRelationTypeByRelationsID(data, topRelation.id);
   const relationSize = topRelation.items.size;
 
   if (readonly) {

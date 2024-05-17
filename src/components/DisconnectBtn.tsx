@@ -17,11 +17,10 @@ import {
   useTemporaryView,
 } from "./TemporaryViewContext";
 import { planUpdateViews, usePlanner } from "../planner";
-import { newDB } from "../knowledge";
 import { useData } from "../DataContext";
 
 export function DisconnectBtn(): JSX.Element | null {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const { createPlan, executePlan } = usePlanner();
   const { multiselectBtns, selection, setState } = useTemporaryView();
   const viewContext = useViewPath();
@@ -33,11 +32,7 @@ export function DisconnectBtn(): JSX.Element | null {
     return null;
   }
   const onDisconnect = (): void => {
-    const relations = getRelationsFromView(
-      knowledgeDBs,
-      user.publicKey,
-      viewContext
-    );
+    const relations = getRelationsFromView(data, viewContext);
     if (!relations) {
       return;
     }
@@ -45,11 +40,15 @@ export function DisconnectBtn(): JSX.Element | null {
       deleteRelations(rel, selectedIndices)
     );
     const finalPlan = selected.reduce((plan, path) => {
-      const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
       const { nodeID, nodeIndex } = getLast(parseViewPath(path));
       return planUpdateViews(
         plan,
-        updateViewPathsAfterDisconnect(views, nodeID, relations.id, nodeIndex)
+        updateViewPathsAfterDisconnect(
+          plan.views,
+          nodeID,
+          relations.id,
+          nodeIndex
+        )
       );
     }, disconnectPlan);
     executePlan(finalPlan);

@@ -9,17 +9,15 @@ export function shorten(nodeText: string): string {
   return nodeText.substr(0, 30);
 }
 
-export function getWorkspaces(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey
-): List<KnowNode> {
-  const myDB = knowledgeDBs.get(myself, newDB());
-  const myWorkspaces = myDB.workspaces.map((id) => myDB.nodes.get(shortID(id)));
-  return knowledgeDBs
-    .filter((db, key) => key !== myself)
-    .reduce((rdx, db) => {
-      const workspaces = db.workspaces.map((id) => db.nodes.get(shortID(id)));
-      return rdx.merge(workspaces);
+export function getWorkspaces(data: Data): List<KnowNode> {
+  const myDB = data.knowledgeDBs.get(data.user.publicKey, newDB());
+  const myWorkspaces = data.workspaces.map((id) => myDB.nodes.get(shortID(id)));
+  return data.contactsWorkspaces
+    .reduce((rdx, wsIDs) => {
+      const workspaces = wsIDs.map((id) =>
+        getNodeFromID(data.knowledgeDBs, id, data.user.publicKey)
+      );
+      return workspaces.merge(rdx);
     }, myWorkspaces)
     .filter((n) => n !== undefined) as List<KnowNode>;
 }
@@ -32,9 +30,8 @@ export function useWorkspaceFromURL(): LongID | undefined {
 }
 
 export function useWorkspace(): string {
-  const { knowledgeDBs, user } = useData();
-  const myDB = knowledgeDBs.get(user.publicKey, newDB());
-  const activeWorkspace = useWorkspaceFromURL() || myDB.activeWorkspace;
+  const { knowledgeDBs, user, activeWorkspace: a } = useData();
+  const activeWorkspace = useWorkspaceFromURL() || a;
   const node = getNodeFromID(knowledgeDBs, activeWorkspace, user.publicKey);
   if (!node) {
     return "New Workspace";

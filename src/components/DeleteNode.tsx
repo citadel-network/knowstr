@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "citadel-commons";
 import { deleteRelations, isRemote, joinID, splitID } from "../connections";
 import { getWorkspaces } from "../KnowledgeDataContext";
-import { updateViewPathsAfterDeleteNode, useNode } from "../ViewContext";
+import { updateViewPathsAfterDeleteNode, useNodeID } from "../ViewContext";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import {
@@ -30,40 +30,40 @@ function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
       return rdx;
     }
     return planUpsertRelations(rdx, deleteRelations(relation, toDelete));
-  }, planUpdateViews(plan, updateViewPathsAfterDeleteNode(myDB.views, toDisconnect)));
+  }, planUpdateViews(plan, updateViewPathsAfterDeleteNode(plan.views, toDisconnect)));
 }
 
 function useDeleteNode(): undefined | (() => void) {
-  const [node] = useNode();
+  const [nodeID] = useNodeID();
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
-  const { knowledgeDBs, user } = useData();
-  const myDB = knowledgeDBs.get(user.publicKey, newDB());
+  const data = useData();
 
   // Can only delete my own nodes
-  if (!node || isRemote(splitID(node.id)[0], user.publicKey)) {
+  if (isRemote(splitID(nodeID)[0], data.user.publicKey)) {
     return undefined;
   }
 
   return () => {
     navigate("/");
-    const planWithDisconnectedNode = disconnectNode(createPlan(), node.id);
+    const planWithDisconnectedNode = disconnectNode(createPlan(), nodeID);
     const planWithDeletedNode = planDeleteNode(
       planWithDisconnectedNode,
-      node.id
+      nodeID
     );
-    if (myDB.workspaces.filter((id) => id === node.id).size > 0) {
-      const updatedWorkspaces = myDB.workspaces.filter((id) => id !== node.id);
+    if (data.workspaces.filter((id) => id === nodeID).size > 0) {
+      const updatedWorkspaces = data.workspaces.filter((id) => id !== nodeID);
+      const updatedData = {
+        ...data,
+        workspaces: updatedWorkspaces,
+      };
       const activeWorkspace =
-        myDB.activeWorkspace === node.id
-          ? getWorkspaces(
-              planWithDeletedNode.knowledgeDBs.set(user.publicKey, {
-                ...myDB,
-                workspaces: updatedWorkspaces,
-              }),
-              user.publicKey
-            ).first({ id: joinID(user.publicKey, "my-first-workspace") }).id
-          : myDB.activeWorkspace;
+        data.activeWorkspace === nodeID
+          ? getWorkspaces(updatedData).first({
+              id: joinID(data.user.publicKey, "my-first-workspace"),
+            }).id
+          : data.activeWorkspace;
+
       executePlan(
         planUpdateWorkspaces(
           planWithDeletedNode,

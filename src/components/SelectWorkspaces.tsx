@@ -34,7 +34,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
     }
     const setActivePlan = planUpdateWorkspaces(
       newNodePlan,
-      myDB.workspaces.push(node.id),
+      newNodePlan.workspaces.push(node.id),
       node.id
     );
     executePlan(setActivePlan);
@@ -69,16 +69,11 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
 }
 
 function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
-  const { user, knowledgeDBs } = useData();
-  const myDB = knowledgeDBs.get(user.publicKey);
+  const { workspaces } = useData();
   const { createPlan, executePlan } = usePlanner();
   const navigate = useNavigate();
 
   const onClick = (): void => {
-    if (!myDB) {
-      return;
-    }
-    const { workspaces } = myDB;
     executePlan(planUpdateWorkspaces(createPlan(), workspaces, id));
     navigate(`/w/${id}`);
   };
@@ -98,14 +93,14 @@ function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
 /* eslint-disable react/no-array-index-key */
 export function SelectWorkspaces(): JSX.Element {
   const [newWorkspace, setNewWorkspace] = useState<boolean>(false);
-  const { knowledgeDBs, user } = useData();
-  const workspaces = getWorkspaces(knowledgeDBs, user.publicKey);
+  const data = useData();
+  const workspaces = getWorkspaces(data);
 
   const localWorkspaces = workspaces.filter(
-    (node) => !isIDRemote(node.id, user.publicKey)
+    (node) => !isIDRemote(node.id, data.user.publicKey)
   );
   const remoteOnlyWorkspaces = workspaces.filter((node) =>
-    isIDRemote(node.id, user.publicKey)
+    isIDRemote(node.id, data.user.publicKey)
   );
 
   return (

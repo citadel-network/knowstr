@@ -280,10 +280,7 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
   };
   return {
     ...plan,
-    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, {
-      ...userDB,
-      views,
-    }),
+    views,
     publishEvents: publishEvents.push(writeViewEvent),
   };
 }
@@ -293,7 +290,6 @@ export function planUpdateWorkspaces(
   workspaces: List<ID>,
   activeWorkspace: LongID
 ): Plan {
-  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   const serialized = {
     w: workspaces.toArray(),
     a: activeWorkspace,
@@ -307,11 +303,8 @@ export function planUpdateWorkspaces(
   };
   return {
     ...plan,
-    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, {
-      ...userDB,
-      workspaces,
-      activeWorkspace,
-    }),
+    workspaces,
+    activeWorkspace,
     publishEvents: plan.publishEvents.push(writeWorkspacesEvent),
   };
 }
@@ -331,10 +324,7 @@ export function planUpdateRelationTypes(
   };
   return {
     ...plan,
-    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, {
-      ...userDB,
-      relationTypes,
-    }),
+    relationTypes,
     publishEvents: plan.publishEvents.push(writeRelationsEvent),
   };
 }

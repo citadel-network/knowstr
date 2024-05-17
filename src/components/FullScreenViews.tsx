@@ -33,12 +33,11 @@ function DetailView(): JSX.Element | null {
 }
 
 function MobileViewNodes(): JSX.Element | null {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const nodes = getNodesInTree(
-    knowledgeDBs,
-    user.publicKey,
+    data,
     viewPath,
     List<ViewPath>(),
     isOpenInFullScreen,

@@ -51,6 +51,13 @@ declare global {
     publishResults: PublishResultsEventMap;
     loadingResults: boolean;
     unpublishedEvents: List<UnsignedEvent>;
+
+    views: Views;
+    workspaces: List<ID>;
+    activeWorkspace: LongID;
+    relationTypes: RelationTypes;
+    contactsRelationTypes: Map<PublicKey, RelationTypes>;
+    contactsWorkspaces: Map<PublicKey, List<ID>>;
   };
 
   type LocalStorage = {
@@ -110,9 +117,5 @@ declare global {
   type KnowledgeData = {
     nodes: Map<ID, KnowNode>;
     relations: Map<ID, Relations>;
-    views: Views;
-    workspaces: List<ID>;
-    activeWorkspace: LongID;
-    relationTypes: RelationTypes;
   };
 }

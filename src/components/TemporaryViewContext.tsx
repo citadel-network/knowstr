@@ -86,24 +86,23 @@ export function getSelectedInView(
 }
 
 function getSelectedIndices(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
+  data: Data,
   selection: OrderedSet<string>,
   viewKey: string
 ): OrderedSet<number> {
   return getSelectedInView(selection, viewKey)
     .map((key) => {
       const path = parseViewPath(key);
-      return getRelationIndex(knowledgeDBs, myself, path);
+      return getRelationIndex(data, path);
     })
     .filter((n) => n !== undefined) as OrderedSet<number>;
 }
 
 export function useSelectedIndices(): OrderedSet<number> {
   const { selection } = useTemporaryView();
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const viewKey = useViewKey();
-  return getSelectedIndices(knowledgeDBs, user.publicKey, selection, viewKey);
+  return getSelectedIndices(data, selection, viewKey);
 }
 
 export function useGetSelectedInView(): FindSelectedByPostfix {

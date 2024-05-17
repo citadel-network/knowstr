@@ -161,43 +161,29 @@ export function getRoot(viewContext: ViewPath): SubPath | SubPathWithRelations {
   return viewContext[0];
 }
 
-export function getViewFromPath(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  views: Views, // get rid of this?
-  path: ViewPath
-): View {
+export function getViewFromPath(data: Data, path: ViewPath): View {
   const { nodeID } = getLast(path);
   return (
-    getViewExactMatch(views, path) ||
-    getDefaultView(nodeID, knowledgeDBs, myself)
+    getViewExactMatch(data.views, path) ||
+    getDefaultView(nodeID, data.knowledgeDBs, data.user.publicKey)
   );
 }
 
 export function getNodeIDFromView(
-  knowledgeDBs: KnowledgeDBs,
-  views: Views,
-  myself: PublicKey,
-  viewContext: ViewPath
+  data: Data,
+  viewPath: ViewPath
 ): [LongID, View] {
-  const view = getViewFromPath(knowledgeDBs, myself, views, viewContext);
-  const { nodeID } = getLast(viewContext);
+  const view = getViewFromPath(data, viewPath);
+  const { nodeID } = getLast(viewPath);
   return [nodeID, view];
 }
 
 export function getNodeFromView(
-  knowledgeDBs: KnowledgeDBs,
-  views: Views,
-  myself: PublicKey,
-  viewContext: ViewPath
+  data: Data,
+  viewPath: ViewPath
 ): [KnowNode, View] | [undefined, undefined] {
-  const [nodeID, view] = getNodeIDFromView(
-    knowledgeDBs,
-    views,
-    myself,
-    viewContext
-  );
-  const node = getNodeFromID(knowledgeDBs, nodeID, myself);
+  const [nodeID, view] = getNodeIDFromView(data, viewPath);
+  const node = getNodeFromID(data.knowledgeDBs, nodeID, data.user.publicKey);
   if (!node) {
     return [undefined, undefined];
   }
@@ -205,16 +191,14 @@ export function getNodeFromView(
 }
 
 export function getRelationsFromView(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
+  data: Data,
   viewPath: ViewPath
 ): Relations | undefined {
-  const { views } = knowledgeDBs.get(myself, newDB());
-  const view = getViewFromPath(knowledgeDBs, myself, views, viewPath);
+  const view = getViewFromPath(data, viewPath);
   return getRelations(
-    knowledgeDBs,
+    data.knowledgeDBs,
     view.relations,
-    myself,
+    data.user.publicKey,
     getLast(viewPath).nodeID
   );
 }
@@ -268,12 +252,8 @@ function addRelationsToLastElement(
   return [...pathWithoutParent, { ...getLast(path), relationsID }];
 }
 
-export function addAddToNodeToPath(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  path: ViewPath
-): ViewPath {
-  const relations = getRelationsFromView(knowledgeDBs, myself, path);
+export function addAddToNodeToPath(data: Data, path: ViewPath): ViewPath {
+  const relations = getRelationsFromView(data, path);
   // Assume there is only one Add to node per parent
   const nodeIndex = 0 as NodeIndex;
   return [
@@ -283,12 +263,11 @@ export function addAddToNodeToPath(
 }
 
 export function addNodeToPath(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
+  data: Data,
   path: ViewPath,
   index: number
 ): ViewPath {
-  const relations = getRelationsFromView(knowledgeDBs, myself, path);
+  const relations = getRelationsFromView(data, path);
   if (!relations) {
     throw new Error("Parent doesn't have relations, cannot add to path");
   }
@@ -316,8 +295,7 @@ function popPath(viewContext: ViewPath): ViewPath | undefined {
 }
 
 export function getRelationIndex(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
+  data: Data,
   viewPath: ViewPath
 ): number | undefined {
   const { nodeIndex, nodeID } = getLast(viewPath);
@@ -325,7 +303,7 @@ export function getRelationIndex(
   if (!parentPath) {
     return undefined;
   }
-  const relations = getRelationsFromView(knowledgeDBs, myself, parentPath);
+  const relations = getRelationsFromView(data, parentPath);
   if (!relations) {
     return undefined;
   }
@@ -337,8 +315,8 @@ export function getRelationIndex(
 
 export function useRelationIndex(): number | undefined {
   const path = useViewPath();
-  const { knowledgeDBs, user } = useData();
-  return getRelationIndex(knowledgeDBs, user.publicKey, path);
+  const data = useData();
+  return getRelationIndex(data, path);
 }
 
 export function RootViewContextProvider({
@@ -350,10 +328,10 @@ export function RootViewContextProvider({
   root: LongID;
   indices?: List<number>;
 }): JSX.Element {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const startPath: ViewPath = [{ nodeID: root, nodeIndex: 0 as NodeIndex }];
   const finalPath = (indices || List<number>()).reduce(
-    (acc, index) => addNodeToPath(knowledgeDBs, user.publicKey, acc, index),
+    (acc, index) => addNodeToPath(data, acc, index),
     startPath
   );
   return (
@@ -368,10 +346,10 @@ export function PushNode({
   children: React.ReactNode;
   push: List<number>;
 }): JSX.Element {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const existingPath = useViewPath();
   const finalPath = push.reduce(
-    (acc, index) => addNodeToPath(knowledgeDBs, user.publicKey, acc, index),
+    (acc, index) => addNodeToPath(data, acc, index),
     existingPath
   );
   return (
@@ -380,37 +358,28 @@ export function PushNode({
 }
 
 export function useNodeID(): [LongID, View] {
-  const viewContext = useViewPath();
-  const { knowledgeDBs, user } = useData();
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
-  return getNodeIDFromView(knowledgeDBs, views, user.publicKey, viewContext);
+  const data = useData();
+  const viewPath = useViewPath();
+  return getNodeIDFromView(data, viewPath);
 }
 
 export function useNode(): [KnowNode, View] | [undefined, undefined] {
-  const viewContext = useViewPath();
-  const { knowledgeDBs, user } = useData();
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
-  return getNodeFromView(knowledgeDBs, views, user.publicKey, viewContext);
+  return getNodeFromView(useData(), useViewPath());
 }
 
 export function getParentNode(
-  knowledgeDBs: KnowledgeDBs,
-  views: Views,
-  myself: PublicKey,
-  viewContext: ViewPath
+  data: Data,
+  viewPath: ViewPath
 ): [KnowNode, View] | [undefined, undefined] {
-  const path = popPath(viewContext);
-  if (!path) {
+  const parentPath = popPath(viewPath);
+  if (!parentPath) {
     return [undefined, undefined];
   }
-  return getNodeFromView(knowledgeDBs, views, myself, path);
+  return getNodeFromView(data, parentPath);
 }
 
 export function useParentNode(): [KnowNode, View] | [undefined, undefined] {
-  const viewContext = useViewPath();
-  const { knowledgeDBs, user } = useData();
-  const { views } = knowledgeDBs.get(user.publicKey, newDB());
-  return getParentNode(knowledgeDBs, views, user.publicKey, viewContext);
+  return getParentNode(useData(), useViewPath());
 }
 
 export function useIsAddToNode(): boolean {
@@ -488,29 +457,18 @@ function createUpdatableRelations(
 
 export function upsertRelations(
   plan: Plan,
-  viewContext: ViewPath,
+  viewPath: ViewPath,
   modify: (relations: Relations, ctx: { view: View }) => Relations
 ): Plan {
-  const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
-  const [node, nodeView] = getNodeFromView(
-    plan.knowledgeDBs,
-    views,
-    plan.user.publicKey,
-    viewContext
-  );
-  if (!node || !nodeView) {
-    // eslint-disable-next-line no-console
-    console.error("Node or View not found", node, nodeView);
-    throw new Error("Nothing to update");
-  }
+  const [nodeID, nodeView] = getNodeIDFromView(plan, viewPath);
   // create new relations if this node doesn't have any
   const relationsID = nodeView.relations || v4();
   const relations = createUpdatableRelations(
     plan.knowledgeDBs,
-    viewContext,
+    viewPath,
     plan.user.publicKey,
     relationsID,
-    node.id,
+    nodeID,
     "" // TODO: relation type?
   );
 
@@ -518,7 +476,7 @@ export function upsertRelations(
   const planWithUpdatedView = didViewChange
     ? planUpdateViews(
         plan,
-        views.set(viewPathToString(viewContext), {
+        plan.views.set(viewPathToString(viewPath), {
           ...nodeView,
           relations: relations.id,
         })
@@ -550,25 +508,18 @@ function getAllSubpaths(path: string): Set<string> {
 }
 
 function findViewsForRepo(
-  knowledgeDBs: KnowledgeDBs,
-  views: Views,
-  myself: PublicKey,
+  data: Data,
   id: string,
   relationsID: ID
 ): Set<string> {
   // include partial, non existing views
-  const paths = views.reduce((acc, _, path) => {
+  const paths = data.views.reduce((acc, _, path) => {
     return acc.merge(getAllSubpaths(path));
   }, Set<string>());
   return paths.filter((path) => {
     try {
-      const [node, view] = getNodeFromView(
-        knowledgeDBs,
-        views,
-        myself,
-        parseViewPath(path)
-      );
-      return node && node.id === id && view.relations === relationsID;
+      const [nodeID, view] = getNodeIDFromView(data, parseViewPath(path));
+      return nodeID === id && view.relations === relationsID;
     } catch {
       // Some view paths lead to nowhere
       return false;
@@ -640,58 +591,42 @@ function moveChildViews(
 }
 
 export function updateViewPathsAfterMoveRelations(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  repoPath: ViewPath,
+  data: Data,
+  toView: ViewPath,
   indices: Array<number>,
   startPosition?: number
 ): Views {
-  // nothing to do
-  const { views } = knowledgeDBs.get(myself, newDB());
+  // moved to the end, nothing to do
   if (startPosition === undefined) {
-    return views;
+    return data.views;
   }
-  const [node, view] = getNodeFromView(knowledgeDBs, views, myself, repoPath);
-  if (!node || !view.relations) {
-    return views;
+  const [nodeID, view] = getNodeIDFromView(data, toView);
+  if (!view.relations) {
+    return data.views;
   }
-  const viewKeys = findViewsForRepo(
-    knowledgeDBs,
-    views,
-    myself,
-    node.id,
-    view.relations
-  );
+  const viewKeys = findViewsForRepo(data, nodeID, view.relations);
   const sortedViewKeys = viewKeys.sort(
     (a, b) => b.split(":").length - a.split(":").length
   );
   return sortedViewKeys.reduce((accViews, parentViewPath) => {
     return moveChildViews(accViews, parentViewPath, indices, startPosition);
-  }, views);
+  }, data.views);
 }
 
 export function updateViewPathsAfterAddRelation(
-  knowledgeDBs: KnowledgeDBs,
-  views: Views,
-  myself: PublicKey,
-  repoPath: ViewPath,
+  data: Data,
+  viewPath: ViewPath,
   ord?: number
 ): Views {
   // nothing to do
   if (ord === undefined) {
-    return views;
+    return data.views;
   }
-  const [node, view] = getNodeFromView(knowledgeDBs, views, myself, repoPath);
-  if (!node || !view.relations) {
-    return views;
+  const [nodeID, view] = getNodeIDFromView(data, viewPath);
+  if (!view.relations) {
+    return data.views;
   }
-  const viewKeys = findViewsForRepo(
-    knowledgeDBs,
-    views,
-    myself,
-    node.id,
-    view.relations
-  );
+  const viewKeys = findViewsForRepo(data, nodeID, view.relations);
 
   const sortedViewKeys = viewKeys.sort(
     (a, b) => b.split(":").length - a.split(":").length
@@ -712,7 +647,7 @@ export function updateViewPathsAfterAddRelation(
     const indices = [lastChildIndex];
     const startPosition = ord;
     return moveChildViews(accViews, parentViewPath, indices, startPosition);
-  }, views);
+  }, data.views);
 }
 
 export function updateViewPathsAfterDeleteNode(
@@ -782,22 +717,18 @@ export function updateViewPathsAfterDisconnect(
 }
 
 export function bulkUpdateViewPathsAfterAddRelation(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
+  data: Data,
   repoPath: ViewPath,
   nAdds: number,
   startPos?: number
 ): Views {
-  const { views } = knowledgeDBs.get(myself, newDB());
   return List<undefined>([])
     .set(nAdds - 1, undefined)
     .reduce((rdx, i, currentIndex) => {
       return updateViewPathsAfterAddRelation(
-        knowledgeDBs,
-        views,
-        myself,
+        { ...data, views: rdx },
         repoPath,
         startPos !== undefined ? startPos + currentIndex : undefined
       );
-    }, views);
+    }, data.views);
 }

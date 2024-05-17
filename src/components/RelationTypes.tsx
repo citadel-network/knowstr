@@ -11,8 +11,12 @@ import {
   usePlanner,
 } from "../planner";
 import { useData } from "../DataContext";
-import { newDB } from "../knowledge";
-import { REFERENCED_BY, getRelationsNoSocial, splitID } from "../connections";
+import {
+  REFERENCED_BY,
+  getRelationsNoSocial,
+  isRemote,
+  splitID,
+} from "../connections";
 import {
   ViewPath,
   newRelations,
@@ -55,12 +59,11 @@ function planAddNewRelationToNode(
   view: View,
   viewPath: ViewPath
 ): Plan {
-  const { views } = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   const relations = newRelations(nodeID, relationTypeID, plan.user.publicKey);
   const createRelationPlan = planUpsertRelations(plan, relations);
   return planUpdateViews(
     createRelationPlan,
-    updateView(views, viewPath, {
+    updateView(plan.views, viewPath, {
       ...view,
       relations: relations.id,
       expanded: true,
@@ -71,7 +74,7 @@ function planAddNewRelationToNode(
 export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
   const [color, setColor] = useState<string>(COLORS[0]);
   const { createPlan, executePlan } = usePlanner();
-  const { user, knowledgeDBs } = useData();
+  const { relationTypes } = useData();
   const [node, view] = useNode();
   const viewPath = useViewPath();
   const onSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
@@ -83,10 +86,9 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
     }
     const id = v4();
     const label = (form.elements.namedItem("name") as HTMLInputElement).value;
-    const myDB = knowledgeDBs.get(user.publicKey, newDB());
     const updateRelationTypesPlan = planUpdateRelationTypes(
       createPlan(),
-      myDB.relationTypes.set(id, { color, label })
+      relationTypes.set(id, { color, label })
     );
     if (node && view) {
       executePlan(
@@ -133,27 +135,31 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
   );
 }
 
-export function getMyRelationTypes(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey
-): RelationTypes {
-  return knowledgeDBs.get(myself, newDB()).relationTypes;
+export function getMyRelationTypes(data: Data): RelationTypes {
+  return data.relationTypes;
 }
 
 export function getRelationTypeByRelationsID(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
+  data: Data,
   relationsID: ID
 ): [RelationType, ID] | [undefined, undefined] {
-  const relations = getRelationsNoSocial(knowledgeDBs, relationsID, myself);
+  const relations = getRelationsNoSocial(
+    data.knowledgeDBs,
+    relationsID,
+    data.user.publicKey
+  );
   if (!relations || relationsID === "social" || relationsID === REFERENCED_BY) {
     return [undefined, undefined];
   }
   const [remote] = splitID(relationsID);
   const relationTypeID = relations.type;
-  const relationType = knowledgeDBs
-    .get(remote || myself, newDB())
-    .relationTypes.get(relationTypeID);
+
+  const relationType =
+    (remote &&
+      isRemote(remote, data.user.publicKey) &&
+      data.contactsRelationTypes.get(remote)?.get(relationTypeID)) ||
+    data.relationTypes.get(relationTypeID);
+
   if (!relationType || relationTypeID === undefined) {
     return [undefined, undefined];
   }
@@ -168,17 +174,13 @@ export function planCopyRelationsTypeIfNecessary(
     return plan;
   }
   const [relationType, relationTypeID] = getRelationTypeByRelationsID(
-    plan.knowledgeDBs,
-    plan.user.publicKey,
+    plan,
     relationsID
   );
   if (!relationType) {
     return plan;
   }
-  const myRelationTypes = getMyRelationTypes(
-    plan.knowledgeDBs,
-    plan.user.publicKey
-  );
+  const myRelationTypes = getMyRelationTypes(plan);
   if (myRelationTypes.has(relationTypeID)) {
     return plan;
   }
@@ -193,14 +195,14 @@ export function AddNewRelationsToNodeItem({
 }: {
   relationTypeID: ID;
 }): JSX.Element | null {
-  const { knowledgeDBs, user } = useData();
+  const data = useData();
   const [node, view] = useNode();
   const viewPath = useViewPath();
   const { createPlan, executePlan } = usePlanner();
-  const relationType = getMyRelationTypes(knowledgeDBs, user.publicKey).get(
-    relationTypeID,
-    { color: DEFAULT_COLOR, label: "default" }
-  );
+  const relationType = getMyRelationTypes(data).get(relationTypeID, {
+    color: DEFAULT_COLOR,
+    label: "default",
+  });
 
   const onClick = (): void => {
     if (!node) {

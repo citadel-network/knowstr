@@ -18,37 +18,11 @@ export function useData(): DataContextProps {
 
 export function DataContextProvider({
   children,
-  contacts,
-  user,
-  settings,
-  relays,
-  contactsRelays,
-  knowledgeDBs,
-  relaysInfos,
-  publishResults,
-  loadingResults,
-  unpublishedEvents,
+  ...props
 }: DataContextProps & {
   children: React.ReactNode;
 }): JSX.Element {
-  return (
-    <DataContext.Provider
-      value={{
-        contacts,
-        user,
-        settings,
-        relays,
-        contactsRelays,
-        knowledgeDBs,
-        relaysInfos,
-        publishResults,
-        loadingResults,
-        unpublishedEvents,
-      }}
-    >
-      {children}
-    </DataContext.Provider>
-  );
+  return <DataContext.Provider value={props}>{children}</DataContext.Provider>;
 }
 
 function mergeDBNodesAndRelations(
@@ -62,10 +36,6 @@ function mergeDBNodesAndRelations(
   return {
     nodes: existing.nodes.merge(b.nodes),
     relations: existing.relations.merge(b.relations),
-    views: existing.views,
-    workspaces: existing.workspaces,
-    activeWorkspace: existing.activeWorkspace,
-    relationTypes: existing.relationTypes,
   };
 }
 
