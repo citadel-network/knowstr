@@ -100,11 +100,13 @@ declare global {
     id: LongID;
     type: ID;
     updated: number;
+    author: PublicKey;
   };
 
   type KnowNode = {
     id: LongID;
     text: string;
+    author: PublicKey;
   };
 
   type Views = Map<string, View>;

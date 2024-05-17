@@ -74,6 +74,7 @@ export function getSocialRelations(
     head: nodeID,
     id: "social" as LongID,
     type: "social",
+    author: "" as PublicKey,
   };
 }
 
@@ -189,5 +190,6 @@ export function newNode(text: string, myself: PublicKey, id?: ID): KnowNode {
   return {
     text,
     id: joinID(myself, id || v4()),
+    author: myself,
   };
 }

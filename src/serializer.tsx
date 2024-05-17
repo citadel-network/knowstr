@@ -151,5 +151,6 @@ export function eventToRelations(e: UnsignedEvent): Relations | undefined {
     type,
     updated,
     items,
+    author: e.pubkey as PublicKey,
   };
 }

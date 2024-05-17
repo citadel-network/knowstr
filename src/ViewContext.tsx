@@ -419,6 +419,7 @@ export function newRelations(
     id: joinID(myself, v4()),
     type,
     updated: Math.floor(Date.now() / 1000),
+    author: myself,
   };
 }
 
