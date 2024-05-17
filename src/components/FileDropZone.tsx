@@ -1,9 +1,7 @@
 import React from "react";
 import { useDropzone } from "react-dropzone";
 import MarkdownIt from "markdown-it";
-
-import { v4 } from "uuid";
-import { newNode, bulkAddRelations } from "../connections";
+import { newNode, bulkAddRelations, newID } from "../connections";
 import { newRelations } from "../ViewContext";
 import {
   Plan,
@@ -23,11 +21,11 @@ function convertToPlainText(html: string): string {
 function createRelationsFromParagraphNodes(
   nodes: KnowNode[],
   myself: PublicKey
-): [relations: Relations, topNodeID: LongID] {
+): [relations: Relations, topNodeID: ID] {
   const topParagraph = nodes[0];
   const furtherParagraphs = nodes.slice(1);
   const relations = bulkAddRelations(
-    newRelations(topParagraph.id, "", myself),
+    newRelations(topParagraph.id, "" as ID, myself),
     furtherParagraphs.map((n) => n.id)
   );
   return [relations, topParagraph.id];
@@ -43,7 +41,7 @@ export function createNodesFromMarkdown(
     return convertToPlainText(md.render(paragraph));
   });
   return plainTextParagraphs.map((paragraph) => {
-    return newNode(paragraph, myself, v4());
+    return newNode(paragraph, myself, newID());
   });
 }
 
@@ -65,7 +63,7 @@ function splitMarkdownInChunkSizes(markdown: string): string[] {
 export function planCreateNodesFromMarkdown(
   plan: Plan,
   markdown: string
-): [Plan, topNodeID: LongID] {
+): [Plan, topNodeID: ID] {
   const splittedMarkdown = splitMarkdownInChunkSizes(markdown);
   const nodes = splittedMarkdown.reduce((rdx: KnowNode[], md: string) => {
     const mdNodes = createNodesFromMarkdown(md, plan.user.publicKey);
@@ -82,12 +80,12 @@ export function planCreateNodesFromMarkdown(
 
 type FileDropZoneProps = {
   children: React.ReactNode;
-  onDrop: (plan: Plan, topNodes: Array<LongID>) => void;
+  onDrop: (plan: Plan, topNodes: Array<ID>) => void;
 };
 
 type MarkdownReducer = {
   plan: Plan;
-  topNodeIDs: LongID[];
+  topNodeIDs: ID[];
 };
 
 /* eslint-disable react/jsx-props-no-spreading */

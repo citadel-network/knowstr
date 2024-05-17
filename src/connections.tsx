@@ -3,77 +3,76 @@ import { v4 } from "uuid";
 import { newDB } from "./knowledge";
 import { newRelations } from "./ViewContext";
 
-export function splitID(id: ID): [PublicKey | undefined, string] {
-  const split = id.split("_");
-  if (split.length === 1) {
-    return [undefined, split[0]];
-  }
-  return [split[0] as PublicKey, split.slice(1).join(":")];
+export function newID(): ID {
+  return v4() as ID;
 }
 
-export function joinID(remote: PublicKey | string, id: string): LongID {
-  return `${remote}_${id}` as LongID;
+function getRelationsFromDB(
+  knowledgeDBs: KnowledgeDBs,
+  relationID: ID
+): Relations | undefined {
+  return knowledgeDBs
+    .map((db) => db.relations.get(relationID))
+    .filter((r) => r !== undefined)
+    .first();
 }
 
-export function shortID(id: ID): string {
-  return splitID(id)[1];
+export function getNodeFromDB(
+  knowledgeDBs: KnowledgeDBs,
+  nodeID: ID
+): KnowNode | undefined {
+  return knowledgeDBs
+    .map((db) => db.nodes.get(nodeID))
+    .filter((n) => n !== undefined)
+    .first();
 }
 
 export function getRelationsNoSocial(
   knowledgeDBs: KnowledgeDBs,
-  relationID: ID | undefined,
-  myself: PublicKey
+  relationID: ID | undefined
 ): Relations | undefined {
   if (!relationID) {
     return undefined;
   }
-  const [remote, id] = splitID(relationID);
-  if (remote) {
-    return knowledgeDBs.get(remote)?.relations.get(id);
-  }
-  const res = knowledgeDBs.get(myself)?.relations.get(relationID);
-  return res;
+  return getRelationsFromDB(knowledgeDBs, relationID);
 }
 
-function getAllRelationsForNode(
+function getAllItemsFromRelationsToNode(
   knowledgeDB: KnowledgeData,
-  nodeID: LongID
-): Set<LongID> {
-  const localID = shortID(nodeID);
+  nodeID: ID
+): Set<ID> {
   return knowledgeDB.relations.reduce((rdx, relations) => {
-    if (relations.head === localID) {
+    if (relations.head === nodeID) {
       return rdx.merge(relations.items);
     }
     return rdx;
-  }, Set<LongID>());
+  }, Set<ID>());
 }
 
 export function getSocialRelations(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  nodeID: LongID // for social lookup
+  nodeID: ID // for social lookup
 ): Relations | undefined {
   // Combines all items from other users we don't have in our Lists
-  const myRelationsForNode = getAllRelationsForNode(
+  const myRelationsForNode = getAllItemsFromRelationsToNode(
     knowledgeDBs.get(myself, newDB()),
     nodeID
   );
 
   const otherRelationsForNode = knowledgeDBs.reduce((rdx, knowledgeDB) => {
-    return rdx.merge(getAllRelationsForNode(knowledgeDB, nodeID));
-  }, Set<LongID>());
-
-  const myShortIds = myRelationsForNode.map((id) => shortID(id)[1]);
+    return rdx.merge(getAllItemsFromRelationsToNode(knowledgeDB, nodeID));
+  }, Set<ID>());
 
   const items = otherRelationsForNode.filter(
-    (id) => !myShortIds.has(shortID(id)[1])
+    (id) => !myRelationsForNode.has(id)
   );
   return {
     updated: Math.floor(Date.now() / 1000),
     items: items.toList(),
     head: nodeID,
-    id: "social" as LongID,
-    type: "social",
+    id: "social" as ID,
+    type: "social" as ID,
     author: "" as PublicKey,
   };
 }
@@ -83,29 +82,33 @@ export const REFERENCED_BY = "referencedby" as ID;
 export function getReferencedByRelations(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  nodeID: LongID
+  nodeID: ID
 ): Relations | undefined {
   const rel = newRelations(nodeID, REFERENCED_BY, myself);
-  const items = knowledgeDBs.reduce((r, knowledgeDB, author) => {
+  const items = knowledgeDBs.reduce((r, knowledgeDB) => {
     return knowledgeDB.relations.reduce((rdx, relations) => {
       if (relations.items.includes(nodeID)) {
-        return rdx.push(joinID(author, relations.head));
+        return rdx.push(relations.head);
       }
       return rdx;
     }, r);
   }, rel.items);
   return {
     ...rel,
-    id: REFERENCED_BY as LongID,
-    items,
+    id: REFERENCED_BY,
+    items: items.toSet().toList(),
   };
+}
+
+export function isVirtualRelationsType(relationID: ID): boolean {
+  return relationID === "social" || relationID === REFERENCED_BY;
 }
 
 export function getRelations(
   knowledgeDBs: KnowledgeDBs,
   relationID: ID | undefined,
   myself: PublicKey,
-  nodeID: LongID // for social lookup
+  nodeID: ID // for social lookup
 ): Relations | undefined {
   if (relationID === "social") {
     return getSocialRelations(knowledgeDBs, myself, nodeID);
@@ -113,7 +116,7 @@ export function getRelations(
   if (relationID === REFERENCED_BY) {
     return getReferencedByRelations(knowledgeDBs, myself, nodeID);
   }
-  return getRelationsNoSocial(knowledgeDBs, relationID, myself);
+  return getRelationsNoSocial(knowledgeDBs, relationID);
 }
 
 export function deleteRelations(
@@ -136,10 +139,6 @@ export function isRemote(
   return remote !== undefined && remote !== myself;
 }
 
-export function isIDRemote(id: ID, myself: PublicKey): boolean {
-  return isRemote(splitID(id)[0], myself);
-}
-
 export function moveRelations(
   relations: Relations,
   indices: Array<number>,
@@ -158,7 +157,7 @@ export function moveRelations(
 
 export function addRelationToRelations(
   relations: Relations,
-  objectID: LongID,
+  objectID: ID,
   ord?: number
 ): Relations {
   const defaultOrder = relations.items.size;
@@ -174,7 +173,7 @@ export function addRelationToRelations(
 
 export function bulkAddRelations(
   relations: Relations,
-  objectIDs: Array<LongID>,
+  objectIDs: Array<ID>,
   startPos?: number
 ): Relations {
   return objectIDs.reduce((rdx, id, currentIndex) => {
@@ -189,7 +188,7 @@ export function bulkAddRelations(
 export function newNode(text: string, myself: PublicKey, id?: ID): KnowNode {
   return {
     text,
-    id: joinID(myself, id || v4()),
+    id: id || newID(),
     author: myself,
   };
 }

@@ -7,12 +7,10 @@ import { planUpdateViews, usePlanner } from "../planner";
 
 export function ChangeColumnWidth(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const { knowledgeDBs, views } = useData();
+  const { views } = useData();
   const { createPlan, executePlan } = usePlanner();
   const viewContext = useViewPath();
   const view = useNode()[1];
-  // TODO: check why this was implemented like that
-  // const view = getNodeFromView(knowledgeDBs, views, viewContext)[1];
   if (!view || !views) {
     return null;
   }

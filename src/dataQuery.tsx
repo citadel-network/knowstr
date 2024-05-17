@@ -7,25 +7,20 @@ import {
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
 } from "citadel-commons";
-import { splitID } from "./connections";
 import { useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
 
-function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
+function addIDToFilter(filter: Filter, id: ID, tag: `#${string}`): Filter {
   const d = filter[tag] || [];
-  const local = splitID(id)[1];
-  // TODO: Add unknown remotes? Or even better create a filter for each unknown remote to query specific ids
-  // strip index from ID when we look for a node belonging to a collection
-
-  if (d.includes(local)) {
+  if (d.includes(id)) {
     return filter;
   }
   return {
     ...filter,
-    [tag]: [...d, local],
+    [tag]: [...d, id],
   };
 }
 
@@ -74,7 +69,7 @@ export function filtersToFilterArray(filters: Filters): Filter[] {
   ].filter((f) => f !== undefined) as Filter[];
 }
 
-export function addNodeToFilters(filters: Filters, id: LongID): Filters {
+export function addNodeToFilters(filters: Filters, id: ID): Filters {
   return {
     ...filters,
     knowledgeNodesByID: addIDToFilter(filters.knowledgeNodesByID, id, "#d"),
@@ -82,10 +77,7 @@ export function addNodeToFilters(filters: Filters, id: LongID): Filters {
   };
 }
 
-export function addReferencedByToFilters(
-  filters: Filters,
-  id: LongID
-): Filters {
+export function addReferencedByToFilters(filters: Filters, id: ID): Filters {
   const filter = filters.referencedBy;
   const d = filter["#i"] || [];
   const updatedFilter = {
@@ -98,20 +90,20 @@ export function addReferencedByToFilters(
   };
 }
 
-export function addListToFilters(filters: Filters, listID: LongID): Filters {
+export function addListToFilters(filters: Filters, listID: ID): Filters {
   return {
     ...filters,
     knowledgeListbyID: addIDToFilter(filters.knowledgeListbyID, listID, "#d"),
   };
 }
 
-export function addWorkspaceToFilter(filters: Filters, id: LongID): Filters {
+export function addWorkspaceToFilter(filters: Filters, id: ID): Filters {
   return addNodeToFilters(filters, id);
 }
 
 export function addWorkspacesToFilter(
   filters: Filters,
-  workspaces: List<LongID>
+  workspaces: List<ID>
 ): Filters {
   return workspaces.reduce((rdx, id) => addWorkspaceToFilter(rdx, id), filters);
 }

@@ -31,8 +31,8 @@ test("Render non existing Node", async () => {
   const { publicKey } = alice().user;
   const pl = newNode("Programming Languages", publicKey);
   const relations = addRelationToRelations(
-    newRelations(pl.id, "", publicKey),
-    "not-existing-id" as LongID
+    newRelations(pl.id, "" as ID, publicKey),
+    "not-existing-id" as ID
   );
   const plan = planUpsertRelations(
     planUpsertNode(createPlan(alice()), pl),
@@ -102,7 +102,7 @@ test("Edit node inline", async () => {
   // Menu doesn't show on root notes
   const plan = planUpsertRelations(
     createPlan(alice()),
-    addRelationToRelations(newRelations(note.id, "", publicKey), note.id)
+    addRelationToRelations(newRelations(note.id, "" as ID, publicKey), note.id)
   );
   await execute({
     ...alice(),
@@ -151,21 +151,21 @@ test("Edited node is shown in Tree View", async () => {
   const plan = planUpsertRelations(
     planUpsertRelations(
       createPlan(alice()),
-      addRelationToRelations(newRelations(pl.id, "", publicKey), oop.id)
+      addRelationToRelations(newRelations(pl.id, "" as ID, publicKey), oop.id)
     ),
-    addRelationToRelations(newRelations(oop.id, "", publicKey), java.id)
+    addRelationToRelations(newRelations(oop.id, "" as ID, publicKey), java.id)
   );
   const planWithViews = planUpdateViews(
     plan,
     Map({
       [viewPathToString([
-        { nodeID: pl.id, nodeIndex: 0 as NodeIndex, relationsID: "" as LongID },
+        { nodeID: pl.id, nodeIndex: 0 as NodeIndex, relationsID: "" as ID },
         { nodeID: oop.id, nodeIndex: 0 as NodeIndex },
       ])]: {
         expanded: true,
         displaySubjects: false,
         width: 1,
-        relations: "" as LongID,
+        relations: "" as ID,
       },
     })
   );

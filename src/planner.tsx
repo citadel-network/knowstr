@@ -19,7 +19,6 @@ import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";
 import { relationTypesToJson, viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
-import { shortID } from "./connections";
 
 type ExecutePlan = (plan: Plan) => Promise<void>;
 type RepublishEvents = (events: List<Event>, relayUrl: string) => Promise<void>;
@@ -170,10 +169,7 @@ export function planRemoveContact(plan: Plan, publicKey: PublicKey): Plan {
 
 export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
   const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
-  const updatedRelations = userDB.relations.set(
-    shortID(relations.id),
-    relations
-  );
+  const updatedRelations = userDB.relations.set(relations.id, relations);
   const updatedDB = {
     ...userDB,
     relations: updatedRelations,
@@ -184,8 +180,8 @@ export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
     tags: [
-      ["d", shortID(relations.id)],
-      ["k", shortID(relations.head)],
+      ["d", relations.id],
+      ["k", relations.head],
       ["rel_type", relations.type],
       ...itemsAsTags,
     ],
@@ -200,7 +196,7 @@ export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
 
 export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
   const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
-  const updatedNodes = userDB.nodes.set(shortID(node.id), node);
+  const updatedNodes = userDB.nodes.set(node.id, node);
   const updatedDB = {
     ...userDB,
     nodes: updatedNodes,
@@ -209,7 +205,7 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
     kind: KIND_KNOWLEDGE_NODE,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [["d", shortID(node.id)]],
+    tags: [["d", node.id]],
     content: node.text,
   };
   return {
@@ -223,12 +219,12 @@ export function planBulkUpsertNodes(plan: Plan, nodes: KnowNode[]): Plan {
   return nodes.reduce((p, node) => planUpsertNode(p, node), plan);
 }
 
-function planDelete(plan: Plan, id: LongID, kind: number): Plan {
+function planDelete(plan: Plan, id: ID, kind: number): Plan {
   const deleteEvent = {
     kind: KIND_DELETE,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [["a", `${kind}:${plan.user.publicKey}:${shortID(id)}`]],
+    tags: [["a", `${kind}:${plan.user.publicKey}:${id}`]],
     content: "",
   };
   return {
@@ -237,10 +233,10 @@ function planDelete(plan: Plan, id: LongID, kind: number): Plan {
   };
 }
 
-export function planDeleteNode(plan: Plan, nodeID: LongID): Plan {
+export function planDeleteNode(plan: Plan, nodeID: ID): Plan {
   const deletePlan = planDelete(plan, nodeID, KIND_KNOWLEDGE_NODE);
   const userDB = plan.knowledgeDBs.get(deletePlan.user.publicKey, newDB());
-  const updatedNodes = userDB.nodes.remove(shortID(nodeID));
+  const updatedNodes = userDB.nodes.remove(nodeID);
   const updatedDB = {
     ...userDB,
     nodes: updatedNodes,
@@ -251,10 +247,10 @@ export function planDeleteNode(plan: Plan, nodeID: LongID): Plan {
   };
 }
 
-export function planDeleteRelations(plan: Plan, relationsID: LongID): Plan {
+export function planDeleteRelations(plan: Plan, relationsID: ID): Plan {
   const deletePlan = planDelete(plan, relationsID, KIND_KNOWLEDGE_LIST);
   const userDB = plan.knowledgeDBs.get(deletePlan.user.publicKey, newDB());
-  const updatedRelations = userDB.relations.remove(shortID(relationsID));
+  const updatedRelations = userDB.relations.remove(relationsID);
   const updatedDB = {
     ...userDB,
     relations: updatedRelations,
@@ -266,7 +262,6 @@ export function planDeleteRelations(plan: Plan, relationsID: LongID): Plan {
 }
 
 export function planUpdateViews(plan: Plan, views: Views): Plan {
-  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   // filter previous events for views
   const publishEvents = plan.publishEvents.filterNot(
     (event) => event.kind === KIND_VIEWS
@@ -288,7 +283,7 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
 export function planUpdateWorkspaces(
   plan: Plan,
   workspaces: List<ID>,
-  activeWorkspace: LongID
+  activeWorkspace: ID
 ): Plan {
   const serialized = {
     w: workspaces.toArray(),
@@ -313,7 +308,6 @@ export function planUpdateRelationTypes(
   plan: Plan,
   relationTypes: RelationTypes
 ): Plan {
-  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   const serialized = relationTypesToJson(relationTypes);
   const writeRelationsEvent = {
     kind: KIND_RELATION_TYPES,

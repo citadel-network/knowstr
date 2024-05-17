@@ -23,7 +23,6 @@ import {
   useQueryKnowledgeData,
 } from "../dataQuery";
 import { RegisterQuery } from "../LoadingStatus";
-import { splitID } from "../connections";
 
 const LOAD_EXTRA = 10;
 
@@ -39,9 +38,7 @@ export function TreeViewNodeLoader({
   const data = useData();
   const baseFilter = createBaseFilter(data.contacts, data.user.publicKey);
 
-  const nodeIDs = nodes.map(
-    (path) => splitID(getNodeIDFromView(data, path)[0])[1]
-  );
+  const nodeIDs = nodes.map((path) => getNodeIDFromView(data, path)[0]);
 
   const nodeIDsWithRange = range
     ? nodeIDs.slice(range.startIndex, range.endIndex + 1 + LOAD_EXTRA) // +1 because slice doesn't include last element
@@ -49,8 +46,8 @@ export function TreeViewNodeLoader({
 
   const filter = nodeIDsWithRange.reduce((rdx, nodeID) => {
     const filterWithNode = addReferencedByToFilters(
-      addNodeToFilters(rdx, nodeID as LongID),
-      nodeID as LongID
+      addNodeToFilters(rdx, nodeID),
+      nodeID
     );
     return filterWithNode;
   }, baseFilter);
@@ -144,7 +141,7 @@ export function TreeView(): JSX.Element {
     .filter(
       (view, path) => path.startsWith(key) && view.expanded && path !== key
     )
-    .map((view) => view.relations || ("" as LongID))
+    .map((view) => view.relations || ("" as ID))
     .valueSeq()
     .toArray()
     .filter((r) => r !== "");

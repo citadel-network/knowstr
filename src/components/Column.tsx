@@ -24,7 +24,7 @@ export function Column(): JSX.Element | null {
   const viewKey = useViewKey();
   const { executePlan } = usePlanner();
   const isMobile = useMediaQuery(IS_MOBILE);
-  const onDropFiles = (plan: Plan, topNodes: Array<LongID>): void => {
+  const onDropFiles = (plan: Plan, topNodes: Array<ID>): void => {
     const addTopNodesPlan = upsertRelations(plan, viewContext, (r: Relations) =>
       bulkAddRelations(r, topNodes)
     );

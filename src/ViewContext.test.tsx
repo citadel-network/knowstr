@@ -2,12 +2,11 @@ import React from "react";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { List, Map } from "immutable";
-import Data from "./Data";
+import Data, { defaultWorkspaceID } from "./Data";
 import {
   newNode,
   addRelationToRelations,
   bulkAddRelations,
-  joinID,
 } from "./connections";
 import { execute } from "./executor";
 import {
@@ -55,18 +54,21 @@ test("Move View Settings on Delete", async () => {
   ]);
 
   const wsRelations = addRelationToRelations(
-    newRelations(joinID(publicKey, "my-first-workspace"), "", publicKey),
+    newRelations(defaultWorkspaceID(publicKey), "" as ID, publicKey),
     pl.id
   );
   const planWithRelations = planUpsertRelations(
     planUpsertRelations(
       planUpsertRelations(
         planWithNodes,
-        bulkAddRelations(newRelations(pl.id, "", publicKey), [c.id, java.id])
+        bulkAddRelations(newRelations(pl.id, "" as ID, publicKey), [
+          c.id,
+          java.id,
+        ])
       ),
       wsRelations
     ),
-    addRelationToRelations(newRelations(c.id, "", publicKey), cpp.id)
+    addRelationToRelations(newRelations(c.id, "" as ID, publicKey), cpp.id)
   );
 
   await execute({
@@ -249,8 +251,8 @@ test("Alter View paths after disconnect", () => {
   });
   const updatedViews = updateViewPathsAfterDisconnect(
     views as unknown as Views,
-    "n" as LongID,
-    "r" as LongID,
+    "n" as ID,
+    "r" as ID,
     1 as NodeIndex
   );
 
@@ -271,19 +273,19 @@ test("Calculate index from node index", () => {
   expect(calculateNodeIndex(relations, 4)).toBe(0);
 
   expect(
-    calculateIndexFromNodeIndex(relations, "pl" as LongID, 0 as NodeIndex)
+    calculateIndexFromNodeIndex(relations, "pl" as ID, 0 as NodeIndex)
   ).toBe(0);
   expect(
-    calculateIndexFromNodeIndex(relations, "oop" as LongID, 0 as NodeIndex)
+    calculateIndexFromNodeIndex(relations, "oop" as ID, 0 as NodeIndex)
   ).toBe(1);
   expect(
-    calculateIndexFromNodeIndex(relations, "pl" as LongID, 1 as NodeIndex)
+    calculateIndexFromNodeIndex(relations, "pl" as ID, 1 as NodeIndex)
   ).toBe(2);
   expect(
-    calculateIndexFromNodeIndex(relations, "pl" as LongID, 2 as NodeIndex)
+    calculateIndexFromNodeIndex(relations, "pl" as ID, 2 as NodeIndex)
   ).toBe(3);
   expect(
-    calculateIndexFromNodeIndex(relations, "java" as LongID, 0 as NodeIndex)
+    calculateIndexFromNodeIndex(relations, "java" as ID, 0 as NodeIndex)
   ).toBe(4);
 });
 

@@ -3,7 +3,7 @@ import { Dropdown, Modal, Form, InputGroup, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { FormControlWrapper } from "citadel-commons";
 import { getWorkspaces } from "../KnowledgeDataContext";
-import { isIDRemote, newNode } from "../connections";
+import { isRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
 
@@ -68,7 +68,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   );
 }
 
-function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
+function ListItem({ id, title }: { id: ID; title: string }): JSX.Element {
   const { workspaces } = useData();
   const { createPlan, executePlan } = usePlanner();
   const navigate = useNavigate();
@@ -97,10 +97,10 @@ export function SelectWorkspaces(): JSX.Element {
   const workspaces = getWorkspaces(data);
 
   const localWorkspaces = workspaces.filter(
-    (node) => !isIDRemote(node.id, data.user.publicKey)
+    (node) => !isRemote(node.author, data.user.publicKey)
   );
   const remoteOnlyWorkspaces = workspaces.filter((node) =>
-    isIDRemote(node.id, data.user.publicKey)
+    isRemote(node.author, data.user.publicKey)
   );
 
   return (

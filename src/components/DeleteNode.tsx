@@ -3,9 +3,9 @@ import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Button } from "citadel-commons";
-import { deleteRelations, isRemote, joinID, splitID } from "../connections";
+import { deleteRelations } from "../connections";
 import { getWorkspaces } from "../KnowledgeDataContext";
-import { updateViewPathsAfterDeleteNode, useNodeID } from "../ViewContext";
+import { updateViewPathsAfterDeleteNode, useNode } from "../ViewContext";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import {
@@ -16,8 +16,9 @@ import {
   planUpsertRelations,
   usePlanner,
 } from "../planner";
+import { defaultWorkspaceID } from "../Data";
 
-function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
+function disconnectNode(plan: Plan, toDisconnect: ID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   return myDB.relations.reduce((rdx, relation) => {
     const toDelete = relation.items.reduce((indices, id, idx) => {
@@ -34,33 +35,33 @@ function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
 }
 
 function useDeleteNode(): undefined | (() => void) {
-  const [nodeID] = useNodeID();
+  const [node] = useNode();
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const data = useData();
 
   // Can only delete my own nodes
-  if (isRemote(splitID(nodeID)[0], data.user.publicKey)) {
+  if (!node || node.author !== data.user.publicKey) {
     return undefined;
   }
 
   return () => {
     navigate("/");
-    const planWithDisconnectedNode = disconnectNode(createPlan(), nodeID);
+    const planWithDisconnectedNode = disconnectNode(createPlan(), node.id);
     const planWithDeletedNode = planDeleteNode(
       planWithDisconnectedNode,
-      nodeID
+      node.id
     );
-    if (data.workspaces.filter((id) => id === nodeID).size > 0) {
-      const updatedWorkspaces = data.workspaces.filter((id) => id !== nodeID);
+    if (data.workspaces.filter((id) => id === node.id).size > 0) {
+      const updatedWorkspaces = data.workspaces.filter((id) => id !== node.id);
       const updatedData = {
         ...data,
         workspaces: updatedWorkspaces,
       };
       const activeWorkspace =
-        data.activeWorkspace === nodeID
+        data.activeWorkspace === node.id
           ? getWorkspaces(updatedData).first({
-              id: joinID(data.user.publicKey, "my-first-workspace"),
+              id: defaultWorkspaceID(data.user.publicKey),
             }).id
           : data.activeWorkspace;
 

@@ -1,5 +1,4 @@
-import { List, Map, OrderedMap } from "immutable";
-import { DEFAULT_COLOR } from "./components/RelationTypes";
+import { Map } from "immutable";
 
 export function newDB(): KnowledgeData {
   return {

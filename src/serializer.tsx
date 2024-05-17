@@ -2,7 +2,6 @@ import { Map, List, OrderedMap } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
 import { findAllTags, findTag } from "citadel-commons";
 import { parseViewPath } from "./ViewContext";
-import { joinID } from "./connections";
 
 export type Serializable =
   | string
@@ -73,7 +72,7 @@ function jsonToView(view: Serializable): View | undefined {
   const a = asObject(view);
   return {
     displaySubjects: asBoolean(a.s),
-    relations: a.o !== undefined ? (asString(a.o) as LongID) : undefined,
+    relations: a.o !== undefined ? (asString(a.o) as ID) : undefined,
     width: asNumber(a.w),
     expanded: a.e !== undefined ? asBoolean(a.e) : undefined,
   };
@@ -81,14 +80,14 @@ function jsonToView(view: Serializable): View | undefined {
 
 export function jsonToWorkspace(
   workspaces: Serializable
-): { workspaces: List<LongID>; activeWorkspace: LongID } | undefined {
+): { workspaces: List<ID>; activeWorkspace: ID } | undefined {
   if (workspaces === undefined) {
     return undefined;
   }
   const w = asObject(workspaces);
   return {
-    workspaces: List<LongID>(asArray(w.w).map((i) => asString(i) as LongID)),
-    activeWorkspace: asString(w.a) as LongID,
+    workspaces: List<ID>(asArray(w.w).map((i) => asString(i) as ID)),
+    activeWorkspace: asString(w.a) as ID,
   };
 }
 
@@ -136,17 +135,17 @@ export function viewsToJSON(views: Map<string, View>): Serializable {
 }
 
 export function eventToRelations(e: UnsignedEvent): Relations | undefined {
-  const id = findTag(e, "d");
+  const id = findTag(e, "d") as ID;
   const head = findTag(e, "k") as ID;
-  const type = findTag(e, "rel_type");
+  const type = findTag(e, "rel_type") as ID;
   const updated = e.created_at;
   if (id === undefined || head === undefined || type === undefined) {
     return undefined;
   }
   const itemsAsTags = findAllTags(e, "i") || [];
-  const items = List(itemsAsTags.map((i) => i[0] as LongID));
+  const items = List(itemsAsTags.map((i) => i[0] as ID));
   return {
-    id: joinID(e.pubkey, id),
+    id,
     head,
     type,
     updated,
