@@ -219,10 +219,10 @@ function Data({ user, children }: DataProps): JSX.Element {
   const defaultRelays = useDefaultRelays();
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] = useState<{
-    events: List<UnsignedEvent>;
+    unsignedEvents: List<UnsignedEvent>;
     results: PublishResultsEventMap;
-  }>({ events: List(), results: Map() });
-  const [loadingResults, setLoadingResults] = useState<boolean>(false);
+    isLoading: boolean;
+  }>({ unsignedEvents: List(), results: Map(), isLoading: false });
   const { relayPool } = useApis();
   const { events: relaysEvents, eose: relaysEose } = useEventQuery(
     relayPool,
@@ -250,7 +250,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     { readFromRelays }
   );
   const metaEvents = createDefaultEvents(user).merge(
-    mE.valueSeq().toList().merge(newEventsAndPublishResults.events)
+    mE.valueSeq().toList().merge(newEventsAndPublishResults.unsignedEvents)
   );
 
   const processedMetaEvents = useEventProcessor(metaEvents).get(
@@ -307,11 +307,11 @@ function Data({ user, children }: DataProps): JSX.Element {
     .filter((_, k) => k !== myPublicKey);
 
   const addNewEvents = (events: List<UnsignedEvent>): void => {
-    setLoadingResults(true);
     setNewEventsAndPublishResults((prev) => {
       return {
-        events: prev.events.merge(events),
+        unsignedEvents: prev.unsignedEvents.merge(events),
         results: prev.results,
+        isLoading: true,
       };
     });
   };
@@ -319,11 +319,11 @@ function Data({ user, children }: DataProps): JSX.Element {
   const updatePublishResults = (results: PublishResultsEventMap): void => {
     setNewEventsAndPublishResults((prev) => {
       return {
-        events: prev.events,
+        unsignedEvents: prev.unsignedEvents,
         results: mergePublishResultsOfEvents(prev.results, results),
+        isLoading: false,
       };
     });
-    setLoadingResults(false);
   };
 
   return (
@@ -336,8 +336,8 @@ function Data({ user, children }: DataProps): JSX.Element {
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
       publishResults={newEventsAndPublishResults.results}
-      unpublishedEvents={newEventsAndPublishResults.events}
-      loadingResults={loadingResults}
+      unpublishedEvents={newEventsAndPublishResults.unsignedEvents}
+      loadingResults={newEventsAndPublishResults.isLoading}
       views={processedMetaEvents.views}
       workspaces={processedMetaEvents.workspaces}
       activeWorkspace={activeWorkspace}
