@@ -35,6 +35,12 @@ declare global {
   };
   type PublishResultsEventMap = Map<string, PublishResultsOfEvent>;
 
+  type PublishEvents = {
+    unsignedEvents: List<UnsignedEvent>;
+    results: PublishResultsEventMap;
+    isLoading: boolean;
+  };
+
   type PublishResultsOfRelay = Map<string, Event & PublishStatus>;
   type PublishResultsRelayMap = Map<string, PublishResultsOfRelay>;
 
@@ -48,9 +54,7 @@ declare global {
     contactsRelays: Map<PublicKey, Relays>;
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
-    publishResults: PublishResultsEventMap;
-    loadingResults: boolean;
-    unpublishedEvents: List<UnsignedEvent>;
+    publishEventsStatus: PublishEvents;
 
     views: Views;
     workspaces: List<ID>;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { List } from "immutable";
 import { UnsignedEvent, Event } from "nostr-tools";
 import crypto from "crypto";
@@ -34,27 +34,54 @@ export type Plan = Data & {
   publishEvents: List<UnsignedEvent>;
 };
 
+function mergePublishResultsOfEvents(
+  existing: PublishResultsEventMap,
+  newResults: PublishResultsEventMap
+): PublishResultsEventMap {
+  return newResults.reduce((rdx, results, eventID) => {
+    const existingResults = rdx.get(eventID);
+    if (!existingResults) {
+      return rdx.set(eventID, results);
+    }
+    return rdx.set(eventID, {
+      ...existingResults,
+      results: existingResults.results.merge(results.results),
+    });
+  }, existing);
+}
+
 export function PlanningContextProvider({
   children,
-  addNewEvents,
-  updatePublishResults,
+  setPublishEvents,
 }: {
   children: React.ReactNode;
-  addNewEvents: (events: List<UnsignedEvent>) => void;
-  updatePublishResults: (results: PublishResultsEventMap) => void;
+  setPublishEvents: Dispatch<SetStateAction<PublishEvents>>;
 }): JSX.Element {
   const { relayPool, finalizeEvent } = useApis();
 
   const executePlan = async (plan: Plan): Promise<void> => {
-    // TODO: this needs a lot of error handling etc...
-    addNewEvents(plan.publishEvents);
+    setPublishEvents((prevStatus) => {
+      return {
+        unsignedEvents: prevStatus.unsignedEvents.merge(plan.publishEvents),
+        results: prevStatus.results,
+        isLoading: true,
+      };
+    });
+
     const results = await execute({
       plan,
       relayPool,
       relays: plan.relays.filter((r) => r.write === true),
       finalizeEvent,
     });
-    updatePublishResults(results);
+
+    setPublishEvents((prevStatus) => {
+      return {
+        unsignedEvents: prevStatus.unsignedEvents,
+        results: mergePublishResultsOfEvents(prevStatus.results, results),
+        isLoading: false,
+      };
+    });
   };
 
   const republishEventsOnRelay = async (
@@ -66,7 +93,13 @@ export function PlanningContextProvider({
       relayPool,
       writeRelayUrl: relayUrl,
     });
-    updatePublishResults(results);
+    setPublishEvents((prevStatus) => {
+      return {
+        unsignedEvents: prevStatus.unsignedEvents,
+        results: mergePublishResultsOfEvents(prevStatus.results, results),
+        isLoading: false,
+      };
+    });
   };
 
   return (

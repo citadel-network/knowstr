@@ -151,7 +151,8 @@ export function useQueryKnowledgeData(filters: Filter[]): {
   eose: boolean;
   allEventsProcessed: boolean;
 } {
-  const { relays, unpublishedEvents } = useData();
+  const { relays, publishEventsStatus } = useData();
+  const unpublishedEvents = publishEventsStatus.unsignedEvents;
   const { relayPool, eventLoadingTimeout } = useApis();
   const [allEventsProcessed, setAllEventsProcessed] = useState(false);
   const setAllEventsProcessedTimeout = useRef<number | undefined>(undefined);

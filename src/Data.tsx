@@ -199,30 +199,15 @@ export function useRelaysInfo(
   return infos;
 }
 
-function mergePublishResultsOfEvents(
-  existing: PublishResultsEventMap,
-  newResults: PublishResultsEventMap
-): PublishResultsEventMap {
-  return newResults.reduce((rdx, results, eventID) => {
-    const existingResults = rdx.get(eventID);
-    if (!existingResults) {
-      return rdx.set(eventID, results);
-    }
-    return rdx.set(eventID, {
-      ...existingResults,
-      results: existingResults.results.merge(results.results),
-    });
-  }, existing);
-}
-
 function Data({ user, children }: DataProps): JSX.Element {
   const defaultRelays = useDefaultRelays();
   const myPublicKey = user.publicKey;
-  const [newEventsAndPublishResults, setNewEventsAndPublishResults] = useState<{
-    unsignedEvents: List<UnsignedEvent>;
-    results: PublishResultsEventMap;
-    isLoading: boolean;
-  }>({ unsignedEvents: List(), results: Map(), isLoading: false });
+  const [newEventsAndPublishResults, setNewEventsAndPublishResults] =
+    useState<PublishEvents>({
+      unsignedEvents: List(),
+      results: Map(),
+      isLoading: false,
+    });
   const { relayPool } = useApis();
   const { events: relaysEvents, eose: relaysEose } = useEventQuery(
     relayPool,
@@ -306,26 +291,6 @@ function Data({ user, children }: DataProps): JSX.Element {
     .map((data) => data.workspaces)
     .filter((_, k) => k !== myPublicKey);
 
-  const addNewEvents = (events: List<UnsignedEvent>): void => {
-    setNewEventsAndPublishResults((prev) => {
-      return {
-        unsignedEvents: prev.unsignedEvents.merge(events),
-        results: prev.results,
-        isLoading: true,
-      };
-    });
-  };
-
-  const updatePublishResults = (results: PublishResultsEventMap): void => {
-    setNewEventsAndPublishResults((prev) => {
-      return {
-        unsignedEvents: prev.unsignedEvents,
-        results: mergePublishResultsOfEvents(prev.results, results),
-        isLoading: false,
-      };
-    });
-  };
-
   return (
     <DataContextProvider
       contacts={contacts}
@@ -335,9 +300,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       contactsRelays={contactsRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}
-      publishResults={newEventsAndPublishResults.results}
-      unpublishedEvents={newEventsAndPublishResults.unsignedEvents}
-      loadingResults={newEventsAndPublishResults.isLoading}
+      publishEventsStatus={newEventsAndPublishResults}
       views={processedMetaEvents.views}
       workspaces={processedMetaEvents.workspaces}
       activeWorkspace={activeWorkspace}
@@ -345,10 +308,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       contactsRelationTypes={contactsRelationTypes}
       contactsWorkspaces={contactsWorkspaces}
     >
-      <PlanningContextProvider
-        addNewEvents={addNewEvents}
-        updatePublishResults={updatePublishResults}
-      >
+      <PlanningContextProvider setPublishEvents={setNewEventsAndPublishResults}>
         <RootViewContextProvider root={activeWorkspace}>
           {children}
         </RootViewContextProvider>

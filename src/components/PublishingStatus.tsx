@@ -156,18 +156,20 @@ function getStatusColor(publishResults: PublishResultsRelayMap): StatusColor {
 
 export function PublishingStatus(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const { publishResults, loadingResults, relays } = useData();
-  if (loadingResults === true) {
+  const { publishEventsStatus, relays } = useData();
+  if (publishEventsStatus.isLoading === true) {
     return (
       <div style={{ paddingTop: "6px", paddingBottom: "4px" }}>
         <Spinner animation="border" role="status" />
       </div>
     );
   }
-  if (publishResults.size === 0) {
+  if (publishEventsStatus.results.size === 0) {
     return null;
   }
-  const publishResultsRelayMap = transformPublishResults(publishResults);
+  const publishResultsRelayMap = transformPublishResults(
+    publishEventsStatus.results
+  );
   const writeRelays = getWriteRelays(relays);
   const publishResultsForActiveWriteRelays = publishResultsRelayMap.filter(
     (_, relayUrl) =>
