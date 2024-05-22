@@ -60,6 +60,7 @@ export function PlanningContextProvider({
   const { relayPool, finalizeEvent } = useApis();
 
   const executePlan = async (plan: Plan): Promise<void> => {
+    // TODO: Just sign in planner, but non-blocking
     setPublishEvents((prevStatus) => {
       return {
         unsignedEvents: prevStatus.unsignedEvents.merge(plan.publishEvents),
