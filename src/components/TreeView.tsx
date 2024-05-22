@@ -102,7 +102,7 @@ function Tree(): JSX.Element | null {
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
       <div
-        className="max-height-100 overfloallEventsProcessedhidden background-dark"
+        className="max-height-100 overflow-hidden background-dark"
         aria-label={ariaLabel}
         style={virtuosoStyle}
       >
