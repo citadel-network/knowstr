@@ -12,6 +12,7 @@ import {
 import { useData } from "../DataContext";
 import {
   REFERENCED_BY,
+  SOCIAL,
   getRelationsNoSocial,
   isRemote,
   newID,
@@ -143,7 +144,7 @@ export function getRelationTypeByRelationsID(
   relationsID: ID
 ): [RelationType, ID] | [undefined, undefined] {
   const relations = getRelationsNoSocial(data.knowledgeDBs, relationsID);
-  if (!relations || relationsID === "social" || relationsID === REFERENCED_BY) {
+  if (!relations || relationsID === SOCIAL || relationsID === REFERENCED_BY) {
     return [undefined, undefined];
   }
   const relationTypeID = relations.type;
@@ -163,7 +164,7 @@ export function planCopyRelationsTypeIfNecessary(
   plan: Plan,
   relationsID: ID
 ): Plan {
-  if (relationsID === "social" || relationsID === REFERENCED_BY) {
+  if (relationsID === SOCIAL || relationsID === REFERENCED_BY) {
     return plan;
   }
   const [relationType, relationTypeID] = getRelationTypeByRelationsID(

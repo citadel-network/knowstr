@@ -20,7 +20,7 @@ import {
   useDeselectAllInView,
   useTemporaryView,
 } from "./TemporaryViewContext";
-import { REFERENCED_BY, getRelations, isRemote } from "../connections";
+import { REFERENCED_BY, SOCIAL, getRelations, isRemote } from "../connections";
 import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import {
@@ -169,7 +169,7 @@ function EditRelationsDropdown({
   }
 
   const isDeleteAvailable =
-    view.relations !== "social" &&
+    view.relations !== SOCIAL &&
     view.relations !== REFERENCED_BY &&
     relations &&
     !isRemote(relations.author, data.user.publicKey);
@@ -366,7 +366,7 @@ function SocialRelationsButton({
   }
   const socialRelations = getRelations(
     knowledgeDBs,
-    "social" as ID,
+    SOCIAL,
     user.publicKey,
     node.id
   );

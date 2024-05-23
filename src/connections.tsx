@@ -49,6 +49,9 @@ function getAllItemsFromRelationsToNode(
   }, Set<ID>());
 }
 
+export const REFERENCED_BY = "referencedby" as ID;
+export const SOCIAL = "social" as ID;
+
 export function getSocialRelations(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
@@ -71,13 +74,11 @@ export function getSocialRelations(
     updated: Math.floor(Date.now() / 1000),
     items: items.toList(),
     head: nodeID,
-    id: "social" as ID,
-    type: "social" as ID,
+    id: SOCIAL,
+    type: SOCIAL,
     author: "" as PublicKey,
   };
 }
-
-export const REFERENCED_BY = "referencedby" as ID;
 
 export function getReferencedByRelations(
   knowledgeDBs: KnowledgeDBs,
@@ -101,7 +102,7 @@ export function getReferencedByRelations(
 }
 
 export function isVirtualRelationsType(relationID: ID): boolean {
-  return relationID === "social" || relationID === REFERENCED_BY;
+  return relationID === SOCIAL || relationID === REFERENCED_BY;
 }
 
 export function getRelations(
@@ -110,7 +111,7 @@ export function getRelations(
   myself: PublicKey,
   nodeID: ID // for social lookup
 ): Relations | undefined {
-  if (relationID === "social") {
+  if (relationID === SOCIAL) {
     return getSocialRelations(knowledgeDBs, myself, nodeID);
   }
   if (relationID === REFERENCED_BY) {
