@@ -186,10 +186,10 @@ export function bulkAddRelations(
   }, relations);
 }
 
-export function newNode(text: string, myself: PublicKey, id?: ID): KnowNode {
+export function newNode(text: string, myself: PublicKey): KnowNode {
   return {
     text,
-    id: id || newID(),
+    id: newID(),
     author: myself,
   };
 }

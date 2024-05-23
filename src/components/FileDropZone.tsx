@@ -41,7 +41,7 @@ export function createNodesFromMarkdown(
     return convertToPlainText(md.render(paragraph));
   });
   return plainTextParagraphs.map((paragraph) => {
-    return newNode(paragraph, myself, newID());
+    return newNode(paragraph, myself);
   });
 }
 
