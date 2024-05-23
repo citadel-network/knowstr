@@ -11,6 +11,8 @@ import {
   ViewContext,
   useViewKey,
   getNodeIDFromView,
+  getLast,
+  parseViewPath,
 } from "../ViewContext";
 import { getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { MergeKnowledgeDB, useData } from "../DataContext";
@@ -142,11 +144,10 @@ export function TreeView(): JSX.Element {
       (view, path) => path.startsWith(key) && view.expanded && path !== key
     )
     .map((view) => view.relations || ("" as ID))
-    .valueSeq()
-    .toArray()
     .filter((r) => r !== "");
   const listsFilter = lists.reduce(
-    (rdx, listID) => addListToFilters(rdx, listID),
+    (rdx, listID, path) =>
+      addListToFilters(rdx, listID, getLast(parseViewPath(path)).nodeID),
     filter
   );
   const { knowledgeDBs } = useQueryKnowledgeData(

@@ -12,7 +12,7 @@ import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
-import { getNodeFromDB } from "./connections";
+import { REFERENCED_BY, getNodeFromDB } from "./connections";
 
 function addIDToFilter(filter: Filter, id: ID, tag: `#${string}`): Filter {
   const d = filter[tag] || [];
@@ -91,7 +91,14 @@ export function addReferencedByToFilters(filters: Filters, id: ID): Filters {
   };
 }
 
-export function addListToFilters(filters: Filters, listID: ID): Filters {
+export function addListToFilters(
+  filters: Filters,
+  listID: ID,
+  nodeID: ID
+): Filters {
+  if (listID === REFERENCED_BY) {
+    return addReferencedByToFilters(filters, nodeID);
+  }
   return {
     ...filters,
     knowledgeListbyID: addIDToFilter(filters.knowledgeListbyID, listID, "#d"),
