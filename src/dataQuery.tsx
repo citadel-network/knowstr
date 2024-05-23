@@ -12,7 +12,7 @@ import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
-import { REFERENCED_BY, getNodeFromDB } from "./connections";
+import { REFERENCED_BY, SOCIAL, getNodeFromDB } from "./connections";
 
 function addIDToFilter(filter: Filter, id: ID, tag: `#${string}`): Filter {
   const d = filter[tag] || [];
@@ -91,6 +91,17 @@ export function addReferencedByToFilters(filters: Filters, id: ID): Filters {
   };
 }
 
+function addSocialListToFilters(filters: Filters, nodeID: ID): Filters {
+  return {
+    ...filters,
+    knowledgeListByHead: addIDToFilter(
+      filters.knowledgeListByHead,
+      nodeID,
+      "#k"
+    ),
+  };
+}
+
 export function addListToFilters(
   filters: Filters,
   listID: ID,
@@ -98,6 +109,9 @@ export function addListToFilters(
 ): Filters {
   if (listID === REFERENCED_BY) {
     return addReferencedByToFilters(filters, nodeID);
+  }
+  if (listID === SOCIAL) {
+    return addSocialListToFilters(filters, nodeID);
   }
   return {
     ...filters,
