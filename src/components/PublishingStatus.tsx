@@ -3,7 +3,7 @@ import { List, Map } from "immutable";
 import { Dropdown, Spinner, ProgressBar } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
 import { Event } from "nostr-tools";
-import { Button, getWriteRelays } from "citadel-commons";
+import { getWriteRelays, LoadingSpinnerButton } from "citadel-commons";
 import { useData } from "../DataContext";
 import { IS_MOBILE } from "./responsive";
 import { usePlanner } from "../planner";
@@ -118,13 +118,13 @@ function RelayPublishStatus({
                 }
               />
               {numberRejected > 0 && (
-                <Button
+                <LoadingSpinnerButton
                   className="btn mt-2 font-size-small"
                   ariaLabel={`resend rejected events to relay ${relayUrl}`}
                   onClick={() => republishEvents(rejectedEvents, relayUrl)}
                 >
                   Resend
-                </Button>
+                </LoadingSpinnerButton>
               )}
             </div>
           </div>
