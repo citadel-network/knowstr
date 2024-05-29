@@ -121,7 +121,7 @@ body {
   margin: 3px;
 }
 
-.asset-workspace-height {
+.flex-grow-1 {
  flex-grow: 1;
 }
 
@@ -261,7 +261,7 @@ body {
   max-height: 100%;
 }
 
-.asset-workspace-height .workspace-column {
+.flex-grow-1 .workspace-column {
     position: relative;
     height: 100%;
     overflow-y: hidden;

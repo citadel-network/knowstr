@@ -24,7 +24,7 @@ export function WorkspaceView(): JSX.Element | null {
   const columns = relations ? relations.items.toArray() : [];
   return (
     <TemporaryViewProvider>
-      <div className="position-relative asset-workspace-height">
+      <div className="position-relative flex-grow-1">
         <div className="position-absolute board overflow-y-hidden">
           <div className="workspace-columns overflow-y-hidden h-100">
             <DND>
