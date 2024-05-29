@@ -1,6 +1,5 @@
 import React from "react";
 import { useMediaQuery } from "react-responsive";
-import { SelectVersions } from "./SelectVersions";
 import {
   ToggleEditing,
   ToggleMultiselect,
@@ -26,7 +25,6 @@ export function ColumnMenu(): JSX.Element {
         {!isMultiSelectToggled && (
           <div className="menu-layout">
             <SelectRelations alwaysOneSelected />
-            <SelectVersions />
             <ToggleEditing />
           </div>
         )}
@@ -50,7 +48,6 @@ export function DetailViewMenu(): JSX.Element {
         {!isMultiSelectToggled && (
           <div className="menu-layout">
             <SelectRelations alwaysOneSelected />
-            <SelectVersions />
             <ToggleEditing />
           </div>
         )}
@@ -84,7 +81,6 @@ function ReadonlyMenu(): JSX.Element | null {
   return (
     <div className="menu-layout w-100" style={{ height: "min-content" }}>
       <SelectRelations readonly />
-      <SelectVersions />
     </div>
   );
 }
@@ -98,7 +94,6 @@ export function NodeMenu(): JSX.Element | null {
   return (
     <div className="menu-layout w-100" style={{ height: "min-content" }}>
       <SelectRelations />
-      <SelectVersions />
       <ToggleEditing />
     </div>
   );
