@@ -1,7 +1,7 @@
 import React from "react";
 import { useDropzone } from "react-dropzone";
 import MarkdownIt from "markdown-it";
-import { newNode, bulkAddRelations, newID } from "../connections";
+import { newNode, bulkAddRelations } from "../connections";
 import { newRelations } from "../ViewContext";
 import {
   Plan,
