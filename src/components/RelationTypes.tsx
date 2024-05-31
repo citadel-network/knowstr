@@ -53,7 +53,7 @@ type NewRelationTypeProps = {
   onHide: () => void;
 };
 
-function planAddNewRelationToNode(
+export function planAddNewRelationToNode(
   plan: Plan,
   nodeID: LongID,
   relationTypeID: ID,

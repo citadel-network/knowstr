@@ -36,6 +36,7 @@ import {
 } from "./TemporaryViewContext";
 import { Plan, planUpdateViews, planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
+import { planAddNewRelationToNode } from "./RelationTypes";
 
 function AddNodeButton({
   onClick,
@@ -250,12 +251,21 @@ export function AddColumn(): JSX.Element {
       viewPath,
       rels.items.size - 1
     );
+    const viewOfChild = getViewFromPath(updateRelationsPlan, viewPathOfChild);
+    // Add default relations to the child node
+    const planWithDefaultRelationsAddedToChild = planAddNewRelationToNode(
+      updateRelationsPlan,
+      nodeID,
+      "" as ID,
+      viewOfChild,
+      viewPathOfChild
+    );
     // Explicitly write this views into the dashboard as we are gonna use this to determine which
     // nodes we need to fetch
     const updateViewsPlan = planUpdateViews(
-      updateRelationsPlan,
-      updateView(updateRelationsPlan.views, viewPathOfChild, {
-        ...getViewFromPath(updateRelationsPlan, viewPathOfChild),
+      planWithDefaultRelationsAddedToChild,
+      updateView(planWithDefaultRelationsAddedToChild.views, viewPathOfChild, {
+        ...viewOfChild,
         expanded: true,
       })
     );
