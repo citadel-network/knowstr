@@ -36,6 +36,7 @@ import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
 import { PlanningContextProvider } from "./planner";
 import { RootViewContextProvider } from "./ViewContext";
+import { joinID } from "./connections";
 import {
   addWorkspacesToFilter,
   createBaseFilter,
@@ -58,24 +59,20 @@ type ProcessedEvents = {
 
   views: Views;
   workspaces: List<ID>;
-  activeWorkspace: ID;
+  activeWorkspace: LongID;
   relationTypes: RelationTypes;
 };
 
-const DEFAULT_WORKSPACE = "my-first-workspace" as ID;
+export const DEFAULT_WORKSPACE = "my-first-workspace" as LongID;
 
-export function defaultWorkspaceID(myself: PublicKey): ID {
-  return `${myself}-${DEFAULT_WORKSPACE}` as ID;
-}
-
-function newProcessedEvents(myself: PublicKey): ProcessedEvents {
+function newProcessedEvents(): ProcessedEvents {
   return {
     settings: DEFAULT_SETTINGS,
     knowledgeDB: newDB(),
     contacts: Map<PublicKey, Contact>(),
     relays: [],
     views: Map<string, View>(),
-    activeWorkspace: defaultWorkspaceID(myself),
+    activeWorkspace: DEFAULT_WORKSPACE,
     workspaces: List<ID>(),
     relationTypes: OrderedMap<ID, RelationType>().set("" as ID, {
       color: DEFAULT_COLOR,
@@ -124,7 +121,7 @@ function processEventsByAuthor(
     workspaces: workspaces ? workspaces.workspaces : List<ID>(),
     activeWorkspace: workspaces
       ? workspaces.activeWorkspace
-      : ("my-first-workspace" as ID),
+      : ("my-first-workspace" as LongID),
     relationTypes,
   };
 }
@@ -144,16 +141,15 @@ export function useEventProcessor(
 }
 
 function createDefaultEvents(user: KeyPair): List<UnsignedEvent> {
-  const defaultWSID = defaultWorkspaceID(user.publicKey);
   const serialized = {
-    w: [defaultWSID],
-    a: defaultWSID,
+    w: [joinID(user.publicKey, "my-first-workspace")],
+    a: joinID(user.publicKey, "my-first-workspace"),
   };
   const createWorkspaceNodeEvent = {
     kind: KIND_KNOWLEDGE_NODE,
     pubkey: user.publicKey,
     created_at: 0,
-    tags: [["d", defaultWSID]],
+    tags: [["d", "my-first-workspace"]],
     content: "My first Workspace",
   };
 
@@ -240,7 +236,7 @@ function Data({ user, children }: DataProps): JSX.Element {
 
   const processedMetaEvents = useEventProcessor(metaEvents).get(
     myPublicKey,
-    newProcessedEvents(myPublicKey)
+    newProcessedEvents()
   );
   const contacts = processedMetaEvents.contacts.filter(
     (_, k) => k !== myPublicKey
@@ -265,8 +261,8 @@ function Data({ user, children }: DataProps): JSX.Element {
     useWorkspaceFromURL() || processedMetaEvents.activeWorkspace;
 
   const workspaceFilters = processedContactMetaEvents.reduce((rdx, p) => {
-    return addWorkspacesToFilter(rdx, p.workspaces);
-  }, addWorkspacesToFilter(createBaseFilter(contacts, myPublicKey), processedMetaEvents.workspaces));
+    return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
+  }, addWorkspacesToFilter(createBaseFilter(contacts, myPublicKey), processedMetaEvents.workspaces as List<LongID>));
 
   const { events: workspaceEvents } = useEventQuery(
     relayPool,

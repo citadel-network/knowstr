@@ -82,6 +82,9 @@ export function dnd(
       return nodeID;
     })
   );
+  const sourceIndices = List(
+    sources.map((n) => getRelationIndex(plan, parseViewPath(n)))
+  ).filter((n) => n !== undefined) as List<number>;
 
   const [fromRepo, fromView] = getParentNode(plan, sourceViewPath);
 
@@ -92,24 +95,12 @@ export function dnd(
 
   const [toNodeID, toV] = getNodeIDFromView(plan, toView);
 
+  // TODO: this can be optimized
   const move =
     dropIndex !== undefined &&
     fromRepo !== undefined &&
     toNodeID === fromRepo.id &&
     fromView.relations === toV.relations;
-
-  // Only the Data of the current column are available, so we cannot make any reliable
-  // lookups in other columns. getRelationIndex requires that all relations are available
-  // therefore we can only use it on move (which happens in the same column). It's also only
-  // required on move.
-  //
-  // Example: target column is B, source column is A. We want to move a note from Referenced By
-  // from A. In the current context we might not have loaded A nor referenced by relations.
-  const sourceIndices = move
-    ? (List(
-        sources.map((n) => getRelationIndex(plan, parseViewPath(n)))
-      ).filter((n) => n !== undefined) as List<number>)
-    : List<number>();
 
   const updatedRelationsPlan = upsertRelations(
     plan,

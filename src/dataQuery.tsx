@@ -7,21 +7,25 @@ import {
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
 } from "citadel-commons";
-import { useNodeID } from "./ViewContext";
+import { splitID, REFERENCED_BY, SOCIAL } from "./connections";
+import { getNodeFromID, useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
-import { REFERENCED_BY, SOCIAL, getNodeFromDB } from "./connections";
 
-function addIDToFilter(filter: Filter, id: ID, tag: `#${string}`): Filter {
+function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
   const d = filter[tag] || [];
-  if (d.includes(id)) {
+  const local = splitID(id)[1];
+  // TODO: Add unknown remotes? Or even better create a filter for each unknown remote to query specific ids
+  // strip index from ID when we look for a node belonging to a collection
+
+  if (d.includes(local)) {
     return filter;
   }
   return {
     ...filter,
-    [tag]: [...d, id],
+    [tag]: [...d, local],
   };
 }
 
@@ -70,7 +74,7 @@ export function filtersToFilterArray(filters: Filters): Filter[] {
   ].filter((f) => f !== undefined) as Filter[];
 }
 
-export function addNodeToFilters(filters: Filters, id: ID): Filters {
+export function addNodeToFilters(filters: Filters, id: LongID): Filters {
   return {
     ...filters,
     knowledgeNodesByID: addIDToFilter(filters.knowledgeNodesByID, id, "#d"),
@@ -78,7 +82,10 @@ export function addNodeToFilters(filters: Filters, id: ID): Filters {
   };
 }
 
-export function addReferencedByToFilters(filters: Filters, id: ID): Filters {
+export function addReferencedByToFilters(
+  filters: Filters,
+  id: LongID
+): Filters {
   const filter = filters.referencedBy;
   const d = filter["#i"] || [];
   const updatedFilter = {
@@ -91,7 +98,7 @@ export function addReferencedByToFilters(filters: Filters, id: ID): Filters {
   };
 }
 
-function addSocialListToFilters(filters: Filters, nodeID: ID): Filters {
+function addSocialListToFilters(filters: Filters, nodeID: LongID): Filters {
   return {
     ...filters,
     knowledgeListByHead: addIDToFilter(
@@ -104,8 +111,8 @@ function addSocialListToFilters(filters: Filters, nodeID: ID): Filters {
 
 export function addListToFilters(
   filters: Filters,
-  listID: ID,
-  nodeID: ID
+  listID: LongID,
+  nodeID: LongID
 ): Filters {
   if (listID === REFERENCED_BY) {
     return addReferencedByToFilters(filters, nodeID);
@@ -119,13 +126,13 @@ export function addListToFilters(
   };
 }
 
-export function addWorkspaceToFilter(filters: Filters, id: ID): Filters {
+export function addWorkspaceToFilter(filters: Filters, id: LongID): Filters {
   return addNodeToFilters(filters, id);
 }
 
 export function addWorkspacesToFilter(
   filters: Filters,
-  workspaces: List<ID>
+  workspaces: List<LongID>
 ): Filters {
   return workspaces.reduce((rdx, id) => addWorkspaceToFilter(rdx, id), filters);
 }
@@ -233,7 +240,7 @@ export function LoadNode({
   const { knowledgeDBs, eose, allEventsProcessed } =
     useQueryKnowledgeData(filterArray);
   if (waitForEose === true && !eose) {
-    const haveNode = getNodeFromDB(knowledgeDBs, nodeID);
+    const haveNode = getNodeFromID(knowledgeDBs, nodeID, user.publicKey);
     if (!haveNode) {
       return <div className="loading" aria-label="loading" />;
     }

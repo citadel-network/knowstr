@@ -11,6 +11,8 @@ export function ChangeColumnWidth(): JSX.Element | null {
   const { createPlan, executePlan } = usePlanner();
   const viewContext = useViewPath();
   const view = useNode()[1];
+  // TODO: check why this was implemented like that
+  // const view = getNodeFromView(knowledgeDBs, views, viewContext)[1];
   if (!view || !views) {
     return null;
   }

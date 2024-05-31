@@ -25,10 +25,12 @@ function sampleNodes(): {
   const d = newNode("c", ALICE.publicKey);
   const e = newNode("e", ALICE.publicKey);
 
-  const relations = bulkAddRelations(
-    newRelations(a.id, "" as ID, ALICE.publicKey),
-    [b.id, c.id, d.id, e.id]
-  );
+  const relations = bulkAddRelations(newRelations(a.id, "", ALICE.publicKey), [
+    b.id,
+    c.id,
+    d.id,
+    e.id,
+  ]);
 
   const nodes = Map({
     [a.id]: a,
@@ -36,7 +38,7 @@ function sampleNodes(): {
     [c.id]: c,
     [d.id]: d,
     [e.id]: e,
-  }) as Map<ID, KnowNode>;
+  });
   return { nodes, a, b, c, d, e, relations };
 }
 
@@ -70,11 +72,11 @@ test("get referenced by relations", () => {
   const crypto = newNode("Crypto", BOB.publicKey);
 
   const moneyRelations = addRelationToRelations(
-    newRelations(money.id, "" as ID, ALICE.publicKey),
+    newRelations(money.id, "", ALICE.publicKey),
     btc.id
   );
   const cryptoRelations = addRelationToRelations(
-    newRelations(crypto.id, "" as ID, BOB.publicKey),
+    newRelations(crypto.id, "", BOB.publicKey),
     btc.id
   );
   const aliceDBWithRelations = {

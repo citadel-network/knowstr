@@ -59,7 +59,7 @@ import { newDB } from "./knowledge";
 import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 import { findContacts } from "./contacts";
-import { defaultWorkspaceID } from "./Data";
+import { DEFAULT_WORKSPACE } from "./Data";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -293,7 +293,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   },
   views: Map<string, View>(),
   workspaces: List<ID>(),
-  activeWorkspace: defaultWorkspaceID(ALICE.publicKey),
+  activeWorkspace: DEFAULT_WORKSPACE,
   relationTypes: OrderedMap<ID, RelationType>(),
   contactsRelationTypes: Map<PublicKey, RelationTypes>(),
   contactsWorkspaces: Map<PublicKey, List<ID>>(),
@@ -477,12 +477,16 @@ type NodeDescription = [
 
 function createNodesAndRelations(
   plan: Plan,
-  currentRelationsID: ID | undefined,
+  currentRelationsID: LongID | undefined,
   nodes: NodeDescription[]
 ): Plan {
   return List(nodes).reduce((rdx: Plan, nodeDescription: NodeDescription) => {
     const currentRelations = currentRelationsID
-      ? getRelationsNoSocial(rdx.knowledgeDBs, currentRelationsID)
+      ? getRelationsNoSocial(
+          rdx.knowledgeDBs,
+          currentRelationsID,
+          rdx.user.publicKey
+        )
       : undefined;
     const textOrNode = Array.isArray(nodeDescription)
       ? nodeDescription[0]
@@ -506,11 +510,7 @@ function createNodesAndRelations(
       : planWithNode;
     if (children) {
       // Create Relations for children
-      const relationForChildren = newRelations(
-        node.id,
-        "" as ID,
-        rdx.user.publicKey
-      );
+      const relationForChildren = newRelations(node.id, "", rdx.user.publicKey);
       const planWithRelations = planUpsertRelations(
         planWithUpdatedRelation,
         relationForChildren

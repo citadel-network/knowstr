@@ -139,7 +139,7 @@ function useGetFullScreenViewRepo(): string | undefined {
 
 type AddNodeProps = {
   onCreateNewNode: (text: string) => void;
-  onAddExistingNode: (nodeID: ID) => void;
+  onAddExistingNode: (nodeID: LongID) => void;
   ariaLabel: string;
   isSearchEnabledByShortcut?: boolean;
 };
@@ -189,7 +189,7 @@ function AddNode({
     reset();
   };
 
-  const onAddExistingRepo = (id: ID): void => {
+  const onAddExistingRepo = (id: LongID): void => {
     if (isOpen) {
       closeModal();
     }
@@ -231,7 +231,7 @@ export function AddColumn(): JSX.Element {
   const viewPath = useViewPath();
   const { createPlan, executePlan } = usePlanner();
 
-  const onAddNode = (plan: Plan, nodeID: ID): void => {
+  const onAddNode = (plan: Plan, nodeID: LongID): void => {
     const updateRelationsPlan = upsertRelations(
       plan,
       viewPath,
@@ -292,7 +292,7 @@ export function AddNodeToNode(): JSX.Element | null {
     return null;
   }
 
-  const onAddNode = (plan: Plan, nodeID: ID): void => {
+  const onAddNode = (plan: Plan, nodeID: LongID): void => {
     const updateRelationsPlan = upsertRelations(
       plan,
       viewContext,

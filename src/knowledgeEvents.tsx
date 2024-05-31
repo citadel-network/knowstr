@@ -18,9 +18,10 @@ import {
   jsonToRelationTypes,
   eventToRelations,
 } from "./serializer";
+import { joinID, splitID } from "./connections";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
 
-export function findNodes(events: List<UnsignedEvent>): Nodes {
+export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
   const sorted = sortEvents(
     events.filter(
       (event) =>
@@ -37,23 +38,25 @@ export function findNodes(events: List<UnsignedEvent>): Nodes {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [deleteKind, _, eventToDelete] = deleteTag.split(":");
       if (deleteKind === `${KIND_KNOWLEDGE_NODE}`) {
-        return rdx.remove(eventToDelete as ID);
+        return rdx.remove(eventToDelete);
       }
       return rdx;
     }
-    const id = findTag(event, "d") as ID;
+    const id = findTag(event, "d");
     if (!id) {
       return rdx;
     }
     return rdx.set(id, {
-      id,
+      id: joinID(event.pubkey, id),
       text: event.content,
       author: event.pubkey as PublicKey,
     });
-  }, Map<ID, KnowNode>());
+  }, Map<string, KnowNode>());
 }
 
-export function findRelations(events: List<UnsignedEvent>): Map<ID, Relations> {
+export function findRelations(
+  events: List<UnsignedEvent>
+): Map<string, Relations> {
   const sorted = sortEvents(
     events.filter(
       (event) =>
@@ -69,7 +72,7 @@ export function findRelations(events: List<UnsignedEvent>): Map<ID, Relations> {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [deleteKind, _, eventToDelete] = deleteTag.split(":");
       if (deleteKind === `${KIND_KNOWLEDGE_LIST}`) {
-        return rdx.remove(eventToDelete as ID);
+        return rdx.remove(eventToDelete);
       }
       return rdx;
     }
@@ -77,13 +80,14 @@ export function findRelations(events: List<UnsignedEvent>): Map<ID, Relations> {
     if (!relations) {
       return rdx;
     }
-    return rdx.set(relations.id, relations);
-  }, Map<ID, Relations>());
+    const id = splitID(relations.id)[1];
+    return rdx.set(id, relations);
+  }, Map<string, Relations>());
 }
 
 type Workspaces = {
-  workspaces: List<ID>;
-  activeWorkspace: ID;
+  workspaces: List<LongID>;
+  activeWorkspace: LongID;
 };
 
 export function findWorkspaces(
@@ -114,7 +118,7 @@ export function findRelationTypes(events: List<UnsignedEvent>): RelationTypes {
     events.filter((event) => event.kind === KIND_RELATION_TYPES)
   );
   if (relationTypesEvent === undefined) {
-    return OrderedMap<ID, RelationType>().set("" as ID, {
+    return OrderedMap<ID, RelationType>().set("", {
       color: DEFAULT_COLOR,
       label: "Default",
     });

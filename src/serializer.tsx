@@ -2,6 +2,7 @@ import { Map, List, OrderedMap } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
 import { findAllTags, findTag } from "citadel-commons";
 import { parseViewPath } from "./ViewContext";
+import { joinID } from "./connections";
 
 export type Serializable =
   | string
@@ -72,7 +73,7 @@ function jsonToView(view: Serializable): View | undefined {
   const a = asObject(view);
   return {
     displaySubjects: asBoolean(a.s),
-    relations: a.o !== undefined ? (asString(a.o) as ID) : undefined,
+    relations: a.o !== undefined ? (asString(a.o) as LongID) : undefined,
     width: asNumber(a.w),
     expanded: a.e !== undefined ? asBoolean(a.e) : undefined,
   };
@@ -80,14 +81,14 @@ function jsonToView(view: Serializable): View | undefined {
 
 export function jsonToWorkspace(
   workspaces: Serializable
-): { workspaces: List<ID>; activeWorkspace: ID } | undefined {
+): { workspaces: List<LongID>; activeWorkspace: LongID } | undefined {
   if (workspaces === undefined) {
     return undefined;
   }
   const w = asObject(workspaces);
   return {
-    workspaces: List<ID>(asArray(w.w).map((i) => asString(i) as ID)),
-    activeWorkspace: asString(w.a) as ID,
+    workspaces: List<LongID>(asArray(w.w).map((i) => asString(i) as LongID)),
+    activeWorkspace: asString(w.a) as LongID,
   };
 }
 
@@ -135,17 +136,17 @@ export function viewsToJSON(views: Map<string, View>): Serializable {
 }
 
 export function eventToRelations(e: UnsignedEvent): Relations | undefined {
-  const id = findTag(e, "d") as ID;
+  const id = findTag(e, "d");
   const head = findTag(e, "k") as ID;
-  const type = findTag(e, "rel_type") as ID;
+  const type = findTag(e, "rel_type");
   const updated = e.created_at;
   if (id === undefined || head === undefined || type === undefined) {
     return undefined;
   }
   const itemsAsTags = findAllTags(e, "i") || [];
-  const items = List(itemsAsTags.map((i) => i[0] as ID));
+  const items = List(itemsAsTags.map((i) => i[0] as LongID));
   return {
-    id,
+    id: joinID(e.pubkey, id),
     head,
     type,
     updated,

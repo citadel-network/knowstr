@@ -21,11 +21,11 @@ function convertToPlainText(html: string): string {
 function createRelationsFromParagraphNodes(
   nodes: KnowNode[],
   myself: PublicKey
-): [relations: Relations, topNodeID: ID] {
+): [relations: Relations, topNodeID: LongID] {
   const topParagraph = nodes[0];
   const furtherParagraphs = nodes.slice(1);
   const relations = bulkAddRelations(
-    newRelations(topParagraph.id, "" as ID, myself),
+    newRelations(topParagraph.id, "", myself),
     furtherParagraphs.map((n) => n.id)
   );
   return [relations, topParagraph.id];
@@ -63,7 +63,7 @@ function splitMarkdownInChunkSizes(markdown: string): string[] {
 export function planCreateNodesFromMarkdown(
   plan: Plan,
   markdown: string
-): [Plan, topNodeID: ID] {
+): [Plan, topNodeID: LongID] {
   const splittedMarkdown = splitMarkdownInChunkSizes(markdown);
   const nodes = splittedMarkdown.reduce((rdx: KnowNode[], md: string) => {
     const mdNodes = createNodesFromMarkdown(md, plan.user.publicKey);
@@ -80,12 +80,12 @@ export function planCreateNodesFromMarkdown(
 
 type FileDropZoneProps = {
   children: React.ReactNode;
-  onDrop: (plan: Plan, topNodes: Array<ID>) => void;
+  onDrop: (plan: Plan, topNodes: Array<LongID>) => void;
 };
 
 type MarkdownReducer = {
   plan: Plan;
-  topNodeIDs: ID[];
+  topNodeIDs: LongID[];
 };
 
 /* eslint-disable react/jsx-props-no-spreading */

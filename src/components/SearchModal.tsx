@@ -48,7 +48,7 @@ function HighlightedText({
 }
 
 type SearchModalProps = {
-  onAddExistingNode: (id: ID) => void;
+  onAddExistingNode: (id: LongID) => void;
   onHide: () => void;
 };
 

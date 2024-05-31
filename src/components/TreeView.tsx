@@ -143,7 +143,7 @@ export function TreeView(): JSX.Element {
     .filter(
       (view, path) => path.startsWith(key) && view.expanded && path !== key
     )
-    .map((view) => view.relations || ("" as ID))
+    .map((view) => view.relations || ("" as LongID))
     .filter((r) => r !== "");
   const listsFilter = lists.reduce(
     (rdx, listID, path) =>

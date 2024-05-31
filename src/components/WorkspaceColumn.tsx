@@ -27,7 +27,7 @@ export function WorkspaceColumnView(): JSX.Element | null {
 export function EmptyColumn(): JSX.Element {
   const viewContext = useViewPath();
   const { executePlan } = usePlanner();
-  const onDropFiles = (plan: Plan, topNodes: Array<ID>): void => {
+  const onDropFiles = (plan: Plan, topNodes: Array<LongID>): void => {
     const addTopNodesPlan = upsertRelations(plan, viewContext, (r: Relations) =>
       addRelationToRelations(r, topNodes[0])
     );

@@ -1,11 +1,12 @@
 import React from "react";
 import { List, Set, Map } from "immutable";
+import { v4 } from "uuid";
 import {
-  getNodeFromDB,
   getRelations,
   isRemote,
-  isVirtualRelationsType,
-  newID,
+  joinID,
+  shortID,
+  splitID,
 } from "./connections";
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
@@ -15,10 +16,10 @@ import { planCopyRelationsTypeIfNecessary } from "./components/RelationTypes";
 // only exported for tests
 export type NodeIndex = number & { readonly "": unique symbol };
 
-const ADD_TO_NODE = "ADD_TO_NODE" as ID;
+const ADD_TO_NODE = "ADD_TO_NODE" as LongID;
 
 type SubPath = {
-  nodeID: ID;
+  nodeID: LongID;
   nodeIndex: NodeIndex;
 };
 
@@ -46,7 +47,7 @@ export function parseViewPath(path: string): ViewPath {
     throw new Error("Invalid view path");
   }
   const nodeIndexEnd = parseInt(pieces[pieces.length - 1], 10) as NodeIndex;
-  const nodeIdEnd = pieces[pieces.length - 2] as ID;
+  const nodeIdEnd = pieces[pieces.length - 2] as LongID;
 
   const beginning = pieces
     .slice(0, -2)
@@ -58,9 +59,9 @@ export function parseViewPath(path: string): ViewPath {
         subPaths
       ): SubPathWithRelations[] => {
         if (index % 3 === 0) {
-          const nodeID = piece as ID;
+          const nodeID = piece as LongID;
           const indexValue = parseInt(subPaths[index + 1], 10) as NodeIndex;
-          const relationID = subPaths[index + 2] as ID;
+          const relationID = subPaths[index + 2];
           return [
             ...acc,
             { nodeID, nodeIndex: indexValue, relationsID: relationID },
@@ -98,45 +99,39 @@ function getViewExactMatch(views: Views, path: ViewPath): View | undefined {
 export function getAvailableRelationsForNode(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  id: ID,
-  preferredAuthor?: PublicKey
+  id: LongID
 ): List<Relations> {
   const myRelations = knowledgeDBs.get(myself, newDB()).relations;
+  const [remote, localID] = splitID(id);
   const relations: List<Relations> = myRelations
-    .filter((r) => r.head === id)
+    .filter((r) => r.head === localID)
     .toList();
 
   const preferredRemoterelations: List<Relations> =
-    preferredAuthor && isRemote(preferredAuthor, myself)
+    remote && isRemote(remote, myself)
       ? knowledgeDBs
-          .get(preferredAuthor, newDB())
-          .relations.filter((r) => r.head === id)
+          .get(remote, newDB())
+          .relations.filter((r) => r.head === localID)
           .toList()
       : List<Relations>();
   const otherRelations: List<Relations> = knowledgeDBs
-    .filter((_, k) => k !== myself && k !== preferredAuthor)
-    .map((db) => db.relations.filter((r) => r.head === id).toList())
+    .filter((_, k) => k !== myself && k !== remote)
+    .map((db) => db.relations.filter((r) => r.head === localID).toList())
     .toList()
     .flatten(1) as List<Relations>;
   return relations.concat(preferredRemoterelations).concat(otherRelations);
 }
 
 export function getDefaultRelationForNode(
-  id: ID,
+  id: LongID,
   knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  preferredAuthor?: PublicKey
-): ID | undefined {
-  return getAvailableRelationsForNode(
-    knowledgeDBs,
-    myself,
-    id,
-    preferredAuthor
-  ).first()?.id;
+  myself: PublicKey
+): LongID | undefined {
+  return getAvailableRelationsForNode(knowledgeDBs, myself, id).first()?.id;
 }
 
 function getDefaultView(
-  id: ID,
+  id: LongID,
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey
 ): View {
@@ -150,9 +145,12 @@ function getDefaultView(
 
 export function getNodeFromID(
   knowledgeDBs: KnowledgeDBs,
-  id: ID | ID
+  id: ID | LongID,
+  myself: PublicKey
 ): KnowNode | undefined {
-  return getNodeFromDB(knowledgeDBs, id);
+  const [remote, knowID] = splitID(id);
+  const db = knowledgeDBs.get(remote || myself, newDB());
+  return db.nodes.get(knowID);
 }
 
 export function getLast(viewContext: ViewPath): SubPath {
@@ -171,7 +169,10 @@ export function getViewFromPath(data: Data, path: ViewPath): View {
   );
 }
 
-export function getNodeIDFromView(data: Data, viewPath: ViewPath): [ID, View] {
+export function getNodeIDFromView(
+  data: Data,
+  viewPath: ViewPath
+): [LongID, View] {
   const view = getViewFromPath(data, viewPath);
   const { nodeID } = getLast(viewPath);
   return [nodeID, view];
@@ -182,7 +183,7 @@ export function getNodeFromView(
   viewPath: ViewPath
 ): [KnowNode, View] | [undefined, undefined] {
   const [nodeID, view] = getNodeIDFromView(data, viewPath);
-  const node = getNodeFromID(data.knowledgeDBs, nodeID);
+  const node = getNodeFromID(data.knowledgeDBs, nodeID, data.user.publicKey);
   if (!node) {
     return [undefined, undefined];
   }
@@ -217,7 +218,7 @@ export function calculateNodeIndex(
 
 export function calculateIndexFromNodeIndex(
   relations: Relations,
-  node: ID,
+  node: LongID,
   nodeIndex: NodeIndex
 ): number {
   // Find the nth occurance of the node in the list
@@ -238,16 +239,14 @@ export function calculateIndexFromNodeIndex(
     [0, false]
   );
   if (res[1] === false) {
-    throw new Error(
-      `Node ${node} not found in relations ${JSON.stringify(relations)}`
-    );
+    throw new Error("Node not found in relations");
   }
   return res[0];
 }
 
 function addRelationsToLastElement(
   path: ViewPath,
-  relationsID: ID
+  relationsID: LongID
 ): SubPathWithRelations[] {
   const pathWithoutParent = path.slice(0, -1) as SubPathWithRelations[];
   return [...pathWithoutParent, { ...getLast(path), relationsID }];
@@ -258,7 +257,7 @@ export function addAddToNodeToPath(data: Data, path: ViewPath): ViewPath {
   // Assume there is only one Add to node per parent
   const nodeIndex = 0 as NodeIndex;
   return [
-    ...addRelationsToLastElement(path, relations?.id || ("" as ID)),
+    ...addRelationsToLastElement(path, relations?.id || ("" as LongID)),
     { nodeID: ADD_TO_NODE, nodeIndex },
   ];
 }
@@ -326,7 +325,7 @@ export function RootViewContextProvider({
   indices, // TODO: only used in tests, get rid of it
 }: {
   children: React.ReactNode;
-  root: ID;
+  root: LongID;
   indices?: List<number>;
 }): JSX.Element {
   const data = useData();
@@ -358,7 +357,7 @@ export function PushNode({
   );
 }
 
-export function useNodeID(): [ID, View] {
+export function useNodeID(): [LongID, View] {
   const data = useData();
   const viewPath = useViewPath();
   return getNodeIDFromView(data, viewPath);
@@ -409,11 +408,15 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
   return views.filter((v, k) => !k.startsWith(key) || k === key);
 }
 
-export function newRelations(head: ID, type: ID, myself: PublicKey): Relations {
+export function newRelations(
+  head: LongID,
+  type: ID,
+  myself: PublicKey
+): Relations {
   return {
-    head,
-    items: List<ID>(),
-    id: newID(),
+    head: shortID(head),
+    items: List<LongID>(),
+    id: joinID(myself, v4()),
     type,
     updated: Math.floor(Date.now() / 1000),
     author: myself,
@@ -425,23 +428,32 @@ function createUpdatableRelations(
   viewContext: ViewPath,
   myself: PublicKey,
   relationsID: ID,
-  head: ID,
+  head: LongID,
   relationTypeID: ID
 ): Relations {
-  const relations = getRelations(knowledgeDBs, relationsID, myself, head);
-  if (!relations) {
-    return newRelations(head, relationTypeID, myself);
-  }
-  if (relations.author !== myself) {
-    // Copy relations
+  const [remote, id] = splitID(relationsID);
+  if (relationsID === "social" || (remote && isRemote(remote, myself))) {
+    // copy remote or social relations
+    const remoteRelations = getRelations(
+      knowledgeDBs,
+      relationsID,
+      myself,
+      head
+    );
+    if (!remoteRelations) {
+      // This should not happen
+      return newRelations(head, relationTypeID, myself);
+    }
+    // Make a copy
     return {
-      ...relations,
-      // TODO: empty type is not really pretty
-      type: isVirtualRelationsType(relationsID) ? ("" as ID) : relations.type,
-      id: newID(),
+      ...remoteRelations,
+      type: remoteRelations.type === "social" ? "" : remoteRelations.type,
+      id: joinID(myself, v4()),
     };
   }
-  return relations;
+  return knowledgeDBs
+    .get(myself, newDB())
+    .relations.get(id, newRelations(head, relationTypeID, myself));
 }
 
 export function upsertRelations(
@@ -451,14 +463,14 @@ export function upsertRelations(
 ): Plan {
   const [nodeID, nodeView] = getNodeIDFromView(plan, viewPath);
   // create new relations if this node doesn't have any
-  const relationsID = nodeView.relations || newID();
+  const relationsID = nodeView.relations || v4();
   const relations = createUpdatableRelations(
     plan.knowledgeDBs,
     viewPath,
     plan.user.publicKey,
     relationsID,
     nodeID,
-    "" as ID // TODO: relation type?
+    "" // TODO: relation type?
   );
 
   const didViewChange = nodeView.relations !== relations.id;
@@ -641,7 +653,7 @@ export function updateViewPathsAfterAddRelation(
 
 export function updateViewPathsAfterDeleteNode(
   views: Views,
-  nodeID: ID
+  nodeID: LongID
 ): Views {
   return views.filterNot((_, k) => k.includes(nodeID));
 }
@@ -657,15 +669,15 @@ export function updateViewPathsAfterDeleteNode(
 
 function alterPath(
   viewPath: string,
-  calcIndex: (relation: ID, node: ID, index: NodeIndex) => NodeIndex
+  calcIndex: (relation: LongID, node: LongID, index: NodeIndex) => NodeIndex
 ): string {
   const paths = viewPath.split(":");
   return paths
     .map((path, idx) => {
       // The first two values are root:0
       if (idx >= 4 && (idx - 1) % 3 === 0) {
-        const relation = paths[idx - 2] as ID;
-        const node = paths[idx - 1] as ID;
+        const relation = paths[idx - 2] as LongID;
+        const node = paths[idx - 1] as LongID;
         const index = parseInt(paths[idx], 10) as NodeIndex;
         return calcIndex(relation, node, index);
       }
@@ -676,8 +688,8 @@ function alterPath(
 
 export function updateViewPathsAfterDisconnect(
   views: Views,
-  disconnectNode: ID,
-  fromRelation: ID,
+  disconnectNode: LongID,
+  fromRelation: LongID,
   nodeIndex: NodeIndex
 ): Views {
   // If I delete A:0, A:1 will be A:0, A:2 will be A:1 ...

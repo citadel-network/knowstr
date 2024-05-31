@@ -6,7 +6,6 @@ import {
   deleteChildViews,
   getAvailableRelationsForNode,
   getDefaultRelationForNode,
-  getRelationsFromView,
   updateView,
   useNode,
   useNodeID,
@@ -20,7 +19,13 @@ import {
   useDeselectAllInView,
   useTemporaryView,
 } from "./TemporaryViewContext";
-import { REFERENCED_BY, SOCIAL, getRelations, isRemote } from "../connections";
+import {
+  REFERENCED_BY,
+  SOCIAL,
+  getRelations,
+  isRemote,
+  splitID,
+} from "../connections";
 import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import {
@@ -64,12 +69,11 @@ function AddRelationsButton(): JSX.Element {
   );
 }
 
-function DeleteRelationItem({ id }: { id: ID }): JSX.Element | null {
+function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
   const { createPlan, executePlan } = usePlanner();
   const { user, views } = useData();
   const viewPath = useViewPath();
   const [nodeID, view] = useNodeID();
-  const [node] = useNode();
 
   const onClick = (): void => {
     const deleteRelationsPlan = planDeleteRelations(createPlan(), id);
@@ -81,8 +85,7 @@ function DeleteRelationItem({ id }: { id: ID }): JSX.Element | null {
         relations: getDefaultRelationForNode(
           nodeID,
           deleteRelationsPlan.knowledgeDBs,
-          user.publicKey,
-          node?.author
+          user.publicKey
         ),
       })
     );
@@ -134,7 +137,7 @@ function SelectOtherRelationsItem({
   if (!onChangeRelations) {
     return null;
   }
-  const remote = isRemote(relations.author, useData().user.publicKey);
+  const remote = isRemote(splitID(relations.id)[0], useData().user.publicKey);
   return (
     <>
       <Dropdown.Item onClick={() => onChangeRelations(relations, true)}>
@@ -161,9 +164,7 @@ function EditRelationsDropdown({
   otherRelations: List<Relations>;
 }): JSX.Element | null {
   const view = useNodeID()[1];
-  const viewPath = useViewPath();
-  const data = useData();
-  const relations = getRelationsFromView(data, viewPath);
+  const { user } = useData();
   if (!view.relations) {
     return null;
   }
@@ -171,8 +172,7 @@ function EditRelationsDropdown({
   const isDeleteAvailable =
     view.relations !== SOCIAL &&
     view.relations !== REFERENCED_BY &&
-    relations &&
-    !isRemote(relations.author, data.user.publicKey);
+    !isRemote(splitID(view.relations)[0], user.publicKey);
   if (!isDeleteAvailable && otherRelations.size === 0) {
     return null;
   }
@@ -393,10 +393,10 @@ function sortRelations(
 ): List<Relations> {
   return relationList.sort((rA, rB) => {
     // Sort by date, but the one relation which is not remote comes always first
-    if (!isRemote(rA.author, myself)) {
+    if (!isRemote(splitID(rA.id)[0], myself)) {
       return -1;
     }
-    if (!isRemote(rB.author, myself)) {
+    if (!isRemote(splitID(rB.id)[0], myself)) {
       return 1;
     }
     return rB.updated - rA.updated;
@@ -513,8 +513,7 @@ export function SelectRelations({
   const relations = getAvailableRelationsForNode(
     knowledgeDBs,
     user.publicKey,
-    node.id,
-    node.author
+    node.id
   );
   const groupedByType = relations.groupBy((r) => r.type);
   return (

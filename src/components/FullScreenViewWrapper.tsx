@@ -4,9 +4,9 @@ import { RootViewContextProvider, useNode } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import { LoadNode } from "../dataQuery";
 
-export function useNodeIDFromURL(): ID | undefined {
+export function useNodeIDFromURL(): LongID | undefined {
   const params = useParams<{
-    openNodeID?: ID;
+    openNodeID?: LongID;
   }>();
   return params.openNodeID;
 }

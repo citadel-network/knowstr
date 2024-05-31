@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Dropdown, Form, InputGroup, Modal } from "react-bootstrap";
 import { CirclePicker } from "react-color";
+import { v4 } from "uuid";
 import { FormControlWrapper } from "citadel-commons";
 import {
   Plan,
@@ -15,7 +16,7 @@ import {
   SOCIAL,
   getRelationsNoSocial,
   isRemote,
-  newID,
+  splitID,
 } from "../connections";
 import {
   ViewPath,
@@ -54,7 +55,7 @@ type NewRelationTypeProps = {
 
 function planAddNewRelationToNode(
   plan: Plan,
-  nodeID: ID,
+  nodeID: LongID,
   relationTypeID: ID,
   view: View,
   viewPath: ViewPath
@@ -84,7 +85,7 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
     if (form.checkValidity() === false) {
       return;
     }
-    const id = newID();
+    const id = v4();
     const label = (form.elements.namedItem("name") as HTMLInputElement).value;
     const updateRelationTypesPlan = planUpdateRelationTypes(
       createPlan(),
@@ -143,15 +144,21 @@ export function getRelationTypeByRelationsID(
   data: Data,
   relationsID: ID
 ): [RelationType, ID] | [undefined, undefined] {
-  const relations = getRelationsNoSocial(data.knowledgeDBs, relationsID);
+  const relations = getRelationsNoSocial(
+    data.knowledgeDBs,
+    relationsID,
+    data.user.publicKey
+  );
   if (!relations || relationsID === SOCIAL || relationsID === REFERENCED_BY) {
     return [undefined, undefined];
   }
+  const [remote] = splitID(relationsID);
   const relationTypeID = relations.type;
 
   const relationType =
-    (isRemote(relations.author, data.user.publicKey) &&
-      data.contactsRelationTypes.get(relations.author)?.get(relationTypeID)) ||
+    (remote &&
+      isRemote(remote, data.user.publicKey) &&
+      data.contactsRelationTypes.get(remote)?.get(relationTypeID)) ||
     data.relationTypes.get(relationTypeID);
 
   if (!relationType || relationTypeID === undefined) {

@@ -58,7 +58,7 @@ declare global {
 
     views: Views;
     workspaces: List<ID>;
-    activeWorkspace: ID;
+    activeWorkspace: LongID;
     relationTypes: RelationTypes;
     contactsRelationTypes: Map<PublicKey, RelationTypes>;
     contactsWorkspaces: Map<PublicKey, List<ID>>;
@@ -87,27 +87,28 @@ declare global {
   };
 
   type Hash = string;
-  type ID = string & { readonly "": unique symbol };
+  type ID = string;
+  type LongID = string & { readonly "": unique symbol };
 
   type View = {
     displaySubjects: boolean;
-    relations?: ID;
+    relations?: LongID;
     width: number;
     // Show children, only relevant for inner nodes
     expanded?: boolean;
   };
 
   type Relations = {
-    items: List<ID>;
+    items: List<LongID>;
     head: ID;
-    id: ID;
+    id: LongID;
     type: ID;
     updated: number;
     author: PublicKey;
   };
 
   type KnowNode = {
-    id: ID;
+    id: LongID;
     text: string;
     author: PublicKey;
   };

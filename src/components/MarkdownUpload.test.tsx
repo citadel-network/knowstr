@@ -12,9 +12,8 @@ import { createPlan, planUpsertRelations } from "../planner";
 import { ALICE, renderWithTestData, setup, UpdateState } from "../utils.test";
 import { planCreateNodesFromMarkdown } from "./FileDropZone";
 import { Column } from "./Column";
-import { addRelationToRelations } from "../connections";
+import { addRelationToRelations, joinID } from "../connections";
 import { LoadNode } from "../dataQuery";
-import { defaultWorkspaceID } from "../Data";
 
 const TEST_FILE = `# Programming Languages
 
@@ -32,11 +31,11 @@ async function uploadAndRenderMarkdown(alice: UpdateState): Promise<void> {
     createPlan(alice()),
     TEST_FILE
   );
-  const wsID = defaultWorkspaceID(alice().user.publicKey);
+  const wsID = joinID(alice().user.publicKey, "my-first-workspace");
   const addNodeToWS = planUpsertRelations(
     plan,
     addRelationToRelations(
-      newRelations(wsID, "" as ID, alice().user.publicKey),
+      newRelations(wsID, "", alice().user.publicKey),
       topNodeID
     )
   );
@@ -80,7 +79,7 @@ test("Delete Node uploaded from Markdown", async () => {
 
   cleanup();
 
-  const wsID = defaultWorkspaceID(alice().user.publicKey);
+  const wsID = joinID(alice().user.publicKey, "my-first-workspace");
   // Test after rerender
   renderWithTestData(
     <RootViewContextProvider root={wsID}>
