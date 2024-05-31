@@ -48,7 +48,7 @@ import { App } from "./App";
 import { DataContextProps } from "./DataContext";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
-import { NostrAuthContext } from "./NostrAuthContext";
+import { NostrAuthContext, isUserLoggedIn } from "./NostrAuthContext";
 import {
   addRelationToRelations,
   getRelationsNoSocial,
@@ -80,7 +80,7 @@ const UNAUTHENTICATED_ALICE: Contact = {
     "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758" as PublicKey,
 };
 
-const ALICE: KeyPair = {
+const ALICE: User = {
   publicKey: UNAUTHENTICATED_ALICE.publicKey,
   privateKey: hexToBytes(
     "04d22f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e"
@@ -100,7 +100,7 @@ const UNAUTHENTICATED_CAROL: Contact = {
   publicKey: CAROL_PUBLIC_KEY,
 };
 
-export const CAROL: KeyPair = {
+export const CAROL: User = {
   publicKey: CAROL_PUBLIC_KEY,
   privateKey: hexToBytes(CAROL_PRIVATE_KEY),
 };
@@ -186,7 +186,7 @@ function applyApis(props?: Partial<TestApis>): TestApis {
 type RenderApis = Partial<TestApis> & {
   initialRoute?: string;
   includeFocusContext?: boolean;
-  user?: KeyPair;
+  user?: User;
   defaultRelays?: Relays;
 };
 
@@ -200,12 +200,13 @@ function renderApis(
     user: ALICE,
     ...options,
   };
-  const user = optionsWithDefaultUser.user
-    ? {
-        privateKey: optionsWithDefaultUser.user.privateKey,
-        publicKey: optionsWithDefaultUser.user.publicKey,
-      }
-    : undefined;
+  const user =
+    optionsWithDefaultUser.user && isUserLoggedIn(optionsWithDefaultUser.user)
+      ? {
+          privateKey: optionsWithDefaultUser.user.privateKey,
+          publicKey: optionsWithDefaultUser.user.publicKey,
+        }
+      : undefined;
   window.history.pushState({}, "", options?.initialRoute || "/");
   const utils = render(
     <BrowserRouter>
@@ -335,7 +336,7 @@ function getContacts(appState: TestAppState): Contacts {
 export type UpdateState = () => TestAppState;
 
 export function setup(
-  users: KeyPair[],
+  users: User[],
   options?: Partial<TestAppState>
 ): UpdateState[] {
   const appState = applyDefaults(options);

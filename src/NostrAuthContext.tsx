@@ -5,8 +5,8 @@ import { DEFAULT_RELAYS, sanitizeRelays } from "citadel-commons";
 import { useApis } from "./Apis";
 
 type Context = {
-  user: KeyPair | undefined;
-  setBlockstackUser: (user: KeyPair | undefined) => void;
+  user: User | undefined;
+  setBlockstackUser: (user: User | undefined) => void;
   defaultRelays: Relays;
 };
 
@@ -21,7 +21,11 @@ function getPublicKeyFromContext(context: Context): PublicKey | undefined {
   return context.user.publicKey;
 }
 
-export function useUser(): KeyPair | undefined {
+export function isUserLoggedIn(user: User): user is KeyPair {
+  return (user as KeyPair).privateKey !== undefined;
+}
+
+export function useUser(): User | undefined {
   const context = React.useContext(NostrAuthContext);
   if (!context) {
     throw new Error("NostrAuthContext missing");
@@ -37,7 +41,7 @@ export function useDefaultRelays(): Relays {
   return context.defaultRelays;
 }
 
-function userFromPrivateKey(privateKey: string): KeyPair {
+function userFromPrivateKey(privateKey: string): User {
   const key = hexToBytes(privateKey);
   const publicKey = getPublicKey(key) as PublicKey;
   return {
@@ -86,7 +90,7 @@ export function NostrAuthContextProvider({
 }): JSX.Element {
   const { fileStore } = useApis();
   const keyFromStorage = fileStore.getLocalStorage("privateKey");
-  const [user, setUser] = useState<KeyPair | undefined>(
+  const [user, setUser] = useState<User | undefined>(
     keyFromStorage !== null ? userFromPrivateKey(keyFromStorage) : undefined
   );
   const relays = defaultRelayUrls

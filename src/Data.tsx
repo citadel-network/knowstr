@@ -47,7 +47,7 @@ import { useDefaultRelays } from "./NostrAuthContext";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
 
 type DataProps = {
-  user: KeyPair;
+  user: User;
   children: React.ReactNode;
 };
 
@@ -140,7 +140,7 @@ export function useEventProcessor(
   );
 }
 
-function createDefaultEvents(user: KeyPair): List<UnsignedEvent> {
+function createDefaultEvents(user: User): List<UnsignedEvent> {
   const serialized = {
     w: [joinID(user.publicKey, "my-first-workspace")],
     a: joinID(user.publicKey, "my-first-workspace"),

@@ -9,6 +9,12 @@ declare global {
     publicKey: PublicKey;
   };
 
+  export type User =
+    | KeyPair
+    | {
+        publicKey: PublicKey;
+      };
+
   export type Contact = {
     publicKey: PublicKey;
     mainRelay?: string;
@@ -48,7 +54,7 @@ declare global {
 
   type Data = {
     contacts: Contacts;
-    user: KeyPair;
+    user: User;
     settings: Settings;
     relays: Relays;
     contactsRelays: Map<PublicKey, Relays>;

@@ -2,6 +2,7 @@ import { Event, SimplePool } from "nostr-tools";
 import { List, Map } from "immutable";
 import { Plan } from "./planner";
 import { FinalizeEvent } from "./Apis";
+import { isUserLoggedIn } from "./NostrAuthContext";
 
 // Timeout in ms for pulish() on a relay
 export const PUBLISH_TIMEOUT = 5000;
@@ -62,8 +63,14 @@ export async function execute({
     console.warn("Won't execute Noop plan");
     return Map();
   }
+  const { user } = plan;
+  if (!isUserLoggedIn(user)) {
+    // eslint-disable-next-line no-console
+    console.warn("User not logged in");
+    return Map();
+  }
   const finalizedEvents = plan.publishEvents.map((e) =>
-    finalizeEvent(e, plan.user.privateKey)
+    finalizeEvent(e, user.privateKey)
   );
 
   const writeRelayUrls = relays.map((r) => r.url);

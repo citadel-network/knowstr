@@ -149,7 +149,7 @@ export function usePlanner(): Planner {
   };
 }
 
-function newContactListEvent(contacts: Contacts, user: KeyPair): UnsignedEvent {
+function newContactListEvent(contacts: Contacts, user: User): UnsignedEvent {
   const tags = contacts
     .valueSeq()
     .toArray()
