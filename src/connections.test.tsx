@@ -5,6 +5,7 @@ import {
   bulkAddRelations,
   newNode,
   getReferencedByRelations,
+  shortID,
 } from "./connections";
 import { ALICE, BOB } from "./utils.test";
 import { newRelations } from "./ViewContext";
@@ -99,5 +100,7 @@ test("get referenced by relations", () => {
     ALICE.publicKey,
     btc.id
   );
-  expect(referencedBy?.items).toEqual(List([money.id, crypto.id]));
+  expect(referencedBy?.items).toEqual(
+    List([shortID(money.id), shortID(crypto.id)])
+  );
 });
