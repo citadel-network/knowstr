@@ -17,7 +17,7 @@ import {
   usePlanner,
 } from "../planner";
 
-function disconnectNode(plan: Plan, toDisconnect: LongID): Plan {
+function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
   return myDB.relations.reduce((rdx, relation) => {
     const toDelete = relation.items.reduce((indices, id, idx) => {

@@ -37,15 +37,15 @@ export function getRelationsNoSocial(
 
 function getAllRelationsForNode(
   knowledgeDB: KnowledgeData,
-  nodeID: LongID
-): Set<LongID> {
+  nodeID: LongID | ID
+): Set<LongID | ID> {
   const localID = shortID(nodeID);
   return knowledgeDB.relations.reduce((rdx, relations) => {
     if (relations.head === localID) {
       return rdx.merge(relations.items);
     }
     return rdx;
-  }, Set<LongID>());
+  }, Set<LongID | ID>());
 }
 
 export const REFERENCED_BY = "referencedby" as LongID;
@@ -54,7 +54,7 @@ export const SOCIAL = "social" as LongID;
 export function getSocialRelations(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  nodeID: LongID // for social lookup
+  nodeID: LongID | ID // for social lookup
 ): Relations | undefined {
   // Combines all items from other users we don't have in our Lists
   const myRelationsForNode = getAllRelationsForNode(
@@ -64,7 +64,7 @@ export function getSocialRelations(
 
   const otherRelationsForNode = knowledgeDBs.reduce((rdx, knowledgeDB) => {
     return rdx.merge(getAllRelationsForNode(knowledgeDB, nodeID));
-  }, Set<LongID>());
+  }, Set<LongID | ID>());
 
   const myShortIds = myRelationsForNode.map((id) => shortID(id)[1]);
 
@@ -84,13 +84,13 @@ export function getSocialRelations(
 export function getReferencedByRelations(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  nodeID: LongID
+  nodeID: LongID | ID
 ): Relations | undefined {
   const rel = newRelations(nodeID, REFERENCED_BY, myself);
-  const items = knowledgeDBs.reduce((r, knowledgeDB, author) => {
+  const items = knowledgeDBs.reduce((r, knowledgeDB) => {
     return knowledgeDB.relations.reduce((rdx, relations) => {
       if (relations.items.includes(nodeID)) {
-        return rdx.push(joinID(author, relations.head));
+        return rdx.push(relations.head);
       }
       return rdx;
     }, r);
@@ -110,7 +110,7 @@ export function getRelations(
   knowledgeDBs: KnowledgeDBs,
   relationID: ID | undefined,
   myself: PublicKey,
-  nodeID: LongID // for social lookup
+  nodeID: LongID | ID // for social lookup
 ): Relations | undefined {
   if (relationID === SOCIAL) {
     return getSocialRelations(knowledgeDBs, myself, nodeID);
@@ -163,7 +163,7 @@ export function moveRelations(
 
 export function addRelationToRelations(
   relations: Relations,
-  objectID: LongID,
+  objectID: LongID | ID,
   ord?: number
 ): Relations {
   const defaultOrder = relations.items.size;
@@ -179,7 +179,7 @@ export function addRelationToRelations(
 
 export function bulkAddRelations(
   relations: Relations,
-  objectIDs: Array<LongID>,
+  objectIDs: Array<LongID | ID>,
   startPos?: number
 ): Relations {
   return objectIDs.reduce((rdx, id, currentIndex) => {

@@ -257,7 +257,7 @@ export function planBulkUpsertNodes(plan: Plan, nodes: KnowNode[]): Plan {
   return nodes.reduce((p, node) => planUpsertNode(p, node), plan);
 }
 
-function planDelete(plan: Plan, id: LongID, kind: number): Plan {
+function planDelete(plan: Plan, id: LongID | ID, kind: number): Plan {
   const deleteEvent = {
     kind: KIND_DELETE,
     pubkey: plan.user.publicKey,
@@ -271,7 +271,7 @@ function planDelete(plan: Plan, id: LongID, kind: number): Plan {
   };
 }
 
-export function planDeleteNode(plan: Plan, nodeID: LongID): Plan {
+export function planDeleteNode(plan: Plan, nodeID: LongID | ID): Plan {
   const deletePlan = planDelete(plan, nodeID, KIND_KNOWLEDGE_NODE);
   const userDB = plan.knowledgeDBs.get(deletePlan.user.publicKey, newDB());
   const updatedNodes = userDB.nodes.remove(shortID(nodeID));

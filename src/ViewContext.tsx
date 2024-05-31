@@ -19,7 +19,7 @@ export type NodeIndex = number & { readonly "": unique symbol };
 const ADD_TO_NODE = "ADD_TO_NODE" as LongID;
 
 type SubPath = {
-  nodeID: LongID;
+  nodeID: LongID | ID;
   nodeIndex: NodeIndex;
 };
 
@@ -99,7 +99,7 @@ function getViewExactMatch(views: Views, path: ViewPath): View | undefined {
 export function getAvailableRelationsForNode(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  id: LongID
+  id: LongID | ID
 ): List<Relations> {
   const myRelations = knowledgeDBs.get(myself, newDB()).relations;
   const [remote, localID] = splitID(id);
@@ -123,7 +123,7 @@ export function getAvailableRelationsForNode(
 }
 
 export function getDefaultRelationForNode(
-  id: LongID,
+  id: LongID | ID,
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey
 ): LongID | undefined {
@@ -131,7 +131,7 @@ export function getDefaultRelationForNode(
 }
 
 function getDefaultView(
-  id: LongID,
+  id: LongID | ID,
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey
 ): View {
@@ -143,6 +143,16 @@ function getDefaultView(
   };
 }
 
+function getNodeFromAnyDB(
+  knowledgeDBs: KnowledgeDBs,
+  id: string
+): KnowNode | undefined {
+  return knowledgeDBs
+    .map((db) => db.nodes.get(id))
+    .filter((node) => node !== undefined)
+    .first(undefined);
+}
+
 export function getNodeFromID(
   knowledgeDBs: KnowledgeDBs,
   id: ID | LongID,
@@ -150,7 +160,11 @@ export function getNodeFromID(
 ): KnowNode | undefined {
   const [remote, knowID] = splitID(id);
   const db = knowledgeDBs.get(remote || myself, newDB());
-  return db.nodes.get(knowID);
+  const node = db.nodes.get(knowID);
+  if (!node && remote === undefined) {
+    return getNodeFromAnyDB(knowledgeDBs, knowID);
+  }
+  return node;
 }
 
 export function getLast(viewContext: ViewPath): SubPath {
@@ -172,7 +186,7 @@ export function getViewFromPath(data: Data, path: ViewPath): View {
 export function getNodeIDFromView(
   data: Data,
   viewPath: ViewPath
-): [LongID, View] {
+): [LongID | ID, View] {
   const view = getViewFromPath(data, viewPath);
   const { nodeID } = getLast(viewPath);
   return [nodeID, view];
@@ -218,7 +232,7 @@ export function calculateNodeIndex(
 
 export function calculateIndexFromNodeIndex(
   relations: Relations,
-  node: LongID,
+  node: LongID | ID,
   nodeIndex: NodeIndex
 ): number {
   // Find the nth occurance of the node in the list
@@ -357,7 +371,7 @@ export function PushNode({
   );
 }
 
-export function useNodeID(): [LongID, View] {
+export function useNodeID(): [LongID | ID, View] {
   const data = useData();
   const viewPath = useViewPath();
   return getNodeIDFromView(data, viewPath);
@@ -409,7 +423,7 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
 }
 
 export function newRelations(
-  head: LongID,
+  head: LongID | ID,
   type: ID,
   myself: PublicKey
 ): Relations {
@@ -428,7 +442,7 @@ function createUpdatableRelations(
   viewContext: ViewPath,
   myself: PublicKey,
   relationsID: ID,
-  head: LongID,
+  head: LongID | ID,
   relationTypeID: ID
 ): Relations {
   const [remote, id] = splitID(relationsID);
@@ -653,7 +667,7 @@ export function updateViewPathsAfterAddRelation(
 
 export function updateViewPathsAfterDeleteNode(
   views: Views,
-  nodeID: LongID
+  nodeID: LongID | ID
 ): Views {
   return views.filterNot((_, k) => k.includes(nodeID));
 }
@@ -688,7 +702,7 @@ function alterPath(
 
 export function updateViewPathsAfterDisconnect(
   views: Views,
-  disconnectNode: LongID,
+  disconnectNode: LongID | ID,
   fromRelation: LongID,
   nodeIndex: NodeIndex
 ): Views {

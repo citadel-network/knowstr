@@ -99,7 +99,7 @@ declare global {
   };
 
   type Relations = {
-    items: List<LongID>;
+    items: List<LongID | ID>;
     head: ID;
     id: LongID;
     type: ID;

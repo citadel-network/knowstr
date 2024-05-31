@@ -14,7 +14,11 @@ import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
 
-function addIDToFilter(filter: Filter, id: LongID, tag: `#${string}`): Filter {
+function addIDToFilter(
+  filter: Filter,
+  id: LongID | ID,
+  tag: `#${string}`
+): Filter {
   const d = filter[tag] || [];
   const local = splitID(id)[1];
   // TODO: Add unknown remotes? Or even better create a filter for each unknown remote to query specific ids
@@ -74,7 +78,7 @@ export function filtersToFilterArray(filters: Filters): Filter[] {
   ].filter((f) => f !== undefined) as Filter[];
 }
 
-export function addNodeToFilters(filters: Filters, id: LongID): Filters {
+export function addNodeToFilters(filters: Filters, id: LongID | ID): Filters {
   return {
     ...filters,
     knowledgeNodesByID: addIDToFilter(filters.knowledgeNodesByID, id, "#d"),
@@ -84,7 +88,7 @@ export function addNodeToFilters(filters: Filters, id: LongID): Filters {
 
 export function addReferencedByToFilters(
   filters: Filters,
-  id: LongID
+  id: LongID | ID
 ): Filters {
   const filter = filters.referencedBy;
   const d = filter["#i"] || [];
@@ -98,7 +102,10 @@ export function addReferencedByToFilters(
   };
 }
 
-function addSocialListToFilters(filters: Filters, nodeID: LongID): Filters {
+function addSocialListToFilters(
+  filters: Filters,
+  nodeID: LongID | ID
+): Filters {
   return {
     ...filters,
     knowledgeListByHead: addIDToFilter(
@@ -112,7 +119,7 @@ function addSocialListToFilters(filters: Filters, nodeID: LongID): Filters {
 export function addListToFilters(
   filters: Filters,
   listID: LongID,
-  nodeID: LongID
+  nodeID: LongID | ID
 ): Filters {
   if (listID === REFERENCED_BY) {
     return addReferencedByToFilters(filters, nodeID);
