@@ -195,6 +195,5 @@ export function newNode(text: string, myself: PublicKey): KnowNode {
   return {
     text,
     id: joinID(myself, v4()),
-    author: myself,
   };
 }

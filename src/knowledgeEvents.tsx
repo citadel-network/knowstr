@@ -49,7 +49,6 @@ export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
     return rdx.set(id, {
       id: joinID(event.pubkey, id),
       text: event.content,
-      author: event.pubkey as PublicKey,
     });
   }, Map<string, KnowNode>());
 }

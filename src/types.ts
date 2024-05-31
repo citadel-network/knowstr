@@ -110,7 +110,6 @@ declare global {
   type KnowNode = {
     id: LongID;
     text: string;
-    author: PublicKey;
   };
 
   type Views = Map<string, View>;
