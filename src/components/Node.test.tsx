@@ -4,7 +4,15 @@ import { List, Map } from "immutable";
 import userEvent from "@testing-library/user-event";
 import { addRelationToRelations, newNode } from "../connections";
 import { DND } from "../dnd";
-import { ALICE, renderWithTestData, setup } from "../utils.test";
+import {
+  ALICE,
+  BOB,
+  findNodeByText,
+  follow,
+  renderWithTestData,
+  setup,
+  setupTestDB,
+} from "../utils.test";
 import {
   NodeIndex,
   PushNode,
@@ -61,6 +69,8 @@ test("Render non existing Node", async () => {
   await screen.findByText("Error: Node not found");
 });
 
+const EDIT_MY_NOTE = "edit My Note";
+
 test("Edit node via Column Menu", async () => {
   const [alice] = setup([ALICE]);
   const { publicKey } = alice().user;
@@ -85,13 +95,37 @@ test("Edit node via Column Menu", async () => {
     }
   );
   await screen.findByText("My Note");
-  fireEvent.click(screen.getByLabelText("edit My Note"));
+  fireEvent.click(screen.getByLabelText(EDIT_MY_NOTE));
   userEvent.keyboard(
     "{backspace}{backspace}{backspace}{backspace}edited Note{enter}"
   );
   fireEvent.click(screen.getByLabelText("save"));
   expect(screen.queryByText("Save")).toBeNull();
   await screen.findByText("My edited Note");
+});
+
+test("Cannot edit remote Note", async () => {
+  const [alice, bob] = setup([ALICE, BOB]);
+  await follow(alice, bob().user.publicKey);
+  const bobsDB = await setupTestDB(bob(), [["My Note", []]]);
+  const note = findNodeByText(bobsDB, "My Note") as KnowNode;
+  renderWithTestData(
+    <RootViewContextProvider root={note.id}>
+      <LoadNode>
+        <TemporaryViewProvider>
+          <DND>
+            <Column />
+          </DND>
+        </TemporaryViewProvider>
+      </LoadNode>
+    </RootViewContextProvider>,
+    {
+      ...alice(),
+      initialRoute: `/w/${note.id}`,
+    }
+  );
+  await screen.findByText("My Note");
+  expect(screen.queryByLabelText(EDIT_MY_NOTE)).toBeNull();
 });
 
 test("Edit node inline", async () => {

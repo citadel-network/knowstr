@@ -9,8 +9,9 @@ import {
   useParentNode,
   useRelationIndex,
   getRelationIndex,
+  useNodeID,
 } from "../ViewContext";
-import { getRelations } from "../connections";
+import { getRelations, splitID } from "../connections";
 import { useData } from "../DataContext";
 
 type MultiSelectionState = {
@@ -204,11 +205,17 @@ export function toggleEditing(
   };
 }
 
-export function ToggleEditing(): JSX.Element {
+export function ToggleEditing(): JSX.Element | null {
+  const { user } = useData();
+  const [nodeID] = useNodeID();
   const [node] = useNode();
   const ariaLabel = node ? `edit ${node.text}` : undefined;
   const { editingViews, setEditingState } = useTemporaryView();
   const viewKey = useViewKey();
+  const [remote] = splitID(nodeID);
+  if (remote !== user.publicKey) {
+    return null;
+  }
   const onClick = (): void =>
     setEditingState(toggleEditing(editingViews, viewKey));
 
