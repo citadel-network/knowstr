@@ -65,8 +65,6 @@ export async function execute({
   }
   const { user } = plan;
   if (!isUserLoggedIn(user)) {
-    // eslint-disable-next-line no-console
-    console.warn("User not logged in");
     return Map();
   }
   const finalizedEvents = plan.publishEvents.map((e) =>

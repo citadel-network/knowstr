@@ -5,6 +5,8 @@ import { nip19 } from "nostr-tools";
 import QRCode from "react-qr-code";
 import { Button, FormControlWrapper } from "citadel-commons";
 import { useData } from "../DataContext";
+import { isUserLoggedIn } from "../NostrAuthContext";
+import { SignInModal } from "../SignIn";
 
 type Identifier = "none" | "npub" | "nprofile" | "invite";
 
@@ -77,6 +79,9 @@ export function Profile(): JSX.Element {
   const { user } = useData();
   const [copied, setCopied] = useState<Identifier>("none");
   const [qrCodeIdentifier, setQrCodeIdentifier] = useState<Identifier>("none");
+  if (!isUserLoggedIn(user)) {
+    return <SignInModal />;
+  }
 
   const onHide = (): void => {
     navigate("/");
@@ -85,6 +90,7 @@ export function Profile(): JSX.Element {
   const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text);
   };
+
   const npub = nip19.npubEncode(user.publicKey);
   const nprofile = nip19.nprofileEncode({ pubkey: user.publicKey });
   const inviteLink = `${window.location.origin}/follow?publicKey=${user.publicKey}`;

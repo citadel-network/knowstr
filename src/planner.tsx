@@ -27,6 +27,7 @@ type RepublishEvents = (events: List<Event>, relayUrl: string) => Promise<void>;
 type Context = {
   executePlan: ExecutePlan;
   republishEvents: RepublishEvents;
+  setPublishEvents: Dispatch<SetStateAction<PublishEvents>>;
 };
 
 const PlanningContext = React.createContext<Context | undefined>(undefined);
@@ -106,7 +107,11 @@ export function PlanningContextProvider({
 
   return (
     <PlanningContext.Provider
-      value={{ executePlan, republishEvents: republishEventsOnRelay }}
+      value={{
+        executePlan,
+        republishEvents: republishEventsOnRelay,
+        setPublishEvents,
+      }}
     >
       {children}
     </PlanningContext.Provider>
@@ -128,6 +133,7 @@ type Planner = {
   createPlan: () => Plan;
   executePlan: ExecutePlan;
   republishEvents: RepublishEvents;
+  setPublishEvents: Dispatch<SetStateAction<PublishEvents>>;
 };
 
 export function usePlanner(): Planner {
@@ -146,6 +152,7 @@ export function usePlanner(): Planner {
     createPlan: createPlanningContext,
     executePlan: planningContext.executePlan,
     republishEvents: planningContext.republishEvents,
+    setPublishEvents: planningContext.setPublishEvents,
   };
 }
 

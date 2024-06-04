@@ -1,8 +1,8 @@
 import React from "react";
-import { fireEvent, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { nip19 } from "nostr-tools";
-import { renderWithTestData } from "./utils.test";
+import { renderWithTestData, typeNewNode } from "./utils.test";
 import { NostrAuthContextProvider } from "./NostrAuthContext";
 import { App } from "./App";
 
@@ -16,6 +16,7 @@ test("Login and logout with seed phrase", async () => {
       <App />
     </NostrAuthContextProvider>
   );
+  userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
     await screen.findByLabelText("Sign In"),
     "leader monkey parrot ring guide accident before fence cannon height naive bean{enter}"
@@ -41,6 +42,7 @@ test("Login with nsec", async () => {
       <App />
     </NostrAuthContextProvider>
   );
+  userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
     await screen.findByLabelText("Sign In"),
     "nsec10allq0gjx7fddtzef0ax00mdps9t2kmtrldkyjfs8l5xruwvh2dq0lhhkp{enter}"
@@ -56,6 +58,7 @@ test("Login with private key", async () => {
       <App />
     </NostrAuthContextProvider>
   );
+  userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
     await screen.findByLabelText("Sign In"),
     "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
@@ -71,9 +74,50 @@ test("Display Error", async () => {
       <App />
     </NostrAuthContextProvider>
   );
+  userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
     await screen.findByLabelText("Sign In"),
     "0000completenonsense{enter}"
   );
   await screen.findByText("Input is not a valid nsec, private key or mnemonic");
+});
+
+test("Sign in persists created Notes", async () => {
+  const view = renderWithTestData(
+    <NostrAuthContextProvider>
+      <App />
+    </NostrAuthContextProvider>
+  );
+  typeNewNode(view, "Hello World!");
+  userEvent.click(await screen.findByText("Sign in to Save"));
+  userEvent.type(
+    await screen.findByLabelText("Sign In"),
+    "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
+  );
+
+  // After login the note is still there
+  screen.getByText("Hello World!");
+  // Logout and clear screen
+  fireEvent.click(await screen.findByLabelText("open menu"));
+  fireEvent.click(await screen.findByLabelText("logout"));
+  cleanup();
+
+  // Open App
+  renderWithTestData(
+    <NostrAuthContextProvider>
+      <App />
+    </NostrAuthContextProvider>,
+    {
+      relayPool: view.relayPool,
+    }
+  );
+  expect(screen.queryAllByText("Hello World!").length).toBe(0);
+
+  userEvent.click(await screen.findByLabelText("sign in"));
+  userEvent.type(
+    await screen.findByLabelText("Sign In"),
+    "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
+  );
+  // After login the note is still there
+  await screen.findByText("Hello World!");
 });

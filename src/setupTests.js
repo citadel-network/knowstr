@@ -23,8 +23,11 @@ beforeAll(() => {
     if (
       !(
         msg.toString().includes("An update to %s inside a test") &&
-        (params === "NostrQueryProvider" || params === "Data")
-      )
+        (params === "NostrQueryProvider" ||
+          params === "Data" ||
+          params === "LoadNode")
+      ) &&
+      !msg.toString().includes("Not implemented: navigation")
     ) {
       originalError(msg, params);
     }
@@ -36,6 +39,7 @@ beforeAll(() => {
     }
   };
 });
+
 afterAll(() => {
   // eslint-disable-next-line functional/immutable-data
   console.error = originalError;

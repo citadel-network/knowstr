@@ -13,6 +13,7 @@ import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
+import { isUserLoggedIn } from "./NostrAuthContext";
 
 function addIDToFilter(
   filter: Filter,
@@ -246,7 +247,7 @@ export function LoadNode({
   const filterArray = filtersToFilterArray(filter);
   const { knowledgeDBs, eose, allEventsProcessed } =
     useQueryKnowledgeData(filterArray);
-  if (waitForEose === true && !eose) {
+  if (isUserLoggedIn(user) && waitForEose === true && !eose) {
     const haveNode = getNodeFromID(knowledgeDBs, nodeID, user.publicKey);
     if (!haveNode) {
       return <div className="loading" aria-label="loading" />;

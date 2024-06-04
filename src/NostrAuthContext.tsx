@@ -50,7 +50,7 @@ function userFromPrivateKey(privateKey: string): User {
   };
 }
 
-export function useLogin(): (privateKey: string) => void {
+export function useLogin(): (privateKey: string) => User {
   const context = React.useContext(NostrAuthContext);
   const { fileStore } = useApis();
   const { setLocalStorage } = fileStore;
@@ -59,7 +59,9 @@ export function useLogin(): (privateKey: string) => void {
   }
   return (privateKey) => {
     setLocalStorage("privateKey", privateKey);
-    context.setBlockstackUser(userFromPrivateKey(privateKey));
+    const user = userFromPrivateKey(privateKey);
+    context.setBlockstackUser(user);
+    return user;
   };
 }
 
@@ -78,6 +80,7 @@ export function useLogout(): () => void {
       deleteLocalStorage(publicKey);
     }
     deleteLocalStorage("privateKey");
+    window.location.reload();
   };
 }
 

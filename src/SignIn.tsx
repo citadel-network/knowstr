@@ -1,17 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Card, Form } from "react-bootstrap";
+import { Form, Modal } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getPublicKey, nip19 } from "nostr-tools";
+import { UnsignedEvent, getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import {
-  ErrorMessage,
-  createSubmitHandler,
-  Button,
-  StandaloneCard,
-} from "citadel-commons";
-import { useLogin } from "./NostrAuthContext";
+import { ErrorMessage, createSubmitHandler, Button } from "citadel-commons";
+import { List } from "immutable";
+import { isUserLoggedIn, useLogin } from "./NostrAuthContext";
+import { useData } from "./DataContext";
+import { Plan, usePlanner } from "./planner";
+import { UNAUTHENTICATED_USER_PK } from "./AppState";
+import { execute } from "./executor";
+import { useApis } from "./Apis";
 
 /* eslint-disable no-empty */
 function convertInputToPrivateKey(input: string): string | undefined {
@@ -108,26 +109,103 @@ function SignInWithSeed({
   );
 }
 
-export function SignInFullScreen(): JSX.Element {
-  const path = useLocation();
+type LocationState = {
+  referrer?: string;
+};
+
+function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
+  // TODO: This feels quite dangerous
+  const replacedTags = event.tags.map((tag) =>
+    tag.map((t) => t.replaceAll(UNAUTHENTICATED_USER_PK, event.pubkey))
+  );
+  return {
+    ...event,
+    content: event.content.replaceAll(UNAUTHENTICATED_USER_PK, event.pubkey),
+    tags: replacedTags,
+  };
+}
+
+function planRewriteUnpublishedEvents(
+  plan: Plan,
+  events: List<UnsignedEvent>
+): Plan {
+  const allEvents = plan.publishEvents.concat(events);
+  const rewrittenEvents = allEvents.map((event) =>
+    rewriteIDs({
+      ...event,
+      pubkey: plan.user.publicKey,
+    })
+  );
+  return {
+    ...plan,
+    publishEvents: rewrittenEvents,
+  };
+}
+
+export function SignInModal(): JSX.Element {
   const login = useLogin();
   const navigate = useNavigate();
-  document.body.classList.add("background");
+  const location = useLocation();
+  const { publishEventsStatus } = useData();
+  const { relayPool, finalizeEvent } = useApis();
+  const { createPlan, setPublishEvents } = usePlanner();
+  const referrer =
+    (location.state as LocationState | undefined)?.referrer || "/";
+  const onHide = (): void => {
+    navigate(referrer);
+  };
+  const setPrivateKey = async (pk: string): Promise<void> => {
+    const user = login(pk);
+    const plan = planRewriteUnpublishedEvents(
+      { ...createPlan(), user },
+      publishEventsStatus.unsignedEvents
+    );
+    if (plan.publishEventsStatus.unsignedEvents.size === 0) {
+      onHide();
+      return;
+    }
+    const results = await execute({
+      plan,
+      relayPool,
+      relays: plan.relays.filter((r) => r.write === true),
+      finalizeEvent,
+    });
+    setPublishEvents(() => {
+      return {
+        unsignedEvents: plan.publishEvents, // TODO: or better to empty it?
+        results,
+        isLoading: false,
+      };
+    });
+    onHide();
+  };
   return (
-    <StandaloneCard>
-      <div>
-        <Card.Title className="text-center">
-          <h1>Login</h1>
-        </Card.Title>
-        <SignInWithSeed
-          setPrivateKey={(pk) => {
-            login(pk);
-            navigate(path.pathname.startsWith("/signin") ? "/" : path, {
-              replace: true,
-            });
-          }}
-        />
-      </div>
-    </StandaloneCard>
+    <Modal show onHide={onHide}>
+      <Modal.Header closeButton>
+        <Modal.Title>Login</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <SignInWithSeed setPrivateKey={setPrivateKey} />
+      </Modal.Body>
+    </Modal>
+  );
+}
+
+export function SignInMenuBtn(): JSX.Element | null {
+  const { user, publishEventsStatus } = useData();
+  const navigate = useNavigate();
+  if (isUserLoggedIn(user)) {
+    return null;
+  }
+  const unsavedChanges = publishEventsStatus.unsignedEvents.size > 0;
+  return (
+    <Button
+      ariaLabel="sign in"
+      className="btn font-size-small"
+      onClick={() => navigate("/signin")}
+    >
+      {unsavedChanges && <span style={{ color: "red" }}>Sign in to Save</span>}
+      {!unsavedChanges && <span className="simple-icon-login" />}
+    </Button>
   );
 }

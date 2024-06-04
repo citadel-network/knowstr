@@ -10,6 +10,8 @@ import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
 import { planPublishSettings, usePlanner } from "../planner";
 import { PublishingStatus } from "./PublishingStatus";
+import { SignInMenuBtn } from "../SignIn";
+import { isUserLoggedIn } from "../NostrAuthContext";
 
 type NavBarProps = {
   logout: () => void;
@@ -20,7 +22,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const [isError, setIsError] = useState<boolean>(false);
-  const { settings } = useData();
+  const { settings, user } = useData();
   const isBionic = settings.bionicReading;
   const onToggleBionic = async (): Promise<void> => {
     try {
@@ -36,6 +38,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
       console.error(e);
     }
   };
+  const isLoggedIn = isUserLoggedIn(user);
 
   const isMobile = useMediaQuery(IS_MOBILE);
 
@@ -66,6 +69,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
         )}
         <div className="navbar-right">
           <PublishingStatus />
+          <SignInMenuBtn />
           <NotificationCenter />
           <Dropdown className="options-dropdown">
             <Dropdown.Toggle
@@ -120,15 +124,17 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
                   Turn {isBionic ? "off" : "on"} Bionic Reading
                 </div>
               </Dropdown.Item>
-              <Dropdown.Item
-                className="d-flex workspace-selection"
-                onClick={logout}
-                aria-label="logout"
-                tabIndex={0}
-              >
-                <span className="simple-icon-logout d-block dropdown-item-icon" />
-                <div className="workspace-selection-text">Log Out</div>
-              </Dropdown.Item>
+              {isLoggedIn && (
+                <Dropdown.Item
+                  className="d-flex workspace-selection"
+                  onClick={logout}
+                  aria-label="logout"
+                  tabIndex={0}
+                >
+                  <span className="simple-icon-logout d-block dropdown-item-icon" />
+                  <div className="workspace-selection-text">Log Out</div>
+                </Dropdown.Item>
+              )}
             </Dropdown.Menu>
           </Dropdown>
         </div>
