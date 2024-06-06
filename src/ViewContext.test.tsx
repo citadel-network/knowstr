@@ -1,13 +1,14 @@
 import React from "react";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { List, Map } from "immutable";
+import { List, Map, OrderedMap } from "immutable";
 import Data from "./Data";
 import {
   newNode,
   addRelationToRelations,
   bulkAddRelations,
   joinID,
+  shortID,
 } from "./connections";
 import { execute } from "./executor";
 import {
@@ -33,6 +34,7 @@ import {
   parseViewPath,
   updateViewPathsAfterDisconnect,
   NodeIndex,
+  getDefaultRelationForNode,
 } from "./ViewContext";
 import { WorkspaceView } from "./components/Workspace";
 import { TreeView } from "./components/TreeView";
@@ -298,4 +300,57 @@ test("Parse View path", () => {
     { nodeID: "pl", nodeIndex: 0, relationsID: "rl" },
     { nodeID: "oop", nodeIndex: 1 },
   ]);
+});
+
+test("Default Relations are deterministic", () => {
+  const node = newNode("Node", ALICE.publicKey);
+  const nodes = Map<KnowNode>({ [node.id]: node });
+  const relationTypes = OrderedMap<{ color: string; label: string }>({
+    "": { color: "", label: "Default" },
+  })
+    .set("pro", { color: "green", label: "Pro" })
+    .set("contra", { color: "red", label: "Contra" });
+
+  const pro = {
+    items: List<LongID>(),
+    id: "pro" as LongID,
+    type: "pro",
+    head: shortID(node.id),
+    updated: 0,
+    author: ALICE.publicKey,
+  };
+  const contra = {
+    items: List<LongID>(),
+    id: "contra" as LongID,
+    type: "contra",
+    head: shortID(node.id),
+    updated: 0,
+    author: ALICE.publicKey,
+  };
+  const def = {
+    items: List<LongID>(),
+    id: "default" as LongID,
+    type: "",
+    head: shortID(node.id),
+    updated: 0,
+    author: ALICE.publicKey,
+  };
+
+  const relations = Map<ID, Relations>([
+    ["pro", pro],
+    ["default", def],
+    ["contra", contra],
+  ] as [string, Relations][]);
+
+  const defaultRelation = getDefaultRelationForNode(
+    node.id,
+    Map<PublicKey, KnowledgeData>([[ALICE.publicKey, { relations, nodes }]] as [
+      PublicKey,
+      KnowledgeData
+    ][]),
+    ALICE.publicKey,
+    relationTypes,
+    Map<PublicKey, RelationTypes>()
+  );
+  expect(defaultRelation).toEqual("default");
 });

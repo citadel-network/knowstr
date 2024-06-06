@@ -71,7 +71,7 @@ function AddRelationsButton(): JSX.Element {
 
 function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
   const { createPlan, executePlan } = usePlanner();
-  const { user, views } = useData();
+  const { user, views, relationTypes, contactsRelationTypes } = useData();
   const viewPath = useViewPath();
   const [nodeID, view] = useNodeID();
 
@@ -85,7 +85,9 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
         relations: getDefaultRelationForNode(
           nodeID,
           deleteRelationsPlan.knowledgeDBs,
-          user.publicKey
+          user.publicKey,
+          relationTypes,
+          contactsRelationTypes
         ),
       })
     );
@@ -499,7 +501,8 @@ export function SelectRelations({
   readonly?: boolean;
   alwaysOneSelected?: boolean;
 }): JSX.Element | null {
-  const { knowledgeDBs, user } = useData();
+  const { knowledgeDBs, user, relationTypes, contactsRelationTypes } =
+    useData();
   const [node, view] = useNode();
   if (!node) {
     return null;
@@ -513,7 +516,9 @@ export function SelectRelations({
   const relations = getAvailableRelationsForNode(
     knowledgeDBs,
     user.publicKey,
-    node.id
+    node.id,
+    relationTypes,
+    contactsRelationTypes
   );
   const groupedByType = relations.groupBy((r) => r.type);
   return (

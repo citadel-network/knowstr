@@ -1,5 +1,5 @@
 import React from "react";
-import { List, Set, Map } from "immutable";
+import { List, Set, Map, OrderedMap } from "immutable";
 import { v4 } from "uuid";
 import {
   getRelations,
@@ -96,27 +96,59 @@ function getViewExactMatch(views: Views, path: ViewPath): View | undefined {
   return views.get(viewKey);
 }
 
+function findIndexOfRelationType(
+  types: RelationTypes,
+  type: ID
+): number | number {
+  return types.keySeq().findIndex((k) => k === type);
+}
+
+function sortRelationsAccordingToType(
+  relations: List<Relations>,
+  relationTypes: RelationTypes
+): List<Relations> {
+  return relations.sort((a, b) => {
+    const indexA = findIndexOfRelationType(relationTypes, a.type);
+    const indexB = findIndexOfRelationType(relationTypes, b.type);
+    if (indexA === undefined || indexB === undefined) {
+      return 0;
+    }
+    return indexA - indexB;
+  });
+}
+
 export function getAvailableRelationsForNode(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  id: LongID | ID
+  id: LongID | ID,
+  relationTypes: RelationTypes,
+  contactRelationTypes: Map<PublicKey, RelationTypes>
 ): List<Relations> {
   const myRelations = knowledgeDBs.get(myself, newDB()).relations;
   const [remote, localID] = splitID(id);
-  const relations: List<Relations> = myRelations
-    .filter((r) => r.head === localID)
-    .toList();
+  const relations: List<Relations> = sortRelationsAccordingToType(
+    myRelations.filter((r) => r.head === localID).toList(),
+    relationTypes
+  );
 
   const preferredRemoterelations: List<Relations> =
     remote && isRemote(remote, myself)
-      ? knowledgeDBs
-          .get(remote, newDB())
-          .relations.filter((r) => r.head === localID)
-          .toList()
+      ? sortRelationsAccordingToType(
+          knowledgeDBs
+            .get(remote, newDB())
+            .relations.filter((r) => r.head === localID)
+            .toList(),
+          contactRelationTypes.get(remote, OrderedMap())
+        )
       : List<Relations>();
   const otherRelations: List<Relations> = knowledgeDBs
     .filter((_, k) => k !== myself && k !== remote)
-    .map((db) => db.relations.filter((r) => r.head === localID).toList())
+    .map((db, auth) =>
+      sortRelationsAccordingToType(
+        db.relations.filter((r) => r.head === localID).toList(),
+        contactRelationTypes.get(auth, OrderedMap())
+      )
+    )
     .toList()
     .flatten(1) as List<Relations>;
   return relations.concat(preferredRemoterelations).concat(otherRelations);
@@ -125,18 +157,34 @@ export function getAvailableRelationsForNode(
 export function getDefaultRelationForNode(
   id: LongID | ID,
   knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey
+  myself: PublicKey,
+  relationTypes: RelationTypes,
+  contactRelationTypes: Map<PublicKey, RelationTypes>
 ): LongID | undefined {
-  return getAvailableRelationsForNode(knowledgeDBs, myself, id).first()?.id;
+  return getAvailableRelationsForNode(
+    knowledgeDBs,
+    myself,
+    id,
+    relationTypes,
+    contactRelationTypes
+  ).first()?.id;
 }
 
 function getDefaultView(
   id: LongID | ID,
   knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey
+  myself: PublicKey,
+  relationTypes: RelationTypes,
+  contactRelationTypes: Map<PublicKey, RelationTypes>
 ): View {
   return {
-    relations: getDefaultRelationForNode(id, knowledgeDBs, myself),
+    relations: getDefaultRelationForNode(
+      id,
+      knowledgeDBs,
+      myself,
+      relationTypes,
+      contactRelationTypes
+    ),
     displaySubjects: false,
     width: 1,
     expanded: false,
@@ -179,7 +227,13 @@ export function getViewFromPath(data: Data, path: ViewPath): View {
   const { nodeID } = getLast(path);
   return (
     getViewExactMatch(data.views, path) ||
-    getDefaultView(nodeID, data.knowledgeDBs, data.user.publicKey)
+    getDefaultView(
+      nodeID,
+      data.knowledgeDBs,
+      data.user.publicKey,
+      data.relationTypes,
+      data.contactsRelationTypes
+    )
   );
 }
 
