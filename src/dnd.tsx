@@ -7,7 +7,6 @@ import { bulkAddRelations, getRelations, moveRelations } from "./connections";
 import {
   parseViewPath,
   upsertRelations,
-  getParentNode,
   getParentKey,
   ViewPath,
   getParentView,
@@ -15,6 +14,7 @@ import {
   updateViewPathsAfterMoveRelations,
   getRelationIndex,
   getNodeIDFromView,
+  getParentNodeID,
 } from "./ViewContext";
 import { getNodesInTree } from "./components/Node";
 import { Plan, planUpdateViews } from "./planner";
@@ -75,19 +75,7 @@ export function dnd(
   const selectedSources = getSelectedInView(selection, getParentKey(source));
   const sources = selection.contains(source) ? selectedSources : List([source]);
 
-  const sourceNodes = List(
-    sources.map((s) => {
-      const path = parseViewPath(s);
-      const [nodeID] = getNodeIDFromView(plan, path);
-      return nodeID;
-    })
-  );
-  const sourceIndices = List(
-    sources.map((n) => getRelationIndex(plan, parseViewPath(n)))
-  ).filter((n) => n !== undefined) as List<number>;
-
-  const [fromRepo, fromView] = getParentNode(plan, sourceViewPath);
-
+  const [fromRepoID, fromView] = getParentNodeID(plan, sourceViewPath);
   const [toView, dropIndex] =
     indexTo === undefined
       ? [rootView, undefined]
@@ -95,36 +83,51 @@ export function dnd(
 
   const [toNodeID, toV] = getNodeIDFromView(plan, toView);
 
-  // TODO: this can be optimized
   const move =
     dropIndex !== undefined &&
-    fromRepo !== undefined &&
-    toNodeID === fromRepo.id &&
+    fromRepoID !== undefined &&
+    toNodeID === fromRepoID &&
     fromView.relations === toV.relations;
 
+  if (move) {
+    const sourceIndices = List(
+      sources.map((n) => getRelationIndex(plan, parseViewPath(n)))
+    ).filter((n) => n !== undefined) as List<number>;
+    const updatedRelationsPlan = upsertRelations(
+      plan,
+      toView,
+      (relations: Relations) => {
+        return moveRelations(relations, sourceIndices.toArray(), dropIndex);
+      }
+    );
+    const updatedViews = updateViewPathsAfterMoveRelations(
+      updatedRelationsPlan,
+      toView,
+      sourceIndices.toArray(),
+      dropIndex
+    );
+    return planUpdateViews(updatedRelationsPlan, updatedViews);
+  }
+  const sourceNodes = List(
+    sources.map((s) => {
+      const path = parseViewPath(s);
+      const [nodeID] = getNodeIDFromView(plan, path);
+      return nodeID;
+    })
+  );
   const updatedRelationsPlan = upsertRelations(
     plan,
     toView,
     (relations: Relations) => {
-      if (move) {
-        return moveRelations(relations, sourceIndices.toArray(), dropIndex);
-      }
       return bulkAddRelations(relations, sourceNodes.toArray(), dropIndex);
     }
   );
-  const updatedViews = move
-    ? updateViewPathsAfterMoveRelations(
-        updatedRelationsPlan,
-        toView,
-        sourceIndices.toArray(),
-        dropIndex
-      )
-    : bulkUpdateViewPathsAfterAddRelation(
-        updatedRelationsPlan,
-        toView,
-        sourceNodes.size,
-        dropIndex
-      );
+  const updatedViews = bulkUpdateViewPathsAfterAddRelation(
+    updatedRelationsPlan,
+    toView,
+    sourceNodes.size,
+    dropIndex
+  );
   return planUpdateViews(updatedRelationsPlan, updatedViews);
 }
 

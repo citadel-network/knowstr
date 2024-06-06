@@ -392,6 +392,17 @@ export function getParentNode(
   return getNodeFromView(data, parentPath);
 }
 
+export function getParentNodeID(
+  data: Data,
+  viewPath: ViewPath
+): [LongID | ID, View] | [undefined, undefined] {
+  const parentPath = popPath(viewPath);
+  if (!parentPath) {
+    return [undefined, undefined];
+  }
+  return getNodeIDFromView(data, parentPath);
+}
+
 export function useParentNode(): [KnowNode, View] | [undefined, undefined] {
   return getParentNode(useData(), useViewPath());
 }
