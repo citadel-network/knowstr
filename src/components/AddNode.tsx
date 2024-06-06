@@ -18,10 +18,6 @@ import {
   getParentView,
   useViewKey,
   upsertRelations,
-  addNodeToPath,
-  getRelationsFromView,
-  updateView,
-  getViewFromPath,
 } from "../ViewContext";
 import useModal from "./useModal";
 import { ESC, SearchModal } from "./SearchModal";
@@ -34,7 +30,7 @@ import {
   useTemporaryView,
   useIsEditorOpen,
 } from "./TemporaryViewContext";
-import { Plan, planUpdateViews, planUpsertNode, usePlanner } from "../planner";
+import { Plan, planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
 
 function AddNodeButton({
@@ -240,26 +236,7 @@ export function AddColumn(): JSX.Element {
         items: relations.items.push(nodeID),
       })
     );
-    const rels = getRelationsFromView(updateRelationsPlan, viewPath);
-    if (!rels) {
-      // If this happens something went wrong
-      throw new Error("No relations found to add column");
-    }
-    const viewPathOfChild = addNodeToPath(
-      updateRelationsPlan,
-      viewPath,
-      rels.items.size - 1
-    );
-    // Explicitly write this views into the dashboard as we are gonna use this to determine which
-    // nodes we need to fetch
-    const updateViewsPlan = planUpdateViews(
-      updateRelationsPlan,
-      updateView(updateRelationsPlan.views, viewPathOfChild, {
-        ...getViewFromPath(updateRelationsPlan, viewPathOfChild),
-        expanded: true,
-      })
-    );
-    executePlan(updateViewsPlan);
+    executePlan(updateRelationsPlan);
   };
 
   const onCreateNewNode = (text: string): void => {
