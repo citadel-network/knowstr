@@ -103,7 +103,7 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
 
 type ChangeRelation = (relations: Relations, expand: boolean) => void;
 
-function useOnChangeRelations(): undefined | ChangeRelation {
+function useOnChangeRelations(): ChangeRelation {
   const data = useData();
   const { editorOpenViews, setEditorOpenState } = useTemporaryView();
   const viewPath = useViewPath();
@@ -503,20 +503,17 @@ export function SelectRelations({
 }): JSX.Element | null {
   const { knowledgeDBs, user, relationTypes, contactsRelationTypes } =
     useData();
-  const [node, view] = useNode();
-  if (!node) {
-    return null;
-  }
+  const [nodeID, view] = useNodeID();
   const currentRelations = getRelations(
     knowledgeDBs,
     view.relations,
     user.publicKey,
-    node.id
+    nodeID
   );
   const relations = getAvailableRelationsForNode(
     knowledgeDBs,
     user.publicKey,
-    node.id,
+    nodeID,
     relationTypes,
     contactsRelationTypes
   );

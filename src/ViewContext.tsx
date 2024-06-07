@@ -131,7 +131,7 @@ export function getAvailableRelationsForNode(
     relationTypes
   );
 
-  const preferredRemoterelations: List<Relations> =
+  const preferredRemoteRelations: List<Relations> =
     remote && isRemote(remote, myself)
       ? sortRelationsAccordingToType(
           knowledgeDBs
@@ -151,7 +151,7 @@ export function getAvailableRelationsForNode(
     )
     .toList()
     .flatten(1) as List<Relations>;
-  return relations.concat(preferredRemoterelations).concat(otherRelations);
+  return relations.concat(preferredRemoteRelations).concat(otherRelations);
 }
 
 export function getDefaultRelationForNode(
