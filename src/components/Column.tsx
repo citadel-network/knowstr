@@ -6,8 +6,7 @@ import { bulkAddRelations } from "../connections";
 import { FileDropZone } from "./FileDropZone";
 import { Indent } from "./Node";
 import { ColumnMenu } from "./Menu";
-import { ToggleEditing, useDeselectAllInView } from "./TemporaryViewContext";
-import { RemoveColumnButton } from "./RemoveColumnButton";
+import { useDeselectAllInView } from "./TemporaryViewContext";
 import { upsertRelations, useViewKey, useViewPath } from "../ViewContext";
 import { TreeView } from "./TreeView";
 import { AddNodeToNode } from "./AddNode";
@@ -15,7 +14,6 @@ import { Plan, usePlanner } from "../planner";
 import { IS_MOBILE } from "./responsive";
 import { DraggableNote } from "./Draggable";
 import { DroppableContainer } from "./DroppableContainer";
-import { ChangeColumnWidth } from "./ChangeColumnWidth";
 
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -38,16 +36,7 @@ export function Column(): JSX.Element | null {
       <FileDropZone onDrop={onDropFiles}>
         <UIColumnHeader>
           <DroppableContainer>
-            <div className="visible-on-hover">
-              <DraggableNote />
-              <div className="on-hover-menu left">
-                <RemoveColumnButton />
-              </div>
-              <div className="on-hover-menu right">
-                <ToggleEditing />
-                <ChangeColumnWidth />
-              </div>
-            </div>
+            <DraggableNote />
             <Card.Body className="p-0 overflow-y-hidden">
               <ColumnMenu />
             </Card.Body>

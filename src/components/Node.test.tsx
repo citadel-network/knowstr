@@ -30,7 +30,7 @@ import {
   planUpsertRelations,
 } from "../planner";
 import { execute } from "../executor";
-import { Node } from "./Node";
+import { DraggableNote } from "./Draggable";
 import { TreeView } from "./TreeView";
 import { LoadNode } from "../dataQuery";
 
@@ -151,7 +151,7 @@ test("Edit node inline", async () => {
               <TemporaryViewProvider>
                 <DND>
                   <LoadNode>
-                    <Node />
+                    <DraggableNote />
                   </LoadNode>
                 </DND>
               </TemporaryViewProvider>

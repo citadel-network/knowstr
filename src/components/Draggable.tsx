@@ -3,7 +3,9 @@ import { ConnectableElement, useDrag } from "react-dnd";
 import { ViewPath, useIsAddToNode, useViewPath } from "../ViewContext";
 import { NOTE_TYPE, Node } from "./Node";
 import { useDroppable } from "./DroppableContainer";
-import { useIsEditingOn } from "./TemporaryViewContext";
+import { ToggleEditing, useIsEditingOn } from "./TemporaryViewContext";
+import { RemoveColumnButton } from "./RemoveColumnButton";
+import { ChangeColumnWidth } from "./ChangeColumnWidth";
 
 export type DragItemType = {
   path: ViewPath;
@@ -43,8 +45,15 @@ const Draggable = React.forwardRef<HTMLDivElement, DraggableProps>(
 export function DraggableNote(): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
   return (
-    <div>
+    <div className="visible-on-hover">
       <Draggable ref={ref} />
+      <div className="on-hover-menu left">
+        <RemoveColumnButton />
+      </div>
+      <div className="on-hover-menu right">
+        <ToggleEditing />
+        <ChangeColumnWidth />
+      </div>
     </div>
   );
 }
@@ -67,5 +76,12 @@ export function ListItem({
   const className = `${dragDirection === 1 ? "dragging-over-top" : ""} ${
     dragDirection === -1 ? "dragging-over-bottom" : ""
   }`;
-  return <Draggable ref={ref} className={className} />;
+  return (
+    <div className="visible-on-hover">
+      <Draggable ref={ref} className={className} />
+      <div className="on-hover-menu right">
+        <ToggleEditing />
+      </div>
+    </div>
+  );
 }
