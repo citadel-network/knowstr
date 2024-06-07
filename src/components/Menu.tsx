@@ -7,7 +7,6 @@ import {
 } from "./TemporaryViewContext";
 import { DisconnectBtn } from "./DisconnectBtn";
 import { SelectRelations } from "./SelectRelations";
-import { ChangeColumnWidth } from "./ChangeColumnWidth";
 import { useNode, useViewKey } from "../ViewContext";
 import { IS_MOBILE } from "./responsive";
 import { getRelations } from "../connections";
@@ -25,12 +24,11 @@ export function ColumnMenu(): JSX.Element {
         {!isMultiSelectToggled && (
           <div className="menu-layout">
             <SelectRelations alwaysOneSelected />
-            <ToggleEditing />
           </div>
         )}
       </div>
       <div className="flex-row-end p-1">
-        {isMultiSelectToggled ? <DisconnectBtn /> : <ChangeColumnWidth />}
+        {isMultiSelectToggled && <DisconnectBtn />}
       </div>
     </div>
   );

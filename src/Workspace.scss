@@ -101,7 +101,6 @@ body {
   border: inset 1px black;
 }
 
-.close:focus,
 .input-group:focus-within,
 .dropdown-toggle:focus,
 .dropdown-item:focus,
@@ -578,14 +577,29 @@ body {
   margin-left: 30px;
 }
 
+.visible-on-hover {
+  position: relative;
 
-.column-extras {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  z-index: 20;
-  flex-direction: column;
-  height: min-content;
+  .on-hover-menu {
+    position: absolute;
+    top: 1px;
+    height: min-content;
+    visibility: hidden;
+  }
+
+  &:hover {
+    .on-hover-menu {
+      visibility: visible;
+    }
+  }
+
+  .left {
+    left: 1px;
+  }
+
+  .right {
+    right: 1px;
+  }
 }
 
 .btn-close {
@@ -594,17 +608,9 @@ body {
   &:after {
     content: "✕";
   }
-}
 
-.column-extras-close-btn {
-  background-color: transparent;
-  border: 0px;
-  font-size: 1.5rem;
-  border-radius: 4px;
-
-  &:hover,
-  &:active {
-    background: $dark-gray;
+  &.small {
+    font-size: 0.8rem;
   }
 }
 
