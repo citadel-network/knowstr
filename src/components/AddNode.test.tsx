@@ -57,3 +57,36 @@ test("Link Nodes from other Users", async () => {
   );
   await screen.findByText("Java");
 });
+
+test("Default Relations are shown when adding a node from other User via search", async () => {
+  const [alice, bob] = setup([ALICE, BOB]);
+  await follow(alice, bob().user.publicKey);
+
+  const oop = newNode("Object Oriented Languages", bob().user.publicKey);
+  const java = newNode("Java", bob().user.publicKey);
+  const relations = addRelationToRelations(
+    newRelations(oop.id, "" as ID, bob().user.publicKey),
+    java.id
+  );
+  const plan = planUpsertRelations(
+    planUpsertNode(planUpsertNode(createPlan(bob()), oop), java),
+    relations
+  );
+  await execute({
+    ...bob(),
+    plan,
+  });
+
+  renderApp({ ...alice(), includeFocusContext: true });
+  userEvent.type(await screen.findByText("My first Workspace"), "/");
+  screen.getByPlaceholderText("Search");
+  const searchInput = await screen.findByLabelText("search input");
+  userEvent.type(searchInput, "Object");
+  fireEvent.click(
+    await screen.findByText(matchSplitText("Object Oriented Languages"))
+  );
+  await screen.findByLabelText(
+    "show Default items of Object Oriented Languages"
+  );
+  screen.getByText("Java");
+});
