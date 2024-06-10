@@ -14,12 +14,11 @@ import { Profile } from "./components/Profile";
 export const FULL_SCREEN_PATH = "/d/:openNodeID";
 
 export function App(): JSX.Element {
-  const isMobile = useMediaQuery(IS_MOBILE);
   return (
     <Routes>
       <Route element={<RequireLogin />}>
         <Route path="/w/:workspaceID" element={<Dashboard />} />
-        {isMobile && <Route path={FULL_SCREEN_PATH} element={<MobileView />} />}
+        <Route path={FULL_SCREEN_PATH} element={<MobileView />} />
         <Route path="/" element={<Dashboard />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/follow" element={<Follow />} />

@@ -1,7 +1,7 @@
 import { List } from "immutable";
 import React, { useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
-import { matchPath, useLocation, useParams } from "react-router-dom";
+import { Link, matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import { textVide } from "text-vide";
 import DOMPurify from "dompurify";
@@ -23,6 +23,7 @@ import {
   addNodeToPath,
   addAddToNodeToPath,
   getNodeIDFromView,
+  useNodeID,
 } from "../ViewContext";
 import {
   NodeSelectbox,
@@ -179,6 +180,25 @@ function NodeContent(): JSX.Element {
   );
 }
 
+function NodeAutoLink({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element | null {
+  const { openNodeID: id } = useParams<{
+    openNodeID: string;
+  }>();
+  const [nodeID] = useNodeID();
+  const isMainNodeInFullscreenView = id !== undefined && id === nodeID;
+  return isMainNodeInFullscreenView ? (
+    <>{children}</>
+  ) : (
+    <Link className="no-underline" to={`/d/${escape(nodeID)}`}>
+      {children}
+    </Link>
+  );
+}
+
 function EditingNodeContent(): JSX.Element | null {
   const [node] = useNode();
   const { createPlan, executePlan } = usePlanner();
@@ -305,7 +325,12 @@ export function Node({
           {isMultiselect && <NodeSelectbox />}
           <div className="flex-column w-100">
             {isNodeBeingEdited && <EditingNodeContent />}
-            {!isNodeBeingEdited && <NodeContent />}
+            {!isNodeBeingEdited && isMobile && (
+              <NodeAutoLink>
+                <NodeContent />
+              </NodeAutoLink>
+            )}
+            {!isNodeBeingEdited && !isMobile && <NodeContent />}
             {displayMenu && <NodeMenu />}
           </div>
         </>
