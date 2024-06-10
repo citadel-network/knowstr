@@ -1,7 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { List } from "immutable";
-import { ModalNode, ModalNodeBody } from "citadel-commons";
 import {
   ViewContext,
   ViewPath,
@@ -12,8 +10,7 @@ import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { NavBar } from "./Navbar";
 import { DetailViewMenu } from "./Menu";
 import { AddNodeToNode } from "./AddNode";
-import { TreeView, TreeViewNodeLoader } from "./TreeView";
-import { DND } from "../dnd";
+import { TreeViewNodeLoader } from "./TreeView";
 import { FullScreenViewWrapper } from "./FullScreenViewWrapper";
 import { useLogout } from "../NostrAuthContext";
 import { useData } from "../DataContext";
@@ -75,25 +72,6 @@ export function MobileView(): JSX.Element | null {
           </div>
         </div>
       </div>
-    </FullScreenViewWrapper>
-  );
-}
-
-export function DesktopView(): JSX.Element {
-  const navigate = useNavigate();
-  const onHide = (): void => {
-    navigate("/");
-  };
-  return (
-    <FullScreenViewWrapper>
-      <ModalNode onHide={onHide}>
-        <ModalNodeBody>
-          <DetailView />
-          <DND>
-            <TreeView />
-          </DND>
-        </ModalNodeBody>
-      </ModalNode>
     </FullScreenViewWrapper>
   );
 }
