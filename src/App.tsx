@@ -1,9 +1,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import { useMediaQuery } from "react-responsive";
 import Dashboard from "./components/Dashboard";
 import { Follow } from "./components/Follow";
-import { IS_MOBILE } from "./components/responsive";
 import { MobileView } from "./components/FullScreenViews";
 import { RelaysWrapper } from "./components/RelaysWrapper";
 import { RequireLogin } from "./AppState";
