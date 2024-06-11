@@ -748,11 +748,11 @@ to {
 }
 
 .menu-layout {
-  display: grid;
-  grid-auto-columns: max-content;
-  grid-auto-flow: column;
-  grid-gap: 5px;
-  overflow-y: scroll;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  overflow-y: auto;
+  gap: 2px;
 }
 
 [class^="ribbon-"] {
