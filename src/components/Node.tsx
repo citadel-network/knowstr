@@ -106,15 +106,18 @@ function InlineEditor({
   useEffect(() => {
     if (ref.current) {
       ref.current.focus();
-      ref.current.getEditor().deleteText(0, 1000000);
-      ref.current.getEditor().insertText(0, node.text);
+      const quill = ref.current.getEditor();
+      quill.deleteText(0, 1000000);
+      quill.insertText(0, node.text);
     }
   }, []);
   const onSave = (): void => {
     if (!ref.current) {
       return;
     }
-    onCreateNode(ref.current.getEditor().getText());
+    const text = ref.current.getEditor().getText();
+    const isNewLineAdded = text.endsWith("\n");
+    onCreateNode(isNewLineAdded ? text.slice(0, -1) : text);
   };
   return (
     <>
@@ -160,10 +163,12 @@ function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
   return <div dangerouslySetInnerHTML={{ __html: bionicNodeText }} />;
 }
 
-function NodeContent(): JSX.Element {
+function NodeContent({ editOnClick }: { editOnClick?: boolean }): JSX.Element {
   const { settings } = useData();
   const [node] = useNode();
   const isLoading = useNodeIsLoading();
+  const viewKey = useViewKey();
+  const { editingViews, setEditingState } = useTemporaryView();
   if (isLoading) {
     return <LoadingNode />;
   }
@@ -171,12 +176,34 @@ function NodeContent(): JSX.Element {
     return <ErrorContent />;
   }
   const isBionic = settings.bionicReading;
+
+  const handleInteraction = (
+    event:
+      | React.KeyboardEvent<HTMLButtonElement>
+      | React.MouseEvent<HTMLButtonElement>
+  ): void => {
+    if (!editOnClick) {
+      return;
+    }
+    if (
+      (event instanceof KeyboardEvent && event.key === "Enter") ||
+      event.type === "click"
+    ) {
+      setEditingState(toggleEditing(editingViews, viewKey));
+    }
+  };
+
   return (
-    <div>
+    <button
+      type="button"
+      onClick={handleInteraction}
+      onKeyDown={handleInteraction}
+      className={`node-content-button ${editOnClick ? "border-on-hover" : ""}`}
+    >
       <span className="break-word">
         {isBionic ? <BionicText nodeText={node.text} /> : node.text}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -305,7 +332,9 @@ export function Node({
   const isMobile = useMediaQuery(IS_MOBILE);
   const viewPath = useViewPath();
   const isOpenInFullScreen = useIsOpenInFullScreen();
+  const isDesktopFullScreen = !isMobile && isOpenInFullScreen;
   const levels = getLevels(viewPath, isOpenInFullScreen);
+  const isDesktopFullScreenTitleNode = isDesktopFullScreen && levels === 0;
   const isAddToNode = useIsAddToNode();
   const isNodeBeingEdited = useIsEditingOn();
   const isMultiselect = useIsParentMultiselectBtnOn();
@@ -314,9 +343,7 @@ export function Node({
   return (
     <NodeCard
       className={cls}
-      cardBodyClassName={
-        !isMobile && isOpenInFullScreen ? "ps-2 pt-2 pb-2" : undefined
-      }
+      cardBodyClassName={isDesktopFullScreen ? "ps-2 pt-2 pb-2" : undefined}
     >
       {levels > 0 && <Indent levels={levels} />}
       {isAddToNode && levels !== 1 && <AddNodeToNode />}
@@ -325,10 +352,13 @@ export function Node({
           {isMultiselect && <NodeSelectbox />}
           <div className="flex-column w-100">
             {isNodeBeingEdited && <EditingNodeContent />}
-            {!isNodeBeingEdited && (
+            {!isNodeBeingEdited && !isDesktopFullScreenTitleNode && (
               <NodeAutoLink>
                 <NodeContent />
               </NodeAutoLink>
+            )}
+            {!isNodeBeingEdited && isDesktopFullScreenTitleNode && (
+              <NodeContent editOnClick />
             )}
             {displayMenu && <NodeMenu />}
           </div>
