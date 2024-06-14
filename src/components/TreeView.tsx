@@ -25,6 +25,7 @@ import {
   useQueryKnowledgeData,
 } from "../dataQuery";
 import { RegisterQuery } from "../LoadingStatus";
+import { shortID } from "../connections";
 
 const LOAD_EXTRA = 10;
 
@@ -61,7 +62,7 @@ export function TreeViewNodeLoader({
   return (
     <MergeKnowledgeDB knowledgeDBs={mergedDBs}>
       <RegisterQuery
-        nodesBeeingQueried={nodeIDs.toArray()}
+        nodesBeeingQueried={nodeIDs.map((longID) => shortID(longID)).toArray()}
         allEventsProcessed={allEventsProcessed}
       >
         {children}
