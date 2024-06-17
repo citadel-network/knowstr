@@ -1,4 +1,4 @@
-import { Set } from "immutable";
+import { List, Set } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
 import { newRelations } from "./ViewContext";
@@ -81,24 +81,38 @@ export function getSocialRelations(
   };
 }
 
+type ReferencedByHeadAndUpdated = Pick<Relations, "head" | "updated">;
+
 export function getReferencedByRelations(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
   nodeID: LongID | ID
 ): Relations | undefined {
   const rel = newRelations(nodeID, REFERENCED_BY, myself);
-  const items = knowledgeDBs.reduce((r, knowledgeDB) => {
-    return knowledgeDB.relations.reduce((rdx, relations) => {
+  const referencesOfAllDBs = knowledgeDBs.reduce((r, knowledgeDB) => {
+    const relationsOfDB = knowledgeDB.relations.reduce((rdx, relations) => {
       if (relations.items.includes(nodeID)) {
-        return rdx.push(relations.head);
+        if (!rdx.find((item) => item.head === relations.head)) {
+          return rdx.push({
+            head: relations.head as LongID,
+            updated: relations.updated,
+          });
+        }
       }
       return rdx;
     }, r);
-  }, rel.items);
+    return r.merge(relationsOfDB);
+  }, List<ReferencedByHeadAndUpdated>());
+  const items = referencesOfAllDBs
+    .filter(
+      (relation, index, self) =>
+        index === self.findIndex((t) => t.head === relation.head)
+    )
+    .sort((a, b) => a.updated - b.updated);
   return {
     ...rel,
     id: REFERENCED_BY,
-    items,
+    items: items.map((item) => item.head),
   };
 }
 

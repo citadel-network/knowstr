@@ -108,17 +108,17 @@ test("Show Referenced By", async () => {
   const references = await screen.findByLabelText("show references to Bitcoin");
   userEvent.click(references);
   expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
-    "Alice Workspace2",
+    "Money1",
     "+Default",
     "New Relation Type",
-    "Money1",
+    "Alice Workspace2",
     "+Default",
     "New Relation Type",
     "P2P Apps1",
     "+Default",
     "New Relation Type",
   ]);
-  // 3 References: WS, P2P Apps and Money
+  // 3 References: WS, P2P Apps and Money, sorted according to relations.updated
   screen.getByText("Referenced By (3)");
 });
 
