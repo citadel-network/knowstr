@@ -227,7 +227,7 @@ body {
     &:hover,
     &:focus,
     &:active {
-      border-color: $theme-color-blue;
+      cursor: text;
     }
   }
 }
