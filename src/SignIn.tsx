@@ -9,7 +9,7 @@ import { ErrorMessage, createSubmitHandler, Button } from "citadel-commons";
 import { List } from "immutable";
 import { isUserLoggedIn, useLogin } from "./NostrAuthContext";
 import { useData } from "./DataContext";
-import { Plan, usePlanner } from "./planner";
+import { Plan, planFallbackWorkspaceIfNecessary, usePlanner } from "./planner";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { execute } from "./executor";
 import { useApis } from "./Apis";
@@ -157,7 +157,7 @@ export function SignInModal(): JSX.Element {
   const setPrivateKey = async (pk: string): Promise<void> => {
     const user = login(pk);
     const plan = planRewriteUnpublishedEvents(
-      { ...createPlan(), user },
+      { ...planFallbackWorkspaceIfNecessary(createPlan()), user },
       publishEventsStatus.unsignedEvents
     );
     if (plan.publishEventsStatus.unsignedEvents.size === 0) {

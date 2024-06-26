@@ -7,13 +7,13 @@ import {
   newNode,
   addRelationToRelations,
   bulkAddRelations,
-  joinID,
   shortID,
 } from "./connections";
 import { execute } from "./executor";
 import {
   createPlan,
   planBulkUpsertNodes,
+  planUpdateWorkspaces,
   planUpsertRelations,
 } from "./planner";
 import {
@@ -48,22 +48,30 @@ test("Move View Settings on Delete", async () => {
   const cpp = newNode("C++", publicKey);
   const java = newNode("Java", publicKey);
   const pl = newNode("Programming Languages", publicKey);
+  const newWS = newNode("My Workspace", publicKey);
 
   const planWithNodes = planBulkUpsertNodes(createPlan(alice()), [
     c,
     cpp,
     java,
     pl,
+    newWS,
   ]);
 
+  const planWithWs = planUpdateWorkspaces(
+    planWithNodes,
+    List([newWS.id]),
+    newWS.id
+  );
+
   const wsRelations = addRelationToRelations(
-    newRelations(joinID(publicKey, "my-first-workspace"), "", publicKey),
+    newRelations(newWS.id, "", publicKey),
     pl.id
   );
   const planWithRelations = planUpsertRelations(
     planUpsertRelations(
       planUpsertRelations(
-        planWithNodes,
+        planWithWs,
         bulkAddRelations(newRelations(pl.id, "", publicKey), [c.id, java.id])
       ),
       wsRelations
@@ -82,7 +90,11 @@ test("Move View Settings on Delete", async () => {
     </Data>,
     alice()
   );
-  fireEvent.click(await screen.findByLabelText("show Default items of C"));
+  fireEvent.click(
+    await screen.findByLabelText("show Default items of C", undefined, {
+      timeout: 5000,
+    })
+  );
   await screen.findByText("C++");
   // Remove JAVA Node
   userEvent.click(

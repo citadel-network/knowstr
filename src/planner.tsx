@@ -14,12 +14,14 @@ import {
   KIND_SETTINGS,
   KIND_RELAY_METADATA_EVENT,
 } from "citadel-commons";
+import { v4 } from "uuid";
 import { useData } from "./DataContext";
 import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";
 import { relationTypesToJson, viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
-import { shortID } from "./connections";
+import { isIDRemote, joinID, shortID } from "./connections";
+import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
 
 type ExecutePlan = (plan: Plan) => Promise<void>;
 type RepublishEvents = (events: List<Event>, relayUrl: string) => Promise<void>;
@@ -325,14 +327,29 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
   };
 }
 
+export function fallbackWorkspace(publicKey: PublicKey): LongID {
+  return joinID(publicKey, v4());
+}
+
+function isWsMissing(plan: Plan, workspace: LongID): boolean {
+  if (isIDRemote(workspace, plan.user.publicKey)) {
+    return false;
+  }
+  return !plan.workspaces.includes(workspace);
+}
+
 export function planUpdateWorkspaces(
   plan: Plan,
   workspaces: List<ID>,
-  activeWorkspace: LongID
+  activeWorkspace: LongID | undefined
 ): Plan {
+  const newActiveWs = activeWorkspace || fallbackWorkspace(plan.user.publicKey);
+  const newWorkspaces = isWsMissing({ ...plan, workspaces }, newActiveWs)
+    ? workspaces.push(newActiveWs)
+    : workspaces;
   const serialized = {
-    w: workspaces.toArray(),
-    a: activeWorkspace,
+    w: newWorkspaces.toArray(),
+    a: newActiveWs,
   };
   const writeWorkspacesEvent = {
     kind: KIND_WORKSPACES,
@@ -343,10 +360,33 @@ export function planUpdateWorkspaces(
   };
   return {
     ...plan,
-    workspaces,
-    activeWorkspace,
+    workspaces: newWorkspaces,
+    activeWorkspace: newActiveWs,
     publishEvents: plan.publishEvents.push(writeWorkspacesEvent),
   };
+}
+
+export function planFallbackWorkspaceIfNecessary(plan: Plan): Plan {
+  const isRemote = isIDRemote(plan.activeWorkspace, plan.user.publicKey);
+  if (isRemote) {
+    return plan;
+  }
+
+  const updatedWS = isWsMissing(plan, plan.activeWorkspace)
+    ? planUpdateWorkspaces(plan, plan.workspaces, plan.activeWorkspace)
+    : plan;
+
+  // test if the node exists
+  const node = plan.knowledgeDBs
+    .get(plan.user.publicKey)
+    ?.nodes.get(shortID(plan.activeWorkspace));
+  if (!node) {
+    return planUpsertNode(updatedWS, {
+      id: plan.activeWorkspace,
+      text: DEFAULT_WS_NAME,
+    });
+  }
+  return updatedWS;
 }
 
 export function planUpdateRelationTypes(

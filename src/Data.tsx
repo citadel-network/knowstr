@@ -34,9 +34,8 @@ import {
 } from "./knowledgeEvents";
 import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
-import { PlanningContextProvider } from "./planner";
+import { PlanningContextProvider, fallbackWorkspace } from "./planner";
 import { RootViewContextProvider } from "./ViewContext";
-import { joinID } from "./connections";
 import {
   addWorkspacesToFilter,
   createBaseFilter,
@@ -59,11 +58,9 @@ type ProcessedEvents = {
 
   views: Views;
   workspaces: List<ID>;
-  activeWorkspace: LongID;
+  activeWorkspace: LongID | undefined;
   relationTypes: RelationTypes;
 };
-
-export const DEFAULT_WORKSPACE = "my-first-workspace" as LongID;
 
 function newProcessedEvents(): ProcessedEvents {
   return {
@@ -72,7 +69,7 @@ function newProcessedEvents(): ProcessedEvents {
     contacts: Map<PublicKey, Contact>(),
     relays: [],
     views: Map<string, View>(),
-    activeWorkspace: DEFAULT_WORKSPACE,
+    activeWorkspace: undefined,
     workspaces: List<ID>(),
     relationTypes: OrderedMap<ID, RelationType>().set("" as ID, {
       color: DEFAULT_COLOR,
@@ -119,9 +116,7 @@ function processEventsByAuthor(
     relays,
     views,
     workspaces: workspaces ? workspaces.workspaces : List<ID>(),
-    activeWorkspace: workspaces
-      ? workspaces.activeWorkspace
-      : ("my-first-workspace" as LongID),
+    activeWorkspace: workspaces ? workspaces.activeWorkspace : undefined,
     relationTypes,
   };
 }
@@ -138,29 +133,6 @@ export function useEventProcessor(
       return [author, processEventsByAuthor(authorEvents)];
     })
   );
-}
-
-function createDefaultEvents(user: User): List<UnsignedEvent> {
-  const serialized = {
-    w: [joinID(user.publicKey, "my-first-workspace")],
-    a: joinID(user.publicKey, "my-first-workspace"),
-  };
-  const createWorkspaceNodeEvent = {
-    kind: KIND_KNOWLEDGE_NODE,
-    pubkey: user.publicKey,
-    created_at: 0,
-    tags: [["d", "my-first-workspace"]],
-    content: "My first Workspace",
-  };
-
-  const writeWorkspacesEvent = {
-    kind: KIND_WORKSPACES,
-    pubkey: user.publicKey,
-    created_at: 0,
-    tags: [],
-    content: JSON.stringify(serialized),
-  };
-  return List<UnsignedEvent>([createWorkspaceNodeEvent, writeWorkspacesEvent]);
 }
 
 export function useRelaysInfo(
@@ -204,6 +176,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       results: Map(),
       isLoading: false,
     });
+  const [fallbackWSID] = useState(fallbackWorkspace(myPublicKey));
   const { relayPool } = useApis();
   const { events: relaysEvents, eose: relaysEose } = useEventQuery(
     relayPool,
@@ -230,9 +203,10 @@ function Data({ user, children }: DataProps): JSX.Element {
     ],
     { readFromRelays }
   );
-  const metaEvents = createDefaultEvents(user).merge(
-    mE.valueSeq().toList().merge(newEventsAndPublishResults.unsignedEvents)
-  );
+  const metaEvents = mE
+    .valueSeq()
+    .toList()
+    .merge(newEventsAndPublishResults.unsignedEvents);
 
   const processedMetaEvents = useEventProcessor(metaEvents).get(
     myPublicKey,
@@ -258,7 +232,9 @@ function Data({ user, children }: DataProps): JSX.Element {
   }, Map<PublicKey, Relays>());
 
   const activeWorkspace =
-    useWorkspaceFromURL() || processedMetaEvents.activeWorkspace;
+    useWorkspaceFromURL() ||
+    processedMetaEvents.activeWorkspace ||
+    fallbackWSID;
 
   const workspaceFilters = processedContactMetaEvents.reduce((rdx, p) => {
     return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);

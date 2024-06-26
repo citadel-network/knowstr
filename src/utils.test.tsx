@@ -36,6 +36,7 @@ import { RequireLogin } from "./AppState";
 import {
   Plan,
   createPlan,
+  fallbackWorkspace,
   planAddContact,
   planRemoveContact,
   planUpdateWorkspaces,
@@ -59,7 +60,6 @@ import { newDB } from "./knowledge";
 import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 import { findContacts } from "./contacts";
-import { DEFAULT_WORKSPACE } from "./Data";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -294,7 +294,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   },
   views: Map<string, View>(),
   workspaces: List<ID>(),
-  activeWorkspace: DEFAULT_WORKSPACE,
+  activeWorkspace: fallbackWorkspace(ALICE.publicKey),
   relationTypes: OrderedMap<ID, RelationType>(),
   contactsRelationTypes: Map<PublicKey, RelationTypes>(),
   contactsWorkspaces: Map<PublicKey, List<ID>>(),

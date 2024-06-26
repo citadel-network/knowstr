@@ -29,12 +29,14 @@ export function useWorkspaceFromURL(): LongID | undefined {
   return params.workspaceID;
 }
 
+export const DEFAULT_WS_NAME = "My first Workspace";
+
 export function useWorkspace(): string {
   const { knowledgeDBs, user, activeWorkspace: a } = useData();
   const activeWorkspace = useWorkspaceFromURL() || a;
   const node = getNodeFromID(knowledgeDBs, activeWorkspace, user.publicKey);
   if (!node) {
-    return "New Workspace";
+    return DEFAULT_WS_NAME;
   }
   return node.text;
 }
