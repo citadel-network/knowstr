@@ -1,9 +1,18 @@
 import { Map, OrderedMap, List } from "immutable";
-import { Event, UnsignedEvent } from "nostr-tools";
+import { Event, UnsignedEvent, EventTemplate } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
 
 declare global {
+  export type Nostr = {
+    getPublicKey: () => Promise<PublicKey>;
+    signEvent: (event: EventTemplate) => Promise<Event>;
+  };
+
+  interface Window {
+    nostr: Nostr;
+  }
+
   export type KeyPair = {
     privateKey: Uint8Array;
     publicKey: PublicKey;

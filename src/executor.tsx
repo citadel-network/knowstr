@@ -1,8 +1,11 @@
-import { Event, SimplePool } from "nostr-tools";
+import { Event, EventTemplate, SimplePool, VerifiedEvent } from "nostr-tools";
 import { List, Map } from "immutable";
 import { Plan, planFallbackWorkspaceIfNecessary } from "./planner";
 import { FinalizeEvent } from "./Apis";
-import { isUserLoggedIn } from "./NostrAuthContext";
+import {
+  isUserLoggedIn,
+  isUserLoggedInWithExtension,
+} from "./NostrAuthContext";
 
 // Timeout in ms for pulish() on a relay
 export const PUBLISH_TIMEOUT = 5000;
@@ -66,12 +69,30 @@ export async function execute({
     return Map();
   }
   const { user } = planWithWs;
+
   if (!isUserLoggedIn(user)) {
     return Map();
   }
-  const finalizedEvents = planWithWs.publishEvents.map((e) =>
-    finalizeEvent(e, user.privateKey)
-  );
+
+  const signEventWithExtension = async (
+    event: EventTemplate
+  ): Promise<Event> => {
+    try {
+      return window.nostr.signEvent(event);
+      // eslint-disable-next-line no-empty
+    } catch {
+      throw new Error("Failed to sign event with extension");
+    }
+  };
+  const finalizedEvents = isUserLoggedInWithExtension(user)
+    ? List(
+        await Promise.all(
+          planWithWs.publishEvents.map((e) => signEventWithExtension(e))
+        )
+      ).map((e) => e as VerifiedEvent)
+    : planWithWs.publishEvents.map((e) =>
+        finalizeEvent(e, (user as KeyPair).privateKey)
+      );
 
   const writeRelayUrls = relays.map((r) => r.url);
   const results = await Promise.all(

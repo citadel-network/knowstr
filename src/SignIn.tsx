@@ -7,12 +7,79 @@ import * as nip06 from "nostr-tools/nip06";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { ErrorMessage, createSubmitHandler, Button } from "citadel-commons";
 import { List } from "immutable";
-import { isUserLoggedIn, useLogin } from "./NostrAuthContext";
+import {
+  isUserLoggedIn,
+  useLogin,
+  useLoginWithExtension,
+} from "./NostrAuthContext";
 import { useData } from "./DataContext";
 import { Plan, planFallbackWorkspaceIfNecessary, usePlanner } from "./planner";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { execute } from "./executor";
 import { useApis } from "./Apis";
+
+function SignInWithExtension({
+  setPublicKey,
+}: {
+  setPublicKey: (publicKey: PublicKey) => void;
+}): JSX.Element {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const componentIsMounted = useRef(true);
+  useEffect(() => {
+    return () => {
+      // eslint-disable-next-line functional/immutable-data
+      componentIsMounted.current = false;
+    };
+  }, []);
+
+  const getPublicKeyFromExtension = async (): Promise<
+    PublicKey | undefined
+  > => {
+    try {
+      return window.nostr.getPublicKey();
+      // eslint-disable-next-line no-empty
+    } catch {
+      return undefined;
+    }
+  };
+
+  const submit = async (): Promise<void> => {
+    const publicKey = await getPublicKeyFromExtension();
+    if (!publicKey) {
+      throw new Error("No public key found in extension");
+    }
+    setPublicKey(publicKey);
+  };
+  const onSubmit = createSubmitHandler({
+    setLoading: (l) => {
+      if (componentIsMounted.current) {
+        setLoading(l);
+      }
+    },
+    setError,
+    submit,
+  });
+
+  return (
+    <Form onSubmit={onSubmit}>
+      <Form.Group controlId="signInWithExtension" className="mb-2">
+        <Form.Label>Sign In With Extension</Form.Label>
+        <ErrorMessage error={error} setError={setError} />
+      </Form.Group>
+      <div>
+        <div className="float-end">
+          {loading ? (
+            <div aria-label="loading" className="spinner-border" />
+          ) : (
+            <Button type="submit">Login with Extension</Button>
+          )}
+        </div>
+      </div>
+    </Form>
+  );
+}
 
 /* eslint-disable no-empty */
 function convertInputToPrivateKey(input: string): string | undefined {
@@ -144,6 +211,7 @@ function planRewriteUnpublishedEvents(
 
 export function SignInModal(): JSX.Element {
   const login = useLogin();
+  const loginWithExtension = useLoginWithExtension();
   const navigate = useNavigate();
   const location = useLocation();
   const { publishEventsStatus } = useData();
@@ -154,8 +222,16 @@ export function SignInModal(): JSX.Element {
   const onHide = (): void => {
     navigate(referrer);
   };
-  const setPrivateKey = async (pk: string): Promise<void> => {
-    const user = login(pk);
+  const signIn = async ({
+    withExtension,
+    key,
+  }: {
+    withExtension: boolean;
+    key: string | PublicKey;
+  }): Promise<void> => {
+    const user = withExtension
+      ? loginWithExtension(key as PublicKey)
+      : login(key as string);
     const plan = planRewriteUnpublishedEvents(
       { ...planFallbackWorkspaceIfNecessary(createPlan()), user },
       publishEventsStatus.unsignedEvents
@@ -185,7 +261,18 @@ export function SignInModal(): JSX.Element {
         <Modal.Title>Login</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <SignInWithSeed setPrivateKey={setPrivateKey} />
+        <SignInWithSeed
+          setPrivateKey={(privateKey) =>
+            signIn({ withExtension: false, key: privateKey })
+          }
+        />
+      </Modal.Body>
+      <Modal.Body>
+        <SignInWithExtension
+          setPublicKey={(publicKey) =>
+            signIn({ withExtension: false, key: publicKey })
+          }
+        />
       </Modal.Body>
     </Modal>
   );
@@ -194,7 +281,8 @@ export function SignInModal(): JSX.Element {
 export function SignInMenuBtn(): JSX.Element | null {
   const { user, publishEventsStatus } = useData();
   const navigate = useNavigate();
-  if (isUserLoggedIn(user)) {
+  const isLoggedIn = isUserLoggedIn(user);
+  if (isLoggedIn) {
     return null;
   }
   const unsavedChanges = publishEventsStatus.unsignedEvents.size > 0;

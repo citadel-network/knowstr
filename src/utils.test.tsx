@@ -49,7 +49,7 @@ import { App } from "./App";
 import { DataContextProps } from "./DataContext";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
-import { NostrAuthContext, isUserLoggedIn } from "./NostrAuthContext";
+import { NostrAuthContext, isUserLoggedInWithSeed } from "./NostrAuthContext";
 import {
   addRelationToRelations,
   getRelationsNoSocial,
@@ -201,7 +201,8 @@ function renderApis(
     ...options,
   };
   const user =
-    optionsWithDefaultUser.user && isUserLoggedIn(optionsWithDefaultUser.user)
+    optionsWithDefaultUser.user &&
+    isUserLoggedInWithSeed(optionsWithDefaultUser.user)
       ? {
           privateKey: optionsWithDefaultUser.user.privateKey,
           publicKey: optionsWithDefaultUser.user.publicKey,

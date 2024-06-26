@@ -3,6 +3,7 @@ import { getPublicKey } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 import { DEFAULT_RELAYS, sanitizeRelays } from "citadel-commons";
 import { useApis } from "./Apis";
+import { UNAUTHENTICATED_USER_PK } from "./AppState";
 
 type Context = {
   user: User | undefined;
@@ -21,8 +22,21 @@ function getPublicKeyFromContext(context: Context): PublicKey | undefined {
   return context.user.publicKey;
 }
 
-export function isUserLoggedIn(user: User): user is KeyPair {
+export function isUserLoggedInWithSeed(user: User): user is KeyPair {
   return (user as KeyPair).privateKey !== undefined;
+}
+
+export function isUserLoggedInWithExtension(
+  user: User
+): user is { publicKey: PublicKey } {
+  if (isUserLoggedInWithSeed(user)) {
+    return false;
+  }
+  return user.publicKey !== UNAUTHENTICATED_USER_PK;
+}
+
+export function isUserLoggedIn(user: User): boolean {
+  return isUserLoggedInWithSeed(user) || isUserLoggedInWithExtension(user);
 }
 
 export function useUser(): User | undefined {
@@ -65,6 +79,21 @@ export function useLogin(): (privateKey: string) => User {
   };
 }
 
+export function useLoginWithExtension(): (publicKey: PublicKey) => User {
+  const context = React.useContext(NostrAuthContext);
+  const { fileStore } = useApis();
+  const { setLocalStorage } = fileStore;
+  if (!context) {
+    throw new Error("NostrAuthContext missing");
+  }
+  return (publicKey) => {
+    setLocalStorage("publicKey", publicKey);
+    const user = { publicKey };
+    context.setBlockstackUser(user);
+    return user;
+  };
+}
+
 export function useLogout(): () => void {
   const context = React.useContext(NostrAuthContext);
   const { fileStore } = useApis();
@@ -80,6 +109,7 @@ export function useLogout(): () => void {
       deleteLocalStorage(publicKey);
     }
     deleteLocalStorage("privateKey");
+    deleteLocalStorage("publicKey");
     window.location.reload();
   };
 }
@@ -92,9 +122,19 @@ export function NostrAuthContextProvider({
   children: React.ReactNode;
 }): JSX.Element {
   const { fileStore } = useApis();
-  const keyFromStorage = fileStore.getLocalStorage("privateKey");
+  const privKeyFromStorage = fileStore.getLocalStorage("privateKey");
+  const userFromStorage =
+    privKeyFromStorage !== null
+      ? userFromPrivateKey(privKeyFromStorage)
+      : undefined;
+  // when logging in with an extension, the publicKey is stored in local storage
+  const pubKeyFromStorage = fileStore.getLocalStorage("publicKey");
+  const userWithPubkeyFromStorage =
+    pubKeyFromStorage !== null
+      ? { publicKey: pubKeyFromStorage as PublicKey }
+      : undefined;
   const [user, setUser] = useState<User | undefined>(
-    keyFromStorage !== null ? userFromPrivateKey(keyFromStorage) : undefined
+    userFromStorage || userWithPubkeyFromStorage
   );
   const relays = defaultRelayUrls
     ? sanitizeRelays(
