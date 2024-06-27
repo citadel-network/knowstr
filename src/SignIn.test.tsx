@@ -18,7 +18,9 @@ test("Login and logout with seed phrase", async () => {
   );
   userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
-    await screen.findByLabelText("Sign In"),
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
     "leader monkey parrot ring guide accident before fence cannon height naive bean{enter}"
   );
 
@@ -33,7 +35,7 @@ test("Login and logout with seed phrase", async () => {
   fireEvent.click(await screen.findByLabelText("open menu"));
   const logoutButton = await screen.findByLabelText("logout");
   fireEvent.click(logoutButton);
-  await screen.findByLabelText("Sign In");
+  await screen.findByLabelText("sign in");
 });
 
 test("Login with nsec", async () => {
@@ -44,7 +46,9 @@ test("Login with nsec", async () => {
   );
   userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
-    await screen.findByLabelText("Sign In"),
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
     "nsec10allq0gjx7fddtzef0ax00mdps9t2kmtrldkyjfs8l5xruwvh2dq0lhhkp{enter}"
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
@@ -60,7 +64,9 @@ test("Login with private key", async () => {
   );
   userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
-    await screen.findByLabelText("Sign In"),
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
     "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
   );
   fireEvent.click(await screen.findByLabelText("open menu"));
@@ -76,7 +82,9 @@ test("Display Error", async () => {
   );
   userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
-    await screen.findByLabelText("Sign In"),
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
     "0000completenonsense{enter}"
   );
   await screen.findByText("Input is not a valid nsec, private key or mnemonic");
@@ -91,7 +99,9 @@ test("Sign in persists created Notes", async () => {
   typeNewNode(view, "Hello World!");
   userEvent.click(await screen.findByText("Sign in to Save"));
   userEvent.type(
-    await screen.findByLabelText("Sign In"),
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
     "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
   );
 
@@ -115,7 +125,9 @@ test("Sign in persists created Notes", async () => {
 
   userEvent.click(await screen.findByLabelText("sign in"));
   userEvent.type(
-    await screen.findByLabelText("Sign In"),
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
     "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
   );
   // After login the note is still there

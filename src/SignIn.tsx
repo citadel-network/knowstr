@@ -18,13 +18,97 @@ import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { execute } from "./executor";
 import { useApis } from "./Apis";
 
+/* eslint-disable no-empty */
+function convertInputToPrivateKey(input: string): string | undefined {
+  try {
+    const { type, data } = nip19.decode(input);
+    if (type !== "nsec") {
+      return undefined;
+    }
+    return bytesToHex(data);
+  } catch {}
+  try {
+    // Is this a seed phrase?
+    return nip06.privateKeyFromSeedWords(input);
+  } catch {}
+  try {
+    // Is this a private key?
+    getPublicKey(hexToBytes(input));
+    return input;
+  } catch {}
+  return undefined;
+}
+/* eslint-disable no-empty */
+
+function SignInWithSeed({
+  setPrivateKey,
+}: {
+  setPrivateKey: (privateKey: string) => void;
+}): JSX.Element {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const componentIsMounted = useRef(true);
+  useEffect(() => {
+    return () => {
+      // eslint-disable-next-line functional/immutable-data
+      componentIsMounted.current = false;
+    };
+  }, []);
+
+  const submit = (form: HTMLFormElement): Promise<void> => {
+    const seedPhrase = (
+      form.elements.namedItem("inputSeed") as HTMLInputElement
+    ).value;
+    const privateKey = convertInputToPrivateKey(seedPhrase);
+    if (!privateKey) {
+      throw new Error("Input is not a valid nsec, private key or mnemonic");
+    }
+    setPrivateKey(privateKey);
+    return Promise.resolve();
+  };
+  const onSubmit = createSubmitHandler({
+    setLoading: (l) => {
+      if (componentIsMounted.current) {
+        setLoading(l);
+      }
+    },
+    setError,
+    submit,
+  });
+
+  return (
+    <Form onSubmit={onSubmit}>
+      <div className="flex-row-space-between align-center mb-3">
+        <Form.Group controlId="inputSeed" className="w-80">
+          <ErrorMessage error={error} setError={setError} />
+          <Form.Control
+            type="password"
+            placeholder="nsec, private key or mnemonic (12 words)"
+            required
+          />
+        </Form.Group>
+        <div className="float-end">
+          {loading ? (
+            <div aria-label="loading" className="spinner-border" />
+          ) : (
+            <Button type="submit">Continue</Button>
+          )}
+        </div>
+      </div>
+    </Form>
+  );
+}
+
 function SignInWithExtension({
   setPublicKey,
 }: {
   setPublicKey: (publicKey: PublicKey) => void;
 }): JSX.Element {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { pathname, search, hash } = new URL(window.location.href);
 
   const componentIsMounted = useRef(true);
   useEffect(() => {
@@ -64,112 +148,30 @@ function SignInWithExtension({
 
   return (
     <Form onSubmit={onSubmit}>
-      <Form.Group controlId="signInWithExtension" className="mb-2">
-        <Form.Label>Sign In With Extension</Form.Label>
-        <ErrorMessage error={error} setError={setError} />
-      </Form.Group>
-      <div>
-        <div className="float-end">
-          {loading ? (
-            <div aria-label="loading" className="spinner-border" />
-          ) : (
-            <Button type="submit">Login with Extension</Button>
-          )}
-        </div>
-      </div>
-    </Form>
-  );
-}
-
-/* eslint-disable no-empty */
-function convertInputToPrivateKey(input: string): string | undefined {
-  try {
-    const { type, data } = nip19.decode(input);
-    if (type !== "nsec") {
-      return undefined;
-    }
-    return bytesToHex(data);
-  } catch {}
-  try {
-    // Is this a seed phrase?
-    return nip06.privateKeyFromSeedWords(input);
-  } catch {}
-  try {
-    // Is this a private key?
-    getPublicKey(hexToBytes(input));
-    return input;
-  } catch {}
-  return undefined;
-}
-/* eslint-disable no-empty */
-
-function SignInWithSeed({
-  setPrivateKey,
-}: {
-  setPrivateKey: (privateKey: string) => void;
-}): JSX.Element {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { pathname, search, hash } = new URL(window.location.href);
-
-  const componentIsMounted = useRef(true);
-  useEffect(() => {
-    return () => {
-      // eslint-disable-next-line functional/immutable-data
-      componentIsMounted.current = false;
-    };
-  }, []);
-
-  const submit = (form: HTMLFormElement): Promise<void> => {
-    const seedPhrase = (
-      form.elements.namedItem("inputSeed") as HTMLInputElement
-    ).value;
-    const privateKey = convertInputToPrivateKey(seedPhrase);
-    if (!privateKey) {
-      throw new Error("Input is not a valid nsec, private key or mnemonic");
-    }
-    setPrivateKey(privateKey);
-    return Promise.resolve();
-  };
-  const onSubmit = createSubmitHandler({
-    setLoading: (l) => {
-      if (componentIsMounted.current) {
-        setLoading(l);
-      }
-    },
-    setError,
-    submit,
-  });
-
-  return (
-    <Form onSubmit={onSubmit}>
-      <Form.Group controlId="inputSeed" className="mb-2">
-        <Form.Label>Sign In</Form.Label>
-        <ErrorMessage error={error} setError={setError} />
-        <Form.Control
-          type="password"
-          placeholder="nsec, private key or mnemonic (12 words)"
-          required
-        />
-      </Form.Group>
-      <div>
-        <Button
-          className="btn btn-borderless underline"
-          onClick={() => {
-            navigate("/signup", {
-              state: { referrer: pathname + search + hash },
-            });
-          }}
-        >
-          Create new Account
-        </Button>
-        <div className="float-end">
-          {loading ? (
-            <div aria-label="loading" className="spinner-border" />
-          ) : (
-            <Button type="submit">Login</Button>
-          )}
+      <div className="d-flex flex-column align-center">
+        <div className="black-muted m-3">- OR -</div>
+        <Form.Group controlId="signInWithExtension">
+          <ErrorMessage error={error} setError={setError} />
+          <div className="w-100">
+            {loading ? (
+              <div aria-label="loading" className="spinner-border" />
+            ) : (
+              <Button type="submit">Continue with Extension</Button>
+            )}
+          </div>
+        </Form.Group>
+        <div className="black-muted m-3">- OR -</div>
+        <div>
+          <Button
+            className="btn btn-borderless underline mb-3"
+            onClick={() => {
+              navigate("/signup", {
+                state: { referrer: pathname + search + hash },
+              });
+            }}
+          >
+            Create new Account
+          </Button>
         </div>
       </div>
     </Form>
@@ -266,8 +268,6 @@ export function SignInModal(): JSX.Element {
             signIn({ withExtension: false, key: privateKey })
           }
         />
-      </Modal.Body>
-      <Modal.Body>
         <SignInWithExtension
           setPublicKey={(publicKey) =>
             signIn({ withExtension: false, key: publicKey })
