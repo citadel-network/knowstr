@@ -92,7 +92,9 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
     if (!ref.current) {
       return;
     }
-    onCreateNode(ref.current.getEditor().getText(), relationType);
+    const text = ref.current.getEditor().getText();
+    const isNewLineAdded = text.endsWith("\n");
+    onCreateNode(isNewLineAdded ? text.slice(0, -1) : text, relationType);
   };
 
   return (
