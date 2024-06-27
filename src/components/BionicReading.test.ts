@@ -20,6 +20,6 @@ test("Bionic Reading", async () => {
     expect(screen.queryByText("My first quote")).toBeNull();
   });
   expect(screen.getByText(matchSplitText("My first quote")).innerHTML).toBe(
-    "<b>M</b>y <b>fi</b>rst <b>qu</b>ote\n"
+    "<b>M</b>y <b>fi</b>rst <b>qu</b>ote"
   );
 });

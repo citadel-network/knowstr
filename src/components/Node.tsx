@@ -198,7 +198,9 @@ function NodeContent({ editOnClick }: { editOnClick?: boolean }): JSX.Element {
       type="button"
       onClick={handleInteraction}
       onKeyDown={handleInteraction}
-      className={`node-content-button ${editOnClick ? "border-on-hover" : ""}`}
+      className={`node-content-button ${
+        editOnClick ? "cursor-on-hover w-100" : ""
+      }`}
     >
       <span className="break-word">
         {isBionic ? <BionicText nodeText={node.text} /> : node.text}
