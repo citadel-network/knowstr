@@ -42,7 +42,7 @@ import {
   filtersToFilterArray,
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
-import { useDefaultRelays } from "./NostrAuthContext";
+import { isUserLoggedIn, useDefaultRelays } from "./NostrAuthContext";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
 
 type DataProps = {
@@ -167,6 +167,9 @@ export function useRelaysInfo(
   return infos;
 }
 
+const DEFAULT_WORKSPACE =
+  "febcf8e93f7ae4a6d04679ad579accab221249897bd4a592b750ac0a77b0b4bf_c85d62ed-ca48-49dd-af4f-fc5b7fb4b013" as LongID;
+
 function Data({ user, children }: DataProps): JSX.Element {
   const defaultRelays = useDefaultRelays();
   const myPublicKey = user.publicKey;
@@ -234,7 +237,10 @@ function Data({ user, children }: DataProps): JSX.Element {
   const activeWorkspace =
     useWorkspaceFromURL() ||
     processedMetaEvents.activeWorkspace ||
+    (!isUserLoggedIn(user) && DEFAULT_WORKSPACE) ||
     fallbackWSID;
+
+  console.log(">>> active ws", activeWorkspace);
 
   const workspaceFilters = processedContactMetaEvents.reduce((rdx, p) => {
     return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
