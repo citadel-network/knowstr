@@ -153,19 +153,19 @@ export function createBaseFilter(
   return {
     knowledgeListbyID: {
       kinds: [KIND_KNOWLEDGE_LIST],
-      authors,
     },
     knowledgeNodesByID: {
       kinds: [KIND_KNOWLEDGE_NODE],
-      authors,
     },
     knowledgeListByHead: {
       kinds: [KIND_KNOWLEDGE_LIST],
-      authors,
+      // Not filtering for authors is a opening for spam, we may require client
+      // side filtering for this. ( Or filter for authors of Notes we load, which
+      // is a bit more complex )
     },
     referencedBy: {
       kinds: [KIND_KNOWLEDGE_LIST],
-      authors,
+      //  authors,
     },
     deleteFilter: {
       kinds: [KIND_DELETE],
