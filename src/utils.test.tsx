@@ -27,11 +27,8 @@ import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
-import {
-  KIND_CONTACTLIST,
-  FocusContext,
-  FocusContextProvider,
-} from "citadel-commons";
+import { FocusContext, FocusContextProvider } from "citadel-commons";
+import { KIND_CONTACTLIST } from "./nostr";
 import { RequireLogin } from "./AppState";
 import {
   Plan,

@@ -2,6 +2,8 @@ import React, { Dispatch, SetStateAction } from "react";
 import { List } from "immutable";
 import { UnsignedEvent, Event } from "nostr-tools";
 import crypto from "crypto";
+import { newTimestamp, KIND_RELAY_METADATA_EVENT } from "citadel-commons";
+import { v4 } from "uuid";
 import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
@@ -10,11 +12,8 @@ import {
   KIND_CONTACTLIST,
   KIND_VIEWS,
   KIND_WORKSPACES,
-  newTimestamp,
   KIND_SETTINGS,
-  KIND_RELAY_METADATA_EVENT,
-} from "citadel-commons";
-import { v4 } from "uuid";
+} from "./nostr";
 import { useData } from "./DataContext";
 import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";

@@ -1,6 +1,7 @@
 import { UnsignedEvent } from "nostr-tools";
-import { getMostRecentReplacableEvent, KIND_SETTINGS } from "citadel-commons";
+import { getMostRecentReplacableEvent } from "citadel-commons";
 import { List } from "immutable";
+import { KIND_SETTINGS } from "./nostr";
 
 function settingsFromEvent(event: UnsignedEvent): Settings {
   try {

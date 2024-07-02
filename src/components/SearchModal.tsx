@@ -1,13 +1,13 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { List, Map } from "immutable";
 import {
-  KIND_KNOWLEDGE_NODE,
   useEventQuery,
   ModalNode,
   ModalNodeBody,
   ModalNodeTitle,
 } from "citadel-commons";
 import { useDebounce } from "use-debounce";
+import { KIND_KNOWLEDGE_NODE } from "../nostr";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { useApis } from "../Apis";

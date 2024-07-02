@@ -11,17 +11,19 @@ import {
   getMostRecentReplacableEvent,
   findAllRelays,
   KIND_RELAY_METADATA_EVENT,
+} from "citadel-commons";
+import { List, Map, OrderedMap } from "immutable";
+import { Event, UnsignedEvent } from "nostr-tools";
+// eslint-disable-next-line import/no-unresolved
+import { RelayInformation } from "nostr-tools/lib/types/nip11";
+import {
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
   KIND_WORKSPACES,
   KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_SETTINGS,
-} from "citadel-commons";
-import { List, Map, OrderedMap } from "immutable";
-import { Event, UnsignedEvent } from "nostr-tools";
-// eslint-disable-next-line import/no-unresolved
-import { RelayInformation } from "nostr-tools/lib/types/nip11";
+} from "./nostr";
 import { DataContextProvider } from "./DataContext";
 import { findContacts } from "./contacts";
 import { useApis } from "./Apis";
