@@ -71,8 +71,8 @@ test("Markdown Upload", async () => {
 test("Delete Node uploaded from Markdown", async () => {
   const [alice] = setup([ALICE]);
   await uploadAndRenderMarkdown(alice);
-  userEvent.click(screen.getByLabelText("edit Python"));
-  userEvent.click(screen.getByLabelText("delete node"));
+  await userEvent.click(screen.getByLabelText("edit Python"));
+  await userEvent.click(screen.getByLabelText("delete node"));
 
   expect(screen.queryByText("Python")).toBeNull();
   screen.getByText("Java");
@@ -101,9 +101,9 @@ test("Edit Node uploaded from Markdown", async () => {
   const [alice] = setup([ALICE]);
   await uploadAndRenderMarkdown(alice);
 
-  userEvent.click(screen.getByLabelText("edit Programming Languages"));
-  userEvent.keyboard("{backspace} OOP{enter}");
-  userEvent.click(screen.getByText("Save"));
+  await userEvent.click(screen.getByLabelText("edit Programming Languages"));
+  await userEvent.keyboard(" OOP{enter}");
+  await userEvent.click(screen.getByText("Save"));
   await waitFor(() => {
     expect(screen.queryByText("Programming Languages")).toBeNull();
   });

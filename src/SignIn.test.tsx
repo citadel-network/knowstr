@@ -16,8 +16,8 @@ test("Login and logout with seed phrase", async () => {
       <App />
     </NostrAuthContextProvider>
   );
-  userEvent.click(await screen.findByLabelText("sign in"));
-  userEvent.type(
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
     await screen.findByPlaceholderText(
       "nsec, private key or mnemonic (12 words)"
     ),
@@ -44,8 +44,8 @@ test("Login with nsec", async () => {
       <App />
     </NostrAuthContextProvider>
   );
-  userEvent.click(await screen.findByLabelText("sign in"));
-  userEvent.type(
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
     await screen.findByPlaceholderText(
       "nsec, private key or mnemonic (12 words)"
     ),
@@ -62,8 +62,8 @@ test("Login with private key", async () => {
       <App />
     </NostrAuthContextProvider>
   );
-  userEvent.click(await screen.findByLabelText("sign in"));
-  userEvent.type(
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
     await screen.findByPlaceholderText(
       "nsec, private key or mnemonic (12 words)"
     ),
@@ -80,8 +80,8 @@ test("Display Error", async () => {
       <App />
     </NostrAuthContextProvider>
   );
-  userEvent.click(await screen.findByLabelText("sign in"));
-  userEvent.type(
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
     await screen.findByPlaceholderText(
       "nsec, private key or mnemonic (12 words)"
     ),
@@ -97,8 +97,8 @@ test("Sign in persists created Notes", async () => {
     </NostrAuthContextProvider>
   );
   typeNewNode(view, "Hello World!");
-  userEvent.click(await screen.findByText("Sign in to Save"));
-  userEvent.type(
+  await userEvent.click(await screen.findByText("Sign in to Save"));
+  await userEvent.type(
     await screen.findByPlaceholderText(
       "nsec, private key or mnemonic (12 words)"
     ),
@@ -123,8 +123,8 @@ test("Sign in persists created Notes", async () => {
   );
   expect(screen.queryAllByText("Hello World!").length).toBe(0);
 
-  userEvent.click(await screen.findByLabelText("sign in"));
-  userEvent.type(
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
     await screen.findByPlaceholderText(
       "nsec, private key or mnemonic (12 words)"
     ),

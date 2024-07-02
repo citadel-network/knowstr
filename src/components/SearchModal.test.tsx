@@ -42,13 +42,13 @@ test("Search works like spotlight", async () => {
   );
   fireEvent.click(searchButton);
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "My very first");
+  await userEvent.type(searchInput, "My very first");
   const searchResults = await screen.findAllByText("My very first", {
     exact: false,
   });
   expect(searchResults).toHaveLength(2);
   const firstResult = screen.getByText(matchSplitText("My very first topic"));
-  userEvent.type(firstResult, "{enter}");
+  await userEvent.type(firstResult, "{enter}");
   expect(screen.queryByLabelText("search input")).toBeNull();
   await screen.findAllByText("My very first topic");
 
@@ -58,7 +58,7 @@ test("Search works like spotlight", async () => {
   );
   fireEvent.click(searchButtons[0]);
   const secondSearchInput = await screen.findByLabelText("search input");
-  userEvent.type(secondSearchInput, "search note");
+  await userEvent.type(secondSearchInput, "search note");
   const secondSearchResults = await screen.findAllByText("search note", {
     exact: false,
   });
@@ -66,8 +66,8 @@ test("Search works like spotlight", async () => {
   const secondResult = screen.getByText(
     matchSplitText("My second search note ever made")
   );
-  userEvent.type(secondSearchInput, "{arrowdown}");
-  userEvent.type(secondResult, "{enter}");
+  await userEvent.type(secondSearchInput, "{arrowdown}");
+  await userEvent.type(secondResult, "{enter}");
   expect(screen.queryByLabelText("search input")).toBeNull();
   await screen.findByText("My second search note ever made");
 
@@ -76,11 +76,11 @@ test("Search works like spotlight", async () => {
   );
   fireEvent.click(allSearchButtons);
   const searchInputField = await screen.findByLabelText("search input");
-  userEvent.type(searchInputField, "first search");
+  await userEvent.type(searchInputField, "first search");
   await screen.findByText(matchSplitText("My very first search note made"));
-  userEvent.type(searchInputField, "{escape}");
+  await userEvent.type(searchInputField, "{escape}");
   expect(screen.queryByText("My first search note made")).toBeNull();
-  userEvent.type(searchInputField, "{escape}");
+  await userEvent.type(searchInputField, "{escape}");
   expect(screen.queryByPlaceholderText("Search")).toBeNull();
 });
 
@@ -94,12 +94,12 @@ test("On Fullscreen, search also starts with press on slash key", async () => {
     ),
   });
   renderApp({ ...alice(), includeFocusContext: true });
-  userEvent.type(await screen.findByText("My first Workspace"), "/");
+  await userEvent.type(await screen.findByText("My first Workspace"), "/");
   screen.getByPlaceholderText("Search");
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "My s");
-  await screen.findByText(matchSplitText("My source"));
-  userEvent.type(searchInput, "{enter}");
+  await userEvent.type(searchInput, "My s");
+  const text = await screen.findByText(matchSplitText("My source"));
+  await userEvent.click(text);
   expect(screen.queryByPlaceholderText("Search")).toBeNull();
   await screen.findByText("My source");
 });
@@ -129,7 +129,7 @@ test("Results from relays with nip-50 support will be shown unfiltered", async (
   );
   const searchInput = await screen.findByLabelText("search input");
   // The mock relay pool ignores the search parameter completely
-  userEvent.type(searchInput, "Bitcorn");
+  await userEvent.type(searchInput, "Bitcorn");
   await screen.findByText("Bitcoin");
 });
 
@@ -147,7 +147,7 @@ test("Client side filtering when relay does not support nip-50", async () => {
     alice()
   );
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "Bitcoin");
+  await userEvent.type(searchInput, "Bitcoin");
   await screen.findByText("Bitcoin");
   await waitFor(() => {
     expect(screen.queryByText("Ethereum")).toBeNull();

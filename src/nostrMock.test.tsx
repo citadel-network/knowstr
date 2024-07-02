@@ -29,6 +29,7 @@ async function broadcastEvent(
   const filtered = subs.filter((sub) => matchFilters(sub.filters, event));
   await Promise.all(
     filtered.toList().map(async (sub) => {
+      // eslint-disable-next-line testing-library/no-await-sync-events
       await fireEvent(sub, event);
       await fireEose(sub);
     })

@@ -85,7 +85,7 @@ test("Add a new Relay", async () => {
   const { relayPool } = renderApp({ ...alice(), initialRoute: `/relays` });
   await screen.findByText("Edit Nostr Relays");
   const inputRelay = screen.getByLabelText("add new relay");
-  userEvent.type(inputRelay, "wss://relay.test.fifth/");
+  await userEvent.type(inputRelay, "wss://relay.test.fifth/");
   fireEvent.click(
     screen.getByLabelText("add new relay wss://relay.test.fifth/")
   );

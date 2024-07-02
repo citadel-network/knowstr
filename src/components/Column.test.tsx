@@ -40,16 +40,16 @@ test("Multiple connections to same node", async () => {
   fireEvent.click(searchButton);
 
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "Jav");
-  userEvent.click(await screen.findByText(matchSplitText("Java")));
+  await userEvent.type(searchInput, "Jav");
+  await userEvent.click(await screen.findByText(matchSplitText("Java")));
 
   fireEvent.click(searchButton);
   const searchInput2 = await screen.findByLabelText("search input");
-  userEvent.type(searchInput2, "Jav");
+  await userEvent.type(searchInput2, "Jav");
   await waitFor(() => {
     expect(screen.getAllByText(matchSplitText("Java"))).toHaveLength(2);
   });
-  userEvent.click(screen.getAllByText(matchSplitText("Java"))[1]);
+  await userEvent.click(screen.getAllByText(matchSplitText("Java"))[1]);
 
   expectTextContent(
     await screen.findByLabelText("related to Programming Languages"),
@@ -73,9 +73,9 @@ test("Change Column width", async () => {
   );
   await typeNewNode(view, "Hello World");
   expect(screen.queryByLabelText("decrease width")).toBeNull();
-  userEvent.click(await screen.findByLabelText("increase width"));
+  await userEvent.click(await screen.findByLabelText("increase width"));
   // I can decrease once
-  userEvent.click(await screen.findByLabelText("decrease width"));
+  await userEvent.click(await screen.findByLabelText("decrease width"));
   expect(screen.queryByLabelText("decrease width")).toBeNull();
 });
 
@@ -106,7 +106,7 @@ test("Show Referenced By", async () => {
   );
   await screen.findByText("Bitcoin");
   const references = await screen.findByLabelText("show references to Bitcoin");
-  userEvent.click(references);
+  await userEvent.click(references);
   expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
     "Money1",
     "+Default",
@@ -170,7 +170,7 @@ test("If Node is the root we always show references when there are more than 0",
   );
   await screen.findByText("Bitcoin");
   const references = await screen.findByLabelText("show references to Bitcoin");
-  userEvent.click(references);
+  await userEvent.click(references);
   expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
     "Money1",
     "+Default",

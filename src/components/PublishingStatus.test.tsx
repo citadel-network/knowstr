@@ -18,7 +18,7 @@ test("Publishing Status", async () => {
   const [alice] = setup([ALICE]);
   const view = renderApp(alice());
   await typeNewNode(view, "New Note");
-  userEvent.click(screen.getByLabelText("publishing status"));
+  await userEvent.click(screen.getByLabelText("publishing status"));
   await screen.findByText("Publishing Status");
   expect(await screen.findAllByText("100%")).toHaveLength(4);
   screen.getByText("Relay wss://relay.test.first.success/:");
@@ -60,9 +60,11 @@ test("Details of Publishing Status", async () => {
     }
   );
   await typeNewNode(view, "Hello World");
-  userEvent.click(await screen.findByLabelText("publishing status"));
+  await userEvent.click(await screen.findByLabelText("publishing status"));
   await screen.findByText("Publishing Status");
-  userEvent.click(screen.getByText("Relay wss://relay.test.first.success/:"));
+  await userEvent.click(
+    screen.getByText("Relay wss://relay.test.first.success/:")
+  );
   screen.getByText("Relay wss://relay.test.fourth.success/:");
   expect(
     screen.getAllByText("5 of the last 5 events have been published")

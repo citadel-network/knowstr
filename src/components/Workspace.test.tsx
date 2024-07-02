@@ -6,14 +6,14 @@ test("Create a new Workspace", async () => {
   const [alice] = setup([ALICE]);
   const { relayPool } = renderApp(alice());
   const switchWsBtn = await screen.findByLabelText("switch workspace");
-  userEvent.click(switchWsBtn);
+  await userEvent.click(switchWsBtn);
   const newWsBtn = screen.getByText("New Workspace");
   fireEvent.click(newWsBtn);
-  userEvent.type(
+  await userEvent.type(
     screen.getByLabelText("title of new workspace"),
     "My Brand New Workspace"
   );
-  userEvent.click(screen.getByText("Create Workspace"));
+  await userEvent.click(screen.getByText("Create Workspace"));
   await waitFor(() => {
     // One to create the Node, one to add it to workspaces
     expect(relayPool.getEvents()).toHaveLength(2);

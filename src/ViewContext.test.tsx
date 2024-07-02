@@ -97,16 +97,16 @@ test("Move View Settings on Delete", async () => {
   );
   await screen.findByText("C++");
   // Remove JAVA Node
-  userEvent.click(
+  await userEvent.click(
     screen.getByLabelText("toggle multiselect Programming Languages")
   );
-  userEvent.click(screen.getByLabelText("select Java"));
-  userEvent.click(screen.getByLabelText("disconnect 1 selected nodes"));
+  await userEvent.click(screen.getByLabelText("select Java"));
+  await userEvent.click(screen.getByLabelText("disconnect 1 selected nodes"));
   // Ensure C is still expanded
   await screen.findByText("C++");
   screen.getByLabelText("hide Default items of C");
 
-  userEvent.click(screen.getByLabelText("hide Default items of C"));
+  await userEvent.click(screen.getByLabelText("hide Default items of C"));
   screen.getByLabelText("show Default items of C");
   expect(screen.queryByText("C++")).toBeNull();
 });
@@ -140,7 +140,7 @@ test("Move Node Up", async () => {
   );
   await screen.findByText("FPL");
   expect(extractNodes(utils.container)).toEqual(["FPL", "OOP"]);
-  userEvent.click(screen.getByLabelText("show Default items of OOP"));
+  await userEvent.click(screen.getByLabelText("show Default items of OOP"));
   expect(extractNodes(utils.container)).toEqual(["FPL", "OOP", "C++", "Java"]);
 
   const oop = screen.getByText("OOP");
@@ -200,7 +200,7 @@ test("Contact reorders list", async () => {
   );
   await screen.findByText("FPL");
   expect(extractNodes(utils.container)).toEqual(["OOP", "FPL"]);
-  userEvent.click(screen.getByLabelText("show Default items of OOP"));
+  await userEvent.click(screen.getByLabelText("show Default items of OOP"));
   await screen.findByText("C++");
   expect(extractNodes(utils.container)).toEqual(["OOP", "C++", "Java", "FPL"]);
   cleanup();
@@ -225,8 +225,8 @@ test("Contact reorders list", async () => {
       initialRoute: `/w/${bobsWorkspace.id}`,
     }
   );
-  userEvent.click(await screen.findByLabelText("edit OOP"));
-  userEvent.click(screen.getByLabelText("delete node"));
+  await userEvent.click(await screen.findByLabelText("edit OOP"));
+  await userEvent.click(screen.getByLabelText("delete node"));
   cleanup();
 
   const { container } = renderWithTestData(

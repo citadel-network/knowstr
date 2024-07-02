@@ -96,7 +96,7 @@ test("Edit node via Column Menu", async () => {
   );
   await screen.findByText("My Note");
   fireEvent.click(screen.getByLabelText(EDIT_MY_NOTE));
-  userEvent.keyboard(
+  await userEvent.keyboard(
     "{backspace}{backspace}{backspace}{backspace}edited Note{enter}"
   );
   fireEvent.click(screen.getByLabelText("save"));
@@ -167,7 +167,7 @@ test("Edit node inline", async () => {
   );
   await screen.findByText("My Note");
   fireEvent.click(screen.getByLabelText("edit My Note"));
-  userEvent.keyboard(
+  await userEvent.keyboard(
     "{backspace}{backspace}{backspace}{backspace}edited Note{enter}"
   );
   fireEvent.click(screen.getByLabelText("save"));
@@ -225,7 +225,9 @@ test("Edited node is shown in Tree View", async () => {
     }
   );
   fireEvent.click(await screen.findByLabelText("edit Java"));
-  userEvent.keyboard("{backspace}{backspace}{backspace}{backspace}C++{enter}");
+  await userEvent.keyboard(
+    "{backspace}{backspace}{backspace}{backspace}C++{enter}"
+  );
   fireEvent.click(screen.getByLabelText("save"));
   expect(screen.queryByText("Save")).toBeNull();
   expect(screen.queryByText("Java")).toBeNull();
@@ -256,7 +258,7 @@ test("Delete node", async () => {
     }
   );
   await screen.findByText("My Note");
-  userEvent.click(screen.getByLabelText("edit My Note"));
-  userEvent.click(screen.getByLabelText("delete node"));
+  await userEvent.click(screen.getByLabelText("edit My Note"));
+  await userEvent.click(screen.getByLabelText("delete node"));
   expect(screen.queryByText("My Note")).toBeNull();
 });

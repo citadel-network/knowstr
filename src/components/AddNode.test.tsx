@@ -45,7 +45,7 @@ test("Link Nodes from other Users", async () => {
   );
   fireEvent.click(searchButton);
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "Object");
+  await userEvent.type(searchInput, "Object");
   fireEvent.click(
     await screen.findByText(matchSplitText("Object Oriented Languages"))
   );
@@ -78,10 +78,10 @@ test("Default Relations are shown when adding a node from other User via search"
   });
 
   renderApp({ ...alice(), includeFocusContext: true });
-  userEvent.type(await screen.findByText("My first Workspace"), "/");
+  await userEvent.type(await screen.findByText("My first Workspace"), "/");
   screen.getByPlaceholderText("Search");
   const searchInput = await screen.findByLabelText("search input");
-  userEvent.type(searchInput, "Object");
+  await userEvent.type(searchInput, "Object");
   fireEvent.click(
     await screen.findByText(matchSplitText("Object Oriented Languages"))
   );

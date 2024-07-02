@@ -19,7 +19,7 @@ test("Bionic Reading", async () => {
   await waitFor(() => {
     expect(screen.queryByText("My first quote")).toBeNull();
   });
-  expect(screen.getByText(matchSplitText("My first quote")).innerHTML).toBe(
-    "<b>M</b>y <b>fi</b>rst <b>qu</b>ote"
+  expect(screen.getByText(matchSplitText("My first quote")).innerHTML).toEqual(
+    "\n<b>M</b>y <b>fi</b>rst <b>qu</b>ote"
   );
 });

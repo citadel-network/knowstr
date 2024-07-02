@@ -463,12 +463,12 @@ export async function typeNewNode(
   view: RenderResult,
   text: string
 ): Promise<void> {
-  userEvent.click(await screen.findByText("Add Note"));
+  await userEvent.click(await screen.findByText("Add Note"));
   /* eslint-disable testing-library/no-container */
   /* eslint-disable testing-library/no-node-access */
   const input = view.container.querySelector(".ql-editor") as Element;
-  userEvent.type(input, text);
-  userEvent.click(await screen.findByText("Add Note"));
+  await userEvent.type(input, text);
+  await userEvent.click(await screen.findByText("Add Note"));
   await screen.findByText(text);
 }
 

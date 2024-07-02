@@ -17,18 +17,18 @@ test("Distinguish between local and remote dashboards", async () => {
 
   renderWithTestData(<SelectWorkspaces />, bob());
   const switchWsBtn = await screen.findByLabelText("switch workspace");
-  userEvent.click(switchWsBtn);
+  await userEvent.click(switchWsBtn);
   const newWsBtn = screen.getByText("New Workspace");
-  userEvent.click(newWsBtn);
-  userEvent.type(
+  await userEvent.click(newWsBtn);
+  await userEvent.type(
     screen.getByLabelText("title of new workspace"),
     "Bobs Workspace"
   );
-  userEvent.click(screen.getByText("Create Workspace"));
+  await userEvent.click(screen.getByText("Create Workspace"));
 
   cleanup();
   renderWithTestData(<SelectWorkspaces />, alice());
-  userEvent.click(await screen.findByLabelText("switch workspace"));
+  await userEvent.click(await screen.findByLabelText("switch workspace"));
   await waitFor(() => {
     const selection = screen.getByLabelText("workspace selection");
     expectTextContent(selection, [

@@ -92,6 +92,7 @@
             "testing-library/no-wait-for-multiple-assertions": 0,
             "testing-library/no-wait-for-side-effects": 0,
             "testing-library/prefer-user-event": ["error", { "allowedMethods": ["click"]}],
+            "testing-library/no-manual-cleanup": 0,
             "prettier/prettier": ["error", { "endOfLine": "auto" }]
           }
       }

@@ -45,7 +45,7 @@ test("Load Referenced By Nodes", async () => {
   );
   await screen.findByText("Bitcoin");
   screen.getByText("3");
-  userEvent.click(screen.getByLabelText("show references to Bitcoin"));
+  await userEvent.click(screen.getByLabelText("show references to Bitcoin"));
   await screen.findByText("Cryptocurrencies");
   await screen.findByText("P2P Apps");
 });
@@ -78,7 +78,7 @@ test("Load Social Nodes", async () => {
     }
   );
   await screen.findByText("Bitcoin");
-  userEvent.click(
+  await userEvent.click(
     screen.getByLabelText("show items created by contacts of Bitcoin")
   );
   await screen.findByText("Censorship Resistance");

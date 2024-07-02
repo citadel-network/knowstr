@@ -50,7 +50,7 @@ test("find a user by nip-05 identifier", async () => {
   });
 
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, bobsNip05Identifier);
+  await userEvent.type(input, bobsNip05Identifier);
 
   const findButton = screen.getByText("Find");
   await waitFor(() => {
@@ -70,7 +70,7 @@ test("find a user by nprofile", async () => {
 
   renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, nprofile);
+  await userEvent.type(input, nprofile);
   fireEvent.click(screen.getByText("Find"));
 
   await screen.findByLabelText("follow user");
@@ -81,7 +81,7 @@ test("cannot find a user by nip-05 identifier", async () => {
   const [alice] = setup([ALICE]);
   renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, bobsNip05Identifier);
+  await userEvent.type(input, bobsNip05Identifier);
 
   const findButton = screen.getByText("Find");
   await waitFor(() => {
@@ -97,7 +97,7 @@ test("find a user x", async () => {
 
   renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, BOB_PUBLIC_KEY);
+  await userEvent.type(input, BOB_PUBLIC_KEY);
   fireEvent.click(screen.getByText("Find"));
 
   await screen.findByLabelText("follow user");
@@ -109,7 +109,7 @@ test("search for an invalid user", async () => {
 
   renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, "invalidPublicKey");
+  await userEvent.type(input, "invalidPublicKey");
   fireEvent.click(screen.getByText("Find"));
 
   await screen.findByText(
@@ -126,7 +126,7 @@ test("search for myself leads to profile", async () => {
   fireEvent.click(await screen.findByLabelText("follow user"));
 
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, ALICE.publicKey);
+  await userEvent.type(input, ALICE.publicKey);
   fireEvent.click(screen.getByText("Find"));
   await screen.findByText("Your nostr npub:");
 });
@@ -137,7 +137,7 @@ test("find a user by npub", async () => {
 
   renderWithTestData(<Follow />, alice());
   const input = await screen.findByLabelText("find user");
-  userEvent.type(input, npub);
+  await userEvent.type(input, npub);
   fireEvent.click(screen.getByText("Find"));
 
   await screen.findByLabelText("follow user");
