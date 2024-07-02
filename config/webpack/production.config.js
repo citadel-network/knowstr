@@ -77,6 +77,7 @@ module.exports = {
       stream: require.resolve("stream-browserify"),
       buffer: require.resolve("buffer"),
       "process/browser": require.resolve("process/browser"),
+      vm: require.resolve("vm-browserify"),
     },
   },
   plugins: [
