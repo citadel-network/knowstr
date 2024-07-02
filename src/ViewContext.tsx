@@ -96,10 +96,7 @@ function getViewExactMatch(views: Views, path: ViewPath): View | undefined {
   return views.get(viewKey);
 }
 
-function findIndexOfRelationType(
-  types: RelationTypes,
-  type: ID
-): number | number {
+function findIndexOfRelationType(types: RelationTypes, type: ID): number {
   return types.keySeq().findIndex((k) => k === type);
 }
 

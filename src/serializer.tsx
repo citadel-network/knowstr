@@ -17,7 +17,7 @@ export type Serializable =
 function toString(serializable: Serializable | undefined): string {
   return serializable === undefined || serializable === null
     ? "undefined"
-    : serializable.toString();
+    : serializable.toString(); // eslint-disable-line @typescript-eslint/no-base-to-string
 }
 
 function asObject(obj: Serializable | undefined): {
