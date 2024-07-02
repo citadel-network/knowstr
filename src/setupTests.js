@@ -22,10 +22,11 @@ beforeAll(() => {
   console.error = (msg, params) => {
     if (
       !(
-        msg.toString().includes("An update to %s inside a test") &&
-        (params === "NostrQueryProvider" ||
-          params === "Data" ||
-          params === "LoadNode")
+        (msg.toString().includes("An update to %s inside a test") &&
+          params === "Data") ||
+        params === "Transition" ||
+        params === "DropdownMenu" ||
+        params === "TreeViewNodeLoader"
       ) &&
       !msg.toString().includes("Not implemented: navigation")
     ) {
