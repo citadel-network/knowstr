@@ -49,6 +49,7 @@ type Filters = {
   knowledgeListByHead: Filter;
   referencedBy: Filter;
   deleteFilter: Filter;
+  authors: PublicKey[];
 };
 
 export function sanitizeFilter(
@@ -66,18 +67,31 @@ export function sanitizeFilter(
 }
 
 export function filtersToFilterArray(filters: Filters): Filter[] {
+  const { authors } = filters;
   return [
-    sanitizeFilter(filters.knowledgeListbyID, "#d"),
-    sanitizeFilter(filters.knowledgeNodesByID, "#d"),
-    sanitizeFilter(filters.knowledgeListByHead, "#k"),
-    sanitizeFilter(filters.referencedBy, "#i"),
-    filters.deleteFilter,
+    sanitizeFilter({ ...filters.knowledgeListbyID, authors }, "#d"),
+    sanitizeFilter({ ...filters.knowledgeNodesByID, authors }, "#d"),
+    sanitizeFilter({ ...filters.knowledgeListByHead, authors }, "#k"),
+    sanitizeFilter({ ...filters.referencedBy, authors }, "#i"),
+    { ...filters.deleteFilter, authors },
   ].filter((f) => f !== undefined) as Filter[];
+}
+
+function addAuthorFromIDToFilters(filters: Filters, id: LongID | ID): Filters {
+  const author = splitID(id)[0];
+  const authors =
+    author && !filters.authors.includes(author)
+      ? [...filters.authors, author]
+      : filters.authors;
+  return {
+    ...filters,
+    authors,
+  };
 }
 
 export function addNodeToFilters(filters: Filters, id: LongID | ID): Filters {
   return {
-    ...filters,
+    ...addAuthorFromIDToFilters(filters, id),
     knowledgeNodesByID: addIDToFilter(filters.knowledgeNodesByID, id, "#d"),
     knowledgeListByHead: addIDToFilter(filters.knowledgeListByHead, id, "#k"),
   };
@@ -94,7 +108,7 @@ export function addReferencedByToFilters(
     "#i": [...d, id],
   };
   return {
-    ...filters,
+    ...addAuthorFromIDToFilters(filters, id),
     referencedBy: updatedFilter,
   };
 }
@@ -104,7 +118,7 @@ function addSocialListToFilters(
   nodeID: LongID | ID
 ): Filters {
   return {
-    ...filters,
+    ...addAuthorFromIDToFilters(filters, nodeID),
     knowledgeListByHead: addIDToFilter(
       filters.knowledgeListByHead,
       nodeID,
@@ -124,8 +138,9 @@ export function addListToFilters(
   if (listID === SOCIAL) {
     return addSocialListToFilters(filters, nodeID);
   }
+
   return {
-    ...filters,
+    ...addAuthorFromIDToFilters(filters, listID),
     knowledgeListbyID: addIDToFilter(filters.knowledgeListbyID, listID, "#d"),
   };
 }
@@ -145,28 +160,24 @@ export function createBaseFilter(
   contacts: Contacts,
   myself: PublicKey
 ): Filters {
-  const authors = [...contacts.keySeq().toArray(), myself] as string[];
+  const authors = [...contacts.keySeq().toArray(), myself];
   return {
     knowledgeListbyID: {
       kinds: [KIND_KNOWLEDGE_LIST],
-      authors,
     },
     knowledgeNodesByID: {
       kinds: [KIND_KNOWLEDGE_NODE],
-      authors,
     },
     knowledgeListByHead: {
       kinds: [KIND_KNOWLEDGE_LIST],
-      authors,
     },
     referencedBy: {
       kinds: [KIND_KNOWLEDGE_LIST],
-      authors,
     },
     deleteFilter: {
       kinds: [KIND_DELETE],
-      authors,
     },
+    authors,
   } as Filters;
 }
 

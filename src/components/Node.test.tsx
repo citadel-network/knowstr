@@ -104,6 +104,29 @@ test("Edit node via Column Menu", async () => {
   await screen.findByText("My edited Note");
 });
 
+test("Load Note from other User which is not a contact", async () => {
+  const [alice, bob] = setup([ALICE, BOB]);
+  const bobsDB = await setupTestDB(bob(), [["Bobs Note", []]]);
+  const node = findNodeByText(bobsDB, "Bobs Note") as KnowNode;
+
+  renderWithTestData(
+    <RootViewContextProvider root={node.id}>
+      <LoadNode>
+        <TemporaryViewProvider>
+          <DND>
+            <Column />
+          </DND>
+        </TemporaryViewProvider>
+      </LoadNode>
+    </RootViewContextProvider>,
+    {
+      ...alice(),
+      initialRoute: `/w/${node.id}`,
+    }
+  );
+  await screen.findByText("Bobs Note");
+});
+
 test("Cannot edit remote Note", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
   await follow(alice, bob().user.publicKey);
