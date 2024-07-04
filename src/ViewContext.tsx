@@ -74,15 +74,21 @@ export function parseViewPath(path: string): ViewPath {
   return [...beginning, { nodeID: nodeIdEnd, nodeIndex: nodeIndexEnd }];
 }
 
-function convertViewPathToString(viewContext: ViewPath): string {
-  const withoutLastElement = viewContext.slice(0, -1) as SubPathWithRelations[];
-  const beginning = withoutLastElement.reduce(
+function convertSubPathWithRelationsToString(
+  subPathWithRelations: SubPathWithRelations[]
+): string {
+  return subPathWithRelations.reduce(
     (acc: string, subPath: SubPathWithRelations): string => {
       const postfix = `${subPath.nodeID}:${subPath.nodeIndex}:${subPath.relationsID}`;
       return acc !== "" ? `${acc}:${postfix}` : postfix;
     },
     ""
   );
+}
+
+function convertViewPathToString(viewContext: ViewPath): string {
+  const withoutLastElement = viewContext.slice(0, -1) as SubPathWithRelations[];
+  const beginning = convertSubPathWithRelationsToString(withoutLastElement);
   const lastPath = viewContext[viewContext.length - 1];
   const end = `${lastPath.nodeID}:${lastPath.nodeIndex}`;
   return beginning !== "" ? `${beginning}:${end}` : end;
@@ -532,6 +538,30 @@ function createUpdatableRelations(
     .relations.get(id, newRelations(head, relationTypeID, myself));
 }
 
+function copyViewsUnderRelations(
+  views: Views,
+  viewPath: ViewPath,
+  copyFromRelationsID: LongID | undefined,
+  copyToRelationsID: LongID
+): Views {
+  if (!copyFromRelationsID) {
+    return views;
+  }
+  const viewPathWithRelations = addRelationsToLastElement(
+    viewPath,
+    copyFromRelationsID
+  );
+  const viewsToCopy = views.filter((_, k) =>
+    k.startsWith(convertSubPathWithRelationsToString(viewPathWithRelations))
+  );
+
+  const newViews = viewsToCopy.mapEntries(([path, view]) => {
+    const newPath = path.replace(copyFromRelationsID, copyToRelationsID);
+    return [newPath, view];
+  });
+  return views.merge(newViews);
+}
+
 export function upsertRelations(
   plan: Plan,
   viewPath: ViewPath,
@@ -546,14 +576,19 @@ export function upsertRelations(
     plan.user.publicKey,
     relationsID,
     nodeID,
-    "" // TODO: relation type?
+    ""
   );
 
   const didViewChange = nodeView.relations !== relations.id;
   const planWithUpdatedView = didViewChange
     ? planUpdateViews(
         plan,
-        plan.views.set(viewPathToString(viewPath), {
+        copyViewsUnderRelations(
+          plan.views,
+          viewPath,
+          nodeView.relations,
+          relations.id
+        ).set(viewPathToString(viewPath), {
           ...nodeView,
           relations: relations.id,
         })
