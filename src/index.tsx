@@ -17,6 +17,7 @@ import { NostrAuthContextProvider } from "./NostrAuthContext";
 import { NostrProvider } from "./NostrProvider";
 
 const defaultRelayUrls = process.env.DEFAULT_RELAYS?.split(",");
+const defaultWorkspace = process.env.DEFAULT_WORKSPACE;
 
 function createFileStore(): LocalStorage {
   return {
@@ -32,7 +33,12 @@ if (root !== null) {
   createRoot(root).render(
     <BrowserRouter>
       <NostrProvider apis={{ fileStore: createFileStore() }}>
-        <NostrAuthContextProvider defaultRelayUrls={defaultRelayUrls}>
+        <NostrAuthContextProvider
+          defaultRelayUrls={defaultRelayUrls}
+          defaultWorkspace={
+            defaultWorkspace ? (defaultWorkspace as LongID) : undefined
+          }
+        >
           <FocusContextProvider>
             <App />
           </FocusContextProvider>

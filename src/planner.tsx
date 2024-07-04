@@ -19,7 +19,7 @@ import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";
 import { relationTypesToJson, viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
-import { isIDRemote, joinID, shortID } from "./connections";
+import { isIDRemote, joinID, shortID, splitID } from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
 
 type ExecutePlan = (plan: Plan) => Promise<void>;
@@ -331,7 +331,12 @@ export function fallbackWorkspace(publicKey: PublicKey): LongID {
 }
 
 function isWsMissing(plan: Plan, workspace: LongID): boolean {
-  if (isIDRemote(workspace, plan.user.publicKey)) {
+  const remote = splitID(workspace)[0];
+  if (
+    isIDRemote(workspace, plan.user.publicKey) &&
+    remote &&
+    plan.contacts.has(remote)
+  ) {
     return false;
   }
   return !plan.workspaces.includes(workspace);
@@ -367,7 +372,8 @@ export function planUpdateWorkspaces(
 
 export function planFallbackWorkspaceIfNecessary(plan: Plan): Plan {
   const isRemote = isIDRemote(plan.activeWorkspace, plan.user.publicKey);
-  if (isRemote) {
+  const remote = splitID(plan.activeWorkspace)[0];
+  if (isRemote && remote && plan.contacts.has(remote)) {
     return plan;
   }
 

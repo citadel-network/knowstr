@@ -40,7 +40,10 @@ function useDeleteNode(): undefined | (() => void) {
   const data = useData();
 
   // Can only delete my own nodes
-  if (isRemote(splitID(nodeID)[0], data.user.publicKey)) {
+  if (
+    isRemote(splitID(nodeID)[0], data.user.publicKey) &&
+    data.activeWorkspace !== nodeID
+  ) {
     return undefined;
   }
 
