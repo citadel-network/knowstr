@@ -72,6 +72,7 @@
         "react/require-default-props": 0,
         "@typescript-eslint/no-floating-promises": 0,
         "@typescript-eslint/unbound-method": 0,
+        "@typescript-eslint/no-unnecessary-type-assertion": 0,
         "react/jsx-no-constructed-context-values": 0,
         "react/jsx-no-bind": 0,
         "react/jsx-no-useless-fragment": 0,
