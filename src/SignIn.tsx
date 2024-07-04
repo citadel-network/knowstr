@@ -270,7 +270,7 @@ export function SignInModal(): JSX.Element {
         />
         <SignInWithExtension
           setPublicKey={(publicKey) =>
-            signIn({ withExtension: false, key: publicKey })
+            signIn({ withExtension: true, key: publicKey })
           }
         />
       </Modal.Body>
