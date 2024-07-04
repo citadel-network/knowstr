@@ -9,6 +9,7 @@ type Context = {
   user: User | undefined;
   setBlockstackUser: (user: User | undefined) => void;
   defaultRelays: Relays;
+  defaultWorkspace?: LongID;
 };
 
 export const NostrAuthContext = React.createContext<Context | undefined>(
@@ -53,6 +54,14 @@ export function useDefaultRelays(): Relays {
     throw new Error("NostrAuthContext missing");
   }
   return context.defaultRelays;
+}
+
+export function useDefaultWorkspace(): LongID | undefined {
+  const context = React.useContext(NostrAuthContext);
+  if (!context) {
+    throw new Error("NostrAuthContext missing");
+  }
+  return context.defaultWorkspace;
 }
 
 function userFromPrivateKey(privateKey: string): User {
@@ -116,9 +125,11 @@ export function useLogout(): () => void {
 
 export function NostrAuthContextProvider({
   defaultRelayUrls,
+  defaultWorkspace,
   children,
 }: {
   defaultRelayUrls?: Array<string>;
+  defaultWorkspace?: LongID;
   children: React.ReactNode;
 }): JSX.Element {
   const { fileStore } = useApis();
@@ -150,6 +161,7 @@ export function NostrAuthContextProvider({
         setBlockstackUser: setUser,
         user,
         defaultRelays: relays,
+        defaultWorkspace,
       }}
     >
       {children}

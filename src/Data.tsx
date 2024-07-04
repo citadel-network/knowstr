@@ -44,7 +44,7 @@ import {
   filtersToFilterArray,
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
-import { useDefaultRelays } from "./NostrAuthContext";
+import { useDefaultRelays, useDefaultWorkspace } from "./NostrAuthContext";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
 
 type DataProps = {
@@ -171,6 +171,7 @@ export function useRelaysInfo(
 
 function Data({ user, children }: DataProps): JSX.Element {
   const defaultRelays = useDefaultRelays();
+  const defaultWorkspace = useDefaultWorkspace();
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] =
     useState<PublishEvents>({
@@ -236,11 +237,16 @@ function Data({ user, children }: DataProps): JSX.Element {
   const activeWorkspace =
     useWorkspaceFromURL() ||
     processedMetaEvents.activeWorkspace ||
+    defaultWorkspace ||
     fallbackWSID;
+
+  const workspaces = processedMetaEvents.workspaces.includes(activeWorkspace)
+    ? processedMetaEvents.workspaces
+    : processedMetaEvents.workspaces.push(activeWorkspace);
 
   const workspaceFilters = processedContactMetaEvents.reduce((rdx, p) => {
     return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
-  }, addWorkspacesToFilter(createBaseFilter(contacts, myPublicKey), processedMetaEvents.workspaces as List<LongID>));
+  }, addWorkspacesToFilter(createBaseFilter(contacts, myPublicKey), workspaces as List<LongID>));
 
   const { events: workspaceEvents } = useEventQuery(
     relayPool,
@@ -276,7 +282,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       relaysInfos={relaysInfo}
       publishEventsStatus={newEventsAndPublishResults}
       views={processedMetaEvents.views}
-      workspaces={processedMetaEvents.workspaces}
+      workspaces={workspaces}
       activeWorkspace={activeWorkspace}
       relationTypes={processedMetaEvents.relationTypes}
       contactsRelationTypes={contactsRelationTypes}

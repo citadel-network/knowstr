@@ -97,10 +97,14 @@ export function SelectWorkspaces(): JSX.Element {
   const workspaces = getWorkspaces(data);
 
   const localWorkspaces = workspaces.filter(
-    (node) => !isIDRemote(node.id, data.user.publicKey)
+    (node) =>
+      !isIDRemote(node.id, data.user.publicKey) ||
+      data.workspaces.includes(node.id)
   );
-  const remoteOnlyWorkspaces = workspaces.filter((node) =>
-    isIDRemote(node.id, data.user.publicKey)
+  const remoteOnlyWorkspaces = workspaces.filter(
+    (node) =>
+      isIDRemote(node.id, data.user.publicKey) &&
+      !data.workspaces.includes(node.id)
   );
 
   return (

@@ -1,7 +1,5 @@
 import { List } from "immutable";
 import { useParams } from "react-router-dom";
-import { newDB } from "./knowledge";
-import { shortID } from "./connections";
 import { useData } from "./DataContext";
 import { getNodeFromID } from "./ViewContext";
 
@@ -10,8 +8,9 @@ export function shorten(nodeText: string): string {
 }
 
 export function getWorkspaces(data: Data): List<KnowNode> {
-  const myDB = data.knowledgeDBs.get(data.user.publicKey, newDB());
-  const myWorkspaces = data.workspaces.map((id) => myDB.nodes.get(shortID(id)));
+  const myWorkspaces = data.workspaces.map((id) =>
+    getNodeFromID(data.knowledgeDBs, id, data.user.publicKey)
+  );
   return data.contactsWorkspaces
     .reduce((rdx, wsIDs) => {
       const workspaces = wsIDs.map((id) =>
