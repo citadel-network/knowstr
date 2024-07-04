@@ -23,7 +23,6 @@ import { isIDRemote, joinID, shortID, splitID } from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
 
 type ExecutePlan = (plan: Plan) => Promise<void>;
-type RepublishEvents = (events: List<Event>, relayUrl: string) => Promise<void>;
 
 type Context = {
   executePlan: ExecutePlan;

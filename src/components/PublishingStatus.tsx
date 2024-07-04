@@ -1,12 +1,8 @@
 import React from "react";
 import { List, Map } from "immutable";
 import { Dropdown, Spinner, ProgressBar } from "react-bootstrap";
-import { useMediaQuery } from "react-responsive";
 import { Event } from "nostr-tools";
 import { getWriteRelays, LoadingSpinnerButton } from "citadel-commons";
-import { useData } from "../DataContext";
-import { IS_MOBILE } from "./responsive";
-import { usePlanner } from "../planner";
 
 function transformPublishResults(
   results: PublishResultsEventMap
@@ -69,11 +65,12 @@ function getWarningDetails(status: PublishResultsOfRelay): {
 function RelayPublishStatus({
   status,
   relayUrl,
+  republishEvents,
 }: {
   status: PublishResultsOfRelay;
   relayUrl: string;
+  republishEvents: RepublishEvents;
 }): JSX.Element {
-  const { republishEvents } = usePlanner();
   const numberFulfilled = getStatusCount(status, "fulfilled");
   const numberRejected = getStatusCount(status, "rejected");
   const totalNumber = numberFulfilled + numberRejected;
@@ -154,9 +151,19 @@ function getStatusColor(publishResults: PublishResultsRelayMap): StatusColor {
   return "green";
 }
 
-export function PublishingStatus(): JSX.Element | null {
-  const isMobile = useMediaQuery(IS_MOBILE);
-  const { publishEventsStatus, relays } = useData();
+type PublishingStatusProps = {
+  isMobile: boolean;
+  publishEventsStatus: PublishEvents;
+  relays: Relays;
+  republishEvents: RepublishEvents;
+};
+
+export function PublishingStatus({
+  isMobile,
+  publishEventsStatus,
+  relays,
+  republishEvents,
+}: PublishingStatusProps): JSX.Element | null {
   if (publishEventsStatus.isLoading === true) {
     return (
       <div style={{ paddingTop: "6px", paddingBottom: "4px" }}>
@@ -207,6 +214,7 @@ export function PublishingStatus(): JSX.Element | null {
               <RelayPublishStatus
                 status={status}
                 relayUrl={relayUrl}
+                republishEvents={republishEvents}
                 // eslint-disable-next-line react/no-array-index-key
                 key={`publishing-status ${relayUrl}`}
               />

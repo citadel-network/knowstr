@@ -10,7 +10,7 @@ import {
   renderWithTestData,
   TEST_RELAYS,
 } from "../utils.test";
-import { PublishingStatus } from "./PublishingStatus";
+import { PublishingStatusWrapper } from "./PublishingStatusWrapper";
 import { WorkspaceView } from "./Workspace";
 import { MockRelayPool, mockRelayPool } from "../nostrMock.test";
 
@@ -32,7 +32,7 @@ test("Details of Publishing Status", async () => {
   const utils = alice();
   const view = renderWithTestData(
     <>
-      <PublishingStatus />
+      <PublishingStatusWrapper />
       <WorkspaceView />
     </>,
     {

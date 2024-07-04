@@ -9,7 +9,7 @@ import { IS_MOBILE } from "./responsive";
 import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
 import { planPublishSettings, usePlanner } from "../planner";
-import { PublishingStatus } from "./PublishingStatus";
+import { PublishingStatusWrapper } from "./PublishingStatusWrapper";
 import { SignInMenuBtn } from "../SignIn";
 import { isUserLoggedIn } from "../NostrAuthContext";
 
@@ -68,7 +68,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
           </div>
         )}
         <div className="navbar-right">
-          <PublishingStatus />
+          <PublishingStatusWrapper />
           <SignInMenuBtn />
           <NotificationCenter />
           <Dropdown className="options-dropdown">

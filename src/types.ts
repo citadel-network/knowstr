@@ -58,6 +58,10 @@ declare global {
 
   type PublishResultsOfRelay = Map<string, Event & PublishStatus>;
   type PublishResultsRelayMap = Map<string, PublishResultsOfRelay>;
+  type RepublishEvents = (
+    events: List<Event>,
+    relayUrl: string
+  ) => Promise<void>;
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
