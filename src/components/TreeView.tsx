@@ -56,11 +56,14 @@ export function TreeViewNodeLoader({
   }, baseFilter);
 
   const finalFilter = filtersToFilterArray(filter);
-  const { knowledgeDBs: mergedDBs, allEventsProcessed } =
-    useQueryKnowledgeData(finalFilter);
+  const {
+    knowledgeDBs: mergedDBs,
+    allEventsProcessed,
+    relationTypes,
+  } = useQueryKnowledgeData(finalFilter);
 
   return (
-    <MergeKnowledgeDB knowledgeDBs={mergedDBs}>
+    <MergeKnowledgeDB knowledgeDBs={mergedDBs} relationTypes={relationTypes}>
       <RegisterQuery
         nodesBeeingQueried={nodeIDs.map((longID) => shortID(longID)).toArray()}
         allEventsProcessed={allEventsProcessed}
@@ -151,12 +154,12 @@ export function TreeView(): JSX.Element {
       addListToFilters(rdx, listID, getLast(parseViewPath(path)).nodeID),
     filter
   );
-  const { knowledgeDBs } = useQueryKnowledgeData(
+  const { knowledgeDBs, relationTypes } = useQueryKnowledgeData(
     filtersToFilterArray(listsFilter)
   );
 
   return (
-    <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>
+    <MergeKnowledgeDB knowledgeDBs={knowledgeDBs} relationTypes={relationTypes}>
       <Tree />
     </MergeKnowledgeDB>
   );
