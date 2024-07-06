@@ -1,5 +1,5 @@
 import { Map, OrderedMap, List } from "immutable";
-import { Event, UnsignedEvent, EventTemplate } from "nostr-tools";
+import { Event, EventTemplate } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
 
@@ -39,29 +39,6 @@ declare global {
   };
 
   type Contacts = Map<PublicKey, Contact>;
-
-  type PublishStatus = {
-    status: "rejected" | "fulfilled";
-    reason?: string;
-  };
-  type PublishResultsOfEvent = {
-    event: Event;
-    results: Map<string, PublishStatus>;
-  };
-  type PublishResultsEventMap = Map<string, PublishResultsOfEvent>;
-
-  type PublishEvents = {
-    unsignedEvents: List<UnsignedEvent>;
-    results: PublishResultsEventMap;
-    isLoading: boolean;
-  };
-
-  type PublishResultsOfRelay = Map<string, Event & PublishStatus>;
-  type PublishResultsRelayMap = Map<string, PublishResultsOfRelay>;
-  type RepublishEvents = (
-    events: List<Event>,
-    relayUrl: string
-  ) => Promise<void>;
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
