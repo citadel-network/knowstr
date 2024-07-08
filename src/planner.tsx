@@ -2,7 +2,11 @@ import React, { Dispatch, SetStateAction } from "react";
 import { List } from "immutable";
 import { UnsignedEvent, Event } from "nostr-tools";
 import crypto from "crypto";
-import { newTimestamp, KIND_RELAY_METADATA_EVENT } from "citadel-commons";
+import {
+  newTimestamp,
+  KIND_RELAY_METADATA_EVENT,
+  mergePublishResultsOfEvents,
+} from "citadel-commons";
 import { v4 } from "uuid";
 import {
   KIND_DELETE,
@@ -22,35 +26,25 @@ import { newDB } from "./knowledge";
 import { isIDRemote, joinID, shortID, splitID } from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
 
+export type Plan = Data & {
+  publishEvents: List<UnsignedEvent>;
+};
+
 type ExecutePlan = (plan: Plan) => Promise<void>;
 
-type Context = {
+type Planner = {
+  createPlan: () => Plan;
   executePlan: ExecutePlan;
   republishEvents: RepublishEvents;
   setPublishEvents: Dispatch<SetStateAction<PublishEvents>>;
 };
 
+type Context = Pick<
+  Planner,
+  "executePlan" | "republishEvents" | "setPublishEvents"
+>;
+
 const PlanningContext = React.createContext<Context | undefined>(undefined);
-
-export type Plan = Data & {
-  publishEvents: List<UnsignedEvent>;
-};
-
-function mergePublishResultsOfEvents(
-  existing: PublishResultsEventMap,
-  newResults: PublishResultsEventMap
-): PublishResultsEventMap {
-  return newResults.reduce((rdx, results, eventID) => {
-    const existingResults = rdx.get(eventID);
-    if (!existingResults) {
-      return rdx.set(eventID, results);
-    }
-    return rdx.set(eventID, {
-      ...existingResults,
-      results: existingResults.results.merge(results.results),
-    });
-  }, existing);
-}
 
 export function PlanningContextProvider({
   children,
@@ -128,13 +122,6 @@ export function createPlan(
     publishEvents: props.publishEvents || List<UnsignedEvent>([]),
   };
 }
-
-type Planner = {
-  createPlan: () => Plan;
-  executePlan: ExecutePlan;
-  republishEvents: RepublishEvents;
-  setPublishEvents: Dispatch<SetStateAction<PublishEvents>>;
-};
 
 export function usePlanner(): Planner {
   const data = useData();
