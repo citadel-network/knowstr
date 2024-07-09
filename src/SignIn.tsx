@@ -243,7 +243,7 @@ export function SignInModal(): JSX.Element {
       { ...planFallbackWorkspaceIfNecessary(createPlan()), user },
       publishEventsStatus.unsignedEvents
     );
-    if (plan.publishEventsStatus.unsignedEvents.size === 0) {
+    if (plan.publishEvents.size === 0) {
       onHide();
       return;
     }

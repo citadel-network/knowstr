@@ -29,7 +29,7 @@ import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
 import { FocusContext, FocusContextProvider } from "citadel-commons";
 import { KIND_CONTACTLIST } from "./nostr";
-import { RequireLogin } from "./AppState";
+import { RequireLogin, UNAUTHENTICATED_USER_PK } from "./AppState";
 import {
   Plan,
   createPlan,
@@ -64,6 +64,9 @@ import { findContacts } from "./contacts";
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
 
+export const ALICE_PRIVATE_KEY =
+  "04d22f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e";
+
 export const BOB_PRIVATE_KEY =
   "00000f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e";
 
@@ -80,11 +83,13 @@ const UNAUTHENTICATED_ALICE: Contact = {
     "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758" as PublicKey,
 };
 
+export const ANON: User = {
+  publicKey: UNAUTHENTICATED_USER_PK,
+};
+
 const ALICE: User = {
   publicKey: UNAUTHENTICATED_ALICE.publicKey,
-  privateKey: hexToBytes(
-    "04d22f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e"
-  ),
+  privateKey: hexToBytes(ALICE_PRIVATE_KEY),
 };
 
 const UNAUTHENTICATED_BOB: Contact = {
@@ -186,8 +191,9 @@ function applyApis(props?: Partial<TestApis>): TestApis {
 type RenderApis = Partial<TestApis> & {
   initialRoute?: string;
   includeFocusContext?: boolean;
-  user?: User | undefined;
+  user?: User;
   defaultRelays?: Array<string>;
+  defaultWorkspace?: LongID;
 };
 
 function renderApis(
@@ -230,6 +236,7 @@ function renderApis(
             optionsWithDefaultUser.defaultRelays ||
             TEST_RELAYS.map((r) => r.url)
           }
+          defaultWorkspace={options?.defaultWorkspace}
         >
           <VirtuosoMockContext.Provider
             value={{ viewportHeight: 10000, itemHeight: 100 }}

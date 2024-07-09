@@ -372,7 +372,7 @@ export function planFallbackWorkspaceIfNecessary(plan: Plan): Plan {
   const node = plan.knowledgeDBs
     .get(plan.user.publicKey)
     ?.nodes.get(shortID(plan.activeWorkspace));
-  if (!node) {
+  if (!node && !isRemote) {
     return planUpsertNode(updatedWS, {
       id: plan.activeWorkspace,
       text: DEFAULT_WS_NAME,

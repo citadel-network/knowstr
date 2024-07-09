@@ -1,5 +1,6 @@
-import { List } from "immutable";
+import { List, Set } from "immutable";
 import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useData } from "./DataContext";
 import { getNodeFromID } from "./ViewContext";
 
@@ -7,25 +8,34 @@ export function shorten(nodeText: string): string {
   return nodeText.substr(0, 30);
 }
 
+// TODO: Move workspace loading to SelectWorkspaces.tsx
+
 export function getWorkspaces(data: Data): List<KnowNode> {
-  const myWorkspaces = data.workspaces.map((id) =>
-    getNodeFromID(data.knowledgeDBs, id, data.user.publicKey)
-  );
-  return data.contactsWorkspaces
-    .reduce((rdx, wsIDs) => {
-      const workspaces = wsIDs.map((id) =>
-        getNodeFromID(data.knowledgeDBs, id, data.user.publicKey)
-      );
-      return workspaces.merge(rdx);
-    }, myWorkspaces)
-    .filter((n) => n !== undefined) as List<KnowNode>;
+  const allWorkspaces: Set<LongID | ID> = (
+    data.contactsWorkspaces.valueSeq().toList().flatten(1) as List<LongID>
+  )
+    .concat(data.workspaces)
+    .concat([data.activeWorkspace as LongID])
+    .toSet();
+
+  const nodes = allWorkspaces
+    .map((wsID) => getNodeFromID(data.knowledgeDBs, wsID, data.user.publicKey))
+    .filter((n) => n !== undefined);
+  return nodes.toList();
 }
 
 export function useWorkspaceFromURL(): LongID | undefined {
   const params = useParams<{
     workspaceID?: LongID;
   }>();
-  return params.workspaceID;
+  const wsID = params.workspaceID;
+  const [lastWSFromURL, setLastWSFromURL] = useState<LongID | undefined>(wsID);
+  useEffect(() => {
+    if (wsID !== lastWSFromURL && wsID) {
+      setLastWSFromURL(wsID);
+    }
+  }, [wsID]);
+  return lastWSFromURL;
 }
 
 export const DEFAULT_WS_NAME = "My first Workspace";
