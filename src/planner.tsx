@@ -6,6 +6,7 @@ import {
   newTimestamp,
   KIND_RELAY_METADATA_EVENT,
   mergePublishResultsOfEvents,
+  getWriteRelays,
 } from "citadel-commons";
 import { v4 } from "uuid";
 import {
@@ -68,7 +69,7 @@ export function PlanningContextProvider({
     const results = await execute({
       plan,
       relayPool,
-      relays: plan.relays.filter((r) => r.write === true),
+      relays: getWriteRelays(plan.relays),
       finalizeEvent,
     });
 

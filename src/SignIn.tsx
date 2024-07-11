@@ -5,7 +5,12 @@ import { UnsignedEvent, getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import { ErrorMessage, createSubmitHandler, Button } from "citadel-commons";
+import {
+  ErrorMessage,
+  createSubmitHandler,
+  Button,
+  getWriteRelays,
+} from "citadel-commons";
 import { List } from "immutable";
 import {
   isUserLoggedIn,
@@ -245,7 +250,7 @@ export function SignInModal(): JSX.Element {
     const results = await execute({
       plan,
       relayPool,
-      relays: plan.relays.filter((r) => r.write === true),
+      relays: getWriteRelays(plan.relays),
       finalizeEvent,
     });
     setPublishEvents(() => {
