@@ -116,10 +116,6 @@ export function getReferencedByRelations(
   };
 }
 
-export function isVirtualRelationsType(relationID: ID): boolean {
-  return relationID === SOCIAL || relationID === REFERENCED_BY;
-}
-
 export function getRelations(
   knowledgeDBs: KnowledgeDBs,
   relationID: ID | undefined,
