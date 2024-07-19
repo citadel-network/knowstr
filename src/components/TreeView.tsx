@@ -26,6 +26,7 @@ import {
 } from "../dataQuery";
 import { RegisterQuery } from "../LoadingStatus";
 import { shortID } from "../connections";
+import { useApis } from "../Apis";
 
 const LOAD_EXTRA = 10;
 
@@ -77,12 +78,17 @@ export function TreeViewNodeLoader({
 /* eslint-disable react/jsx-props-no-spreading */
 function Tree(): JSX.Element | null {
   const data = useData();
+  const { fileStore } = useApis();
+  const { getLocalStorage, setLocalStorage } = fileStore;
+  const scrollableId = useViewKey();
+  const isOpenInFullScreen = useIsOpenInFullScreen();
   const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
     undefined
   );
+  const savedIndex = !isOpenInFullScreen ? getLocalStorage(scrollableId) : null;
+  const startIndexFromStorage = Number(savedIndex) || 0;
   const [range, setRange] = useState<ListRange>({ startIndex: 0, endIndex: 0 });
   const viewPath = useViewPath();
-  const isOpenInFullScreen = useIsOpenInFullScreen();
   const nodes = getNodesInTree(
     data,
     viewPath,
@@ -105,6 +111,15 @@ function Tree(): JSX.Element | null {
     []
   );
 
+  const onStopScrolling = (isScrolling: boolean): void => {
+    if (isScrolling) {
+      return;
+    }
+    if (startIndexFromStorage !== range.startIndex) {
+      setLocalStorage(scrollableId, JSON.stringify(range.startIndex));
+    }
+  };
+
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
       <div
@@ -117,12 +132,19 @@ function Tree(): JSX.Element | null {
           totalListHeightChanged={(height) => {
             setTotalListHeight(height);
           }}
-          rangeChanged={(r) => {
+          initialTopMostItemIndex={startIndexFromStorage}
+          rangeChanged={(r): void => {
             if (r.startIndex === 0 && r.endIndex === 0) {
               return;
             }
-            setRange(r);
+            if (
+              r.startIndex !== range.startIndex ||
+              r.endIndex !== range.endIndex
+            ) {
+              setRange(r);
+            }
           }}
+          isScrolling={onStopScrolling}
           components={{ Scroller }}
           itemContent={(index, path) => {
             return (
