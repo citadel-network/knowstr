@@ -3,7 +3,6 @@ import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { nip19 } from "nostr-tools";
 import { renderWithTestData, typeNewNode } from "./utils.test";
-import { NostrAuthContextProvider } from "./NostrAuthContext";
 import { App } from "./App";
 
 const npub = nip19.npubEncode(
@@ -11,11 +10,7 @@ const npub = nip19.npubEncode(
 );
 
 test("Login and logout with seed phrase", async () => {
-  renderWithTestData(
-    <NostrAuthContextProvider>
-      <App />
-    </NostrAuthContextProvider>
-  );
+  renderWithTestData(<App />, { user: undefined });
   await userEvent.click(await screen.findByLabelText("sign in"));
   await userEvent.type(
     await screen.findByPlaceholderText(
@@ -39,11 +34,7 @@ test("Login and logout with seed phrase", async () => {
 });
 
 test("Login with nsec", async () => {
-  renderWithTestData(
-    <NostrAuthContextProvider>
-      <App />
-    </NostrAuthContextProvider>
-  );
+  renderWithTestData(<App />, { user: undefined });
   await userEvent.click(await screen.findByLabelText("sign in"));
   await userEvent.type(
     await screen.findByPlaceholderText(
@@ -57,11 +48,7 @@ test("Login with nsec", async () => {
 });
 
 test("Login with private key", async () => {
-  renderWithTestData(
-    <NostrAuthContextProvider>
-      <App />
-    </NostrAuthContextProvider>
-  );
+  renderWithTestData(<App />, { user: undefined });
   await userEvent.click(await screen.findByLabelText("sign in"));
   await userEvent.type(
     await screen.findByPlaceholderText(
@@ -75,11 +62,7 @@ test("Login with private key", async () => {
 });
 
 test("Display Error", async () => {
-  renderWithTestData(
-    <NostrAuthContextProvider>
-      <App />
-    </NostrAuthContextProvider>
-  );
+  renderWithTestData(<App />, { user: undefined });
   await userEvent.click(await screen.findByLabelText("sign in"));
   await userEvent.type(
     await screen.findByPlaceholderText(
@@ -91,11 +74,7 @@ test("Display Error", async () => {
 });
 
 test("Sign in persists created Notes", async () => {
-  const view = renderWithTestData(
-    <NostrAuthContextProvider>
-      <App />
-    </NostrAuthContextProvider>
-  );
+  const view = renderWithTestData(<App />, { user: undefined });
   typeNewNode(view, "Hello World!");
   await userEvent.click(await screen.findByText("Sign in to Save"));
   await userEvent.type(
@@ -113,14 +92,10 @@ test("Sign in persists created Notes", async () => {
   cleanup();
 
   // Open App
-  renderWithTestData(
-    <NostrAuthContextProvider>
-      <App />
-    </NostrAuthContextProvider>,
-    {
-      relayPool: view.relayPool,
-    }
-  );
+  renderWithTestData(<App />, {
+    relayPool: view.relayPool,
+    user: undefined,
+  });
   expect(screen.queryAllByText("Hello World!").length).toBe(0);
 
   await userEvent.click(await screen.findByLabelText("sign in"));

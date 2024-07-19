@@ -46,7 +46,10 @@ import { App } from "./App";
 import { DataContextProps } from "./DataContext";
 import { MockRelayPool, mockRelayPool } from "./nostrMock.test";
 import { DEFAULT_SETTINGS } from "./settings";
-import { NostrAuthContext, isUserLoggedInWithSeed } from "./NostrAuthContext";
+import {
+  NostrAuthContextProvider,
+  isUserLoggedInWithSeed,
+} from "./NostrAuthContext";
 import {
   addRelationToRelations,
   getRelationsNoSocial,
@@ -183,8 +186,8 @@ function applyApis(props?: Partial<TestApis>): TestApis {
 type RenderApis = Partial<TestApis> & {
   initialRoute?: string;
   includeFocusContext?: boolean;
-  user?: User;
-  defaultRelays?: Relays;
+  user?: User | undefined;
+  defaultRelays?: Array<string>;
 };
 
 function renderApis(
@@ -205,6 +208,11 @@ function renderApis(
           publicKey: optionsWithDefaultUser.user.publicKey,
         }
       : undefined;
+  if (user && user.publicKey && !user.privateKey) {
+    fileStore.setLocalStorage("publicKey", user.publicKey);
+  } else if (user && user.privateKey) {
+    fileStore.setLocalStorage("privateKey", bytesToHex(user.privateKey));
+  }
   window.history.pushState({}, "", options?.initialRoute || "/");
   const utils = render(
     <BrowserRouter>
@@ -217,12 +225,11 @@ function renderApis(
           eventLoadingTimeout: 0,
         }}
       >
-        <NostrAuthContext.Provider
-          value={{
-            user,
-            setBlockstackUser: jest.fn(),
-            defaultRelays: options?.defaultRelays || TEST_RELAYS,
-          }}
+        <NostrAuthContextProvider
+          defaultRelayUrls={
+            optionsWithDefaultUser.defaultRelays ||
+            TEST_RELAYS.map((r) => r.url)
+          }
         >
           <VirtuosoMockContext.Provider
             value={{ viewportHeight: 10000, itemHeight: 100 }}
@@ -241,7 +248,7 @@ function renderApis(
               </FocusContext.Provider>
             )}
           </VirtuosoMockContext.Provider>
-        </NostrAuthContext.Provider>
+        </NostrAuthContextProvider>
       </ApiProvider>
     </BrowserRouter>
   );

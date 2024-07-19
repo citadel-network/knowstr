@@ -7,14 +7,12 @@ import { UNAUTHENTICATED_USER_PK } from "./AppState";
 
 type Context = {
   user: User | undefined;
-  setBlockstackUser: (user: User | undefined) => void;
+  setUser: (user: User | undefined) => void;
   defaultRelays: Relays;
   defaultWorkspace?: LongID;
 };
 
-export const NostrAuthContext = React.createContext<Context | undefined>(
-  undefined
-);
+const NostrAuthContext = React.createContext<Context | undefined>(undefined);
 
 function getPublicKeyFromContext(context: Context): PublicKey | undefined {
   if (!context.user) {
@@ -83,7 +81,7 @@ export function useLogin(): (privateKey: string) => User {
   return (privateKey) => {
     setLocalStorage("privateKey", privateKey);
     const user = userFromPrivateKey(privateKey);
-    context.setBlockstackUser(user);
+    context.setUser(user);
     return user;
   };
 }
@@ -98,7 +96,7 @@ export function useLoginWithExtension(): (publicKey: PublicKey) => User {
   return (publicKey) => {
     setLocalStorage("publicKey", publicKey);
     const user = { publicKey };
-    context.setBlockstackUser(user);
+    context.setUser(user);
     return user;
   };
 }
@@ -112,7 +110,7 @@ export function useLogout(): () => void {
   }
 
   return () => {
-    context.setBlockstackUser(undefined);
+    context.setUser(undefined);
     const publicKey = getPublicKeyFromContext(context);
     if (publicKey) {
       deleteLocalStorage(publicKey);
@@ -158,7 +156,7 @@ export function NostrAuthContextProvider({
   return (
     <NostrAuthContext.Provider
       value={{
-        setBlockstackUser: setUser,
+        setUser,
         user,
         defaultRelays: relays,
         defaultWorkspace,
