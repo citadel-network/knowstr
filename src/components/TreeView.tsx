@@ -115,8 +115,10 @@ function Tree(): JSX.Element | null {
     if (isScrolling) {
       return;
     }
-    if (startIndexFromStorage !== range.startIndex) {
-      setLocalStorage(scrollableId, JSON.stringify(range.startIndex));
+    const indexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
+    // don't set the storage if the index is 0 since onStopStrolling is called on initial render
+    if (indexFromStorage !== range.startIndex && range.startIndex !== 0) {
+      setLocalStorage(scrollableId, range.startIndex.toString());
     }
   };
 
