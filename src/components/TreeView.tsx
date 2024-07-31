@@ -173,7 +173,6 @@ function Tree(): JSX.Element | null {
     // don't set the storage if the index is 0 since onStopStrolling is called on initial render
     if (indexFromStorage !== range.startIndex && range.startIndex !== 0) {
       setLocalStorage(scrollableId, range.startIndex.toString());
-      isOpenInFullScreen && console.log("setLocalStorage", range.startIndex);
     }
   };
 
