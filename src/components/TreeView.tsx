@@ -30,6 +30,78 @@ import { useApis } from "../Apis";
 
 const LOAD_EXTRA = 10;
 
+function VirtuosoWithCustomScroller({
+  nodes,
+  startIndexFromStorage,
+  range,
+  setRange,
+  onStopScrolling,
+  viewPath,
+  ariaLabel,
+}: {
+  nodes: List<ViewPath>;
+  startIndexFromStorage: number;
+  range: ListRange;
+  setRange: React.Dispatch<React.SetStateAction<ListRange>>;
+  viewPath: ViewPath;
+  onStopScrolling: (isScrolling: boolean) => void;
+  ariaLabel: string | undefined;
+}): JSX.Element {
+  const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
+    undefined
+  );
+  const virtuosoStyle = totalListHeight
+    ? { maxHeight: "100%", height: `${totalListHeight}px` }
+    : { height: "1px" };
+
+  /* eslint-disable react/jsx-props-no-spreading */
+  const Scroller = React.useCallback(
+    React.forwardRef<HTMLDivElement, ScrollerProps>(
+      ({ style, ...props }, ref) => {
+        useDndScrolling(ref, {});
+        return <div style={style} ref={ref} {...props} />;
+      }
+    ),
+    []
+  );
+  /* eslint-enable react/jsx-props-no-spreading */
+  return (
+    <div
+      className="max-height-100 overflow-auto background-dark"
+      aria-label={ariaLabel}
+      style={virtuosoStyle}
+    >
+      <Virtuoso
+        data={nodes.toArray()}
+        totalListHeightChanged={(height) => {
+          setTotalListHeight(height);
+        }}
+        initialTopMostItemIndex={startIndexFromStorage}
+        rangeChanged={(r): void => {
+          if (r.startIndex === 0 && r.endIndex === 0) {
+            return;
+          }
+          if (
+            r.startIndex !== range.startIndex ||
+            r.endIndex !== range.endIndex
+          ) {
+            setRange(r);
+          }
+        }}
+        isScrolling={onStopScrolling}
+        components={{ Scroller }}
+        itemContent={(index, path) => {
+          return (
+            <ViewContext.Provider value={path} key={viewPathToString(path)}>
+              <ListItem index={index} treeViewPath={viewPath} />
+            </ViewContext.Provider>
+          );
+        }}
+      />
+    </div>
+  );
+}
+
 export function TreeViewNodeLoader({
   children,
   nodes,
@@ -75,16 +147,12 @@ export function TreeViewNodeLoader({
   );
 }
 
-/* eslint-disable react/jsx-props-no-spreading */
 function Tree(): JSX.Element | null {
   const data = useData();
   const { fileStore } = useApis();
   const { getLocalStorage, setLocalStorage } = fileStore;
   const scrollableId = useViewKey();
   const isOpenInFullScreen = useIsOpenInFullScreen();
-  const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
-    undefined
-  );
   const startIndexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
   const [range, setRange] = useState<ListRange>({ startIndex: 0, endIndex: 0 });
   const viewPath = useViewPath();
@@ -96,19 +164,6 @@ function Tree(): JSX.Element | null {
   );
   const [node] = useNode();
   const ariaLabel = node ? `related to ${node.text}` : undefined;
-  const virtuosoStyle = totalListHeight
-    ? { maxHeight: "100%", height: `${totalListHeight}px` }
-    : { height: "1px" };
-
-  const Scroller = React.useCallback(
-    React.forwardRef<HTMLDivElement, ScrollerProps>(
-      ({ style, ...props }, ref) => {
-        useDndScrolling(ref, {});
-        return <div style={style} ref={ref} {...props} />;
-      }
-    ),
-    []
-  );
 
   const onStopScrolling = (isScrolling: boolean): void => {
     if (isScrolling) {
@@ -123,39 +178,15 @@ function Tree(): JSX.Element | null {
 
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
-      <div
-        className="max-height-100 overflow-auto background-dark"
-        aria-label={ariaLabel}
-        style={virtuosoStyle}
-      >
-        <Virtuoso
-          data={nodes.toArray()}
-          totalListHeightChanged={(height) => {
-            setTotalListHeight(height);
-          }}
-          initialTopMostItemIndex={startIndexFromStorage}
-          rangeChanged={(r): void => {
-            if (r.startIndex === 0 && r.endIndex === 0) {
-              return;
-            }
-            if (
-              r.startIndex !== range.startIndex ||
-              r.endIndex !== range.endIndex
-            ) {
-              setRange(r);
-            }
-          }}
-          isScrolling={onStopScrolling}
-          components={{ Scroller }}
-          itemContent={(index, path) => {
-            return (
-              <ViewContext.Provider value={path} key={viewPathToString(path)}>
-                <ListItem index={index} treeViewPath={viewPath} />
-              </ViewContext.Provider>
-            );
-          }}
-        />
-      </div>
+      <VirtuosoWithCustomScroller
+        nodes={nodes}
+        range={range}
+        setRange={setRange}
+        startIndexFromStorage={startIndexFromStorage}
+        viewPath={viewPath}
+        onStopScrolling={onStopScrolling}
+        ariaLabel={ariaLabel}
+      />
     </TreeViewNodeLoader>
   );
 }
