@@ -104,6 +104,49 @@ function VirtuosoWithCustomScroller({
   );
 }
 
+function VirtuosoWithoutDnD({
+  nodes,
+  startIndexFromStorage,
+  range,
+  setRange,
+  onStopScrolling,
+  viewPath,
+}: {
+  nodes: List<ViewPath>;
+  startIndexFromStorage: number;
+  range: ListRange;
+  setRange: React.Dispatch<React.SetStateAction<ListRange>>;
+  viewPath: ViewPath;
+  onStopScrolling: (isScrolling: boolean) => void;
+}): JSX.Element {
+  return (
+    <Virtuoso
+      useWindowScroll
+      data={nodes.toArray()}
+      initialTopMostItemIndex={startIndexFromStorage}
+      rangeChanged={(r): void => {
+        if (r.startIndex === 0 && r.endIndex === 0) {
+          return;
+        }
+        if (
+          r.startIndex !== range.startIndex ||
+          r.endIndex !== range.endIndex
+        ) {
+          setRange(r);
+        }
+      }}
+      isScrolling={onStopScrolling}
+      itemContent={(index, path) => {
+        return (
+          <ViewContext.Provider value={path} key={viewPathToString(path)}>
+            <ListItem index={index} treeViewPath={viewPath} />
+          </ViewContext.Provider>
+        );
+      }}
+    />
+  );
+}
+
 export function TreeViewNodeLoader({
   children,
   nodes,
@@ -146,49 +189,6 @@ export function TreeViewNodeLoader({
         {children}
       </RegisterQuery>
     </MergeKnowledgeDB>
-  );
-}
-
-function VirtuosoWithoutDnD({
-  nodes,
-  startIndexFromStorage,
-  range,
-  setRange,
-  onStopScrolling,
-  viewPath,
-}: {
-  nodes: List<ViewPath>;
-  startIndexFromStorage: number;
-  range: ListRange;
-  setRange: React.Dispatch<React.SetStateAction<ListRange>>;
-  viewPath: ViewPath;
-  onStopScrolling: (isScrolling: boolean) => void;
-}): JSX.Element {
-  return (
-    <Virtuoso
-      useWindowScroll
-      data={nodes.toArray()}
-      initialTopMostItemIndex={startIndexFromStorage}
-      rangeChanged={(r): void => {
-        if (r.startIndex === 0 && r.endIndex === 0) {
-          return;
-        }
-        if (
-          r.startIndex !== range.startIndex ||
-          r.endIndex !== range.endIndex
-        ) {
-          setRange(r);
-        }
-      }}
-      isScrolling={onStopScrolling}
-      itemContent={(index, path) => {
-        return (
-          <ViewContext.Provider value={path} key={viewPathToString(path)}>
-            <ListItem index={index} treeViewPath={viewPath} />
-          </ViewContext.Provider>
-        );
-      }}
-    />
   );
 }
 
