@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { List } from "immutable";
 import { ListRange, ScrollerProps, Virtuoso } from "react-virtuoso";
 import { useDndScrolling } from "react-dnd-scrolling";
+import { useMediaQuery } from "react-responsive";
 import { ListItem } from "./Draggable";
 import {
   useNode,
@@ -27,6 +28,7 @@ import {
 import { RegisterQuery } from "../LoadingStatus";
 import { shortID } from "../connections";
 import { useApis } from "../Apis";
+import { IS_MOBILE } from "./responsive";
 
 const LOAD_EXTRA = 10;
 
@@ -147,12 +149,57 @@ export function TreeViewNodeLoader({
   );
 }
 
+function VirtuosoWithoutDnD({
+  nodes,
+  startIndexFromStorage,
+  range,
+  setRange,
+  onStopScrolling,
+  viewPath,
+}: {
+  nodes: List<ViewPath>;
+  startIndexFromStorage: number;
+  range: ListRange;
+  setRange: React.Dispatch<React.SetStateAction<ListRange>>;
+  viewPath: ViewPath;
+  onStopScrolling: (isScrolling: boolean) => void;
+}): JSX.Element {
+  return (
+    <Virtuoso
+      useWindowScroll
+      data={nodes.toArray()}
+      initialTopMostItemIndex={startIndexFromStorage}
+      rangeChanged={(r): void => {
+        if (r.startIndex === 0 && r.endIndex === 0) {
+          return;
+        }
+        if (
+          r.startIndex !== range.startIndex ||
+          r.endIndex !== range.endIndex
+        ) {
+          setRange(r);
+        }
+      }}
+      isScrolling={onStopScrolling}
+      itemContent={(index, path) => {
+        return (
+          <ViewContext.Provider value={path} key={viewPathToString(path)}>
+            <ListItem index={index} treeViewPath={viewPath} />
+          </ViewContext.Provider>
+        );
+      }}
+    />
+  );
+}
+
+/* eslint-disable react/jsx-props-no-spreading */
 function Tree(): JSX.Element | null {
   const data = useData();
   const { fileStore } = useApis();
   const { getLocalStorage, setLocalStorage } = fileStore;
   const scrollableId = useViewKey();
   const isOpenInFullScreen = useIsOpenInFullScreen();
+  const isMobile = useMediaQuery(IS_MOBILE);
   const startIndexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
   const [range, setRange] = useState<ListRange>({ startIndex: 0, endIndex: 0 });
   const viewPath = useViewPath();
@@ -178,15 +225,26 @@ function Tree(): JSX.Element | null {
 
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
-      <VirtuosoWithCustomScroller
-        nodes={nodes}
-        range={range}
-        setRange={setRange}
-        startIndexFromStorage={startIndexFromStorage}
-        viewPath={viewPath}
-        onStopScrolling={onStopScrolling}
-        ariaLabel={ariaLabel}
-      />
+      {isMobile ? (
+        <VirtuosoWithoutDnD
+          nodes={nodes}
+          range={range}
+          setRange={setRange}
+          startIndexFromStorage={startIndexFromStorage}
+          viewPath={viewPath}
+          onStopScrolling={onStopScrolling}
+        />
+      ) : (
+        <VirtuosoWithCustomScroller
+          nodes={nodes}
+          range={range}
+          setRange={setRange}
+          startIndexFromStorage={startIndexFromStorage}
+          viewPath={viewPath}
+          onStopScrolling={onStopScrolling}
+          ariaLabel={ariaLabel}
+        />
+      )}
     </TreeViewNodeLoader>
   );
 }
