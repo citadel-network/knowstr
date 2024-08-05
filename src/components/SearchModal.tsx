@@ -204,7 +204,7 @@ function Search({
         {showSpinner && <div className="spinner-border mt-2" />}
       </ModalNodeTitle>
       {suggestionIndex >= 0 && (
-        <ModalNodeBody>
+        <ModalNodeBody className="flex-col height-100">
           <div className="border-top-strong mb-2" />
           {allSearchResults.toList().map((node, i) => {
             return (

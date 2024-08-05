@@ -87,7 +87,7 @@ export function DesktopView(): JSX.Element {
   return (
     <FullScreenViewWrapper>
       <ModalNode onHide={onHide}>
-        <ModalNodeBody>
+        <ModalNodeBody className="flex-col height-100">
           <DetailView />
           <DND>
             <TreeView />

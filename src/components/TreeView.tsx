@@ -85,8 +85,7 @@ function Tree(): JSX.Element | null {
   const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
     undefined
   );
-  const savedIndex = !isOpenInFullScreen ? getLocalStorage(scrollableId) : null;
-  const startIndexFromStorage = Number(savedIndex) || 0;
+  const startIndexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
   const [range, setRange] = useState<ListRange>({ startIndex: 0, endIndex: 0 });
   const viewPath = useViewPath();
   const nodes = getNodesInTree(
