@@ -17,7 +17,11 @@ export function NostrProvider({
   children: React.ReactNode;
   apis: Omit<
     Apis,
-    "relayPool" | "finalizeEvent" | "nip11" | "eventLoadingTimeout"
+    | "relayPool"
+    | "finalizeEvent"
+    | "nip11"
+    | "eventLoadingTimeout"
+    | "timeToStorePreLoginEvents"
   >;
 }): JSX.Element {
   const [pool, setPool] = useState<AbstractSimplePool | undefined>(undefined);
@@ -42,6 +46,7 @@ export function NostrProvider({
           searchDebounce: 500,
         },
         eventLoadingTimeout: 20000,
+        timeToStorePreLoginEvents: 5000,
       }}
     >
       {children}

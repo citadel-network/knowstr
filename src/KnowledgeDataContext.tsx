@@ -8,8 +8,6 @@ export function shorten(nodeText: string): string {
   return nodeText.substr(0, 30);
 }
 
-// TODO: Move workspace loading to SelectWorkspaces.tsx
-
 export function getWorkspaces(data: Data): List<KnowNode> {
   const allWorkspaces: Set<LongID | ID> = (
     data.contactsWorkspaces.valueSeq().toList().flatten(1) as List<LongID>

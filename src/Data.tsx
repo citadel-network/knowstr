@@ -88,13 +88,33 @@ const KINDS_CONTACTS_META = [
   KIND_RELAY_METADATA_EVENT,
 ];
 
-const KINDS_META = [
+export const KINDS_META = [
   KIND_SETTINGS,
   KIND_CONTACTLIST,
   KIND_WORKSPACES,
   KIND_RELATION_TYPES,
   KIND_VIEWS,
 ];
+
+function mergeEvents(
+  processed: ProcessedEvents,
+  events: List<UnsignedEvent | Event>
+): ProcessedEvents {
+  const workspaces = findWorkspaces(events) || {
+    workspaces: List<ID>(),
+    activeWorkspace: undefined,
+  };
+
+  const newWorkspaces = processed.workspaces
+    .merge(workspaces.workspaces)
+    .toSet()
+    .toList();
+  return {
+    ...processed,
+    workspaces: newWorkspaces,
+    activeWorkspace: processed.activeWorkspace || workspaces.activeWorkspace,
+  };
+}
 
 function processEventsByAuthor(
   authorEvents: List<UnsignedEvent | Event>
@@ -174,10 +194,11 @@ function Data({ user, children }: DataProps): JSX.Element {
   const defaultWorkspace = useDefaultWorkspace();
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] =
-    useState<PublishEvents>({
+    useState<EventState>({
       unsignedEvents: List(),
       results: Map(),
       isLoading: false,
+      preLoginEvents: List(),
     });
   const [fallbackWSID] = useState(fallbackWorkspace(myPublicKey));
   const { relayPool } = useApis();
@@ -211,9 +232,9 @@ function Data({ user, children }: DataProps): JSX.Element {
     .toList()
     .merge(newEventsAndPublishResults.unsignedEvents);
 
-  const processedMetaEvents = useEventProcessor(metaEvents).get(
-    myPublicKey,
-    newProcessedEvents()
+  const processedMetaEvents = mergeEvents(
+    useEventProcessor(metaEvents).get(myPublicKey, newProcessedEvents()),
+    newEventsAndPublishResults.preLoginEvents
   );
   const contacts = processedMetaEvents.contacts.filter(
     (_, k) => k !== myPublicKey

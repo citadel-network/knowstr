@@ -1,5 +1,5 @@
 import { Map, OrderedMap, List } from "immutable";
-import { Event, EventTemplate } from "nostr-tools";
+import { Event, EventTemplate, UnsignedEvent } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
 
@@ -42,6 +42,10 @@ declare global {
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
+  type EventState = PublishEvents & {
+    preLoginEvents: List<UnsignedEvent>;
+  };
+
   type Data = {
     contacts: Contacts;
     user: User;
@@ -50,7 +54,7 @@ declare global {
     contactsRelays: Map<PublicKey, Relays>;
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
-    publishEventsStatus: PublishEvents;
+    publishEventsStatus: EventState;
 
     views: Views;
     workspaces: List<ID>;

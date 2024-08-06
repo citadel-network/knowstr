@@ -22,6 +22,8 @@ import { Plan, planFallbackWorkspaceIfNecessary, usePlanner } from "./planner";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { execute } from "./executor";
 import { useApis } from "./Apis";
+import { KINDS_META } from "./Data";
+import { useStorePreLoginEvents } from "./StorePreLoginContext";
 
 /* eslint-disable no-empty */
 function convertInputToPrivateKey(input: string): string | undefined {
@@ -229,6 +231,8 @@ export function SignInModal(): JSX.Element {
   const onHide = (): void => {
     navigate(referrer);
   };
+  const storeMergeEvents = useStorePreLoginEvents();
+
   const signIn = async ({
     withExtension,
     key,
@@ -247,19 +251,39 @@ export function SignInModal(): JSX.Element {
       onHide();
       return;
     }
-    const results = await execute({
-      plan,
-      relayPool,
-      relays: getWriteRelays(plan.relays),
-      finalizeEvent,
-    });
-    setPublishEvents(() => {
-      return {
-        unsignedEvents: plan.publishEvents, // TODO: or better to empty it?
-        results,
-        isLoading: false,
-      };
-    });
+    const mergeEvents = plan.publishEvents.filter((e) =>
+      KINDS_META.includes(e.kind)
+    );
+    const nonMergeEvents = plan.publishEvents.filter(
+      (e) => !KINDS_META.includes(e.kind)
+    );
+
+    if (nonMergeEvents.size > 0) {
+      const results = await execute({
+        plan: { ...plan, publishEvents: nonMergeEvents },
+        relayPool,
+        relays: getWriteRelays(plan.relays),
+        finalizeEvent,
+      });
+      setPublishEvents(() => {
+        return {
+          unsignedEvents: nonMergeEvents,
+          results,
+          isLoading: false,
+          preLoginEvents: mergeEvents,
+        };
+      });
+    } else {
+      setPublishEvents((current) => {
+        return {
+          unsignedEvents: current.unsignedEvents,
+          results: current.results,
+          isLoading: true,
+          preLoginEvents: mergeEvents,
+        };
+      });
+    }
+    storeMergeEvents(mergeEvents.map((e) => e.kind));
     onHide();
   };
   return (

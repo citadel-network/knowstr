@@ -37,7 +37,7 @@ type Planner = {
   createPlan: () => Plan;
   executePlan: ExecutePlan;
   republishEvents: RepublishEvents;
-  setPublishEvents: Dispatch<SetStateAction<PublishEvents>>;
+  setPublishEvents: Dispatch<SetStateAction<EventState>>;
 };
 
 type Context = Pick<
@@ -52,17 +52,17 @@ export function PlanningContextProvider({
   setPublishEvents,
 }: {
   children: React.ReactNode;
-  setPublishEvents: Dispatch<SetStateAction<PublishEvents>>;
+  setPublishEvents: Dispatch<SetStateAction<EventState>>;
 }): JSX.Element {
   const { relayPool, finalizeEvent } = useApis();
 
   const executePlan = async (plan: Plan): Promise<void> => {
-    // TODO: Just sign in planner, but non-blocking
     setPublishEvents((prevStatus) => {
       return {
         unsignedEvents: prevStatus.unsignedEvents.merge(plan.publishEvents),
         results: prevStatus.results,
         isLoading: true,
+        preLoginEvents: prevStatus.preLoginEvents,
       };
     });
 
@@ -78,6 +78,7 @@ export function PlanningContextProvider({
         unsignedEvents: prevStatus.unsignedEvents,
         results: mergePublishResultsOfEvents(prevStatus.results, results),
         isLoading: false,
+        preLoginEvents: prevStatus.preLoginEvents,
       };
     });
   };
@@ -96,6 +97,7 @@ export function PlanningContextProvider({
         unsignedEvents: prevStatus.unsignedEvents,
         results: mergePublishResultsOfEvents(prevStatus.results, results),
         isLoading: false,
+        preLoginEvents: prevStatus.preLoginEvents,
       };
     });
   };

@@ -173,6 +173,7 @@ type TestApis = Omit<Apis, "fileStore" | "relayPool"> & {
 function applyApis(props?: Partial<TestApis>): TestApis {
   return {
     eventLoadingTimeout: 0,
+    timeToStorePreLoginEvents: 0,
     fileStore: props?.fileStore || mockFileStore(),
     relayPool: props?.relayPool || mockRelayPool(),
     finalizeEvent: props?.finalizeEvent || mockFinalizeEvent(),
@@ -229,6 +230,7 @@ function renderApis(
           finalizeEvent,
           nip11,
           eventLoadingTimeout: 0,
+          timeToStorePreLoginEvents: 0,
         }}
       >
         <NostrAuthContextProvider
@@ -265,6 +267,7 @@ function renderApis(
     finalizeEvent,
     nip11,
     eventLoadingTimeout: 0,
+    timeToStorePreLoginEvents: 0,
     ...utils,
   };
 }
@@ -303,6 +306,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
     isLoading: false,
     unsignedEvents: List<UnsignedEvent>(),
     results: Map<string, PublishResultsOfEvent>(),
+    preLoginEvents: List<UnsignedEvent>(),
   },
   views: Map<string, View>(),
   workspaces: List<ID>(),

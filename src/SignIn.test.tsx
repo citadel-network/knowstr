@@ -74,7 +74,10 @@ test("Display Error", async () => {
 });
 
 test("Sign in persists created Notes", async () => {
-  const view = renderWithTestData(<App />, { user: undefined });
+  const view = renderWithTestData(<App />, {
+    user: undefined,
+    timeToStorePreLoginEvents: 0,
+  });
   typeNewNode(view, "Hello World!");
   await userEvent.click(await screen.findByText("Sign in to Save"));
   await userEvent.type(
