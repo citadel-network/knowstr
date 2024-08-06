@@ -124,7 +124,7 @@ function Tree(): JSX.Element | null {
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
       <div
-        className="max-height-100 overflow-hidden background-dark"
+        className="max-height-100 overflow-auto background-dark"
         aria-label={ariaLabel}
         style={virtuosoStyle}
       >
