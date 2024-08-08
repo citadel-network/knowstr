@@ -113,6 +113,7 @@ function mergeEvents(
     ...processed,
     workspaces: newWorkspaces,
     activeWorkspace: processed.activeWorkspace || workspaces.activeWorkspace,
+    views: findViews(events).merge(processed.views),
   };
 }
 

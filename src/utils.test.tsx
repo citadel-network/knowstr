@@ -397,7 +397,10 @@ export async function unfollow(
 
 export function renderWithTestData(
   children: React.ReactElement,
-  options?: Partial<TestAppState> & { initialRoute?: string }
+  options?: Partial<TestAppState> & {
+    initialRoute?: string;
+    defaultWorkspace?: LongID;
+  }
 ): TestAppState & RenderResult {
   const props = applyDefaults(options);
   const utils = renderApis(

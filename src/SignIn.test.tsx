@@ -2,7 +2,17 @@ import React from "react";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { nip19 } from "nostr-tools";
-import { renderWithTestData, typeNewNode } from "./utils.test";
+import {
+  ALICE,
+  ALICE_PRIVATE_KEY,
+  BOB,
+  findNodeByText,
+  renderApp,
+  renderWithTestData,
+  setup,
+  setupTestDB,
+  typeNewNode,
+} from "./utils.test";
 import { App } from "./App";
 
 const npub = nip19.npubEncode(
@@ -110,4 +120,45 @@ test("Sign in persists created Notes", async () => {
   );
   // After login the note is still there
   await screen.findByText("Hello World!");
+});
+
+test("Merge Views", async () => {
+  const [bob, alice] = setup([BOB, ALICE]);
+  const bobsDB = await setupTestDB(bob(), [
+    ["Default Workspace", [["Bitcoin"], ["Nostr"]]],
+  ]);
+  const wsNode = findNodeByText(bobsDB, "Default Workspace") as KnowNode;
+  renderApp({
+    ...alice(),
+    defaultWorkspace: wsNode.id,
+  });
+  await userEvent.click(
+    await screen.findByLabelText("increase width of Bitcoin")
+  );
+  // Bitcoin column is expanded
+  screen.getByLabelText("decrease width of Bitcoin");
+
+  cleanup();
+  renderWithTestData(<App />, {
+    relayPool: bob().relayPool,
+    user: undefined,
+    defaultWorkspace: wsNode.id,
+  });
+  await userEvent.click(
+    await screen.findByLabelText("increase width of Nostr")
+  );
+  // Nostr column is expanded, but Bitcoin column is not
+  screen.getByLabelText("decrease width of Nostr");
+  expect(screen.queryByLabelText("decrease width of Bitcoin")).toBeNull();
+
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
+    `${ALICE_PRIVATE_KEY}{enter}`
+  );
+  // After Login both columns are expanded because the views of the existing user are merged
+  await screen.findByLabelText("increase width of Nostr");
+  await screen.findByLabelText("increase width of Bitcoin");
 });

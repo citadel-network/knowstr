@@ -1,6 +1,6 @@
 import React from "react";
 import { useMediaQuery } from "react-responsive";
-import { updateView, useNode, useViewPath } from "../ViewContext";
+import { updateView, useNode, useNodeID, useViewPath } from "../ViewContext";
 import { IS_MOBILE } from "./responsive";
 import { useData } from "../DataContext";
 import { planUpdateViews, usePlanner } from "../planner";
@@ -10,10 +10,9 @@ export function ChangeColumnWidth(): JSX.Element | null {
   const { views } = useData();
   const { createPlan, executePlan } = usePlanner();
   const viewContext = useViewPath();
-  const view = useNode()[1];
-  // TODO: check why this was implemented like that
-  // const view = getNodeFromView(knowledgeDBs, views, viewContext)[1];
-  if (!view || !views) {
+  const view = useNodeID()[1];
+  const [node] = useNode();
+  if (!views) {
     return null;
   }
   if (isMobile) {
@@ -41,12 +40,13 @@ export function ChangeColumnWidth(): JSX.Element | null {
       )
     );
   };
+  const suffix = node ? ` of ${node.text}` : "";
   return (
     <>
       {view.width > 1 && (
         <button
           type="button"
-          aria-label="decrease width"
+          aria-label={`decrease width${suffix}`}
           disabled={view.width === 1}
           className="btn btn-borderless"
           onClick={onDecreaseColumnWidth}
@@ -56,7 +56,7 @@ export function ChangeColumnWidth(): JSX.Element | null {
       )}
       <button
         type="button"
-        aria-label="increase width"
+        aria-label={`increase width${suffix}`}
         className="btn btn-borderless"
         onClick={onIncreaseColumnWidth}
       >

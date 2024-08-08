@@ -73,10 +73,14 @@ test("Change Column width", async () => {
   );
   await typeNewNode(view, "Hello World");
   expect(screen.queryByLabelText("decrease width")).toBeNull();
-  await userEvent.click(await screen.findByLabelText("increase width"));
+  await userEvent.click(
+    await screen.findByLabelText("increase width of Hello World")
+  );
   // I can decrease once
-  await userEvent.click(await screen.findByLabelText("decrease width"));
-  expect(screen.queryByLabelText("decrease width")).toBeNull();
+  await userEvent.click(
+    await screen.findByLabelText("decrease width of Hello World")
+  );
+  expect(screen.queryByLabelText("decrease width of Hello World")).toBeNull();
 });
 
 test("Show Referenced By", async () => {
