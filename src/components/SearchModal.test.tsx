@@ -139,7 +139,7 @@ test("Client side filtering when relay does not support nip-50", async () => {
     ...alice(),
     plan: planBulkUpsertNodes(createPlan(alice()), [
       newNode("Bitcoin", alice().user.publicKey),
-      newNode("Ethereum", alice().user.publicKey),
+      newNode("Bircoin", alice().user.publicKey),
     ]),
   });
   renderWithTestData(
@@ -147,9 +147,12 @@ test("Client side filtering when relay does not support nip-50", async () => {
     alice()
   );
   const searchInput = await screen.findByLabelText("search input");
-  await userEvent.type(searchInput, "Bitcoin");
+  await userEvent.type(searchInput, "Bi");
+  await screen.findByText("Bitcoin");
+  await screen.findByText("Bircoin");
+  await userEvent.type(searchInput, "tcoin");
   await screen.findByText("Bitcoin");
   await waitFor(() => {
-    expect(screen.queryByText("Ethereum")).toBeNull();
+    expect(screen.queryByText("Bircoin")).toBeNull();
   });
 });
