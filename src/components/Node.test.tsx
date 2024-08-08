@@ -9,6 +9,7 @@ import {
   BOB,
   findNodeByText,
   follow,
+  renderApp,
   renderWithTestData,
   setup,
   setupTestDB,
@@ -126,6 +127,38 @@ test("Load Note from other User which is not a contact", async () => {
     }
   );
   await screen.findByText("Bobs Note");
+});
+
+test("Show Connections types of contacts", async () => {
+  const [alice, bob] = setup([ALICE, BOB]);
+  await follow(alice, bob().user.publicKey);
+
+  const bobsDB = await setupTestDB(bob(), [["Bobs Workspace", ["Bobs Note"]]]);
+  const node = findNodeByText(bobsDB, "Bobs Note") as KnowNode;
+  const ws = findNodeByText(bobsDB, "Bobs Workspace") as KnowNode;
+
+  const planWithRelationTypes = planUpdateRelationTypes(
+    createPlan(bob()),
+    Map({
+      "1": { label: "Pro", color: "#FF0000" },
+      "": { label: "Default", color: "#000000" },
+    })
+  );
+  const plan = planUpsertRelations(
+    planWithRelationTypes,
+    newRelations(node.id, "1", bob().user.publicKey)
+  );
+  await execute({
+    ...bob(),
+    plan,
+  });
+  renderApp({
+    ...alice(),
+    initialRoute: `/w/${ws.id}`,
+  });
+  await screen.findByText("Bobs Note");
+  await screen.findByText("Pro (0)");
+  await screen.findByLabelText("show Pro items of Bobs Note");
 });
 
 test("Load Connection types of non-contact user if necessary", async () => {

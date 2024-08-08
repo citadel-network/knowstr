@@ -70,7 +70,8 @@ export function MergeKnowledgeDB({
   const contactsRelationTypes = relationTypes.filter(
     (_, k) => k !== data.user.publicKey
   );
-  const mergedRelationTypes = data.contactsRelationTypes.merge(
+  const mergedRelationTypes = data.contactsRelationTypes.mergeWith(
+    (a, b) => a.merge(b),
     contactsRelationTypes
   );
   return (
