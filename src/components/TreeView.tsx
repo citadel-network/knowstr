@@ -1,8 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { List } from "immutable";
-import { ListRange, ScrollerProps, Virtuoso } from "react-virtuoso";
+import {
+  ListRange,
+  ScrollerProps,
+  Virtuoso,
+  VirtuosoHandle,
+} from "react-virtuoso";
 import { useDndScrolling } from "react-dnd-scrolling";
+import { useMediaQuery } from "react-responsive";
+import { useLocation } from "react-router-dom";
 import { ListItem } from "./Draggable";
+import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import {
   useNode,
   useViewPath,
@@ -14,7 +22,6 @@ import {
   getLast,
   parseViewPath,
 } from "../ViewContext";
-import { getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { MergeKnowledgeDB, useData } from "../DataContext";
 import {
   addListToFilters,
@@ -27,8 +34,133 @@ import {
 import { RegisterQuery } from "../LoadingStatus";
 import { shortID } from "../connections";
 import { useApis } from "../Apis";
+import { IS_MOBILE } from "./responsive";
 
 const LOAD_EXTRA = 10;
+
+function VirtuosoWithCustomScroller({
+  nodes,
+  startIndexFromStorage,
+  range,
+  setRange,
+  onStopScrolling,
+  viewPath,
+  ariaLabel,
+}: {
+  nodes: List<ViewPath>;
+  startIndexFromStorage: number;
+  range: ListRange;
+  setRange: React.Dispatch<React.SetStateAction<ListRange>>;
+  viewPath: ViewPath;
+  onStopScrolling: (isScrolling: boolean) => void;
+  ariaLabel: string | undefined;
+}): JSX.Element {
+  const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
+    undefined
+  );
+  const virtuosoStyle = totalListHeight
+    ? { maxHeight: "100%", height: `${totalListHeight}px` }
+    : { height: "1px" };
+
+  /* eslint-disable react/jsx-props-no-spreading */
+  const Scroller = React.useCallback(
+    React.forwardRef<HTMLDivElement, ScrollerProps>(
+      ({ style, ...props }, ref) => {
+        useDndScrolling(ref, {});
+        return <div style={style} ref={ref} {...props} />;
+      }
+    ),
+    []
+  );
+  /* eslint-enable react/jsx-props-no-spreading */
+  return (
+    <div
+      className="max-height-100 overflow-auto background-dark"
+      aria-label={ariaLabel}
+      style={virtuosoStyle}
+    >
+      <Virtuoso
+        data={nodes.toArray()}
+        totalListHeightChanged={(height) => {
+          setTotalListHeight(height);
+        }}
+        initialTopMostItemIndex={startIndexFromStorage}
+        rangeChanged={(r): void => {
+          if (r.startIndex === 0 && r.endIndex === 0) {
+            return;
+          }
+          if (
+            r.startIndex !== range.startIndex ||
+            r.endIndex !== range.endIndex
+          ) {
+            setRange(r);
+          }
+        }}
+        isScrolling={onStopScrolling}
+        components={{ Scroller }}
+        itemContent={(index, path) => {
+          return (
+            <ViewContext.Provider value={path} key={viewPathToString(path)}>
+              <ListItem index={index} treeViewPath={viewPath} />
+            </ViewContext.Provider>
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+function VirtuosoWithoutDnD({
+  nodes,
+  startIndexFromStorage,
+  range,
+  setRange,
+  onStopScrolling,
+}: {
+  nodes: List<ViewPath>;
+  startIndexFromStorage: number;
+  range: ListRange;
+  setRange: React.Dispatch<React.SetStateAction<ListRange>>;
+  onStopScrolling: (isScrolling: boolean) => void;
+}): JSX.Element {
+  const location = useLocation();
+  const virtuosoRef = useRef<VirtuosoHandle>(null); // Step 2
+  useEffect(() => {
+    if (virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({
+        align: "start",
+        behavior: "auto",
+        index: startIndexFromStorage,
+      });
+    }
+  }, [location]);
+
+  return (
+    <Virtuoso
+      ref={virtuosoRef}
+      data={nodes.toArray()}
+      rangeChanged={(r): void => {
+        if (r.startIndex === 0 && r.endIndex === 0) {
+          return;
+        }
+        if (
+          // on mobile there is no decreasing or increasing column width, so no need to set the storage if only the endIndex changes
+          r.startIndex !== range.startIndex
+        ) {
+          setRange(r);
+        }
+      }}
+      isScrolling={onStopScrolling}
+      itemContent={(_, path) => {
+        return (
+          <ViewContext.Provider value={path} key={viewPathToString(path)}>
+            <Node />
+          </ViewContext.Provider>
+        );
+      }}
+    />
+  );
+}
 
 export function TreeViewNodeLoader({
   children,
@@ -82,11 +214,12 @@ function Tree(): JSX.Element | null {
   const { getLocalStorage, setLocalStorage } = fileStore;
   const scrollableId = useViewKey();
   const isOpenInFullScreen = useIsOpenInFullScreen();
-  const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
-    undefined
-  );
+  const isMobile = useMediaQuery(IS_MOBILE);
   const startIndexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
-  const [range, setRange] = useState<ListRange>({ startIndex: 0, endIndex: 0 });
+  const [range, setRange] = useState<ListRange>({
+    startIndex: startIndexFromStorage,
+    endIndex: startIndexFromStorage,
+  });
   const viewPath = useViewPath();
   const nodes = getNodesInTree(
     data,
@@ -96,66 +229,39 @@ function Tree(): JSX.Element | null {
   );
   const [node] = useNode();
   const ariaLabel = node ? `related to ${node.text}` : undefined;
-  const virtuosoStyle = totalListHeight
-    ? { maxHeight: "100%", height: `${totalListHeight}px` }
-    : { height: "1px" };
-
-  const Scroller = React.useCallback(
-    React.forwardRef<HTMLDivElement, ScrollerProps>(
-      ({ style, ...props }, ref) => {
-        useDndScrolling(ref, {});
-        return <div style={style} ref={ref} {...props} />;
-      }
-    ),
-    []
-  );
 
   const onStopScrolling = (isScrolling: boolean): void => {
-    if (isScrolling) {
+    // don't set the storage if the index is 0 since onStopStrolling is called on initial render
+    if (isScrolling || nodes.size <= 1 || range.startIndex === 0) {
       return;
     }
     const indexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
-    // don't set the storage if the index is 0 since onStopStrolling is called on initial render
-    if (indexFromStorage !== range.startIndex && range.startIndex !== 0) {
+    if (indexFromStorage !== range.startIndex) {
       setLocalStorage(scrollableId, range.startIndex.toString());
     }
   };
 
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
-      <div
-        className="max-height-100 overflow-auto background-dark"
-        aria-label={ariaLabel}
-        style={virtuosoStyle}
-      >
-        <Virtuoso
-          data={nodes.toArray()}
-          totalListHeightChanged={(height) => {
-            setTotalListHeight(height);
-          }}
-          initialTopMostItemIndex={startIndexFromStorage}
-          rangeChanged={(r): void => {
-            if (r.startIndex === 0 && r.endIndex === 0) {
-              return;
-            }
-            if (
-              r.startIndex !== range.startIndex ||
-              r.endIndex !== range.endIndex
-            ) {
-              setRange(r);
-            }
-          }}
-          isScrolling={onStopScrolling}
-          components={{ Scroller }}
-          itemContent={(index, path) => {
-            return (
-              <ViewContext.Provider value={path} key={viewPathToString(path)}>
-                <ListItem index={index} treeViewPath={viewPath} />
-              </ViewContext.Provider>
-            );
-          }}
+      {isMobile ? (
+        <VirtuosoWithoutDnD
+          nodes={nodes}
+          range={range}
+          setRange={setRange}
+          startIndexFromStorage={startIndexFromStorage}
+          onStopScrolling={onStopScrolling}
         />
-      </div>
+      ) : (
+        <VirtuosoWithCustomScroller
+          nodes={nodes}
+          range={range}
+          setRange={setRange}
+          startIndexFromStorage={startIndexFromStorage}
+          viewPath={viewPath}
+          onStopScrolling={onStopScrolling}
+          ariaLabel={ariaLabel}
+        />
+      )}
     </TreeViewNodeLoader>
   );
 }
