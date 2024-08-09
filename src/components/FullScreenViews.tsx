@@ -1,22 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { List } from "immutable";
 import { ModalNode, ModalNodeBody } from "citadel-commons";
-import {
-  ViewContext,
-  ViewPath,
-  useViewPath,
-  viewPathToString,
-} from "../ViewContext";
-import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
+import { Node } from "./Node";
 import { NavBar } from "./Navbar";
 import { DetailViewMenu } from "./Menu";
 import { AddNodeToNode } from "./AddNode";
-import { TreeView, TreeViewNodeLoader } from "./TreeView";
+import { TreeView } from "./TreeView";
 import { DND } from "../dnd";
 import { FullScreenViewWrapper } from "./FullScreenViewWrapper";
 import { useLogout } from "../NostrAuthContext";
-import { useData } from "../DataContext";
 
 function DetailView(): JSX.Element | null {
   return (
@@ -32,34 +24,6 @@ function DetailView(): JSX.Element | null {
   );
 }
 
-function MobileViewNodes(): JSX.Element | null {
-  const data = useData();
-  const viewPath = useViewPath();
-  const isOpenInFullScreen = useIsOpenInFullScreen();
-  const nodes = getNodesInTree(
-    data,
-    viewPath,
-    List<ViewPath>(),
-    isOpenInFullScreen,
-    true
-  );
-
-  return (
-    <TreeViewNodeLoader nodes={nodes}>
-      <DetailView />
-      {nodes.map((path) => {
-        return (
-          <ViewContext.Provider value={path} key={viewPathToString(path)}>
-            <div id={viewPathToString(path)}>
-              <Node />
-            </div>
-          </ViewContext.Provider>
-        );
-      })}
-    </TreeViewNodeLoader>
-  );
-}
-
 export function MobileView(): JSX.Element | null {
   const logout = useLogout();
   return (
@@ -70,8 +34,9 @@ export function MobileView(): JSX.Element | null {
       >
         <NavBar logout={logout} />
         <div className="background-white position-relative flex-grow-1">
-          <div className="position-absolute board ps-2 overflow-y-auto">
-            <MobileViewNodes />
+          <div className="position-absolute board ps-2 overflow-y-hidden">
+            <DetailView />
+            <TreeView />
           </div>
         </div>
       </div>

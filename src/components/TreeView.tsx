@@ -1,9 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { List } from "immutable";
-import { ListRange, ScrollerProps, Virtuoso } from "react-virtuoso";
+import {
+  ListRange,
+  ScrollerProps,
+  Virtuoso,
+  VirtuosoHandle,
+} from "react-virtuoso";
 import { useDndScrolling } from "react-dnd-scrolling";
 import { useMediaQuery } from "react-responsive";
+import { useLocation } from "react-router-dom";
 import { ListItem } from "./Draggable";
+import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import {
   useNode,
   useViewPath,
@@ -15,7 +22,6 @@ import {
   getLast,
   parseViewPath,
 } from "../ViewContext";
-import { getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import { MergeKnowledgeDB, useData } from "../DataContext";
 import {
   addListToFilters,
@@ -110,36 +116,45 @@ function VirtuosoWithoutDnD({
   range,
   setRange,
   onStopScrolling,
-  viewPath,
 }: {
   nodes: List<ViewPath>;
   startIndexFromStorage: number;
   range: ListRange;
   setRange: React.Dispatch<React.SetStateAction<ListRange>>;
-  viewPath: ViewPath;
   onStopScrolling: (isScrolling: boolean) => void;
 }): JSX.Element {
+  const location = useLocation();
+  const virtuosoRef = useRef<VirtuosoHandle>(null); // Step 2
+  useEffect(() => {
+    if (virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({
+        align: "start",
+        behavior: "auto",
+        index: startIndexFromStorage,
+      });
+    }
+  }, [location]);
+
   return (
     <Virtuoso
-      useWindowScroll
+      ref={virtuosoRef}
       data={nodes.toArray()}
-      initialTopMostItemIndex={startIndexFromStorage}
       rangeChanged={(r): void => {
         if (r.startIndex === 0 && r.endIndex === 0) {
           return;
         }
         if (
-          r.startIndex !== range.startIndex ||
-          r.endIndex !== range.endIndex
+          // on mobile there is no decreasing or increasing column width, so no need to set the storage if only the endIndex changes
+          r.startIndex !== range.startIndex
         ) {
           setRange(r);
         }
       }}
       isScrolling={onStopScrolling}
-      itemContent={(index, path) => {
+      itemContent={(_, path) => {
         return (
           <ViewContext.Provider value={path} key={viewPathToString(path)}>
-            <ListItem index={index} treeViewPath={viewPath} />
+            <Node />
           </ViewContext.Provider>
         );
       }}
@@ -201,7 +216,10 @@ function Tree(): JSX.Element | null {
   const isOpenInFullScreen = useIsOpenInFullScreen();
   const isMobile = useMediaQuery(IS_MOBILE);
   const startIndexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
-  const [range, setRange] = useState<ListRange>({ startIndex: 0, endIndex: 0 });
+  const [range, setRange] = useState<ListRange>({
+    startIndex: startIndexFromStorage,
+    endIndex: startIndexFromStorage,
+  });
   const viewPath = useViewPath();
   const nodes = getNodesInTree(
     data,
@@ -213,12 +231,12 @@ function Tree(): JSX.Element | null {
   const ariaLabel = node ? `related to ${node.text}` : undefined;
 
   const onStopScrolling = (isScrolling: boolean): void => {
-    if (isScrolling) {
+    // don't set the storage if the index is 0 since onStopStrolling is called on initial render
+    if (isScrolling || nodes.size <= 1 || range.startIndex === 0) {
       return;
     }
     const indexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
-    // don't set the storage if the index is 0 since onStopStrolling is called on initial render
-    if (indexFromStorage !== range.startIndex && range.startIndex !== 0) {
+    if (indexFromStorage !== range.startIndex) {
       setLocalStorage(scrollableId, range.startIndex.toString());
     }
   };
@@ -231,7 +249,6 @@ function Tree(): JSX.Element | null {
           range={range}
           setRange={setRange}
           startIndexFromStorage={startIndexFromStorage}
-          viewPath={viewPath}
           onStopScrolling={onStopScrolling}
         />
       ) : (
