@@ -19,13 +19,7 @@ import {
   useDeselectAllInView,
   useTemporaryView,
 } from "./TemporaryViewContext";
-import {
-  REFERENCED_BY,
-  SOCIAL,
-  getRelations,
-  isRemote,
-  splitID,
-} from "../connections";
+import { REFERENCED_BY, getRelations, isRemote, splitID } from "../connections";
 import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import {
@@ -172,7 +166,6 @@ function EditRelationsDropdown({
   }
 
   const isDeleteAvailable =
-    view.relations !== SOCIAL &&
     view.relations !== REFERENCED_BY &&
     !isRemote(splitID(view.relations)[0], user.publicKey);
   if (!isDeleteAvailable && otherRelations.size === 0) {
@@ -350,45 +343,6 @@ function ReferencedByRelationsButton({
   );
 }
 
-function SocialRelationsButton({
-  alwaysOneSelected,
-  currentRelations,
-  readonly,
-}: {
-  readonly?: boolean;
-  alwaysOneSelected?: boolean;
-  currentRelations?: Relations;
-}): JSX.Element | null {
-  const [node] = useNode();
-  const { knowledgeDBs, user } = useData();
-  const onChangeRelations = useOnChangeRelations();
-  const onToggleExpanded = useOnToggleExpanded();
-  if (!node || !onChangeRelations || !onToggleExpanded) {
-    return null;
-  }
-  const socialRelations = getRelations(
-    knowledgeDBs,
-    SOCIAL,
-    user.publicKey,
-    node.id
-  );
-  if (!socialRelations || socialRelations.items.size === 0) {
-    return null;
-  }
-  return (
-    <AutomaticRelationsButton
-      hideShowLabel={`items created by contacts of ${node.text}`}
-      relations={socialRelations}
-      readonly={readonly}
-      alwaysOneSelected={alwaysOneSelected}
-      currentRelations={currentRelations}
-      label={`By Contacts (${socialRelations.items.size})`}
-    >
-      <span className="iconsminds-conference" />
-    </AutomaticRelationsButton>
-  );
-}
-
 function sortRelations(
   relationList: List<Relations>,
   myself: PublicKey
@@ -529,11 +483,6 @@ export function SelectRelations({
           key={type}
         />
       ))}
-      <SocialRelationsButton
-        readonly={readonly}
-        alwaysOneSelected={alwaysOneSelected}
-        currentRelations={currentRelations}
-      />
       <ReferencedByRelationsButton
         readonly={readonly}
         alwaysOneSelected={alwaysOneSelected}

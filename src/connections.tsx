@@ -1,6 +1,5 @@
 import { List, Set } from "immutable";
 import { v4 } from "uuid";
-import { newDB } from "./knowledge";
 import { newRelations } from "./ViewContext";
 
 export function splitID(id: ID): [PublicKey | undefined, string] {
@@ -35,51 +34,7 @@ export function getRelationsNoSocial(
   return res;
 }
 
-function getAllRelationsForNode(
-  knowledgeDB: KnowledgeData,
-  nodeID: LongID | ID
-): Set<LongID | ID> {
-  const localID = shortID(nodeID);
-  return knowledgeDB.relations.reduce((rdx, relations) => {
-    if (relations.head === localID) {
-      return rdx.merge(relations.items);
-    }
-    return rdx;
-  }, Set<LongID | ID>());
-}
-
 export const REFERENCED_BY = "referencedby" as LongID;
-export const SOCIAL = "social" as LongID;
-
-export function getSocialRelations(
-  knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  nodeID: LongID | ID // for social lookup
-): Relations | undefined {
-  // Combines all items from other users we don't have in our Lists
-  const myRelationsForNode = getAllRelationsForNode(
-    knowledgeDBs.get(myself, newDB()),
-    nodeID
-  );
-
-  const otherRelationsForNode = knowledgeDBs.reduce((rdx, knowledgeDB) => {
-    return rdx.merge(getAllRelationsForNode(knowledgeDB, nodeID));
-  }, Set<LongID | ID>());
-
-  const myShortIds = myRelationsForNode.map((id) => shortID(id)[1]);
-
-  const items = otherRelationsForNode.filter(
-    (id) => !myShortIds.has(shortID(id)[1])
-  );
-  return {
-    updated: Math.floor(Date.now() / 1000),
-    items: items.toList(),
-    head: nodeID,
-    id: SOCIAL,
-    type: SOCIAL,
-    author: "" as PublicKey,
-  };
-}
 
 type ReferencedByHeadAndUpdated = Pick<Relations, "head" | "updated">;
 
@@ -122,9 +77,6 @@ export function getRelations(
   myself: PublicKey,
   nodeID: LongID | ID // for social lookup
 ): Relations | undefined {
-  if (relationID === SOCIAL) {
-    return getSocialRelations(knowledgeDBs, myself, nodeID);
-  }
   if (relationID === REFERENCED_BY) {
     return getReferencedByRelations(knowledgeDBs, myself, nodeID);
   }
