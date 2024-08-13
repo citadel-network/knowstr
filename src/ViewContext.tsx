@@ -16,7 +16,7 @@ import { planCopyRelationsTypeIfNecessary } from "./components/RelationTypes";
 // only exported for tests
 export type NodeIndex = number & { readonly "": unique symbol };
 
-const ADD_TO_NODE = "ADD_TO_NODE" as LongID;
+export const ADD_TO_NODE = "ADD_TO_NODE" as LongID;
 
 type SubPath = {
   nodeID: LongID | ID;

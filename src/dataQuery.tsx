@@ -9,7 +9,7 @@ import {
   KIND_RELATION_TYPES,
 } from "./nostr";
 import { splitID, REFERENCED_BY, SOCIAL } from "./connections";
-import { getNodeFromID, useNodeID } from "./ViewContext";
+import { ADD_TO_NODE, getNodeFromID, useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
@@ -21,6 +21,9 @@ function addIDToFilter(
   id: LongID | ID,
   tag: `#${string}`
 ): Filter {
+  if (id === ADD_TO_NODE) {
+    return filter;
+  }
   const d = filter[tag] || [];
   const local = splitID(id)[1];
   // TODO: Add unknown remotes? Or even better create a filter for each unknown remote to query specific ids
@@ -87,6 +90,9 @@ export function filtersToFilterArray(filters: Filters): Filter[] {
 }
 
 function addAuthorFromIDToFilters(filters: Filters, id: LongID | ID): Filters {
+  if (id === ADD_TO_NODE) {
+    return filters;
+  }
   const author = splitID(id)[0];
   const isNewAuthor = author && !filters.authors.includes(author);
   const authors = isNewAuthor ? [...filters.authors, author] : filters.authors;
