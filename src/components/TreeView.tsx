@@ -37,8 +37,9 @@ import { useApis } from "../Apis";
 import { IS_MOBILE } from "./responsive";
 
 const LOAD_EXTRA = 10;
+const MAX_MODAL_VERTICAL_HEIGHT = 0.75;
 
-function VirtuosoForDesktop({
+function VirtuosoForColumnAndFullScreenDesktop({
   nodes,
   startIndexFromStorage,
   range,
@@ -73,7 +74,10 @@ function VirtuosoForDesktop({
   const virtuosoStyle = totalListHeight
     ? {
         maxHeight: "100%",
-        height: `${Math.min(window.innerHeight * 0.75, totalListHeight)}px`,
+        height: `${Math.min(
+          window.innerHeight * MAX_MODAL_VERTICAL_HEIGHT,
+          totalListHeight
+        )}px`,
       }
     : { height: "1px" };
 
@@ -267,7 +271,7 @@ function Tree(): JSX.Element | null {
           onStopScrolling={onStopScrolling}
         />
       ) : (
-        <VirtuosoForDesktop
+        <VirtuosoForColumnAndFullScreenDesktop
           nodes={nodes}
           range={range}
           setRange={setRange}
