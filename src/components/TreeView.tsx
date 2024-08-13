@@ -38,7 +38,7 @@ import { IS_MOBILE } from "./responsive";
 
 const LOAD_EXTRA = 10;
 
-function VirtuosoWithCustomScroller({
+function VirtuosoForDesktop({
   nodes,
   startIndexFromStorage,
   range,
@@ -55,11 +55,26 @@ function VirtuosoWithCustomScroller({
   onStopScrolling: (isScrolling: boolean) => void;
   ariaLabel: string | undefined;
 }): JSX.Element {
+  const location = useLocation();
+  const virtuosoRef = useRef<VirtuosoHandle>(null); // Step 2
+  useEffect(() => {
+    if (virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({
+        align: "start",
+        behavior: "auto",
+        index: startIndexFromStorage,
+      });
+    }
+  }, [location]);
+
   const [totalListHeight, setTotalListHeight] = useState<number | undefined>(
     undefined
   );
   const virtuosoStyle = totalListHeight
-    ? { maxHeight: "100%", height: `${totalListHeight}px` }
+    ? {
+        maxHeight: "100%",
+        height: `${Math.min(window.innerHeight * 0.75, totalListHeight)}px`,
+      }
     : { height: "1px" };
 
   /* eslint-disable react/jsx-props-no-spreading */
@@ -75,16 +90,16 @@ function VirtuosoWithCustomScroller({
   /* eslint-enable react/jsx-props-no-spreading */
   return (
     <div
-      className="max-height-100 overflow-auto background-dark"
+      className="max-height-100 overflow-hidden background-dark"
       aria-label={ariaLabel}
       style={virtuosoStyle}
     >
       <Virtuoso
+        ref={virtuosoRef}
         data={nodes.toArray()}
         totalListHeightChanged={(height) => {
           setTotalListHeight(height);
         }}
-        initialTopMostItemIndex={startIndexFromStorage}
         rangeChanged={(r): void => {
           if (r.startIndex === 0 && r.endIndex === 0) {
             return;
@@ -109,8 +124,9 @@ function VirtuosoWithCustomScroller({
     </div>
   );
 }
+/* eslint-disable react/jsx-props-no-spreading */
 
-function VirtuosoWithoutDnD({
+function VirtuosoForMobile({
   nodes,
   startIndexFromStorage,
   range,
@@ -207,7 +223,6 @@ export function TreeViewNodeLoader({
   );
 }
 
-/* eslint-disable react/jsx-props-no-spreading */
 function Tree(): JSX.Element | null {
   const data = useData();
   const { fileStore } = useApis();
@@ -244,7 +259,7 @@ function Tree(): JSX.Element | null {
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
       {isMobile ? (
-        <VirtuosoWithoutDnD
+        <VirtuosoForMobile
           nodes={nodes}
           range={range}
           setRange={setRange}
@@ -252,7 +267,7 @@ function Tree(): JSX.Element | null {
           onStopScrolling={onStopScrolling}
         />
       ) : (
-        <VirtuosoWithCustomScroller
+        <VirtuosoForDesktop
           nodes={nodes}
           range={range}
           setRange={setRange}
