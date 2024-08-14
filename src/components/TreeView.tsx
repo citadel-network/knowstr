@@ -83,7 +83,7 @@ function VirtuosoForColumnAndFullScreenDesktop({
     : { height: "1px" };
   const virtuosoStyle = isDesktopFullScreen
     ? desktopFullScreenStyle
-    : { height: "100%" };
+    : { height: totalListHeight ? `${totalListHeight}px` : "1px" };
 
   /* eslint-disable react/jsx-props-no-spreading */
   const Scroller = React.useCallback(
