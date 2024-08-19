@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useRef } from "react";
 import { List } from "immutable";
 
+import { useDndScrolling } from "react-dnd-scrolling";
 import { EmptyColumn, WorkspaceColumnView } from "./WorkspaceColumn";
 
 import { TemporaryViewProvider } from "./TemporaryViewContext";
@@ -14,6 +15,24 @@ export function WorkspaceView(): JSX.Element | null {
   const [workspaceID, view] = useNodeID();
   const { knowledgeDBs, user } = useData();
 
+  const ref = useRef<HTMLDivElement>(null);
+
+  /* eslint-disable react/jsx-props-no-spreading */
+  const Scroller = React.useCallback(
+    React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
+      ({ children, ...props }, r) => {
+        useDndScrolling(ref, {});
+        return (
+          <div ref={r} {...props}>
+            {children}
+          </div>
+        );
+      }
+    ),
+    []
+  );
+  /* eslint-enable react/jsx-props-no-spreading */
+
   /* eslint-disable react/no-array-index-key */
   const relations = getRelations(
     knowledgeDBs,
@@ -26,8 +45,11 @@ export function WorkspaceView(): JSX.Element | null {
     <TemporaryViewProvider>
       <div className="position-relative flex-grow-1">
         <div className="position-absolute board overflow-y-hidden">
-          <div className="workspace-columns overflow-y-hidden h-100">
-            <DND>
+          <DND>
+            <Scroller
+              ref={ref}
+              className="workspace-columns overflow-y-hidden h-100"
+            >
               {columns.map((column, index) => {
                 return (
                   <PushNode push={List([index])} key={index}>
@@ -36,8 +58,8 @@ export function WorkspaceView(): JSX.Element | null {
                 );
               })}
               <EmptyColumn />
-            </DND>
-          </div>
+            </Scroller>
+          </DND>
         </div>
       </div>
     </TemporaryViewProvider>
