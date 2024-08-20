@@ -121,7 +121,7 @@ export function findRelationTypes(events: List<UnsignedEvent>): RelationTypes {
   if (relationTypesEvent === undefined) {
     return OrderedMap<ID, RelationType>().set("", {
       color: DEFAULT_COLOR,
-      label: "Default",
+      label: "",
     });
   }
   return jsonToRelationTypes(

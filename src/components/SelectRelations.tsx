@@ -359,6 +359,23 @@ function sortRelations(
   });
 }
 
+function relationLabel(
+  isActive: boolean,
+  relationType: RelationType | undefined,
+  relationSize: number
+): string {
+  if (!isActive) {
+    return `${relationSize}`;
+  }
+  if (!relationType) {
+    return `Unknown (${relationSize})`;
+  }
+  if (relationType.label === "") {
+    return `${relationSize}`;
+  }
+  return `${relationType.label} (${relationSize})`;
+}
+
 function SelectRelationsButton({
   relationList,
   readonly: ro,
@@ -398,7 +415,7 @@ function SelectRelationsButton({
       ? `hide ${relationType?.label || "list"} items of ${node.text}`
       : `show ${relationType?.label || "list"} items of ${node.text}`;
 
-  const isActive = (isExpanded || alwaysOneSelected) && isSelected;
+  const isActive = (isExpanded || !!alwaysOneSelected) && isSelected;
   const className = `btn select-relation ${
     isActive ? "opacity-none" : "deselected"
   }`;
@@ -412,9 +429,8 @@ function SelectRelationsButton({
         color: "white",
       }
     : {};
-  const label = isActive
-    ? `${relationType?.label || "Unknown"} (${relationSize})`
-    : relationSize;
+
+  const label = relationLabel(isActive, relationType, relationSize);
   const preventDeselect = isActive && alwaysOneSelected;
   const onClick = preventDeselect
     ? undefined

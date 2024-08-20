@@ -201,7 +201,7 @@ export function AddNewRelationsToNodeItem({
   const { createPlan, executePlan } = usePlanner();
   const relationType = getMyRelationTypes(data).get(relationTypeID, {
     color: DEFAULT_COLOR,
-    label: "default",
+    label: "",
   });
 
   const onClick = (): void => {
@@ -217,6 +217,7 @@ export function AddNewRelationsToNodeItem({
     );
     executePlan(plan);
   };
+  const label = relationTypeID === "" ? "New List" : relationType.label;
 
   return (
     <Dropdown.Item className="d-flex workspace-selection" onClick={onClick}>
@@ -226,7 +227,7 @@ export function AddNewRelationsToNodeItem({
           backgroundColor: relationType.color,
         }}
       />
-      <div className="workspace-selection-text">{relationType.label}</div>
+      <div className="workspace-selection-text">{label}</div>
     </Dropdown.Item>
   );
 }

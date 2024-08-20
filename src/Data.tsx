@@ -75,7 +75,7 @@ function newProcessedEvents(): ProcessedEvents {
     workspaces: List<ID>(),
     relationTypes: OrderedMap<ID, RelationType>().set("" as ID, {
       color: DEFAULT_COLOR,
-      label: "Default",
+      label: "",
     }),
   };
 }
