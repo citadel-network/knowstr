@@ -375,6 +375,7 @@ export function getRelationIndex(
   if (nodeID === ADD_TO_NODE) {
     return relations.items.size;
   }
+  // TODO: when does this return an error?
   return calculateIndexFromNodeIndex(relations, nodeID, nodeIndex);
 }
 
@@ -484,6 +485,11 @@ export function deleteChildViews(views: Views, path: ViewPath): Views {
   return views.filter((v, k) => !k.startsWith(key) || k === key);
 }
 
+function getChildViews(views: Views, path: ViewPath): Views {
+  const key = viewPathToString(path);
+  return views.filter((v, k) => k.startsWith(key) && k !== key);
+}
+
 export function newRelations(
   head: LongID | ID,
   type: ID,
@@ -532,6 +538,22 @@ function createUpdatableRelations(
     .relations.get(id, newRelations(head, relationTypeID, myself));
 }
 
+function moveChildViewsToNewRelation(
+  views: Views,
+  viewPath: ViewPath,
+  oldRelationsID: string,
+  newRelationsID: string
+): Views {
+  const viewsWithDeletedChildViews = deleteChildViews(views, viewPath);
+  const childViews = getChildViews(views, viewPath);
+  const movedChildViews = childViews.reduce((rdx, v, k) => {
+    const newKey = k.replace(oldRelationsID, newRelationsID);
+    return rdx.set(newKey, v);
+  }, Map<string, View>());
+
+  return viewsWithDeletedChildViews.merge(movedChildViews);
+}
+
 export function upsertRelations(
   plan: Plan,
   viewPath: ViewPath,
@@ -550,10 +572,19 @@ export function upsertRelations(
   );
 
   const didViewChange = nodeView.relations !== relations.id;
+  const updatedChildViewsIfNecessary = didViewChange
+    ? moveChildViewsToNewRelation(
+        plan.views,
+        viewPath,
+        relationsID,
+        relations.id
+      )
+    : plan.views;
+
   const planWithUpdatedView = didViewChange
     ? planUpdateViews(
         plan,
-        plan.views.set(viewPathToString(viewPath), {
+        updatedChildViewsIfNecessary.set(viewPathToString(viewPath), {
           ...nodeView,
           relations: relations.id,
         })

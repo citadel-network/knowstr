@@ -18,7 +18,7 @@ export function getWorkspaces(data: Data): List<KnowNode> {
 
   const nodes = allWorkspaces
     .map((wsID) => getNodeFromID(data.knowledgeDBs, wsID, data.user.publicKey))
-    .filter((n) => n !== undefined);
+    .filter((n) => n !== undefined) as Set<KnowNode>;
   return nodes.toList();
 }
 
