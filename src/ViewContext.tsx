@@ -557,7 +557,7 @@ function moveChildViewsToNewRelation(
 export function upsertRelations(
   plan: Plan,
   viewPath: ViewPath,
-  modify: (relations: Relations, ctx: { view: View }) => Relations
+  modify: (relations: Relations) => Relations
 ): Plan {
   const [nodeID, nodeView] = getNodeIDFromView(plan, viewPath);
   // create new relations if this node doesn't have any
@@ -591,7 +591,7 @@ export function upsertRelations(
       )
     : plan;
 
-  const updatedRelations = modify(relations, { view: nodeView });
+  const updatedRelations = modify(relations);
   return planUpsertRelations(
     planCopyRelationsTypeIfNecessary(planWithUpdatedView, relationsID),
     updatedRelations
