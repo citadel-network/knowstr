@@ -572,19 +572,15 @@ export function upsertRelations(
   );
 
   const didViewChange = nodeView.relations !== relations.id;
-  const updatedChildViewsIfNecessary = didViewChange
-    ? moveChildViewsToNewRelation(
-        plan.views,
-        viewPath,
-        relationsID,
-        relations.id
-      )
-    : plan.views;
-
   const planWithUpdatedView = didViewChange
     ? planUpdateViews(
         plan,
-        updatedChildViewsIfNecessary.set(viewPathToString(viewPath), {
+        moveChildViewsToNewRelation(
+          plan.views,
+          viewPath,
+          relationsID,
+          relations.id
+        ).set(viewPathToString(viewPath), {
           ...nodeView,
           relations: relations.id,
         })
