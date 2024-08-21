@@ -151,7 +151,6 @@ function SelectOtherRelationsItem({
           <span>{new Date(relations.updated * 1000).toLocaleDateString()}</span>
         </div>
       </Dropdown.Item>
-      <Dropdown.Divider />
     </>
   );
 }
@@ -197,6 +196,7 @@ function EditRelationsDropdown({
         {otherRelations.map((r) => (
           <SelectOtherRelationsItem key={r.id} relations={r} />
         ))}
+        {otherRelations.size > 0 && isDeleteAvailable && <Dropdown.Divider />}
 
         {isDeleteAvailable && <DeleteRelationItem id={view.relations} />}
       </Dropdown.Menu>
