@@ -109,11 +109,16 @@ function mergeEvents(
     .merge(workspaces.workspaces)
     .toSet()
     .toList();
+  const relationTypes = processed.relationTypes.merge(
+    findRelationTypes(events)
+  );
+
   return {
     ...processed,
     workspaces: newWorkspaces,
     activeWorkspace: processed.activeWorkspace || workspaces.activeWorkspace,
     views: findViews(events).merge(processed.views),
+    relationTypes,
   };
 }
 

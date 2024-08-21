@@ -3,8 +3,13 @@ import { List } from "immutable";
 import { useDebouncedCallback } from "use-debounce";
 import { getWriteRelays } from "citadel-commons";
 import { useApis } from "./Apis";
-import { KIND_VIEWS, KIND_WORKSPACES } from "./nostr";
-import { planUpdateViews, planUpdateWorkspaces, usePlanner } from "./planner";
+import { KIND_RELATION_TYPES, KIND_VIEWS, KIND_WORKSPACES } from "./nostr";
+import {
+  planUpdateRelationTypes,
+  planUpdateViews,
+  planUpdateWorkspaces,
+  usePlanner,
+} from "./planner";
 import { execute } from "./executor";
 
 type StorePreLoginData = (eventKinds: List<number>) => void;
@@ -41,9 +46,12 @@ export function StorePreLoginContext({
       const withViews = eventKinds.includes(KIND_VIEWS)
         ? planUpdateViews(withWorkspaces, withWorkspaces.views)
         : withWorkspaces;
+      const withRelationTypes = eventKinds.includes(KIND_RELATION_TYPES)
+        ? planUpdateRelationTypes(withViews, withViews.relationTypes)
+        : withViews;
 
       const results = await execute({
-        plan: withViews,
+        plan: withRelationTypes,
         relayPool,
         relays: getWriteRelays(plan.relays),
         finalizeEvent,
