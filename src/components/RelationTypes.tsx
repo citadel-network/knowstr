@@ -13,6 +13,7 @@ import {
 import { useData } from "../DataContext";
 import {
   REFERENCED_BY,
+  SOCIAL,
   getRelationsNoSocial,
   isRemote,
   splitID,
@@ -148,7 +149,7 @@ export function getRelationTypeByRelationsID(
     relationsID,
     data.user.publicKey
   );
-  if (!relations || relationsID === REFERENCED_BY) {
+  if (!relations || relationsID === SOCIAL || relationsID === REFERENCED_BY) {
     return [undefined, undefined];
   }
   const [remote] = splitID(relationsID);
@@ -170,7 +171,7 @@ export function planCopyRelationsTypeIfNecessary(
   plan: Plan,
   relationsID: ID
 ): Plan {
-  if (relationsID === REFERENCED_BY) {
+  if (relationsID === SOCIAL || relationsID === REFERENCED_BY) {
     return plan;
   }
   const [relationType, relationTypeID] = getRelationTypeByRelationsID(

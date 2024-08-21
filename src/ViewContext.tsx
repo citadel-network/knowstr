@@ -501,14 +501,15 @@ export function newRelations(
 
 function createUpdatableRelations(
   knowledgeDBs: KnowledgeDBs,
+  viewContext: ViewPath,
   myself: PublicKey,
   relationsID: ID,
   head: LongID | ID,
   relationTypeID: ID
 ): Relations {
   const [remote, id] = splitID(relationsID);
-  if (remote && isRemote(remote, myself)) {
-    // copy remote relations
+  if (relationsID === "social" || (remote && isRemote(remote, myself))) {
+    // copy remote or social relations
     const remoteRelations = getRelations(
       knowledgeDBs,
       relationsID,
@@ -522,6 +523,7 @@ function createUpdatableRelations(
     // Make a copy
     return {
       ...remoteRelations,
+      type: remoteRelations.type === "social" ? "" : remoteRelations.type,
       id: joinID(myself, v4()),
     };
   }
@@ -540,6 +542,7 @@ export function upsertRelations(
   const relationsID = nodeView.relations || v4();
   const relations = createUpdatableRelations(
     plan.knowledgeDBs,
+    viewPath,
     plan.user.publicKey,
     relationsID,
     nodeID,
