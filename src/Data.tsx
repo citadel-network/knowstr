@@ -23,6 +23,7 @@ import {
   KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_SETTINGS,
+  KIND_DELETE,
 } from "./nostr";
 import { DataContextProvider } from "./DataContext";
 import { findContacts } from "./contacts";
@@ -80,7 +81,7 @@ function newProcessedEvents(): ProcessedEvents {
   };
 }
 
-export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE];
+export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE, KIND_DELETE];
 
 const KINDS_CONTACTS_META = [
   KIND_WORKSPACES,

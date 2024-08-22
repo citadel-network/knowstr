@@ -7,7 +7,7 @@ import {
   ModalNodeTitle,
 } from "citadel-commons";
 import { useDebounce } from "use-debounce";
-import { KIND_KNOWLEDGE_NODE } from "../nostr";
+import { KIND_DELETE, KIND_KNOWLEDGE_NODE } from "../nostr";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { useApis } from "../Apis";
@@ -101,13 +101,18 @@ function useSearchQuery(
 
   const events = nip50
     ? preFilteredEvents
-    : preFilteredEvents.filter((event) => isMatch(search, event.content));
+    : preFilteredEvents.filter(
+        (event) => event.kind === KIND_DELETE || isMatch(search, event.content)
+      );
 
   const groupByKind = events.groupBy((event) => event.kind);
   const knowledgeEvents = groupByKind.get(KIND_KNOWLEDGE_NODE);
+  const deleteEvents = groupByKind.get(KIND_DELETE);
 
   const nodesFromKnowledgeEvents = findNodes(
-    knowledgeEvents?.toList() || List()
+    (knowledgeEvents?.toList() || List()).merge(
+      deleteEvents?.toList() || List()
+    )
   );
 
   // If the search !== query debounce will trigger a filter change soon
