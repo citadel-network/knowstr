@@ -109,6 +109,22 @@ export function getReferencedByRelations(
         index === self.findIndex((t) => t.head === relation.head)
     )
     .sort((a, b) => a.updated - b.updated);
+  // This is a Tough one:
+  //
+  // Alice has a node Bitcoin with ID 1 and a List default-1
+  // Bob forks default-1 and references "blockchain" (list, id: default-fork-1, head: 1, items: [blockchain])
+  // Carol, who is connected with Bob, counts default-fork-1 as a reference, but will never be able to
+  // see the node "Bitcoin" because she doesn't query Alice node. The List default-1, doesn't mention how to
+  // get ID 1
+  //
+  // Simpler Case:
+  //
+  // Alice is not connected with Bob. Alice forks Bobs Bitcoin List default-1 to default-2.
+  // Alice References a new node "blockchain" in default-2.
+  //
+  // Alice will never see the "Bitcoin" node in references as she is not connected to Bob
+  //
+  // Why don't we make Head a full path?
   return {
     ...rel,
     id: REFERENCED_BY,
