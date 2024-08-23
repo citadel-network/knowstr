@@ -285,7 +285,7 @@ export function calculateIndexFromNodeIndex(
   relations: Relations,
   node: LongID | ID,
   nodeIndex: NodeIndex
-): number {
+): number | undefined {
   // Find the nth occurance of the node in the list
   const { items } = relations;
   const res = items.reduce(
@@ -304,7 +304,7 @@ export function calculateIndexFromNodeIndex(
     [0, false]
   );
   if (res[1] === false) {
-    throw new Error("Node not found in relations");
+    return undefined;
   }
   return res[0];
 }
