@@ -216,7 +216,10 @@ export function planUpsertRelations(plan: Plan, relations: Relations): Plan {
     created_at: newTimestamp(),
     tags: [
       ["d", shortID(relations.id)],
+      // Cannot use fullID here because we need to query for short IDs
       ["k", shortID(relations.head)],
+      // Full ID Head
+      ["head", relations.head],
       ["rel_type", relations.type],
       ...itemsAsTags,
     ],
