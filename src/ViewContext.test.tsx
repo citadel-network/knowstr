@@ -25,6 +25,7 @@ import {
   extractNodes,
   BOB,
   follow,
+  renderApp,
 } from "./utils.test";
 import {
   RootViewContextProvider,
@@ -365,4 +366,44 @@ test("Default Relations are deterministic", () => {
     Map<PublicKey, RelationTypes>()
   );
   expect(defaultRelation).toEqual("default");
+});
+
+test("View doesn't change if list is copied from contact", async () => {
+  const [alice, bob] = setup([ALICE, BOB]);
+  await follow(alice, bob().user.publicKey);
+  const bobsKnowledgeDB = await setupTestDB(bob(), [
+    [
+      "Bobs Workspace",
+      [["Programming Languages", [["OOP", ["C++", "Java"]], ["FPL"]]]],
+    ],
+  ]);
+  const bobsWS = findNodeByText(bobsKnowledgeDB, "Bobs Workspace") as KnowNode;
+
+  const utils = renderApp({
+    ...alice(),
+    initialRoute: `/w/${bobsWS.id}`,
+  });
+
+  await screen.findByText("Bobs Workspace");
+  expect(extractNodes(utils.container)).toEqual(["OOP", "FPL"]);
+  await userEvent.click(screen.getByLabelText("show Default items of OOP"));
+  expect(extractNodes(utils.container)).toEqual(["OOP", "C++", "Java", "FPL"]);
+
+  // add node to Programming Languages and check if view stays the same
+  await userEvent.click(
+    await screen.findByLabelText("add to Programming Languages")
+  );
+  /* eslint-disable testing-library/no-container */
+  /* eslint-disable testing-library/no-node-access */
+  const input = utils.container.querySelector(".ql-editor") as Element;
+  await userEvent.type(input, "added programming language");
+  await userEvent.click((await screen.findAllByText("Add Note"))[1]);
+  expect(extractNodes(utils.container)).toEqual([
+    "OOP",
+    "C++",
+    "Java",
+    "FPL",
+    "\nadded programming language",
+  ]);
+  cleanup();
 });
