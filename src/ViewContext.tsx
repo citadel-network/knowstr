@@ -375,7 +375,6 @@ export function getRelationIndex(
   if (nodeID === ADD_TO_NODE) {
     return relations.items.size;
   }
-  // TODO: when does this return an error?
   return calculateIndexFromNodeIndex(relations, nodeID, nodeIndex);
 }
 
