@@ -1,8 +1,22 @@
-import React, { useState } from "react";
-import { Button, Dropdown, Form, InputGroup, Modal } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import {
+  Button as BSButton,
+  Card,
+  Dropdown,
+  Form,
+  InputGroup,
+  Modal,
+} from "react-bootstrap";
 import { CirclePicker } from "react-color";
 import { v4 } from "uuid";
-import { FormControlWrapper } from "citadel-commons";
+import {
+  FormControlWrapper,
+  Button,
+  CloseButton,
+  ModalForm,
+} from "citadel-commons";
+import { useNavigate } from "react-router-dom";
+import ReactQuill from "react-quill";
 import {
   Plan,
   planUpdateRelationTypes,
@@ -25,6 +39,7 @@ import {
   useNode,
   useViewPath,
 } from "../ViewContext";
+import { ReactQuillWrapper } from "./ReactQuillWrapper";
 
 export const DEFAULT_COLOR = "#027d86";
 
@@ -127,12 +142,183 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" tabIndex={0}>
+          <BSButton type="submit" tabIndex={0}>
             Create Label
-          </Button>
+          </BSButton>
         </Modal.Footer>
       </Form>
     </Modal>
+  );
+}
+
+type EditButtonProps = {
+  onClick: () => void;
+  ariaLabel: string;
+};
+
+function EditButton({ onClick, ariaLabel }: EditButtonProps): JSX.Element {
+  return (
+    <Button
+      onClick={onClick}
+      className="btn font-size-small"
+      ariaLabel={ariaLabel}
+    >
+      <span className="simple-icon-pencil" />
+    </Button>
+  );
+}
+
+type RelationTypeCardProps = {
+  relationType: RelationType;
+  onUpdateRelationType: (newRelationType: RelationType) => void;
+};
+
+function RelationTypeCard({
+  relationType,
+  onUpdateRelationType,
+}: RelationTypeCardProps): JSX.Element {
+  const [color, setColor] = useState<string>(relationType.color);
+  const [isEditing, setIsEditing] = useState<{
+    editColor: boolean;
+    editLabel: boolean;
+  }>({ editColor: false, editLabel: false });
+  const ref = React.createRef<ReactQuill>();
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.focus();
+      const quill = ref.current.getEditor();
+      quill.deleteText(0, 1000000);
+      quill.insertText(0, relationType.label);
+    }
+  }, [isEditing.editLabel]);
+  const onSave = (): void => {
+    if (!ref.current) {
+      return;
+    }
+    const text = ref.current.getEditor().getText();
+    const isNewLineAdded = text.endsWith("\n");
+    onUpdateRelationType({
+      color,
+      label: isNewLineAdded ? text.slice(0, -1) : text,
+    });
+  };
+
+  return (
+    <Card
+      className="p-3 m-2 mt-3 mb-3 border-strong"
+      aria-label={`relation details ${relationType.label}`}
+    >
+      <div className="flex-row-space-between">
+        <div className="flex-row-start align-center m-1 mt-2 ">
+          <button
+            type="button"
+            className="relation-type-selection-color"
+            style={{
+              backgroundColor: color,
+              cursor: "pointer",
+            }}
+            onClick={() =>
+              setIsEditing({ ...isEditing, editColor: !isEditing.editColor })
+            }
+            aria-label={`edit color of relationType ${relationType.label}`}
+          />
+          <div className="ms-2">
+            <div className="flex-row-start w-100">
+              {isEditing.editLabel ? (
+                <ReactQuillWrapper ref={ref} />
+              ) : (
+                <>{relationType.label}</>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex-col-center">
+          {isEditing.editLabel ? (
+            <div className="flex-row-end">
+              <Button
+                className="btn simple-icon-check"
+                onClick={() => {
+                  onSave();
+                  setIsEditing({ ...isEditing, editLabel: false });
+                }}
+                ariaLabel="save"
+              />
+              <div className="ps-1">
+                <CloseButton
+                  onClose={() =>
+                    setIsEditing({ ...isEditing, editLabel: false })
+                  }
+                />
+              </div>
+            </div>
+          ) : (
+            <EditButton
+              onClick={() => setIsEditing({ ...isEditing, editLabel: true })}
+              ariaLabel={`edit relationType ${relationType.label}`}
+            />
+          )}
+        </div>
+      </div>
+      {isEditing.editColor && (
+        <div className="flex-row start m-1">
+          <CirclePicker
+            width="100%"
+            color={color}
+            colors={COLORS}
+            onChange={(c) => {
+              setColor(c.hex);
+              setIsEditing({ ...isEditing, editColor: false });
+            }}
+          />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+export function RelationTypes({
+  relationTypes,
+  onSubmit,
+}: {
+  relationTypes: RelationTypes;
+  onSubmit: (relationTypeState: RelationTypes) => Promise<void>;
+}): JSX.Element {
+  const navigate = useNavigate();
+  const [relationTypeState, setRelationTypeState] =
+    useState<RelationTypes>(relationTypes);
+  const updateRelationType = (
+    updatedRelationType: RelationType,
+    id: string
+  ): void => {
+    setRelationTypeState(relationTypeState.set(id, updatedRelationType));
+  };
+  return (
+    <ModalForm
+      submit={() => onSubmit(relationTypeState)}
+      onHide={() => navigate("/")}
+      title="Edit Relation Types"
+    >
+      <div className="scroll">
+        {relationTypeState.toArray().map(([id, relType]) => {
+          return (
+            <div key={id}>
+              <RelationTypeCard
+                relationType={relType}
+                onUpdateRelationType={(newRelationType) => {
+                  if (
+                    newRelationType.label !== relType.label ||
+                    newRelationType.color !== relType.color
+                  ) {
+                    updateRelationType(newRelationType, id);
+                  }
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </ModalForm>
   );
 }
 

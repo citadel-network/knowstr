@@ -121,7 +121,7 @@ function InlineEditor({
   };
   return (
     <>
-      <div className="editor">
+      <div className="editor pb-2">
         <div className="scrolling-container flex-row-start w-100">
           <ReactQuillWrapper ref={ref} />
         </div>

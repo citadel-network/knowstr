@@ -99,7 +99,7 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
 
   return (
     <div className="editor">
-      <div className="scrolling-container">
+      <div className="scrolling-container pt-2 pb-2">
         <ReactQuillWrapper
           placeholder="Create a Note"
           ref={ref}
