@@ -11,7 +11,6 @@ import { useNode, useViewKey } from "../ViewContext";
 import { IS_MOBILE } from "./responsive";
 import { getRelations } from "../connections";
 import { useData } from "../DataContext";
-import { useIsOpenInFullScreen } from "./Node";
 
 export function ColumnMenu(): JSX.Element {
   const temporaryView = useTemporaryView();
@@ -39,8 +38,6 @@ export function DetailViewMenu(): JSX.Element {
   const temporaryView = useTemporaryView();
   const viewKey = useViewKey();
   const isMobile = useMediaQuery(IS_MOBILE);
-  const isOpenInFullScreen = useIsOpenInFullScreen();
-  const isDesktopFullScreen = !isMobile && isOpenInFullScreen;
   const isMultiSelectToggled = temporaryView.multiselectBtns.has(viewKey);
   return (
     <div className="flex-row-space-between font-size-big">
@@ -50,7 +47,7 @@ export function DetailViewMenu(): JSX.Element {
         {!isMultiSelectToggled && (
           <div className="menu-layout">
             <SelectRelations alwaysOneSelected />
-            {!isDesktopFullScreen && <ToggleEditing />}
+            {isMobile && <ToggleEditing />}
           </div>
         )}
       </div>
