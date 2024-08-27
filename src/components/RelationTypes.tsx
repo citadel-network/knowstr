@@ -177,7 +177,6 @@ function RelationTypeCard({
   relationType,
   onUpdateRelationType,
 }: RelationTypeCardProps): JSX.Element {
-  const [color, setColor] = useState<string>(relationType.color);
   const [isEditing, setIsEditing] = useState<{
     editColor: boolean;
     editLabel: boolean;
@@ -199,7 +198,7 @@ function RelationTypeCard({
     const text = ref.current.getEditor().getText();
     const isNewLineAdded = text.endsWith("\n");
     onUpdateRelationType({
-      color,
+      color: relationType.color,
       label: isNewLineAdded ? text.slice(0, -1) : text,
     });
   };
@@ -213,9 +212,9 @@ function RelationTypeCard({
         <div className="flex-row-start align-center m-1 mt-2 ">
           <button
             type="button"
-            className="relation-type-selection-color"
+            className="btn-borderless relation-type-selection-color"
             style={{
-              backgroundColor: color,
+              backgroundColor: relationType.color,
               cursor: "pointer",
             }}
             onClick={() =>
@@ -264,10 +263,13 @@ function RelationTypeCard({
         <div className="flex-row start m-1">
           <CirclePicker
             width="100%"
-            color={color}
+            color={relationType.color}
             colors={COLORS}
             onChange={(c) => {
-              setColor(c.hex);
+              onUpdateRelationType({
+                color: c.hex,
+                label: relationType.label,
+              });
               setIsEditing({ ...isEditing, editColor: false });
             }}
           />
