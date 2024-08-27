@@ -151,6 +151,85 @@ export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
   );
 }
 
+function NewRelationTypeCard({
+  onAddRelationType,
+}: {
+  onAddRelationType: (newRelationType: RelationType) => void;
+}): JSX.Element {
+  const [isEditingColor, setIsEditingColor] = useState<boolean>(false);
+  const [color, setColor] = useState<string>(COLORS[0]);
+  const ref = React.createRef<ReactQuill>();
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.getEditor().setText("");
+      ref.current.focus();
+    }
+  }, []);
+  const onSave = (): void => {
+    if (!ref.current) {
+      return;
+    }
+    const text = ref.current.getEditor().getText();
+    const isNewLineAdded = text.endsWith("\n");
+    onAddRelationType({
+      color,
+      label: isNewLineAdded ? text.slice(0, -1) : text,
+    });
+    ref.current.getEditor().setText("");
+    ref.current.focus();
+    setColor(COLORS[0]);
+  };
+
+  return (
+    <Card
+      className="p-3 m-2 mt-3 mb-3 border-strong"
+      aria-label="add new relation type"
+    >
+      <div className="flex-row-start m-1">Add a new Relation Type:</div>
+      <div className="flex-row-space-between">
+        <div className="flex-row-start align-center m-1 w-100">
+          <button
+            type="button"
+            className="btn-borderless relation-type-selection-color"
+            style={{
+              backgroundColor: color,
+              cursor: "pointer",
+            }}
+            aria-label="color of new relationType"
+            onClick={() => setIsEditingColor(!isEditingColor)}
+          />
+          <div className="ps-2 flex-grow-1">
+            <div className="border-strong">
+              <ReactQuillWrapper ref={ref} className="m-1" />
+            </div>
+          </div>
+        </div>
+        <div className="flex-col-center">
+          <div className="flex-row-end">
+            <Button
+              className="btn simple-icon-check"
+              onClick={() => {
+                onSave();
+              }}
+              ariaLabel="save new relationType"
+            />
+          </div>
+        </div>
+      </div>
+      {isEditingColor && (
+        <div className="flex-row-start m-1">
+          <CirclePicker
+            width="100%"
+            color={color}
+            colors={COLORS}
+            onChange={(c) => setColor(c.hex)}
+          />
+        </div>
+      )}
+    </Card>
+  );
+}
+
 type EditButtonProps = {
   onClick: () => void;
   ariaLabel: string;
@@ -187,7 +266,7 @@ function RelationTypeCard({
     if (ref.current) {
       ref.current.focus();
       const quill = ref.current.getEditor();
-      quill.deleteText(0, 1000000);
+      quill.setText("");
       quill.insertText(0, relationType.label);
     }
   }, [isEditing.editLabel]);
@@ -209,7 +288,7 @@ function RelationTypeCard({
       aria-label={`relation details ${relationType.label}`}
     >
       <div className="flex-row-space-between">
-        <div className="flex-row-start align-center m-1 mt-2 ">
+        <div className="flex-row-start align-center m-1 w-100">
           <button
             type="button"
             className="btn-borderless relation-type-selection-color"
@@ -222,14 +301,12 @@ function RelationTypeCard({
             }
             aria-label={`edit color of relationType ${relationType.label}`}
           />
-          <div className="ms-2">
-            <div className="flex-row-start w-100">
-              {isEditing.editLabel ? (
-                <ReactQuillWrapper ref={ref} />
-              ) : (
-                <>{relationType.label}</>
-              )}
-            </div>
+          <div className="ps-2 flex-grow-1">
+            {isEditing.editLabel ? (
+              <ReactQuillWrapper ref={ref} className="m-1" />
+            ) : (
+              <div className="m-1">{relationType.label}</div>
+            )}
           </div>
         </div>
         <div className="flex-col-center">
@@ -260,7 +337,7 @@ function RelationTypeCard({
         </div>
       </div>
       {isEditing.editColor && (
-        <div className="flex-row start m-1">
+        <div className="flex-row-start m-1">
           <CirclePicker
             width="100%"
             color={relationType.color}
@@ -289,11 +366,21 @@ export function RelationTypes({
   const navigate = useNavigate();
   const [relationTypeState, setRelationTypeState] =
     useState<RelationTypes>(relationTypes);
-  const updateRelationType = (
-    updatedRelationType: RelationType,
-    id: string
+  const onAddRelationType = (newRelationType: RelationType): void => {
+    const id = v4();
+    setRelationTypeState(relationTypeState.set(id, newRelationType));
+  };
+  const onUpdateRelationType = (
+    id: string,
+    oldRelationType: RelationType,
+    newRelationType: RelationType
   ): void => {
-    setRelationTypeState(relationTypeState.set(id, updatedRelationType));
+    if (
+      newRelationType.label !== oldRelationType.label ||
+      newRelationType.color !== oldRelationType.color
+    ) {
+      setRelationTypeState(relationTypeState.set(id, newRelationType));
+    }
   };
   return (
     <ModalForm
@@ -302,19 +389,15 @@ export function RelationTypes({
       title="Edit Relation Types"
     >
       <div className="scroll">
+        <NewRelationTypeCard onAddRelationType={onAddRelationType} />
         {relationTypeState.toArray().map(([id, relType]) => {
           return (
             <div key={id}>
               <RelationTypeCard
                 relationType={relType}
-                onUpdateRelationType={(newRelationType) => {
-                  if (
-                    newRelationType.label !== relType.label ||
-                    newRelationType.color !== relType.color
-                  ) {
-                    updateRelationType(newRelationType, id);
-                  }
-                }}
+                onUpdateRelationType={(newRelationType) =>
+                  onUpdateRelationType(id, relType, newRelationType)
+                }
               />
             </div>
           );
