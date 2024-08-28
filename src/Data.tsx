@@ -129,7 +129,11 @@ function processEventsByAuthor(
   const relations = findRelations(authorEvents);
   const workspaces = findWorkspaces(authorEvents);
   const views = findViews(authorEvents);
-  const relationTypes = findRelationTypes(authorEvents);
+  const authorRelationTypes = findRelationTypes(authorEvents);
+  const relationTypes =
+    authorRelationTypes.size === 0
+      ? OrderedMap({ "": { color: DEFAULT_COLOR, label: "" } })
+      : authorRelationTypes;
   const knowledgeDB = {
     nodes,
     relations,
