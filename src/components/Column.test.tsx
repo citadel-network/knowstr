@@ -53,14 +53,7 @@ test("Multiple connections to same node", async () => {
 
   expectTextContent(
     await screen.findByLabelText("related to Programming Languages"),
-    [
-      "Java",
-      "+Default",
-      "New Relation Type",
-      "Java",
-      "+Default",
-      "New Relation Type",
-    ]
+    ["Java", "+", "New Relation Type", "Java", "+", "New Relation Type"]
   );
 });
 
@@ -113,13 +106,13 @@ test("Show Referenced By", async () => {
   await userEvent.click(references);
   expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
     "Money1",
-    "+Default",
+    "+",
     "New Relation Type",
     "Alice Workspace2",
-    "+Default",
+    "+",
     "New Relation Type",
     "P2P Apps1",
-    "+Default",
+    "+",
     "New Relation Type",
   ]);
   // 3 References: WS, P2P Apps and Money, sorted according to relations.updated
@@ -148,7 +141,7 @@ test("Don't show Referenced By if parent relation is the only reference", async 
   await screen.findByText("Money");
   expectTextContent(await screen.findByLabelText("related to Money"), [
     "Bitcoin",
-    "+Default",
+    "+",
     "New Relation Type",
   ]);
 });
@@ -177,7 +170,7 @@ test("If Node is the root we always show references when there are more than 0",
   await userEvent.click(references);
   expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
     "Money1",
-    "+Default",
+    "+",
     "New Relation Type",
   ]);
   screen.getByText("Referenced By (1)");

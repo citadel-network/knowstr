@@ -299,7 +299,11 @@ function RelationTypeCard({
             onClick={() =>
               setIsEditing({ ...isEditing, editColor: !isEditing.editColor })
             }
-            aria-label={`edit color of relationType ${relationType.label}`}
+            aria-label={
+              relationType.label
+                ? `edit color of relationType ${relationType.label}`
+                : "edit color of relationType"
+            }
           />
           <div className="ps-2 flex-grow-1">
             {isEditing.editLabel ? (
@@ -331,7 +335,11 @@ function RelationTypeCard({
           ) : (
             <EditButton
               onClick={() => setIsEditing({ ...isEditing, editLabel: true })}
-              ariaLabel={`edit relationType ${relationType.label}`}
+              ariaLabel={
+                relationType.label
+                  ? `edit relationType ${relationType.label}`
+                  : "edit relationType"
+              }
             />
           )}
         </div>
@@ -414,7 +422,7 @@ export function getMyRelationTypes(data: Data): RelationTypes {
 export function getRelationTypeByRelationsID(
   data: Data,
   relationsID: ID
-): [RelationType, ID] | [undefined, undefined] {
+): [RelationType | undefined, ID] | [undefined, undefined] {
   const relations = getRelationsNoSocial(
     data.knowledgeDBs,
     relationsID,
@@ -431,10 +439,6 @@ export function getRelationTypeByRelationsID(
       isRemote(remote, data.user.publicKey) &&
       data.contactsRelationTypes.get(remote)?.get(relationTypeID)) ||
     data.relationTypes.get(relationTypeID);
-
-  if (!relationType || relationTypeID === undefined) {
-    return [undefined, undefined];
-  }
   return [relationType, relationTypeID];
 }
 
@@ -473,7 +477,7 @@ export function AddNewRelationsToNodeItem({
   const { createPlan, executePlan } = usePlanner();
   const relationType = getMyRelationTypes(data).get(relationTypeID, {
     color: DEFAULT_COLOR,
-    label: "default",
+    label: "unknown",
   });
 
   const onClick = (): void => {

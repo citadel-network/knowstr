@@ -74,10 +74,7 @@ function newProcessedEvents(): ProcessedEvents {
     views: Map<string, View>(),
     activeWorkspace: undefined,
     workspaces: List<ID>(),
-    relationTypes: OrderedMap<ID, RelationType>().set("" as ID, {
-      color: DEFAULT_COLOR,
-      label: "Default",
-    }),
+    relationTypes: OrderedMap<ID, RelationType>(),
   };
 }
 
@@ -295,6 +292,11 @@ function Data({ user, children }: DataProps): JSX.Element {
     .map((data) => data.workspaces)
     .filter((_, k) => k !== myPublicKey);
 
+  const relationTypes =
+    processedMetaEvents.relationTypes.size === 0
+      ? OrderedMap({ "": { color: DEFAULT_COLOR, label: "" } })
+      : processedMetaEvents.relationTypes;
+
   return (
     <DataContextProvider
       contacts={contacts}
@@ -308,7 +310,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       views={processedMetaEvents.views}
       workspaces={processedMetaEvents.workspaces}
       activeWorkspace={activeWorkspace}
-      relationTypes={processedMetaEvents.relationTypes}
+      relationTypes={relationTypes}
       contactsRelationTypes={contactsRelationTypes}
       contactsWorkspaces={contactsWorkspaces}
     >

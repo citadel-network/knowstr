@@ -21,7 +21,6 @@ import {
   eventToRelations,
 } from "./serializer";
 import { joinID, splitID } from "./connections";
-import { DEFAULT_COLOR } from "./components/RelationTypes";
 
 export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
   const sorted = sortEvents(
@@ -119,10 +118,7 @@ export function findRelationTypes(events: List<UnsignedEvent>): RelationTypes {
     events.filter((event) => event.kind === KIND_RELATION_TYPES)
   );
   if (relationTypesEvent === undefined) {
-    return OrderedMap<ID, RelationType>().set("", {
-      color: DEFAULT_COLOR,
-      label: "Default",
-    });
+    return OrderedMap<ID, RelationType>();
   }
   return jsonToRelationTypes(
     JSON.parse(relationTypesEvent.content) as Serializable

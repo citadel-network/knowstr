@@ -14,13 +14,9 @@ test("Edit a Relation Type Label", async () => {
     initialRoute: `/relationTypes`,
   });
   await screen.findByText("Edit Relation Types");
-  screen.getByText("Default");
-  fireEvent.click(screen.getByLabelText("edit relationType Default"));
-  await userEvent.keyboard(
-    "{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}edited RelationType"
-  );
+  fireEvent.click(screen.getByLabelText("edit relationType"));
+  await userEvent.keyboard("my new RelationType");
   fireEvent.click(screen.getByLabelText("save"));
-  expect(screen.queryByText("Default")).toBeNull();
   fireEvent.click(screen.getByText("Save"));
 
   await waitFor(() =>
@@ -36,7 +32,7 @@ test("Edit a Relation Type Label", async () => {
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
       tags: [],
       content: JSON.stringify({
-        "": { c: "#027d86", l: "edited RelationType" },
+        "": { c: "#027d86", l: "my new RelationType" },
       }),
     })
   );
@@ -49,8 +45,7 @@ test("Edit color of a Relation Type", async () => {
     initialRoute: `/relationTypes`,
   });
   await screen.findByText("Edit Relation Types");
-  screen.getByText("Default");
-  fireEvent.click(screen.getByLabelText("edit color of relationType Default"));
+  fireEvent.click(screen.getByLabelText("edit color of relationType"));
   const newColorElement = await screen.findByTitle("#9c27b0");
   fireEvent.click(newColorElement);
   expect(screen.queryByTitle("#027d86")).toBeNull();
@@ -68,7 +63,7 @@ test("Edit color of a Relation Type", async () => {
       pubkey:
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
       tags: [],
-      content: JSON.stringify({ "": { c: "#9c27b0", l: "Default" } }),
+      content: JSON.stringify({ "": { c: "#9c27b0", l: "" } }),
     })
   );
 });
@@ -102,7 +97,7 @@ test("Add a new Relation Type", async () => {
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
       tags: [],
       content: JSON.stringify({
-        "": { c: "#027d86", l: "Default" },
+        "": { c: "#027d86", l: "" },
         [relationTypeId]: { c: "#9c27b0", l: "new RelationType" },
       }),
     })

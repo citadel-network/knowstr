@@ -117,7 +117,7 @@ declare global {
   type Nodes = Map<ID, KnowNode>;
 
   type RelationType = { color: string; label: string };
-  type RelationTypes = OrderedMap<ID, { color: string; label: string }>;
+  type RelationTypes = OrderedMap<ID, RelationType>;
 
   type KnowledgeData = {
     nodes: Map<ID, KnowNode>;
