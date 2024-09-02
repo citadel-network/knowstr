@@ -434,7 +434,15 @@ export function AddNewRelationsToNodeItem({
           backgroundColor: relationType.color,
         }}
       />
-      <div className="workspace-selection-text">{relationType.label}</div>
+      <div
+        className={
+          relationType.label
+            ? "workspace-selection-text"
+            : "workspace-selection-text italic"
+        }
+      >
+        {relationType.label || "Unnamed Type"}
+      </div>
     </Dropdown.Item>
   );
 }
