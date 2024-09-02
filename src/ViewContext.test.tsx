@@ -395,7 +395,9 @@ test("View doesn't change if list is copied from contact", async () => {
   );
   /* eslint-disable testing-library/no-container */
   /* eslint-disable testing-library/no-node-access */
-  const input = utils.container.querySelector(".ql-editor") as Element;
+  const input = utils.container.querySelector(
+    '[data-placeholder="Create a Note"]'
+  ) as Element;
   await userEvent.type(input, "added programming language");
   await userEvent.click((await screen.findAllByText("Add Note"))[1]);
   expect(extractNodes(utils.container)).toEqual([

@@ -1,6 +1,7 @@
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties } from "react";
 import { Dropdown } from "react-bootstrap";
 import { List } from "immutable";
+import { v4 } from "uuid";
 import {
   addAddToNodeToPath,
   deleteChildViews,
@@ -27,25 +28,48 @@ import {
   splitID,
 } from "../connections";
 import { useData } from "../DataContext";
-import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
+import {
+  planDeleteRelations,
+  planUpdateRelationTypes,
+  planUpdateViews,
+  usePlanner,
+} from "../planner";
 import {
   AddNewRelationsToNodeItem,
   NewRelationType,
-  getMyRelationTypes,
   getRelationTypeByRelationsID,
+  planAddNewRelationToNode,
 } from "./RelationTypes";
 
 function AddRelationsButton(): JSX.Element {
-  const data = useData();
-  const [newRelationType, setNewRelationType] = useState<boolean>(false);
-  const [node] = useNode();
+  const { relationTypes } = useData();
+  const { createPlan, executePlan } = usePlanner();
+  const [node, view] = useNode();
+  const viewPath = useViewPath();
   const ariaLabel = `Add new Relations to ${node?.text || ""}`;
-  const relationTypes = getMyRelationTypes(data);
+
+  const onSubmit = (relationType: RelationType): void => {
+    const id = v4();
+    const updateRelationTypesPlan = planUpdateRelationTypes(
+      createPlan(),
+      relationTypes.set(id, relationType)
+    );
+    if (node && view) {
+      executePlan(
+        planAddNewRelationToNode(
+          updateRelationTypesPlan,
+          node.id,
+          id,
+          view,
+          viewPath
+        )
+      );
+    } else {
+      executePlan(updateRelationTypesPlan);
+    }
+  };
   return (
     <Dropdown>
-      {newRelationType && (
-        <NewRelationType onHide={() => setNewRelationType(false)} />
-      )}
       <Dropdown.Toggle
         as="button"
         className="btn new-relation"
@@ -54,16 +78,16 @@ function AddRelationsButton(): JSX.Element {
         <span>+</span>
       </Dropdown.Toggle>
       <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
+        <div className="dropdown-item-wide">
+          <NewRelationType onAddRelationType={onSubmit} className="m-1 ms-0" />
+        </div>
+        <Dropdown.Divider />
         {relationTypes
           .keySeq()
           .toArray()
           .map((id) => (
             <AddNewRelationsToNodeItem key={id} relationTypeID={id} />
           ))}
-        <Dropdown.Divider />
-        <Dropdown.Item onClick={() => setNewRelationType(true)} tabIndex={0}>
-          <div className="workspace-selection-text">New Relation Type</div>
-        </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   );

@@ -249,6 +249,9 @@ body {
 
 .ql-editor.ql-blank::before {
   left: 0 !important;
+  color: grey;
+  font-family: $font;
+  font-size: 16px;
 }
 
 .dragging-over {
@@ -515,6 +518,12 @@ body {
 .navbar .navbar-right {
   display: flex;
   justify-content: flex-end;
+}
+
+.dropdown-item-wide {
+  padding-left: 1.5rem;
+  padding-right: 0.75rem;
+  width: 20rem;
 }
 
 .options-dropdown {

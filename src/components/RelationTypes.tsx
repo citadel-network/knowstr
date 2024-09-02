@@ -1,20 +1,8 @@
 import React, { useEffect, useState } from "react";
-import {
-  Button as BSButton,
-  Card,
-  Dropdown,
-  Form,
-  InputGroup,
-  Modal,
-} from "react-bootstrap";
+import { Card, Dropdown } from "react-bootstrap";
 import { CirclePicker } from "react-color";
 import { v4 } from "uuid";
-import {
-  FormControlWrapper,
-  Button,
-  CloseButton,
-  ModalForm,
-} from "citadel-commons";
+import { Button, CloseButton, ModalForm } from "citadel-commons";
 import { useNavigate } from "react-router-dom";
 import ReactQuill from "react-quill";
 import {
@@ -64,11 +52,7 @@ const COLORS = [
   "#795548",
 ];
 
-type NewRelationTypeProps = {
-  onHide: () => void;
-};
-
-function planAddNewRelationToNode(
+export function planAddNewRelationToNode(
   plan: Plan,
   nodeID: LongID,
   relationTypeID: ID,
@@ -87,74 +71,12 @@ function planAddNewRelationToNode(
   );
 }
 
-export function NewRelationType({ onHide }: NewRelationTypeProps): JSX.Element {
-  const [color, setColor] = useState<string>(COLORS[0]);
-  const { createPlan, executePlan } = usePlanner();
-  const { relationTypes } = useData();
-  const [node, view] = useNode();
-  const viewPath = useViewPath();
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    const form = event.currentTarget;
-    if (form.checkValidity() === false) {
-      return;
-    }
-    const id = v4();
-    const label = (form.elements.namedItem("name") as HTMLInputElement).value;
-    const updateRelationTypesPlan = planUpdateRelationTypes(
-      createPlan(),
-      relationTypes.set(id, { color, label })
-    );
-    if (node && view) {
-      executePlan(
-        planAddNewRelationToNode(
-          updateRelationTypesPlan,
-          node.id,
-          id,
-          view,
-          viewPath
-        )
-      );
-    } else {
-      executePlan(updateRelationTypesPlan);
-    }
-    onHide();
-  };
-  return (
-    <Modal show onHide={onHide}>
-      <Modal.Header closeButton>New Relation Type</Modal.Header>
-      <Form onSubmit={onSubmit}>
-        <Modal.Body>
-          <InputGroup>
-            <InputGroup.Text>Name of Relation Type</InputGroup.Text>
-            <FormControlWrapper
-              aria-label="Name of new Relation Type"
-              name="name"
-              required
-            />
-          </InputGroup>
-          <CirclePicker
-            width="100%"
-            color={color}
-            colors={COLORS}
-            onChange={(c) => setColor(c.hex)}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <BSButton type="submit" tabIndex={0}>
-            Create Label
-          </BSButton>
-        </Modal.Footer>
-      </Form>
-    </Modal>
-  );
-}
-
-function NewRelationTypeCard({
+export function NewRelationType({
   onAddRelationType,
+  className,
 }: {
   onAddRelationType: (newRelationType: RelationType) => void;
+  className?: string;
 }): JSX.Element {
   const [isEditingColor, setIsEditingColor] = useState<boolean>(false);
   const [color, setColor] = useState<string>(COLORS[0]);
@@ -181,13 +103,11 @@ function NewRelationTypeCard({
   };
 
   return (
-    <Card
-      className="p-3 m-2 mt-3 mb-3 border-strong"
-      aria-label="add new relation type"
-    >
-      <div className="flex-row-start m-1">Add a new Relation Type:</div>
+    <>
       <div className="flex-row-space-between">
-        <div className="flex-row-start align-center m-1 w-100">
+        <div
+          className={`flex-row-start align-center ${className || "m-1"} w-100`}
+        >
           <button
             type="button"
             className="btn-borderless relation-type-selection-color"
@@ -200,7 +120,11 @@ function NewRelationTypeCard({
           />
           <div className="ps-2 flex-grow-1">
             <div className="border-strong">
-              <ReactQuillWrapper ref={ref} className="m-1" />
+              <ReactQuillWrapper
+                ref={ref}
+                className="m-1"
+                placeholder="Add Relation Type"
+              />
             </div>
           </div>
         </div>
@@ -226,6 +150,18 @@ function NewRelationTypeCard({
           />
         </div>
       )}
+    </>
+  );
+}
+
+function NewRelationTypeCard({
+  onAddRelationType,
+}: {
+  onAddRelationType: (newRelationType: RelationType) => void;
+}): JSX.Element {
+  return (
+    <Card className="p-3 m-2 mt-3 mb-3 border-strong">
+      <NewRelationType onAddRelationType={onAddRelationType} />
     </Card>
   );
 }
@@ -415,10 +351,6 @@ export function RelationTypes({
   );
 }
 
-export function getMyRelationTypes(data: Data): RelationTypes {
-  return data.relationTypes;
-}
-
 export function getRelationTypeByRelationsID(
   data: Data,
   relationsID: ID
@@ -456,7 +388,7 @@ export function planCopyRelationsTypeIfNecessary(
   if (!relationType) {
     return plan;
   }
-  const myRelationTypes = getMyRelationTypes(plan);
+  const myRelationTypes = plan.relationTypes;
   if (myRelationTypes.has(relationTypeID)) {
     return plan;
   }
@@ -471,11 +403,11 @@ export function AddNewRelationsToNodeItem({
 }: {
   relationTypeID: ID;
 }): JSX.Element | null {
-  const data = useData();
+  const { relationTypes } = useData();
   const [node, view] = useNode();
   const viewPath = useViewPath();
   const { createPlan, executePlan } = usePlanner();
-  const relationType = getMyRelationTypes(data).get(relationTypeID, {
+  const relationType = relationTypes.get(relationTypeID, {
     color: DEFAULT_COLOR,
     label: "unknown",
   });

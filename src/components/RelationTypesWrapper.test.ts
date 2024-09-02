@@ -1,11 +1,14 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Event } from "nostr-tools";
-import { KIND_RELATION_TYPES } from "../nostr";
-import { ALICE, setup, renderApp } from "../utils.test";
+import { KIND_KNOWLEDGE_LIST, KIND_RELATION_TYPES } from "../nostr";
+import { ALICE, setup, renderApp, typeNewNode } from "../utils.test";
 
 const filterRelationTypesEvents = (event: Event): boolean =>
   event.kind === KIND_RELATION_TYPES;
+
+const filterKnowledgeListEvents = (event: Event): boolean =>
+  event.kind === KIND_KNOWLEDGE_LIST;
 
 test("Edit a Relation Type Label", async () => {
   const [alice] = setup([ALICE]);
@@ -102,4 +105,36 @@ test("Add a new Relation Type", async () => {
       }),
     })
   );
+});
+
+test("Add a new Relation Type to an existing Note", async () => {
+  const [alice] = setup([ALICE]);
+  const view = renderApp(alice());
+  await typeNewNode(view, "Hello World");
+  fireEvent.click(
+    await screen.findByLabelText("Add new Relations to Hello World")
+  );
+  await screen.findByLabelText("color of new relationType");
+  await userEvent.keyboard("new RelationType");
+  fireEvent.click(screen.getByLabelText("save new relationType"));
+  await waitFor(() =>
+    expect(
+      view.relayPool.getEvents().filter(filterKnowledgeListEvents)
+    ).toHaveLength(2)
+  );
+  const events = view.relayPool.getEvents().filter(filterKnowledgeListEvents);
+  /* tags of upsertRelationsEvent look like this:
+    [["d", shortID(relations.id)],
+    ["k", shortID(relations.head)],
+    ["head", relations.head],
+    ["rel_type", relations.type],
+    ...itemsAsTags,}
+  ], */
+  // two upsertRelationsEvents are expected, one at typeNewNode with default relationType one when setting the new relationType
+  expect(
+    events[0].tags.some((tag) => tag[0] === "rel_type" && tag[1] === "")
+  ).toBeTruthy();
+  expect(
+    events[1].tags.some((tag) => tag[0] === "rel_type" && tag[1] !== "")
+  ).toBeTruthy();
 });

@@ -484,7 +484,9 @@ export async function typeNewNode(
   await userEvent.click(await screen.findByText("Add Note"));
   /* eslint-disable testing-library/no-container */
   /* eslint-disable testing-library/no-node-access */
-  const input = view.container.querySelector(".ql-editor") as Element;
+  const input = view.container.querySelector(
+    '[data-placeholder="Create a Note"]'
+  ) as Element;
   await userEvent.type(input, text);
   await userEvent.click(await screen.findByText("Add Note"));
   await screen.findByText(text);
