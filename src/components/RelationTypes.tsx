@@ -221,7 +221,7 @@ function RelationTypeCard({
   return (
     <Card
       className="p-3 m-2 mt-3 mb-3 border-strong"
-      aria-label={`relation details ${relationType.label}`}
+      aria-label={`relation details ${relationType.label || "Unnamed Type"}`}
     >
       <div className="flex-row-space-between">
         <div className="flex-row-start align-center m-1 w-100">
@@ -237,7 +237,9 @@ function RelationTypeCard({
             }
             aria-label={
               relationType.label
-                ? `edit color of relationType ${relationType.label}`
+                ? `edit color of relationType ${
+                    relationType.label || "Unnamed Type"
+                  }`
                 : "edit color of relationType"
             }
           />
@@ -245,7 +247,9 @@ function RelationTypeCard({
             {isEditing.editLabel ? (
               <ReactQuillWrapper ref={ref} className="m-1" />
             ) : (
-              <div className="m-1">{relationType.label}</div>
+              <div className={relationType.label ? "m-1" : "m-1 italic"}>
+                {relationType.label || "Unnamed Type"}
+              </div>
             )}
           </div>
         </div>
@@ -273,7 +277,7 @@ function RelationTypeCard({
               onClick={() => setIsEditing({ ...isEditing, editLabel: true })}
               ariaLabel={
                 relationType.label
-                  ? `edit relationType ${relationType.label}`
+                  ? `edit relationType ${relationType.label || "Unnamed Type"}`
                   : "edit relationType"
               }
             />
