@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Event } from "nostr-tools";
 import { KIND_KNOWLEDGE_LIST, KIND_RELATION_TYPES } from "../nostr";
@@ -10,15 +10,15 @@ const filterRelationTypesEvents = (event: Event): boolean =>
 const filterKnowledgeListEvents = (event: Event): boolean =>
   event.kind === KIND_KNOWLEDGE_LIST;
 
-test("Edit a Relation Type Label", async () => {
+test("Edit Unnamed Relation Type Label", async () => {
   const [alice] = setup([ALICE]);
   const { relayPool } = renderApp({
     ...alice(),
     initialRoute: `/relationTypes`,
   });
   await screen.findByText("Edit Relation Types");
-  fireEvent.click(screen.getByLabelText("edit relationType"));
-  await userEvent.keyboard("my new RelationType");
+  fireEvent.click(screen.getByLabelText("edit Unnamed Type"));
+  await userEvent.keyboard("Named Type");
   fireEvent.click(screen.getByLabelText("save"));
   fireEvent.click(screen.getByText("Save"));
 
@@ -35,20 +35,28 @@ test("Edit a Relation Type Label", async () => {
         "f0289b28573a7c9bb169f43102b26259b7a4b758aca66ea3ac8cd0fe516a3758",
       tags: [],
       content: JSON.stringify({
-        "": { c: "#027d86", l: "my new RelationType" },
+        "": { c: "#027d86", l: "Named Type" },
       }),
     })
   );
+
+  cleanup();
+  const view = renderApp(alice());
+  await typeNewNode(view, "Hello World");
+  fireEvent.click(
+    await screen.findByLabelText("Add new Relations to Hello World")
+  );
+  await screen.findByText("Named Type");
 });
 
-test("Edit color of a Relation Type", async () => {
+test("Edit color of Unnamed Relation Type", async () => {
   const [alice] = setup([ALICE]);
   const { relayPool } = renderApp({
     ...alice(),
     initialRoute: `/relationTypes`,
   });
   await screen.findByText("Edit Relation Types");
-  fireEvent.click(screen.getByLabelText("edit color of relationType"));
+  fireEvent.click(screen.getByLabelText("edit color of Unnamed Type"));
   const newColorElement = await screen.findByTitle("#9c27b0");
   fireEvent.click(newColorElement);
   expect(screen.queryByTitle("#027d86")).toBeNull();

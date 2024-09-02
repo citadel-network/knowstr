@@ -221,7 +221,9 @@ function RelationTypeCard({
   return (
     <Card
       className="p-3 m-2 mt-3 mb-3 border-strong"
-      aria-label={`relation details ${relationType.label || "Unnamed Type"}`}
+      aria-label={`relation type details ${
+        relationType.label || "Unnamed Type"
+      }`}
     >
       <div className="flex-row-space-between">
         <div className="flex-row-start align-center m-1 w-100">
@@ -237,10 +239,8 @@ function RelationTypeCard({
             }
             aria-label={
               relationType.label
-                ? `edit color of relationType ${
-                    relationType.label || "Unnamed Type"
-                  }`
-                : "edit color of relationType"
+                ? `edit color of relationType ${relationType.label}`
+                : "edit color of Unnamed Type"
             }
           />
           <div className="ps-2 flex-grow-1">
@@ -277,8 +277,8 @@ function RelationTypeCard({
               onClick={() => setIsEditing({ ...isEditing, editLabel: true })}
               ariaLabel={
                 relationType.label
-                  ? `edit relationType ${relationType.label || "Unnamed Type"}`
-                  : "edit relationType"
+                  ? `edit relationType ${relationType.label}`
+                  : "edit Unnamed Type"
               }
             />
           )}
