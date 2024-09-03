@@ -37,10 +37,8 @@ export function EmptyColumn(): JSX.Element {
     <DroppableContainer>
       <FileDropZone onDrop={onDropFiles}>
         <WorkspaceColumn>
-          <div>
-            <div className="outer-node">
-              <AddColumn />
-            </div>
+          <div className="outer-node">
+            <AddColumn />
           </div>
         </WorkspaceColumn>
       </FileDropZone>

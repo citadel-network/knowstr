@@ -317,10 +317,6 @@ body {
   border-radius: 0px;
 }
 
-.white-dimmed {
-  color: rgba(255, 255, 255, 0.6);
-}
-
 .hover-light-bg {
   &:hover {
     background: $light-color;
@@ -328,17 +324,6 @@ body {
     .ph-item {
         background: $light-color;
     }
-  }
-}
-
-.hover-white-dimmed {
-  background: transparent;
-  transition: none !important;
-  &:hover,
-  &:active,
-  &:focus {
-    color: rgb(255, 255, 255) !important;
-    opacity: 1 !important;
   }
 }
 
@@ -352,55 +337,6 @@ body {
   &:hover {
     color: rgb(0, 0, 0) !important;
     opacity: 1 !important;
-  }
-}
-
-.visibility-hidden {
-    visibility: hidden
-}
-
-.hover-white {
-
-  &:hover,
-  &:focus,
-  &:active {
-  color: white;
-  }
-}
-
-.hover-dimmed {
-
-  &:hover,
-  &:focus,
-  &:active {
-  opacity: 0.3;
-  }
-}
-
-.chat-badge {
-  background: #525b64;
-  &:hover,
-  &:focus,
-  &:active {
-    background: #818f9b;
-  }
-}
-
-.chat-badge-lighter {
-  background: #818f9b;
-  &:hover,
-  &:focus,
-  &:active {
-    background: #525b64;
-  }
-}
-
-.chat-badge-warning {
-  background: #145388;
-  &:hover,
-  &:focus,
-  &:active {
-    background: #06243d;
   }
 }
 
@@ -485,10 +421,6 @@ body {
   align-items: center;
 }
 
-.text-right {
-  text-align: right;
-}
-
 .vl {
   border-left: 2px solid rgba(0, 0, 0, 0.1);
   position: absolute;
@@ -498,10 +430,6 @@ body {
 
 .pretty {
   margin-right: 5px;
-}
-
-.font-size-2 {
-  font-size: 2rem;
 }
 
 .navbar {
@@ -647,14 +575,9 @@ body {
   column-gap: 3px;
 }
 
-.touch-action-none {
-  touch-action: none;
-}
-
 .workspace-selection {
   justify-content: flex-start;
 }
-
 
 .workspace-selection-text {
   font-family: $font;
@@ -680,9 +603,6 @@ body {
   margin-top: 20px;
 }
 
-.asset-background {
-  background-color: #ffffff;
-}
 
 .black-muted {
   color: rgba(0, 0, 0, 0.8);
@@ -690,59 +610,6 @@ body {
 
 .white-space-normal {
   white-space: normal;
-}
-
-.search-height {
-  max-height: calc(100vh - 142px);
-}
-
-.modal-footer-chat-input {
-  flex-direction: row;
-  width: 100%;
-}
-
-.chat-app {
-  height: calc(100vh - 322px);
-
-  .chat-card {
-    min-width: 25%;
-    max-width: 75%;
-  }
-
-  .chat-text-left {
-    padding-left: 16px;
-  }
-
-  .chat-text-right {
-    padding-right: 32px;
-  }
-
-  .list-item-heading {
-    @include respond-below(sm) {
-      font-size: 0.9rem;
-    }
-  }
-
-  .card .card-body {
-    @include respond-below(sm) {
-      padding: 0.75rem;
-    }
-  }
-}
-
-.chat-app-tab-content {
-  height: calc(100% - 45px);
-}
-
-.chat-app-tab-pane {
-  height: calc(100% - 45px);
-}
-
-.chat-input-container {
-  width: calc(calc(100% - 45px) - 1.4rem);
-  height: 44px;
-  position: static;
-
 }
 
 .bold {
@@ -785,52 +652,6 @@ to {
   justify-content: flex-start;
   overflow-y: auto;
   gap: 2px;
-}
-
-[class^="ribbon-"] {
-  position: absolute;
-  //margin-bottom: 80px;
-  &:before, &:after {
-    content: "";
-    position: absolute;
-  }
-}
-
-.ribbon-container {
-    position: relative;
-}
-
-$ribbon-width: 16px;
-$ribbon-height: 12px;
-$ribbon-triangle: 5px;
-
-$color-map: (
-  NOTE: #ff8944,
-  TOPIC: #2a93d5,
-  URL: #f56262,
-  TITLE: #f56262,
-  QUOTE: #9b9b9b,
-  WORKSPACE: #f07d50,
-  PROJECT: #407d50,
-  SUMMARY: #f56262
-);
-
-// Ribbon Copied and modified from https://codepen.io/P233/pens/public
-
-@each $name, $current-color in $color-map {
-  .ribbon-#{$name} {
-    width: $ribbon-width;
-    height: $ribbon-height;
-    background: $current-color;
-    right: 0px;
-    opacity: 0.6;
-    top: 0.5rem;
-
-    &:before {
-      @include triangle($ribbon-height $ribbon-triangle, $current-color, left);
-      left: -$ribbon-triangle;
-    }
-  }
 }
 
 .underline {
