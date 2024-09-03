@@ -31,7 +31,7 @@ import { ReactQuillWrapper } from "./ReactQuillWrapper";
 
 export const DEFAULT_COLOR = "#027d86";
 
-const COLORS = [
+export const COLORS = [
   "#9c27b0",
   "#673ab7",
   "#3f51b5",
@@ -71,15 +71,26 @@ export function planAddNewRelationToNode(
   );
 }
 
+export function getFirstUnusedRelationTypeColor(
+  usedColors: Array<string>
+): string {
+  const colors = COLORS.filter((color) => !usedColors.some((c) => c === color));
+  return colors[0] || COLORS[0];
+}
+
 export function NewRelationType({
   onAddRelationType,
+  usedColors,
   className,
 }: {
   onAddRelationType: (newRelationType: RelationType) => void;
+  usedColors: Array<string>;
   className?: string;
 }): JSX.Element {
   const [isEditingColor, setIsEditingColor] = useState<boolean>(false);
-  const [color, setColor] = useState<string>(COLORS[0]);
+  const [color, setColor] = useState<string>(
+    getFirstUnusedRelationTypeColor(usedColors)
+  );
   const ref = React.createRef<ReactQuill>();
   useEffect(() => {
     if (ref.current) {
@@ -99,7 +110,7 @@ export function NewRelationType({
     });
     ref.current.getEditor().setText("");
     ref.current.focus();
-    setColor(COLORS[0]);
+    setColor(getFirstUnusedRelationTypeColor([...usedColors, color]));
   };
 
   return (
@@ -156,12 +167,17 @@ export function NewRelationType({
 
 function NewRelationTypeCard({
   onAddRelationType,
+  usedColors,
 }: {
   onAddRelationType: (newRelationType: RelationType) => void;
+  usedColors: Array<string>;
 }): JSX.Element {
   return (
     <Card className="p-3 m-2 mt-3 mb-3 border-strong">
-      <NewRelationType onAddRelationType={onAddRelationType} />
+      <NewRelationType
+        onAddRelationType={onAddRelationType}
+        usedColors={usedColors}
+      />
     </Card>
   );
 }
@@ -337,7 +353,12 @@ export function RelationTypes({
       title="Edit Relation Types"
     >
       <div className="scroll">
-        <NewRelationTypeCard onAddRelationType={onAddRelationType} />
+        <NewRelationTypeCard
+          onAddRelationType={onAddRelationType}
+          usedColors={relationTypeState
+            .toArray()
+            .map(([, relType]) => relType.color)}
+        />
         {relationTypeState.toArray().map(([id, relType]) => {
           return (
             <div key={id}>

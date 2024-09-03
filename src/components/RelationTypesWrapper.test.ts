@@ -2,7 +2,8 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Event } from "nostr-tools";
 import { KIND_KNOWLEDGE_LIST, KIND_RELATION_TYPES } from "../nostr";
-import { ALICE, setup, renderApp, typeNewNode } from "../utils.test";
+import { ALICE, setup, renderApp, typeNewNode, hexToRgb } from "../utils.test";
+import { COLORS } from "./RelationTypes";
 
 const filterRelationTypesEvents = (event: Event): boolean =>
   event.kind === KIND_RELATION_TYPES;
@@ -122,7 +123,10 @@ test("Add a new Relation Type to an existing Note", async () => {
   fireEvent.click(
     await screen.findByLabelText("Add new Relations to Hello World")
   );
-  await screen.findByLabelText("color of new relationType");
+  const colorElement = await screen.findByLabelText(
+    "color of new relationType"
+  );
+  expect(colorElement.style.backgroundColor).toBe(hexToRgb(COLORS[0]));
   await userEvent.keyboard("new RelationType");
   fireEvent.click(screen.getByLabelText("save new relationType"));
   await waitFor(() =>
@@ -145,4 +149,8 @@ test("Add a new Relation Type to an existing Note", async () => {
   expect(
     events[1].tags.some((tag) => tag[0] === "rel_type" && tag[1] !== "")
   ).toBeTruthy();
+  // check if the color of the new relationType is set to first unused color
+  expect(
+    screen.getByLabelText("color of new relationType").style.backgroundColor
+  ).toBe(hexToRgb(COLORS[1]));
 });

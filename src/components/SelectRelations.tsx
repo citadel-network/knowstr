@@ -79,7 +79,13 @@ function AddRelationsButton(): JSX.Element {
       </Dropdown.Toggle>
       <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
         <div className="dropdown-item-wide">
-          <NewRelationType onAddRelationType={onSubmit} className="m-1 ms-0" />
+          <NewRelationType
+            onAddRelationType={onSubmit}
+            usedColors={relationTypes
+              .toArray()
+              .map(([, relType]) => relType.color)}
+            className="m-1 ms-0"
+          />
         </div>
         <Dropdown.Divider />
         {relationTypes
