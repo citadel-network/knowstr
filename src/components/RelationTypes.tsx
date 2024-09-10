@@ -5,6 +5,7 @@ import { v4 } from "uuid";
 import { Button, CloseButton, ModalForm } from "citadel-commons";
 import { useNavigate } from "react-router-dom";
 import ReactQuill from "react-quill";
+import { OrderedMap } from "immutable";
 import {
   Plan,
   planUpdateRelationTypes,
@@ -51,6 +52,17 @@ export const COLORS = [
   "#bf4d3e",
   "#795548",
 ];
+
+export function useGetAllRelationTypes(): RelationTypes {
+  const { contactsRelationTypes, relationTypes } = useData();
+  const allContactsRelationTypes = contactsRelationTypes.reduce(
+    (acc: RelationTypes, relTypes: RelationTypes) => {
+      return acc.merge(relTypes);
+    },
+    OrderedMap<string, RelationType>()
+  );
+  return allContactsRelationTypes.merge(relationTypes);
+}
 
 export function planAddNewRelationToNode(
   plan: Plan,
@@ -428,11 +440,11 @@ export function AddNewRelationsToNodeItem({
 }: {
   relationTypeID: ID;
 }): JSX.Element | null {
-  const { relationTypes } = useData();
   const [node, view] = useNode();
   const viewPath = useViewPath();
   const { createPlan, executePlan } = usePlanner();
-  const relationType = relationTypes.get(relationTypeID, {
+  const allRelationTypes = useGetAllRelationTypes();
+  const relationType = allRelationTypes.get(relationTypeID, {
     color: DEFAULT_COLOR,
     label: "unknown",
   });

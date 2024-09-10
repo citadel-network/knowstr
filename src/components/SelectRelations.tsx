@@ -39,6 +39,7 @@ import {
   NewRelationType,
   getRelationTypeByRelationsID,
   planAddNewRelationToNode,
+  useGetAllRelationTypes,
 } from "./RelationTypes";
 
 function AddRelationsButton(): JSX.Element {
@@ -46,6 +47,7 @@ function AddRelationsButton(): JSX.Element {
   const { createPlan, executePlan } = usePlanner();
   const [node, view] = useNode();
   const viewPath = useViewPath();
+  const allRelationTypes = useGetAllRelationTypes();
   const ariaLabel = `Add new Relations to ${node?.text || ""}`;
 
   const onSubmit = (relationType: RelationType): void => {
@@ -88,7 +90,7 @@ function AddRelationsButton(): JSX.Element {
           />
         </div>
         <Dropdown.Divider />
-        {relationTypes
+        {allRelationTypes
           .keySeq()
           .toArray()
           .map((id) => (
