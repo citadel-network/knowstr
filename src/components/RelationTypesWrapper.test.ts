@@ -2,7 +2,15 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Event } from "nostr-tools";
 import { KIND_KNOWLEDGE_LIST, KIND_RELATION_TYPES } from "../nostr";
-import { ALICE, setup, renderApp, typeNewNode, hexToRgb } from "../utils.test";
+import {
+  ALICE,
+  setup,
+  renderApp,
+  typeNewNode,
+  hexToRgb,
+  BOB,
+  follow,
+} from "../utils.test";
 import { COLORS } from "./RelationTypes";
 
 const filterRelationTypesEvents = (event: Event): boolean =>
@@ -81,7 +89,8 @@ test("Edit color of Unnamed Relation Type", async () => {
 });
 
 test("Add a new Relation Type", async () => {
-  const [alice] = setup([ALICE]);
+  const [alice, bob] = setup([ALICE, BOB]);
+  await follow(bob, alice().user.publicKey);
   const { relayPool } = renderApp({
     ...alice(),
     initialRoute: `/relationTypes`,
@@ -89,7 +98,7 @@ test("Add a new Relation Type", async () => {
   await screen.findByText("Edit Relation Types");
   fireEvent.click(screen.getByLabelText("color of new relationType"));
   fireEvent.click(await screen.findByTitle("#9c27b0"));
-  await userEvent.keyboard("new RelationType");
+  await userEvent.keyboard("new RelationType of alice");
   fireEvent.click(screen.getByLabelText("save new relationType"));
   fireEvent.click(screen.getByText("Save"));
 
@@ -110,14 +119,22 @@ test("Add a new Relation Type", async () => {
       tags: [],
       content: JSON.stringify({
         "": { c: "#027d86", l: "" },
-        [relationTypeId]: { c: "#9c27b0", l: "new RelationType" },
+        [relationTypeId]: { c: "#9c27b0", l: "new RelationType of alice" },
       }),
     })
   );
+
+  // Bob can see the new relationType
+  cleanup();
+  renderApp(bob());
+  fireEvent.click(await screen.findByLabelText("open menu"));
+  fireEvent.click(await screen.findByLabelText("edit relationTypes"));
+  await screen.findByText("new RelationType of alice");
 });
 
 test("Add a new Relation Type to an existing Note", async () => {
-  const [alice] = setup([ALICE]);
+  const [alice, bob] = setup([ALICE, BOB]);
+  await follow(bob, alice().user.publicKey);
   const view = renderApp(alice());
   await typeNewNode(view, "Hello World");
   fireEvent.click(
@@ -127,7 +144,7 @@ test("Add a new Relation Type to an existing Note", async () => {
     "color of new relationType"
   );
   expect(colorElement.style.backgroundColor).toBe(hexToRgb(COLORS[0]));
-  await userEvent.keyboard("new RelationType");
+  await userEvent.keyboard("new RelationType of alice");
   fireEvent.click(screen.getByLabelText("save new relationType"));
   await waitFor(() =>
     expect(
@@ -153,4 +170,13 @@ test("Add a new Relation Type to an existing Note", async () => {
   expect(
     screen.getByLabelText("color of new relationType").style.backgroundColor
   ).toBe(hexToRgb(COLORS[1]));
+
+  // Bob can see the new relationType
+  cleanup();
+  const utils = renderApp(bob());
+  await typeNewNode(utils, "Hello World from Bob");
+  fireEvent.click(
+    await screen.findByLabelText("Add new Relations to Hello World from Bob")
+  );
+  await screen.findByText("new RelationType of alice");
 });
