@@ -218,6 +218,11 @@ function planRewriteUnpublishedEvents(
   };
 }
 
+export function useIsUnsavedChanges(): boolean {
+  const { publishEventsStatus } = useData();
+  return publishEventsStatus.unsignedEvents.size > 0;
+}
+
 export function SignInModal(): JSX.Element {
   const login = useLogin();
   const loginWithExtension = useLoginWithExtension();
@@ -226,6 +231,7 @@ export function SignInModal(): JSX.Element {
   const { publishEventsStatus } = useData();
   const { relayPool, finalizeEvent } = useApis();
   const { createPlan, setPublishEvents } = usePlanner();
+  const isUnsavedChanges = useIsUnsavedChanges();
   const referrer =
     (location.state as LocationState | undefined)?.referrer || "/";
   const onHide = (): void => {
@@ -243,8 +249,11 @@ export function SignInModal(): JSX.Element {
     const user = withExtension
       ? loginWithExtension(key as PublicKey)
       : login(key as string);
+    const planWithNewWSIfNecessary = isUnsavedChanges
+      ? planFallbackWorkspaceIfNecessary(createPlan())
+      : createPlan();
     const plan = planRewriteUnpublishedEvents(
-      { ...planFallbackWorkspaceIfNecessary(createPlan()), user },
+      { ...planWithNewWSIfNecessary, user },
       publishEventsStatus.unsignedEvents
     );
     if (plan.publishEvents.size === 0) {
@@ -308,13 +317,13 @@ export function SignInModal(): JSX.Element {
 }
 
 export function SignInMenuBtn(): JSX.Element | null {
-  const { user, publishEventsStatus } = useData();
+  const { user } = useData();
   const navigate = useNavigate();
+  const unsavedChanges = useIsUnsavedChanges();
   const isLoggedIn = isUserLoggedIn(user);
   if (isLoggedIn) {
     return null;
   }
-  const unsavedChanges = publishEventsStatus.unsignedEvents.size > 0;
   return (
     <Button
       ariaLabel="sign in"

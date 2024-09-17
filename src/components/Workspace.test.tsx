@@ -73,13 +73,14 @@ test("Remember active Workspace through Route changes", async () => {
   await userEvent.click(screen.getByLabelText("switch workspace"));
   expect(screen.getAllByText("Bobs Workspace").length).toBe(2);
 
+  // don't remember workspace if there are no unsaved changes
   cleanup();
   // reload the app
   renderApp({
     ...alice(),
     defaultWorkspace: defaultWs.id,
   });
-  await screen.findByText("Bobs Workspace");
+  await screen.findByText("Carols Workspace");
 });
 
 test("Create New Workspace as fallback", async () => {});
