@@ -254,9 +254,6 @@ function isRemoteWorkspace(plan: Plan): boolean {
 }
 
 export function planUpdateWorkspaceIfNecessary(plan: Plan): Plan {
-  if (isRemoteWorkspace(plan)) {
-    return plan;
-  }
   return !isRemoteWorkspace(plan) && isWsMissing(plan, plan.activeWorkspace)
     ? planUpdateWorkspaces(plan, plan.workspaces, plan.activeWorkspace)
     : plan;
