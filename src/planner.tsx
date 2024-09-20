@@ -31,121 +31,6 @@ export type Plan = Data & {
   publishEvents: List<UnsignedEvent>;
 };
 
-type ExecutePlan = (plan: Plan) => Promise<void>;
-
-type Planner = {
-  createPlan: () => Plan;
-  executePlan: ExecutePlan;
-  republishEvents: RepublishEvents;
-  setPublishEvents: Dispatch<SetStateAction<EventState>>;
-};
-
-type Context = Pick<
-  Planner,
-  "executePlan" | "republishEvents" | "setPublishEvents"
->;
-
-const PlanningContext = React.createContext<Context | undefined>(undefined);
-
-export function PlanningContextProvider({
-  children,
-  setPublishEvents,
-}: {
-  children: React.ReactNode;
-  setPublishEvents: Dispatch<SetStateAction<EventState>>;
-}): JSX.Element {
-  const { relayPool, finalizeEvent } = useApis();
-
-  const executePlan = async (plan: Plan): Promise<void> => {
-    setPublishEvents((prevStatus) => {
-      return {
-        unsignedEvents: prevStatus.unsignedEvents.merge(plan.publishEvents),
-        results: prevStatus.results,
-        isLoading: true,
-        preLoginEvents: prevStatus.preLoginEvents,
-      };
-    });
-
-    const results = await execute({
-      plan,
-      relayPool,
-      relays: getWriteRelays(plan.relays),
-      finalizeEvent,
-    });
-
-    setPublishEvents((prevStatus) => {
-      return {
-        unsignedEvents: prevStatus.unsignedEvents,
-        results: mergePublishResultsOfEvents(prevStatus.results, results),
-        isLoading: false,
-        preLoginEvents: prevStatus.preLoginEvents,
-      };
-    });
-  };
-
-  const republishEventsOnRelay = async (
-    events: List<Event>,
-    relayUrl: string
-  ): Promise<void> => {
-    const results = await republishEvents({
-      events,
-      relayPool,
-      writeRelayUrl: relayUrl,
-    });
-    setPublishEvents((prevStatus) => {
-      return {
-        unsignedEvents: prevStatus.unsignedEvents,
-        results: mergePublishResultsOfEvents(prevStatus.results, results),
-        isLoading: false,
-        preLoginEvents: prevStatus.preLoginEvents,
-      };
-    });
-  };
-
-  return (
-    <PlanningContext.Provider
-      value={{
-        executePlan,
-        republishEvents: republishEventsOnRelay,
-        setPublishEvents,
-      }}
-    >
-      {children}
-    </PlanningContext.Provider>
-  );
-}
-
-export function createPlan(
-  props: Data & {
-    publishEvents?: List<UnsignedEvent>;
-  }
-): Plan {
-  return {
-    ...props,
-    publishEvents: props.publishEvents || List<UnsignedEvent>([]),
-  };
-}
-
-export function usePlanner(): Planner {
-  const data = useData();
-  const createPlanningContext = (): Plan => {
-    return createPlan({
-      ...data,
-    });
-  };
-  const planningContext = React.useContext(PlanningContext);
-  if (planningContext === undefined) {
-    throw new Error("PlanningContext not provided");
-  }
-
-  return {
-    createPlan: createPlanningContext,
-    executePlan: planningContext.executePlan,
-    republishEvents: planningContext.republishEvents,
-    setPublishEvents: planningContext.setPublishEvents,
-  };
-}
-
 function newContactListEvent(contacts: Contacts, user: User): UnsignedEvent {
   const tags = contacts
     .valueSeq()
@@ -362,28 +247,32 @@ export function planUpdateWorkspaces(
   };
 }
 
-export function planFallbackWorkspaceIfNecessary(plan: Plan): Plan {
+function isRemoteWorkspace(plan: Plan): boolean {
   const isRemote = isIDRemote(plan.activeWorkspace, plan.user.publicKey);
   const remote = splitID(plan.activeWorkspace)[0];
-  if (isRemote && remote && plan.contacts.has(remote)) {
+  return isRemote && !!remote && plan.contacts.has(remote);
+}
+
+export function planUpdateWorkspaceIfNecessary(plan: Plan): Plan {
+  if (isRemoteWorkspace(plan)) {
     return plan;
   }
-
-  const updatedWS = isWsMissing(plan, plan.activeWorkspace)
+  return !isRemoteWorkspace(plan) && isWsMissing(plan, plan.activeWorkspace)
     ? planUpdateWorkspaces(plan, plan.workspaces, plan.activeWorkspace)
     : plan;
+}
 
+export function planUpsertFallbackWorkspaceIfNecessary(plan: Plan): Plan {
   // test if the node exists
   const node = plan.knowledgeDBs
     .get(plan.user.publicKey)
     ?.nodes.get(shortID(plan.activeWorkspace));
-  if (!node && !isRemote) {
-    return planUpsertNode(updatedWS, {
-      id: plan.activeWorkspace,
-      text: DEFAULT_WS_NAME,
-    });
-  }
-  return updatedWS;
+  return !isRemoteWorkspace(plan) && !node
+    ? planUpsertNode(plan, {
+        id: plan.activeWorkspace,
+        text: DEFAULT_WS_NAME,
+      })
+    : plan;
 }
 
 export function planUpdateRelationTypes(
@@ -452,5 +341,123 @@ export function planPublishRelayMetadata(plan: Plan, relays: Relays): Plan {
   return {
     ...plan,
     publishEvents: plan.publishEvents.push(publishRelayMetadataEvent),
+  };
+}
+
+type ExecutePlan = (plan: Plan) => Promise<void>;
+
+type Planner = {
+  createPlan: () => Plan;
+  executePlan: ExecutePlan;
+  republishEvents: RepublishEvents;
+  setPublishEvents: Dispatch<SetStateAction<EventState>>;
+};
+
+type Context = Pick<
+  Planner,
+  "executePlan" | "republishEvents" | "setPublishEvents"
+>;
+
+const PlanningContext = React.createContext<Context | undefined>(undefined);
+
+export function PlanningContextProvider({
+  children,
+  setPublishEvents,
+}: {
+  children: React.ReactNode;
+  setPublishEvents: Dispatch<SetStateAction<EventState>>;
+}): JSX.Element {
+  const { relayPool, finalizeEvent } = useApis();
+
+  const executePlan = async (plan: Plan): Promise<void> => {
+    setPublishEvents((prevStatus) => {
+      return {
+        unsignedEvents: prevStatus.unsignedEvents.merge(plan.publishEvents),
+        results: prevStatus.results,
+        isLoading: true,
+        preLoginEvents: prevStatus.preLoginEvents,
+      };
+    });
+
+    const planWithWs = planUpsertFallbackWorkspaceIfNecessary(
+      planUpdateWorkspaceIfNecessary(plan)
+    );
+    const results = await execute({
+      plan: planWithWs,
+      relayPool,
+      relays: getWriteRelays(plan.relays),
+      finalizeEvent,
+    });
+
+    setPublishEvents((prevStatus) => {
+      return {
+        unsignedEvents: prevStatus.unsignedEvents,
+        results: mergePublishResultsOfEvents(prevStatus.results, results),
+        isLoading: false,
+        preLoginEvents: prevStatus.preLoginEvents,
+      };
+    });
+  };
+
+  const republishEventsOnRelay = async (
+    events: List<Event>,
+    relayUrl: string
+  ): Promise<void> => {
+    const results = await republishEvents({
+      events,
+      relayPool,
+      writeRelayUrl: relayUrl,
+    });
+    setPublishEvents((prevStatus) => {
+      return {
+        unsignedEvents: prevStatus.unsignedEvents,
+        results: mergePublishResultsOfEvents(prevStatus.results, results),
+        isLoading: false,
+        preLoginEvents: prevStatus.preLoginEvents,
+      };
+    });
+  };
+
+  return (
+    <PlanningContext.Provider
+      value={{
+        executePlan,
+        republishEvents: republishEventsOnRelay,
+        setPublishEvents,
+      }}
+    >
+      {children}
+    </PlanningContext.Provider>
+  );
+}
+
+export function createPlan(
+  props: Data & {
+    publishEvents?: List<UnsignedEvent>;
+  }
+): Plan {
+  return {
+    ...props,
+    publishEvents: props.publishEvents || List<UnsignedEvent>([]),
+  };
+}
+
+export function usePlanner(): Planner {
+  const data = useData();
+  const createPlanningContext = (): Plan => {
+    return createPlan({
+      ...data,
+    });
+  };
+  const planningContext = React.useContext(PlanningContext);
+  if (planningContext === undefined) {
+    throw new Error("PlanningContext not provided");
+  }
+
+  return {
+    createPlan: createPlanningContext,
+    executePlan: planningContext.executePlan,
+    republishEvents: planningContext.republishEvents,
+    setPublishEvents: planningContext.setPublishEvents,
   };
 }

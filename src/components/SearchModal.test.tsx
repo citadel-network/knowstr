@@ -12,7 +12,13 @@ import {
   renderWithTestData,
   setup,
 } from "../utils.test";
-import { createPlan, planBulkUpsertNodes, planUpsertNode } from "../planner";
+import {
+  createPlan,
+  planBulkUpsertNodes,
+  planUpdateWorkspaceIfNecessary,
+  planUpsertFallbackWorkspaceIfNecessary,
+  planUpsertNode,
+} from "../planner";
 import { execute } from "../executor";
 
 test("Search works like spotlight", async () => {
@@ -23,11 +29,15 @@ test("Search works like spotlight", async () => {
   const secondNote = newNode("My second search note ever made", publicKey);
   const thirdNote = newNode("My third search note made", publicKey);
   const topic = newNode("My very first topic", publicKey);
+
+  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
+    planUpdateWorkspaceIfNecessary(createPlan(alice()))
+  );
   await execute({
     ...alice(),
     plan: planUpsertNode(
       planUpsertNode(
-        planUpsertNode(planUpsertNode(createPlan(alice()), note), secondNote),
+        planUpsertNode(planUpsertNode(planWithWS, note), secondNote),
         thirdNote
       ),
       topic

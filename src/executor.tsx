@@ -1,6 +1,6 @@
 import { Event, EventTemplate, SimplePool, VerifiedEvent } from "nostr-tools";
 import { List, Map } from "immutable";
-import { Plan, planFallbackWorkspaceIfNecessary } from "./planner";
+import { Plan } from "./planner";
 import { FinalizeEvent } from "./Apis";
 import {
   isUserLoggedIn,
@@ -61,14 +61,12 @@ export async function execute({
   relays: Relays;
   finalizeEvent: FinalizeEvent;
 }): Promise<PublishResultsEventMap> {
-  const planWithWs = planFallbackWorkspaceIfNecessary(plan);
-
-  if (planWithWs.publishEvents.size === 0) {
+  if (plan.publishEvents.size === 0) {
     // eslint-disable-next-line no-console
     console.warn("Won't execute Noop plan");
     return Map();
   }
-  const { user } = planWithWs;
+  const { user } = plan;
 
   if (!isUserLoggedIn(user)) {
     return Map();
@@ -87,10 +85,10 @@ export async function execute({
   const finalizedEvents = isUserLoggedInWithExtension(user)
     ? List(
         await Promise.all(
-          planWithWs.publishEvents.map((e) => signEventWithExtension(e))
+          plan.publishEvents.map((e) => signEventWithExtension(e))
         )
       ).map((e) => e as VerifiedEvent)
-    : planWithWs.publishEvents.map((e) =>
+    : plan.publishEvents.map((e) =>
         finalizeEvent(e, (user as KeyPair).privateKey)
       );
 

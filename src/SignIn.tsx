@@ -18,7 +18,12 @@ import {
   useLoginWithExtension,
 } from "./NostrAuthContext";
 import { useData } from "./DataContext";
-import { Plan, planFallbackWorkspaceIfNecessary, usePlanner } from "./planner";
+import {
+  Plan,
+  planUpdateWorkspaceIfNecessary,
+  planUpsertFallbackWorkspaceIfNecessary,
+  usePlanner,
+} from "./planner";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { execute } from "./executor";
 import { useApis } from "./Apis";
@@ -257,7 +262,9 @@ export function SignInModal(): JSX.Element {
       ? loginWithExtension(key as PublicKey)
       : login(key as string);
     const planWithNewWSIfNecessary = isUnsavedChanges
-      ? planFallbackWorkspaceIfNecessary(createPlan())
+      ? planUpsertFallbackWorkspaceIfNecessary(
+          planUpdateWorkspaceIfNecessary(createPlan())
+        )
       : createPlan();
     const plan = planRewriteUnpublishedEvents(
       { ...planWithNewWSIfNecessary, user },

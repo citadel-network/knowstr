@@ -36,7 +36,9 @@ import {
   fallbackWorkspace,
   planAddContact,
   planRemoveContact,
+  planUpdateWorkspaceIfNecessary,
   planUpdateWorkspaces,
+  planUpsertFallbackWorkspaceIfNecessary,
   planUpsertNode,
   planUpsertRelations,
 } from "./planner";
@@ -377,9 +379,12 @@ export async function follow(
 ): Promise<void> {
   const utils = cU();
   const plan = planAddContact(createPlan(utils), publicKey);
+  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
+    planUpdateWorkspaceIfNecessary(plan)
+  );
   await execute({
     ...utils,
-    plan,
+    plan: planWithWS,
   });
 }
 
@@ -389,9 +394,12 @@ export async function unfollow(
 ): Promise<void> {
   const utils = cU();
   const plan = planRemoveContact(createPlan(utils), publicKey);
+  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
+    planUpdateWorkspaceIfNecessary(plan)
+  );
   await execute({
     ...utils,
-    plan,
+    plan: planWithWS,
   });
 }
 
@@ -574,9 +582,12 @@ export async function setupTestDB(
         setNewWorkspace.id
       )
     : plan;
+  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
+    planUpdateWorkspaceIfNecessary(planWithWorkspace)
+  );
   await execute({
     ...appState,
-    plan: planWithWorkspace,
+    plan: planWithWS,
     finalizeEvent: mockFinalizeEvent(),
   });
   return planWithWorkspace;
