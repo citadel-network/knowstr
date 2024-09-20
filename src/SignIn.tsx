@@ -189,14 +189,21 @@ type LocationState = {
   referrer?: string;
 };
 
-function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
+export function replaceUnauthenticatedUser(
+  from: string,
+  publicKey: string
+): LongID {
   // TODO: This feels quite dangerous
+  return from.replaceAll(UNAUTHENTICATED_USER_PK, publicKey) as LongID;
+}
+
+function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
   const replacedTags = event.tags.map((tag) =>
-    tag.map((t) => t.replaceAll(UNAUTHENTICATED_USER_PK, event.pubkey))
+    tag.map((t) => replaceUnauthenticatedUser(t, event.pubkey))
   );
   return {
     ...event,
-    content: event.content.replaceAll(UNAUTHENTICATED_USER_PK, event.pubkey),
+    content: replaceUnauthenticatedUser(event.content, event.pubkey),
     tags: replacedTags,
   };
 }

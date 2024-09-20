@@ -47,6 +47,7 @@ import {
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useDefaultRelays, useDefaultWorkspace } from "./NostrAuthContext";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
+import { replaceUnauthenticatedUser } from "./SignIn";
 
 type DataProps = {
   user: User;
@@ -263,11 +264,11 @@ function Data({ user, children }: DataProps): JSX.Element {
     return rdx.set(key, p.relays);
   }, Map<PublicKey, Relays>());
 
+  const wsFromURL = useWorkspaceFromURL();
   const activeWorkspace =
-    useWorkspaceFromURL() ||
-    processedMetaEvents.activeWorkspace ||
-    defaultWorkspace ||
-    fallbackWSID;
+    wsFromURL !== undefined
+      ? replaceUnauthenticatedUser(wsFromURL, user.publicKey)
+      : processedMetaEvents.activeWorkspace || defaultWorkspace || fallbackWSID;
 
   const workspaceFilters = processedContactMetaEvents.reduce((rdx, p) => {
     return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
