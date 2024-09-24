@@ -4,7 +4,7 @@ import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Button } from "citadel-commons";
 import { deleteRelations, isRemote, splitID } from "../connections";
-import { getWorkspaces } from "../KnowledgeDataContext";
+import { getWorkspacesWithNodes } from "../KnowledgeDataContext";
 import { updateViewPathsAfterDeleteNode, useNodeID } from "../ViewContext";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
@@ -59,13 +59,13 @@ function useDeleteNode(): undefined | (() => void) {
       data.activeWorkspace === nodeID
     ) {
       const updatedWorkspaces = data.workspaces.filter((id) => id !== nodeID);
-      const updatedData = {
-        ...data,
-        workspaces: updatedWorkspaces,
-      };
+      const newActiveWs = getWorkspacesWithNodes(
+        updatedWorkspaces.toSet(),
+        data
+      ).first(undefined);
       const activeWorkspace =
         data.activeWorkspace === nodeID
-          ? getWorkspaces(updatedData).first(undefined)?.id
+          ? newActiveWs?.id
           : data.activeWorkspace;
       executePlan(
         planUpdateWorkspaces(
@@ -74,6 +74,7 @@ function useDeleteNode(): undefined | (() => void) {
           activeWorkspace
         )
       );
+      navigate(activeWorkspace ? `/w/${activeWorkspace}` : "/");
     } else {
       executePlan(planWithDeletedNode);
     }

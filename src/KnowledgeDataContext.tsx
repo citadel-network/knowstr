@@ -8,6 +8,19 @@ export function shorten(nodeText: string): string {
   return nodeText.substr(0, 30);
 }
 
+export function getWorkspacesWithNodes(
+  workspaces: Set<string | LongID>,
+  data: Data
+): List<KnowNode> {
+  return (
+    workspaces
+      .map((wsID) =>
+        getNodeFromID(data.knowledgeDBs, wsID, data.user.publicKey)
+      )
+      .filter((n) => n !== undefined) as Set<KnowNode>
+  ).toList();
+}
+
 export function getWorkspaces(data: Data): List<KnowNode> {
   const allWorkspaces: Set<LongID | ID> = (
     data.contactsWorkspaces.valueSeq().toList().flatten(1) as List<LongID>
@@ -16,10 +29,7 @@ export function getWorkspaces(data: Data): List<KnowNode> {
     .concat([data.activeWorkspace as LongID])
     .toSet();
 
-  const nodes = allWorkspaces
-    .map((wsID) => getNodeFromID(data.knowledgeDBs, wsID, data.user.publicKey))
-    .filter((n) => n !== undefined) as Set<KnowNode>;
-  return nodes.toList();
+  return getWorkspacesWithNodes(allWorkspaces, data);
 }
 
 export function useWorkspaceFromURL(): LongID | undefined {
