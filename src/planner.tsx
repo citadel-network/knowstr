@@ -26,6 +26,7 @@ import { relationTypesToJson, viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
 import { isIDRemote, joinID, shortID, splitID } from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
+import { UNAUTHENTICATED_USER_PK } from "./AppState";
 
 export type Plan = Data & {
   publishEvents: List<UnsignedEvent>;
@@ -270,6 +271,42 @@ export function planUpsertFallbackWorkspaceIfNecessary(plan: Plan): Plan {
         text: DEFAULT_WS_NAME,
       })
     : plan;
+}
+
+export function replaceUnauthenticatedUser<T extends string>(
+  from: T,
+  publicKey: string
+): T {
+  // TODO: This feels quite dangerous
+  return from.replaceAll(UNAUTHENTICATED_USER_PK, publicKey) as T;
+}
+
+function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
+  const replacedTags = event.tags.map((tag) =>
+    tag.map((t) => replaceUnauthenticatedUser(t, event.pubkey))
+  );
+  return {
+    ...event,
+    content: replaceUnauthenticatedUser(event.content, event.pubkey),
+    tags: replacedTags,
+  };
+}
+
+export function planRewriteUnpublishedEvents(
+  plan: Plan,
+  events: List<UnsignedEvent>
+): Plan {
+  const allEvents = plan.publishEvents.concat(events);
+  const rewrittenEvents = allEvents.map((event) =>
+    rewriteIDs({
+      ...event,
+      pubkey: plan.user.publicKey,
+    })
+  );
+  return {
+    ...plan,
+    publishEvents: rewrittenEvents,
+  };
 }
 
 export function planUpdateRelationTypes(

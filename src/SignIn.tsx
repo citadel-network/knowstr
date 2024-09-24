@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Form, Modal } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
-import { UnsignedEvent, getPublicKey, nip19 } from "nostr-tools";
+import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
@@ -11,7 +11,6 @@ import {
   Button,
   getWriteRelays,
 } from "citadel-commons";
-import { List } from "immutable";
 import {
   isUserLoggedIn,
   useLogin,
@@ -19,12 +18,11 @@ import {
 } from "./NostrAuthContext";
 import { useData } from "./DataContext";
 import {
-  Plan,
+  planRewriteUnpublishedEvents,
   planUpdateWorkspaceIfNecessary,
   planUpsertFallbackWorkspaceIfNecessary,
   usePlanner,
 } from "./planner";
-import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { execute } from "./executor";
 import { useApis } from "./Apis";
 import { KINDS_META } from "./Data";
@@ -193,42 +191,6 @@ function SignInWithExtension({
 type LocationState = {
   referrer?: string;
 };
-
-export function replaceUnauthenticatedUser(
-  from: string,
-  publicKey: string
-): LongID {
-  // TODO: This feels quite dangerous
-  return from.replaceAll(UNAUTHENTICATED_USER_PK, publicKey) as LongID;
-}
-
-function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
-  const replacedTags = event.tags.map((tag) =>
-    tag.map((t) => replaceUnauthenticatedUser(t, event.pubkey))
-  );
-  return {
-    ...event,
-    content: replaceUnauthenticatedUser(event.content, event.pubkey),
-    tags: replacedTags,
-  };
-}
-
-function planRewriteUnpublishedEvents(
-  plan: Plan,
-  events: List<UnsignedEvent>
-): Plan {
-  const allEvents = plan.publishEvents.concat(events);
-  const rewrittenEvents = allEvents.map((event) =>
-    rewriteIDs({
-      ...event,
-      pubkey: plan.user.publicKey,
-    })
-  );
-  return {
-    ...plan,
-    publishEvents: rewrittenEvents,
-  };
-}
 
 export function useIsUnsavedChanges(): boolean {
   const { publishEventsStatus } = useData();

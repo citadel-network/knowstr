@@ -37,7 +37,11 @@ import {
 } from "./knowledgeEvents";
 import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
-import { PlanningContextProvider, fallbackWorkspace } from "./planner";
+import {
+  PlanningContextProvider,
+  fallbackWorkspace,
+  replaceUnauthenticatedUser,
+} from "./planner";
 import { RootViewContextProvider } from "./ViewContext";
 import {
   addWorkspacesToFilter,
@@ -47,7 +51,6 @@ import {
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useDefaultRelays, useDefaultWorkspace } from "./NostrAuthContext";
 import { DEFAULT_COLOR } from "./components/RelationTypes";
-import { replaceUnauthenticatedUser } from "./SignIn";
 
 type DataProps = {
   user: User;
