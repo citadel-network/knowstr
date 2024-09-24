@@ -10,6 +10,7 @@ import {
   hexToRgb,
   BOB,
   follow,
+  ANON,
 } from "../utils.test";
 import { COLORS } from "./RelationTypes";
 
@@ -179,4 +180,28 @@ test("Add a new Relation Type to an existing Note", async () => {
     await screen.findByLabelText("Add new Relations to Hello World from Bob")
   );
   await screen.findByText("new RelationType of alice");
+});
+
+test("Don't overwrite unnamed relation type after signin", async () => {
+  const [anon] = setup([ANON, ALICE]);
+  renderApp({
+    ...anon(),
+    initialRoute: `/relationTypes`,
+  });
+  await screen.findByText("Edit Relation Types");
+  fireEvent.click(screen.getByLabelText("edit Unnamed Type"));
+  await userEvent.keyboard("Named Type");
+  fireEvent.click(screen.getByLabelText("save"));
+  fireEvent.click(screen.getByText("Save"));
+
+  await userEvent.click(await screen.findByText("Sign in to Save"));
+  await userEvent.type(
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
+    "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
+  );
+  fireEvent.click(await screen.findByLabelText("open menu"));
+  fireEvent.click(await screen.findByLabelText("edit relationTypes"));
+  await screen.findByText("Unnamed Type");
 });
