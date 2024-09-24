@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useData } from "./DataContext";
 import { getNodeFromID } from "./ViewContext";
+import { useStorePreLoginEvents } from "./StorePreLoginContext";
 
 export function shorten(nodeText: string): string {
   return nodeText.substr(0, 30);
@@ -51,9 +52,10 @@ export const DEFAULT_WS_NAME = "My first Workspace";
 export function useWorkspace(): string {
   const { knowledgeDBs, user, activeWorkspace: a } = useData();
   const activeWorkspace = useWorkspaceFromURL() || a;
+  const { preLoginActiveWorkspaceTitle } = useStorePreLoginEvents();
   const node = getNodeFromID(knowledgeDBs, activeWorkspace, user.publicKey);
   if (!node) {
-    return DEFAULT_WS_NAME;
+    return preLoginActiveWorkspaceTitle || DEFAULT_WS_NAME;
   }
   return node.text;
 }

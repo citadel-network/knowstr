@@ -6,6 +6,7 @@ import { getWorkspaces } from "../KnowledgeDataContext";
 import { isIDRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
+import { useStorePreLoginEvents } from "../StorePreLoginContext";
 
 type NewWorkspaceProps = {
   onHide: () => void;
@@ -15,6 +16,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const { user } = useData();
+  const { changePreLoginActiveWorkspaceTitle } = useStorePreLoginEvents();
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -29,9 +31,11 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
     // set node as active
     const myDB = newNodePlan.knowledgeDBs.get(newNodePlan.user.publicKey);
     if (!myDB) {
+      changePreLoginActiveWorkspaceTitle(title);
       executePlan(newNodePlan);
       return;
     }
+    changePreLoginActiveWorkspaceTitle(title);
     const setActivePlan = planUpdateWorkspaces(
       newNodePlan,
       newNodePlan.workspaces.push(node.id),
@@ -71,9 +75,11 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
 function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
   const { workspaces } = useData();
   const { createPlan, executePlan } = usePlanner();
+  const { changePreLoginActiveWorkspaceTitle } = useStorePreLoginEvents();
   const navigate = useNavigate();
 
   const onClick = (): void => {
+    changePreLoginActiveWorkspaceTitle(title);
     executePlan(planUpdateWorkspaces(createPlan(), workspaces, id));
     navigate(`/w/${id}`);
   };

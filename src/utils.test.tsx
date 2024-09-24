@@ -62,6 +62,7 @@ import { newDB } from "./knowledge";
 import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 import { findContacts } from "./contacts";
+import { StorePreLoginContext } from "./StorePreLoginContext";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -414,14 +415,16 @@ export function renderWithTestData(
   const utils = renderApis(
     <Routes>
       <Route element={<RequireLogin />}>
-        {["*", "w/:workspaceID", "d/:openNodeID"].map((path) => (
+        {["*", "w/:workspaceID/*", "d/:openNodeID"].map((path) => (
           <Route
             key={path}
             path={path}
             element={
-              <TemporaryViewProvider>
-                <DND>{children}</DND>
-              </TemporaryViewProvider>
+              <StorePreLoginContext>
+                <TemporaryViewProvider>
+                  <DND>{children}</DND>
+                </TemporaryViewProvider>
+              </StorePreLoginContext>
             }
           />
         ))}

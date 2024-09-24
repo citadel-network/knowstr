@@ -211,7 +211,7 @@ export function SignInModal(): JSX.Element {
   const onHide = (): void => {
     navigate(referrer);
   };
-  const storeMergeEvents = useStorePreLoginEvents();
+  const { storeMergeEvents } = useStorePreLoginEvents();
 
   const signIn = async ({
     withExtension,

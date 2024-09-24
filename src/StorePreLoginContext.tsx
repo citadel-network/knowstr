@@ -1,8 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { List } from "immutable";
 import { useDebouncedCallback } from "use-debounce";
 import { getWriteRelays } from "citadel-commons";
 import { useApis } from "./Apis";
+import { isUserLoggedIn } from "./NostrAuthContext";
 import { KIND_RELATION_TYPES, KIND_VIEWS, KIND_WORKSPACES } from "./nostr";
 import {
   planUpdateRelationTypes,
@@ -11,8 +13,13 @@ import {
   usePlanner,
 } from "./planner";
 import { execute } from "./executor";
+import { useData } from "./DataContext";
 
-type StorePreLoginData = (eventKinds: List<number>) => void;
+type StorePreLoginData = {
+  storeMergeEvents: (eventKinds: List<number>) => void;
+  preLoginActiveWorkspaceTitle: string | undefined;
+  changePreLoginActiveWorkspaceTitle: (title: string) => void;
+};
 
 const StorePreLoginDataContext = React.createContext<
   StorePreLoginData | undefined
@@ -31,8 +38,13 @@ export function StorePreLoginContext({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
+  const navigate = useNavigate();
+  const { user } = useData();
   const { createPlan, setPublishEvents } = usePlanner();
   const { relayPool, finalizeEvent, timeToStorePreLoginEvents } = useApis();
+  const isLoggedIn = isUserLoggedIn(user);
+  const [preLoginActiveWorkspaceTitle, setPreLoginActiveWorkspaceTitle] =
+    React.useState<string | undefined>(undefined);
 
   const storeMergeEvents = useDebouncedCallback(
     async (eventKinds: List<number>) => {
@@ -64,12 +76,23 @@ export function StorePreLoginContext({
           preLoginEvents: List(),
         };
       });
+      navigate(`/w/${plan.activeWorkspace}`);
+      setPreLoginActiveWorkspaceTitle(undefined);
     },
     timeToStorePreLoginEvents
   );
+  const changePreLoginActiveWorkspaceTitle = (title: string): void => {
+    setPreLoginActiveWorkspaceTitle(isLoggedIn ? undefined : title);
+  };
 
   return (
-    <StorePreLoginDataContext.Provider value={storeMergeEvents}>
+    <StorePreLoginDataContext.Provider
+      value={{
+        storeMergeEvents,
+        preLoginActiveWorkspaceTitle,
+        changePreLoginActiveWorkspaceTitle,
+      }}
+    >
       {children}
     </StorePreLoginDataContext.Provider>
   );
