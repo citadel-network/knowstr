@@ -17,6 +17,7 @@ import {
   usePlanner,
 } from "../planner";
 import { isUserLoggedIn, useDefaultWorkspace } from "../NostrAuthContext";
+import { useStorePreLoginEvents } from "../StorePreLoginContext";
 
 function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
@@ -41,6 +42,8 @@ function useDeleteNode(): undefined | (() => void) {
   const data = useData();
   const defaultWorkspace = useDefaultWorkspace();
   const isLoggedIn = isUserLoggedIn(data.user);
+  const { changePreLoginActiveWorkspaceTitle, preLoginActiveWorkspaceTitle } =
+    useStorePreLoginEvents();
 
   // Can't delete my contacts nodes, except for active workspace
   // Can't delete the default workspace if not logged in
@@ -72,6 +75,11 @@ function useDeleteNode(): undefined | (() => void) {
         data.activeWorkspace === nodeID
           ? newActiveWs?.id
           : data.activeWorkspace;
+      changePreLoginActiveWorkspaceTitle(
+        data.activeWorkspace === nodeID
+          ? newActiveWs?.text
+          : preLoginActiveWorkspaceTitle
+      );
       executePlan(
         planUpdateWorkspaces(
           planWithDeletedNode,

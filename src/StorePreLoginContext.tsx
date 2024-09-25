@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { List } from "immutable";
 import { useDebouncedCallback } from "use-debounce";
 import { getWriteRelays } from "citadel-commons";
@@ -18,7 +17,7 @@ import { useData } from "./DataContext";
 type StorePreLoginData = {
   storeMergeEvents: (eventKinds: List<number>) => void;
   preLoginActiveWorkspaceTitle: string | undefined;
-  changePreLoginActiveWorkspaceTitle: (title: string) => void;
+  changePreLoginActiveWorkspaceTitle: (title: string | undefined) => void;
 };
 
 const StorePreLoginDataContext = React.createContext<
@@ -38,7 +37,6 @@ export function StorePreLoginContext({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  const navigate = useNavigate();
   const { user } = useData();
   const { createPlan, setPublishEvents } = usePlanner();
   const { relayPool, finalizeEvent, timeToStorePreLoginEvents } = useApis();
@@ -76,12 +74,12 @@ export function StorePreLoginContext({
           preLoginEvents: List(),
         };
       });
-      navigate(`/w/${plan.activeWorkspace}`);
-      setPreLoginActiveWorkspaceTitle(undefined);
     },
     timeToStorePreLoginEvents
   );
-  const changePreLoginActiveWorkspaceTitle = (title: string): void => {
+  const changePreLoginActiveWorkspaceTitle = (
+    title: string | undefined
+  ): void => {
     setPreLoginActiveWorkspaceTitle(isLoggedIn ? undefined : title);
   };
 
