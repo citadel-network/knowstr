@@ -183,7 +183,7 @@ test("Add a new Relation Type to an existing Note", async () => {
 });
 
 test("Don't overwrite unnamed relation type after signin", async () => {
-  const [anon] = setup([ANON, ALICE]);
+  const [anon] = setup([ANON]);
   renderApp({
     ...anon(),
     initialRoute: `/relationTypes`,
