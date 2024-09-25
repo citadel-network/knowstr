@@ -5,6 +5,7 @@ import { nip19 } from "nostr-tools";
 import {
   ALICE,
   ALICE_PRIVATE_KEY,
+  ANON,
   BOB,
   findNodeByText,
   renderApp,
@@ -161,4 +162,31 @@ test("Merge Views", async () => {
   // After Login both columns are expanded because the views of the existing user are merged
   await screen.findByLabelText("increase width of Nostr");
   await screen.findByLabelText("increase width of Bitcoin");
+});
+
+test("Don't change workspace title after signin", async () => {
+  const [anon] = setup([ANON]);
+  cleanup();
+  renderApp(anon());
+  const switchWsBtn = await screen.findByLabelText("switch workspace");
+  await userEvent.click(switchWsBtn);
+  const newWsBtn = screen.getByText("New Workspace");
+  fireEvent.click(newWsBtn);
+  await userEvent.type(
+    screen.getByLabelText("title of new workspace"),
+    "My Brand New Workspace"
+  );
+  await userEvent.click(screen.getByText("Create Workspace"));
+  await screen.findAllByText("My Brand New Workspace");
+  screen.getByLabelText("search and attach to My Brand New Workspace");
+  await userEvent.click(await screen.findByText("Sign in to Save"));
+  await userEvent.type(
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
+    "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a{enter}"
+  );
+  await screen.findAllByText("My Brand New Workspace");
+  // After login there is not default workspace name to be seen
+  expect(screen.queryByText("My first Workspace")).toBeNull();
 });
