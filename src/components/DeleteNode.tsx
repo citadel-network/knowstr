@@ -16,6 +16,7 @@ import {
   planUpsertRelations,
   usePlanner,
 } from "../planner";
+import { isUserLoggedIn, useDefaultWorkspace } from "../NostrAuthContext";
 
 function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
@@ -38,11 +39,15 @@ function useDeleteNode(): undefined | (() => void) {
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const data = useData();
+  const defaultWorkspace = useDefaultWorkspace();
+  const isLoggedIn = isUserLoggedIn(data.user);
 
-  // Can only delete my own nodes
+  // Can't delete my contacts nodes, except for active workspace
+  // Can't delete the default workspace if not logged in
   if (
-    isRemote(splitID(nodeID)[0], data.user.publicKey) &&
-    data.activeWorkspace !== nodeID
+    (isRemote(splitID(nodeID)[0], data.user.publicKey) &&
+      data.activeWorkspace !== nodeID) ||
+    (defaultWorkspace === nodeID && !isLoggedIn)
   ) {
     return undefined;
   }
