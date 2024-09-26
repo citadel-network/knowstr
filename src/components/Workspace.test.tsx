@@ -39,7 +39,6 @@ test("Load Fallback Workspace if user is not logged in", async () => {
   renderApp({ ...anon(), defaultWorkspace: wsNode.id });
   await screen.findByText("Bobs Workspace");
   await screen.findByText("Bitcoin");
-
   await userEvent.click(screen.getByLabelText("switch workspace"));
   expect(screen.getAllByText("Bobs Workspace").length).toBe(2);
 });
@@ -100,4 +99,27 @@ test("Delete Workspace", async () => {
   await userEvent.click(await screen.findByLabelText("delete node"));
   // correct Workspace title is displayed
   await screen.findByText("First Workspace");
+});
+
+test("Can't delete the default workspace if not logged in", async () => {
+  const [anon, bob] = setup([ANON, BOB]);
+  const bobsDB = await setupTestDB(bob(), [["Default Workspace"]]);
+  const defaultWs = findNodeByText(bobsDB, "Default Workspace") as KnowNode;
+
+  renderApp({ ...anon(), defaultWorkspace: defaultWs.id });
+  await screen.findByText("Default Workspace");
+  // Can't delete the default workspace if not logged in
+  expect(screen.queryByLabelText("delete node")).toBeNull();
+
+  // Can delete the default workspace after logged in
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
+    ALICE_PRIVATE_KEY
+  );
+  await userEvent.click(screen.getByText("Continue"));
+  await screen.findByText("Default Workspace");
+  await screen.findByLabelText("delete node");
 });
