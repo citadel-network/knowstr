@@ -83,4 +83,21 @@ test("Remember active Workspace through Route changes", async () => {
   await screen.findByText("Carols Workspace");
 });
 
-test("Create New Workspace as fallback", async () => {});
+test("Delete Workspace", async () => {
+  const [alice] = setup([ALICE]);
+  // create two Workspaces
+  const aliceDBWithFirstWS = await setupTestDB(alice(), [["First Workspace"]], {
+    activeWorkspace: "First Workspace",
+  });
+  await setupTestDB(
+    { ...alice(), ...aliceDBWithFirstWS },
+    [["Bitcoin Workspace"]],
+    { activeWorkspace: "Bitcoin Workspace" }
+  );
+  cleanup();
+  renderApp(alice());
+  await screen.findByText("Bitcoin Workspace");
+  await userEvent.click(await screen.findByLabelText("delete node"));
+  // correct Workspace title is displayed
+  await screen.findByText("First Workspace");
+});
