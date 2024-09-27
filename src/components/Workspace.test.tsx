@@ -6,7 +6,9 @@ import {
   ANON,
   BOB,
   CAROL,
+  expectTextContent,
   findNodeByText,
+  follow,
   renderApp,
   setup,
   setupTestDB,
@@ -122,4 +124,75 @@ test("Can't delete the default workspace if not logged in", async () => {
   await userEvent.click(screen.getByText("Continue"));
   await screen.findByText("Default Workspace");
   await screen.findByLabelText("delete node");
+});
+
+test("Workspace deleted by a contact is still shown", async () => {
+  const [alice, bob, carol] = setup([ALICE, BOB, CAROL]);
+  await follow(alice, bob().user.publicKey);
+  await follow(bob, alice().user.publicKey);
+  await follow(carol, alice().user.publicKey);
+  await follow(carol, bob().user.publicKey);
+
+  await setupTestDB(alice(), [["Alice Workspace"]], {
+    activeWorkspace: "Alice Workspace",
+  });
+
+  cleanup();
+  renderApp(alice());
+  await screen.findByText("Alice Workspace");
+
+  // Bob deletes Alice Workspace and can't see it anymore
+  cleanup();
+  renderApp(bob());
+  await userEvent.click(await screen.findByLabelText("switch workspace"));
+  await waitFor(() => {
+    const selection = screen.getByLabelText("workspace selection");
+    expectTextContent(selection, [
+      "Your Workspaces",
+      "My first Workspace",
+      "Your Contacts Workspaces",
+      "Alice Workspace",
+      "New Workspace",
+    ]);
+  });
+  await userEvent.click(screen.getByText("Alice Workspace"));
+  await userEvent.click(await screen.findByLabelText("delete node"));
+  await screen.findAllByText("My first Workspace");
+
+  // Carol can see Alice Workspace because neither she nor the author Alice deleted it
+  cleanup();
+  renderApp(carol());
+  await userEvent.click(await screen.findByLabelText("switch workspace"));
+  await waitFor(() => {
+    const selection = screen.getByLabelText("workspace selection");
+    expectTextContent(selection, [
+      "Your Workspaces",
+      "My first Workspace",
+      "Your Contacts Workspaces",
+      "Alice Workspace",
+      "New Workspace",
+    ]);
+  });
+
+  // Alice deletes the Workspace and can't see it anymore
+  cleanup();
+  renderApp(alice());
+  await screen.findByText("Alice Workspace");
+  await userEvent.click(await screen.findByLabelText("delete node"));
+  await screen.findAllByText("My first Workspace");
+
+  // Carol can't see Alice Workspace anymore
+  cleanup();
+  renderApp(carol());
+  await userEvent.click(await screen.findByLabelText("switch workspace"));
+  await waitFor(() => {
+    const selection = screen.getByLabelText("workspace selection");
+    expectTextContent(selection, [
+      "Your Workspaces",
+      "My first Workspace",
+      "Your Contacts Workspaces",
+      "My first Workspace",
+      "New Workspace",
+    ]);
+  });
 });
