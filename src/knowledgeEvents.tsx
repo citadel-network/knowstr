@@ -37,9 +37,17 @@ export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
         return rdx;
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [deleteKind, _, eventToDelete] = deleteTag.split(":");
-      if (deleteKind === `${KIND_KNOWLEDGE_NODE}`) {
-        return rdx.remove(eventToDelete);
+      const [deleteKind, userPublicKey, eventToDeleteId] = deleteTag.split(":");
+      const eventToDelete = rdx.get(eventToDeleteId);
+      const isDeletedByAuthor =
+        !!eventToDelete && userPublicKey === eventToDelete.id.split(":")[0];
+      const isDeletedByMyself = userPublicKey === event.pubkey;
+      // ignore delete events if not done by the author or by myself
+      if (
+        deleteKind === `${KIND_KNOWLEDGE_NODE}` &&
+        (isDeletedByAuthor || isDeletedByMyself)
+      ) {
+        return rdx.remove(eventToDeleteId);
       }
       return rdx;
     }
@@ -70,9 +78,17 @@ export function findRelations(
         return rdx;
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [deleteKind, _, eventToDelete] = deleteTag.split(":");
-      if (deleteKind === `${KIND_KNOWLEDGE_LIST}`) {
-        return rdx.remove(eventToDelete);
+      const [deleteKind, userPublicKey, eventToDeleteId] = deleteTag.split(":");
+      const eventToDelete = rdx.get(eventToDeleteId);
+      const isDeletedByAuthor =
+        !!eventToDelete && userPublicKey === eventToDelete.id.split(":")[0];
+      const isDeletedByMyself = userPublicKey === event.pubkey;
+      // ignore delete events if not done by the author or by myself
+      if (
+        deleteKind === `${KIND_KNOWLEDGE_LIST}` &&
+        (isDeletedByAuthor || isDeletedByMyself)
+      ) {
+        return rdx.remove(eventToDeleteId);
       }
       return rdx;
     }
