@@ -292,6 +292,21 @@ function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
   };
 }
 
+export function planRewriteWorkspaceIDs(plan: Plan): Plan {
+  const rewrittenWorkspaces = plan.workspaces.reduce((rdx, wsID) => {
+    return rdx.merge(replaceUnauthenticatedUser(wsID, plan.user.publicKey));
+  }, List<string>());
+  const rewrittenActiveWorkspace = replaceUnauthenticatedUser(
+    plan.activeWorkspace,
+    plan.user.publicKey
+  );
+  return {
+    ...plan,
+    workspaces: rewrittenWorkspaces,
+    activeWorkspace: rewrittenActiveWorkspace,
+  };
+}
+
 export function planRewriteUnpublishedEvents(
   plan: Plan,
   events: List<UnsignedEvent>

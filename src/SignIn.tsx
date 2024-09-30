@@ -19,6 +19,7 @@ import {
 import { useData } from "./DataContext";
 import {
   planRewriteUnpublishedEvents,
+  planRewriteWorkspaceIDs,
   planUpdateWorkspaceIfNecessary,
   planUpsertFallbackWorkspaceIfNecessary,
   usePlanner,
@@ -206,10 +207,9 @@ export function SignInModal(): JSX.Element {
   const { relayPool, finalizeEvent } = useApis();
   const { createPlan, setPublishEvents } = usePlanner();
   const isUnsavedChanges = useIsUnsavedChanges();
-  const referrer =
-    (location.state as LocationState | undefined)?.referrer || "/";
+  const referrer = (location.state as LocationState | undefined)?.referrer;
   const onHide = (): void => {
-    navigate(referrer);
+    navigate(referrer || "/");
   };
   const storeMergeEvents = useStorePreLoginEvents();
 
@@ -228,12 +228,13 @@ export function SignInModal(): JSX.Element {
           planUpdateWorkspaceIfNecessary(createPlan())
         )
       : createPlan();
-    const plan = planRewriteUnpublishedEvents(
+    const planWithRewrittenEvents = planRewriteUnpublishedEvents(
       { ...planWithNewWSIfNecessary, user },
       publishEventsStatus.unsignedEvents
     );
+    const plan = planRewriteWorkspaceIDs(planWithRewrittenEvents);
     if (plan.publishEvents.size === 0) {
-      onHide();
+      navigate(referrer || "/");
       return;
     }
     const mergeEvents = plan.publishEvents.filter((e) =>
@@ -269,7 +270,7 @@ export function SignInModal(): JSX.Element {
       });
     }
     storeMergeEvents(mergeEvents.map((e) => e.kind));
-    onHide();
+    navigate(referrer || `/w/${plan.activeWorkspace}`);
   };
   return (
     <Modal show onHide={onHide}>

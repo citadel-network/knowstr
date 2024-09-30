@@ -414,7 +414,7 @@ export function renderWithTestData(
   const utils = renderApis(
     <Routes>
       <Route element={<RequireLogin />}>
-        {["*", "w/:workspaceID", "d/:openNodeID"].map((path) => (
+        {["*", "w/:workspaceID/*", "d/:openNodeID"].map((path) => (
           <Route
             key={path}
             path={path}
