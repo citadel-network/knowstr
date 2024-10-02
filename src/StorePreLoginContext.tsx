@@ -3,8 +3,14 @@ import { List } from "immutable";
 import { useDebouncedCallback } from "use-debounce";
 import { getWriteRelays } from "citadel-commons";
 import { useApis } from "./Apis";
-import { KIND_RELATION_TYPES, KIND_VIEWS, KIND_WORKSPACES } from "./nostr";
 import {
+  KIND_CONTACTLIST,
+  KIND_RELATION_TYPES,
+  KIND_VIEWS,
+  KIND_WORKSPACES,
+} from "./nostr";
+import {
+  planAddContact,
   planUpdateRelationTypes,
   planUpdateViews,
   planUpdateWorkspaces,
@@ -49,9 +55,14 @@ export function StorePreLoginContext({
       const withRelationTypes = eventKinds.includes(KIND_RELATION_TYPES)
         ? planUpdateRelationTypes(withViews, withViews.relationTypes)
         : withViews;
+      const withContactsTypes = eventKinds.includes(KIND_CONTACTLIST)
+        ? withRelationTypes.contacts.reduce((rdx, contact) => {
+            return planAddContact(rdx, contact.publicKey);
+          }, withRelationTypes)
+        : withViews;
 
       const results = await execute({
-        plan: withRelationTypes,
+        plan: withContactsTypes,
         relayPool,
         relays: getWriteRelays(plan.relays),
         finalizeEvent,
