@@ -114,6 +114,7 @@ function mergeEvents(
 
   return {
     ...processed,
+    contacts: processed.contacts.merge(findContacts(events)),
     workspaces: newWorkspaces,
     activeWorkspace: processed.activeWorkspace || workspaces.activeWorkspace,
     views: findViews(events).merge(processed.views),

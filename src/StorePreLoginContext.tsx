@@ -10,7 +10,7 @@ import {
   KIND_WORKSPACES,
 } from "./nostr";
 import {
-  planAddContact,
+  planAddContacts,
   planUpdateRelationTypes,
   planUpdateViews,
   planUpdateWorkspaces,
@@ -55,14 +55,14 @@ export function StorePreLoginContext({
       const withRelationTypes = eventKinds.includes(KIND_RELATION_TYPES)
         ? planUpdateRelationTypes(withViews, withViews.relationTypes)
         : withViews;
-      const withContactsTypes = eventKinds.includes(KIND_CONTACTLIST)
-        ? withRelationTypes.contacts.reduce((rdx, contact) => {
-            return planAddContact(rdx, contact.publicKey);
-          }, withRelationTypes)
+      const withContacts = eventKinds.includes(KIND_CONTACTLIST)
+        ? planAddContacts(
+            withRelationTypes,
+            withRelationTypes.contacts.keySeq().toList()
+          )
         : withViews;
-
       const results = await execute({
-        plan: withContactsTypes,
+        plan: withContacts,
         relayPool,
         relays: getWriteRelays(plan.relays),
         finalizeEvent,

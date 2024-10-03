@@ -72,6 +72,24 @@ export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
   };
 }
 
+export function planAddContacts(plan: Plan, publicKeys: List<PublicKey>): Plan {
+  const newContacts = publicKeys.reduce((rdx, publicKey) => {
+    if (rdx.has(publicKey)) {
+      return rdx;
+    }
+    const newContact: Contact = {
+      publicKey,
+    };
+    return rdx.set(publicKey, newContact);
+  }, plan.contacts);
+
+  const contactListEvent = newContactListEvent(newContacts, plan.user);
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(contactListEvent),
+  };
+}
+
 export function planRemoveContact(plan: Plan, publicKey: PublicKey): Plan {
   const contactToRemove = plan.contacts.get(publicKey);
   if (!contactToRemove) {

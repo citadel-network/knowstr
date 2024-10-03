@@ -15,8 +15,12 @@ import {
   bobsNip05Identifier,
   finalizeEventWithoutWasm,
   TEST_RELAYS,
+  ANON,
+  ALICE_PRIVATE_KEY,
+  CAROL,
 } from "../utils.test";
 import { Follow } from "./Follow";
+import { App } from "../App";
 
 beforeEach(() => {
   nip05.useFetchImplementation(async () =>
@@ -220,6 +224,46 @@ test("unfollow sends nip-02 event", async () => {
       kind: 3,
       pubkey: `${ALICE.publicKey}`,
       tags: [],
+      content: "",
+    })
+  );
+});
+
+test("follow a new user before signin doesn't delete existing contacts after signin", async () => {
+  const [anon, alice] = setup([ANON, ALICE]);
+  await follow(alice, CAROL.publicKey);
+
+  const { relayPool } = renderWithTestData(<App />, {
+    ...anon(),
+    initialRoute: `/follow?publicKey=${BOB_PUBLIC_KEY}`,
+  });
+  fireEvent.click(await screen.findByLabelText("follow user"));
+  await screen.findByText("You follow this User");
+  fireEvent.click(await screen.findByLabelText("Close"));
+
+  fireEvent.click(await screen.findByLabelText("open menu"));
+  await userEvent.click(await screen.findByLabelText("sign in"));
+  await userEvent.type(
+    await screen.findByPlaceholderText(
+      "nsec, private key or mnemonic (12 words)"
+    ),
+    `${ALICE_PRIVATE_KEY}{enter}`
+  );
+
+  await waitFor(() =>
+    expect(relayPool.getEvents().filter(filterContactListEvents)).toHaveLength(
+      2
+    )
+  );
+  const event = relayPool.getEvents().filter(filterContactListEvents)[1];
+  expect(event).toEqual(
+    expect.objectContaining({
+      kind: KIND_CONTACTLIST,
+      pubkey: `${ALICE.publicKey}`,
+      tags: [
+        ["p", `${CAROL.publicKey}`],
+        ["p", `${BOB.publicKey}`],
+      ],
       content: "",
     })
   );
