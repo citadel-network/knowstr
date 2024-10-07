@@ -1,4 +1,4 @@
-import { List, Set } from "immutable";
+import { List, Set, Map } from "immutable";
 import { v4 } from "uuid";
 import { newDB } from "./knowledge";
 import { newRelations } from "./ViewContext";
@@ -185,6 +185,61 @@ export function moveRelations(
     ...relations,
     items: updatedItems,
   };
+}
+
+function getSharesFromPublicKey(publicKey: PublicKey): number {
+  return 10000; // TODO: implement
+}
+
+function filterVoteRelation(
+  relations: List<Relations>,
+  head: ID,
+  type: ID,
+): List<Relations> {
+  const filteredRelations = relations.filter((relation) => {
+    return shortID(relation.head) === shortID(head) && relation.type === type
+  });
+
+  const latestRelationsByAuthor = filteredRelations.reduce((acc, relation) => {
+    const isFound = acc.get(relation.author);
+    if (!!isFound && isFound.updated > relation.updated) {
+      return acc
+    }
+    return acc.set(relation.author, relation);
+  }, Map<PublicKey, Relations>());
+  return latestRelationsByAuthor.toList();
+}
+
+export function countRelationVotes(
+  relations: List<Relations>,
+  head: ID,
+  type: ID,
+): Map<LongID | ID, number> {
+
+  const filteredVoteRelations = filterVoteRelation(relations, head, type);
+  const votesPerItem = filteredVoteRelations.reduce((rdx, relation) => {
+    const weight = getSharesFromPublicKey(relation.author);
+    const sortedItems = relation.items;
+    const length = sortedItems.size;
+    const denominator = Math.pow(2, length)-1;
+    if (length === 0) {
+      return rdx;
+    }
+    const updatedVotes = sortedItems.map((item, index) => {
+      // calculate (2 ^ (length-index-1)) / (2 ^ length - 1)
+      // so with 3 items, the first item gets 4/7, the second 2/7 and the last 1/7
+      const numerator = Math.pow(2, length - index - 1);
+      const newVotes = numerator / denominator * weight;
+      const initialVotes = rdx.get(item) || 0;
+      const updatedVotes = initialVotes + newVotes;
+      return { item, votes: updatedVotes };
+    });
+    return updatedVotes.reduce((rdx, { item, votes }) => {
+      return rdx.set(item, votes);
+    }
+    , rdx);
+  }, Map<LongID | ID, number>());
+  return votesPerItem;
 }
 
 export function addRelationToRelations(

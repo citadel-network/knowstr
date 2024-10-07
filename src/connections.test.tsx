@@ -6,8 +6,9 @@ import {
   newNode,
   getReferencedByRelations,
   shortID,
+  countRelationVotes,
 } from "./connections";
-import { ALICE, BOB } from "./utils.test";
+import { ALICE, BOB, CAROL } from "./utils.test";
 import { newRelations } from "./ViewContext";
 import { newDB } from "./knowledge";
 
@@ -102,5 +103,35 @@ test("get referenced by relations", () => {
   );
   expect(referencedBy?.items).toEqual(
     List([shortID(money.id), shortID(crypto.id)])
+  );
+});
+
+test("count relation votes", () => {
+  const vote = newNode("VOTING", ALICE.publicKey);
+  const optionA = newNode("A", ALICE.publicKey);
+  const optionB = newNode("B", ALICE.publicKey);
+  const optionC = newNode("C", ALICE.publicKey);
+  const optionD = newNode("D", ALICE.publicKey);
+
+  const aliceVotes = bulkAddRelations(
+    newRelations(vote.id, "PRO", ALICE.publicKey),
+    [optionA.id, optionB.id, optionC.id, optionD.id] // 8/15, 4/15, 2/15, 1/15 *10000
+  );
+  const bobVotes = bulkAddRelations(
+    newRelations(vote.id, "PRO", BOB.publicKey),
+    [optionD.id, optionB.id, optionC.id, optionA.id] // 8/15, 4/15, 2/15, 1/15 *10000
+  );
+  const carolVotes = bulkAddRelations(
+    newRelations(vote.id, "PRO", CAROL.publicKey),
+    [optionA.id, optionB.id, optionC.id] // 4/7, 2/7, 1/7 *10000
+  );
+
+  expect(countRelationVotes(List([aliceVotes, bobVotes, carolVotes]), vote.id, "PRO")).toEqual(
+    Map({
+      [optionA.id]: 11714.285714285714, // 8/15+1/15+4/7 *10000 = 11714,285714285714
+      [optionB.id]: 8190.47619047619, // 4/15+4/15+2/7 *10000 = 8190,47619047619
+      [optionC.id]: 4095.238095238095, // 2/15+2/15+1/7 *10000 = 4095,238095238095
+      [optionD.id]: 6000, // 8/15+1/15 * 10000 = 6000
+    })
   );
 });
