@@ -202,10 +202,12 @@ function EditRelationsDropdown({
     return null;
   }
 
+  const isRemoteRelation = isRemote(splitID(view.relations)[0], user.publicKey);
+
   const isDeleteAvailable =
     view.relations !== SOCIAL &&
     view.relations !== REFERENCED_BY &&
-    !isRemote(splitID(view.relations)[0], user.publicKey);
+    !isRemoteRelation;
   if (!isDeleteAvailable && otherRelations.size === 0) {
     return null;
   }
@@ -222,6 +224,7 @@ function EditRelationsDropdown({
           borderLeftColor: "white",
         }}
       >
+        {isRemoteRelation && <span className="iconsminds-conference" />}
         <span className="iconsminds-arrow-down" />
       </Dropdown.Toggle>
       <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
