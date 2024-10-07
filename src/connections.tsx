@@ -192,40 +192,39 @@ function getSharesFromPublicKey(publicKey: PublicKey): number {
   return 10000; // TODO: implement
 }
 
-function filterVoteRelation(
+function filterVoteRelationLists(
   relations: List<Relations>,
   head: ID,
   type: ID
 ): List<Relations> {
-  const filteredRelations = relations.filter((relation) => {
+  return relations.filter((relation) => {
     return shortID(relation.head) === shortID(head) && relation.type === type;
   });
+}
 
-  const latestRelationsByAuthor = filteredRelations.reduce((acc, relation) => {
+function getLatestvoteRelationListPerAuthor(
+  relations: List<Relations>
+): Map<PublicKey, Relations> {
+  return relations.reduce((acc, relation) => {
     const isFound = acc.get(relation.author);
     if (!!isFound && isFound.updated > relation.updated) {
       return acc;
     }
     return acc.set(relation.author, relation);
   }, Map<PublicKey, Relations>());
-  return latestRelationsByAuthor.toList();
 }
 
-export function countRelationVotes(
-  relations: List<Relations>,
-  head: ID,
-  type: ID
+export function aggregateWeightedVotes(
+  listsOfVotes: List<{ items: List<LongID | ID>; weight: number }>
 ): Map<LongID | ID, number> {
-  const filteredVoteRelations = filterVoteRelation(relations, head, type);
-  const votesPerItem = filteredVoteRelations.reduce((rdx, relation) => {
-    const weight = getSharesFromPublicKey(relation.author);
-    const sortedItems = relation.items;
-    const length = sortedItems.size;
+  const votesPerItem = listsOfVotes.reduce((rdx, v) => {
+    const { weight } = v;
+    const length = v.items.size;
     const denominator = 2 ** length - 1;
     if (length === 0) {
       return rdx;
     }
-    const updatedVotes = sortedItems.map((item, index) => {
+    const updatedVotes = v.items.map((item, index) => {
       // calculate (2 ^ (length-index-1)) / (2 ^ length - 1)
       // so with 3 items, the first item gets 4/7, the second 2/7 and the last 1/7
       const numerator = 2 ** (length - index - 1);
@@ -238,6 +237,26 @@ export function countRelationVotes(
     }, rdx);
   }, Map<LongID | ID, number>());
   return votesPerItem;
+}
+
+export function countRelationVotes(
+  relations: List<Relations>,
+  head: ID,
+  type: ID
+): Map<LongID | ID, number> {
+  const filteredVoteRelations = filterVoteRelationLists(relations, head, type);
+  const latestVotesPerAuthor = getLatestvoteRelationListPerAuthor(
+    filteredVoteRelations
+  );
+  const listsOfVotes = latestVotesPerAuthor
+    .map((relation) => {
+      return {
+        items: relation.items,
+        weight: getSharesFromPublicKey(relation.author),
+      };
+    })
+    .toList();
+  return aggregateWeightedVotes(listsOfVotes);
 }
 
 export function addRelationToRelations(

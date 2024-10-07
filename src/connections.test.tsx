@@ -7,6 +7,7 @@ import {
   getReferencedByRelations,
   shortID,
   countRelationVotes,
+  aggregateWeightedVotes,
 } from "./connections";
 import { ALICE, BOB, CAROL } from "./utils.test";
 import { newRelations } from "./ViewContext";
@@ -134,6 +135,28 @@ test("count relation votes", () => {
       [optionB.id]: 8190.47619047619, // 4/15+4/15+2/7 *10000 = 8190,47619047619
       [optionC.id]: 4095.238095238095, // 2/15+2/15+1/7 *10000 = 4095,238095238095
       [optionD.id]: 6000, // 8/15+1/15 * 10000 = 6000
+    })
+  );
+});
+
+test("aggregate weighted votes", () => {
+  const alice = ["A", "B", "C", "D"];
+  const bob = ["B", "C", "D", "A"];
+  const carol = ["C", "A", "B"];
+  const dan = ["D"];
+
+  const listsOfVotes = List([
+    { items: List(alice), weight: 20 },
+    { items: List(bob), weight: 100 },
+    { items: List(carol), weight: 10 },
+    { items: List(dan), weight: 1 },
+  ]);
+  expect(aggregateWeightedVotes(listsOfVotes)).toEqual(
+    Map({
+      A: 20.19047619047619,
+      B: 60.0952380952381,
+      C: 35.04761904761905,
+      D: 15.666666666666668,
     })
   );
 });
