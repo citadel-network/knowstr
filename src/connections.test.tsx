@@ -126,7 +126,9 @@ test("count relation votes", () => {
     [optionA.id, optionB.id, optionC.id] // 4/7, 2/7, 1/7 *10000
   );
 
-  expect(countRelationVotes(List([aliceVotes, bobVotes, carolVotes]), vote.id, "PRO")).toEqual(
+  expect(
+    countRelationVotes(List([aliceVotes, bobVotes, carolVotes]), vote.id, "PRO")
+  ).toEqual(
     Map({
       [optionA.id]: 11714.285714285714, // 8/15+1/15+4/7 *10000 = 11714,285714285714
       [optionB.id]: 8190.47619047619, // 4/15+4/15+2/7 *10000 = 8190,47619047619
