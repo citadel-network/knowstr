@@ -1,5 +1,5 @@
 import React from "react";
-import { List, Set, Map, OrderedMap } from "immutable";
+import { List, Set, Map } from "immutable";
 import { v4 } from "uuid";
 import {
   getRelations,
@@ -11,7 +11,7 @@ import {
 import { newDB } from "./knowledge";
 import { useData } from "./DataContext";
 import { Plan, planUpsertRelations, planUpdateViews } from "./planner";
-import { planCopyRelationsTypeIfNecessary } from "./components/RelationTypes";
+import { RELATION_TYPES } from "./components/RelationTypes";
 
 // only exported for tests
 export type NodeIndex = number & { readonly "": unique symbol };
@@ -101,12 +101,11 @@ function findIndexOfRelationType(types: RelationTypes, type: ID): number {
 }
 
 function sortRelationsAccordingToType(
-  relations: List<Relations>,
-  relationTypes: RelationTypes
+  relations: List<Relations>
 ): List<Relations> {
   return relations.sort((a, b) => {
-    const indexA = findIndexOfRelationType(relationTypes, a.type);
-    const indexB = findIndexOfRelationType(relationTypes, b.type);
+    const indexA = findIndexOfRelationType(RELATION_TYPES, a.type);
+    const indexB = findIndexOfRelationType(RELATION_TYPES, b.type);
     if (indexA === undefined || indexB === undefined) {
       return 0;
     }
@@ -117,15 +116,12 @@ function sortRelationsAccordingToType(
 export function getAvailableRelationsForNode(
   knowledgeDBs: KnowledgeDBs,
   myself: PublicKey,
-  id: LongID | ID,
-  relationTypes: RelationTypes,
-  contactRelationTypes: Map<PublicKey, RelationTypes>
+  id: LongID | ID
 ): List<Relations> {
   const myRelations = knowledgeDBs.get(myself, newDB()).relations;
   const [remote, localID] = splitID(id);
   const relations: List<Relations> = sortRelationsAccordingToType(
-    myRelations.filter((r) => r.head === localID).toList(),
-    relationTypes
+    myRelations.filter((r) => r.head === localID).toList()
   );
 
   const preferredRemoteRelations: List<Relations> =
@@ -134,16 +130,14 @@ export function getAvailableRelationsForNode(
           knowledgeDBs
             .get(remote, newDB())
             .relations.filter((r) => r.head === localID)
-            .toList(),
-          contactRelationTypes.get(remote, OrderedMap())
+            .toList()
         )
       : List<Relations>();
   const otherRelations: List<Relations> = knowledgeDBs
     .filter((_, k) => k !== myself && k !== remote)
-    .map((db, auth) =>
+    .map((db) =>
       sortRelationsAccordingToType(
-        db.relations.filter((r) => r.head === localID).toList(),
-        contactRelationTypes.get(auth, OrderedMap())
+        db.relations.filter((r) => r.head === localID).toList()
       )
     )
     .toList()
@@ -154,34 +148,18 @@ export function getAvailableRelationsForNode(
 export function getDefaultRelationForNode(
   id: LongID | ID,
   knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  relationTypes: RelationTypes,
-  contactRelationTypes: Map<PublicKey, RelationTypes>
+  myself: PublicKey
 ): LongID | undefined {
-  return getAvailableRelationsForNode(
-    knowledgeDBs,
-    myself,
-    id,
-    relationTypes,
-    contactRelationTypes
-  ).first()?.id;
+  return getAvailableRelationsForNode(knowledgeDBs, myself, id).first()?.id;
 }
 
 function getDefaultView(
   id: LongID | ID,
   knowledgeDBs: KnowledgeDBs,
-  myself: PublicKey,
-  relationTypes: RelationTypes,
-  contactRelationTypes: Map<PublicKey, RelationTypes>
+  myself: PublicKey
 ): View {
   return {
-    relations: getDefaultRelationForNode(
-      id,
-      knowledgeDBs,
-      myself,
-      relationTypes,
-      contactRelationTypes
-    ),
+    relations: getDefaultRelationForNode(id, knowledgeDBs, myself),
     displaySubjects: false,
     width: 1,
     expanded: false,
@@ -224,13 +202,7 @@ export function getViewFromPath(data: Data, path: ViewPath): View {
   const { nodeID } = getLast(path);
   return (
     getViewExactMatch(data.views, path) ||
-    getDefaultView(
-      nodeID,
-      data.knowledgeDBs,
-      data.user.publicKey,
-      data.relationTypes,
-      data.contactsRelationTypes
-    )
+    getDefaultView(nodeID, data.knowledgeDBs, data.user.publicKey)
   );
 }
 
@@ -587,10 +559,7 @@ export function upsertRelations(
     : plan;
 
   const updatedRelations = modify(relations);
-  return planUpsertRelations(
-    planCopyRelationsTypeIfNecessary(planWithUpdatedView, relationsID),
-    updatedRelations
-  );
+  return planUpsertRelations(planWithUpdatedView, updatedRelations);
 }
 
 /*

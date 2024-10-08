@@ -3,15 +3,9 @@ import { List } from "immutable";
 import { useDebouncedCallback } from "use-debounce";
 import { getWriteRelays } from "citadel-commons";
 import { useApis } from "./Apis";
-import {
-  KIND_CONTACTLIST,
-  KIND_RELATION_TYPES,
-  KIND_VIEWS,
-  KIND_WORKSPACES,
-} from "./nostr";
+import { KIND_CONTACTLIST, KIND_VIEWS, KIND_WORKSPACES } from "./nostr";
 import {
   planAddContacts,
-  planUpdateRelationTypes,
   planUpdateViews,
   planUpdateWorkspaces,
   usePlanner,
@@ -52,14 +46,8 @@ export function StorePreLoginContext({
       const withViews = eventKinds.includes(KIND_VIEWS)
         ? planUpdateViews(withWorkspaces, withWorkspaces.views)
         : withWorkspaces;
-      const withRelationTypes = eventKinds.includes(KIND_RELATION_TYPES)
-        ? planUpdateRelationTypes(withViews, withViews.relationTypes)
-        : withViews;
       const withContacts = eventKinds.includes(KIND_CONTACTLIST)
-        ? planAddContacts(
-            withRelationTypes,
-            withRelationTypes.contacts.keySeq().toList()
-          )
+        ? planAddContacts(withViews, withViews.contacts.keySeq().toList())
         : withViews;
       const results = await execute({
         plan: withContacts,

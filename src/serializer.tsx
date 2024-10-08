@@ -1,4 +1,4 @@
-import { Map, List, OrderedMap } from "immutable";
+import { Map, List } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
 import { findAllTags, findTag } from "citadel-commons";
 import { parseViewPath } from "./ViewContext";
@@ -107,28 +107,6 @@ export function jsonToViews(s: Serializable): Map<string, View> {
         return false;
       }
     }) as Map<string, View>;
-}
-
-export function jsonToRelationTypes(s: Serializable): RelationTypes {
-  return OrderedMap(asObject(s))
-    .map((relationType) => {
-      try {
-        const obj = asObject(relationType);
-        if (obj.c === undefined || obj.l === undefined) {
-          return undefined;
-        }
-        return { color: asString(obj.c), label: asString(obj.l) };
-      } catch {
-        return undefined;
-      }
-    })
-    .filter((v) => v !== undefined) as RelationTypes;
-}
-
-export function relationTypesToJson(
-  relationTypes: RelationTypes
-): Serializable {
-  return relationTypes.map((v) => ({ c: v.color, l: v.label })).toJSON();
 }
 
 export function viewsToJSON(views: Map<string, View>): Serializable {

@@ -13,7 +13,6 @@ import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
-  KIND_RELATION_TYPES,
   KIND_CONTACTLIST,
   KIND_VIEWS,
   KIND_WORKSPACES,
@@ -22,7 +21,7 @@ import {
 import { useData } from "./DataContext";
 import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";
-import { relationTypesToJson, viewsToJSON } from "./serializer";
+import { viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
 import { isIDRemote, joinID, shortID, splitID } from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
@@ -339,25 +338,6 @@ export function planRewriteUnpublishedEvents(
   return {
     ...plan,
     publishEvents: rewrittenEvents,
-  };
-}
-
-export function planUpdateRelationTypes(
-  plan: Plan,
-  relationTypes: RelationTypes
-): Plan {
-  const serialized = relationTypesToJson(relationTypes);
-  const writeRelationsEvent = {
-    kind: KIND_RELATION_TYPES,
-    pubkey: plan.user.publicKey,
-    created_at: newTimestamp(),
-    tags: [],
-    content: JSON.stringify(serialized),
-  };
-  return {
-    ...plan,
-    relationTypes,
-    publishEvents: plan.publishEvents.push(writeRelationsEvent),
   };
 }
 

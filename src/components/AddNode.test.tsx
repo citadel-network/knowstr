@@ -51,7 +51,7 @@ test("Link Nodes from other Users", async () => {
   );
   // Open the relations
   fireEvent.click(
-    await screen.findByLabelText("show list items of Object Oriented Languages")
+    await screen.findByLabelText("show Relevant For Object Oriented Languages")
   );
   await screen.findByText("Java");
 });
@@ -83,6 +83,6 @@ test("Default Relations are shown when adding a node from other User via search"
   fireEvent.click(
     await screen.findByText(matchSplitText("Object Oriented Languages"))
   );
-  await screen.findByLabelText("show list items of Object Oriented Languages");
+  await screen.findByLabelText("show Relevant For Object Oriented Languages");
   screen.getByText("Java");
 });

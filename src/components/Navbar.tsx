@@ -111,15 +111,6 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               </Dropdown.Item>
               <Dropdown.Item
                 className="d-flex workspace-selection"
-                onClick={() => navigate("/relationTypes")}
-                aria-label="edit relationTypes"
-                tabIndex={0}
-              >
-                <span className="simple-icon-plus d-block dropdown-item-icon" />
-                <div className="workspace-selection-text">Relation Types</div>
-              </Dropdown.Item>
-              <Dropdown.Item
-                className="d-flex workspace-selection"
                 onClick={onToggleBionic}
                 aria-label={`switch bionic reading ${isBionic ? "off" : "on"}`}
                 tabIndex={0}

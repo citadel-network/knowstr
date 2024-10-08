@@ -12,7 +12,7 @@ import {
   findAllRelays,
   KIND_RELAY_METADATA_EVENT,
 } from "citadel-commons";
-import { List, Map, OrderedMap } from "immutable";
+import { List, Map } from "immutable";
 import { Event, UnsignedEvent } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
@@ -20,7 +20,6 @@ import {
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
   KIND_WORKSPACES,
-  KIND_RELATION_TYPES,
   KIND_VIEWS,
   KIND_SETTINGS,
   KIND_DELETE,
@@ -30,7 +29,6 @@ import { findContacts } from "./contacts";
 import { useApis } from "./Apis";
 import {
   findNodes,
-  findRelationTypes,
   findRelations,
   findViews,
   findWorkspaces,
@@ -50,7 +48,6 @@ import {
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import { useDefaultRelays, useDefaultWorkspace } from "./NostrAuthContext";
-import { DEFAULT_COLOR } from "./components/RelationTypes";
 
 type DataProps = {
   user: User;
@@ -66,7 +63,6 @@ type ProcessedEvents = {
   views: Views;
   workspaces: List<ID>;
   activeWorkspace: LongID | undefined;
-  relationTypes: RelationTypes;
 };
 
 function newProcessedEvents(): ProcessedEvents {
@@ -78,23 +74,17 @@ function newProcessedEvents(): ProcessedEvents {
     views: Map<string, View>(),
     activeWorkspace: undefined,
     workspaces: List<ID>(),
-    relationTypes: OrderedMap<ID, RelationType>(),
   };
 }
 
 export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE, KIND_DELETE];
 
-const KINDS_CONTACTS_META = [
-  KIND_WORKSPACES,
-  KIND_RELATION_TYPES,
-  KIND_RELAY_METADATA_EVENT,
-];
+const KINDS_CONTACTS_META = [KIND_WORKSPACES, KIND_RELAY_METADATA_EVENT];
 
 export const KINDS_META = [
   KIND_SETTINGS,
   KIND_CONTACTLIST,
   KIND_WORKSPACES,
-  KIND_RELATION_TYPES,
   KIND_VIEWS,
 ];
 
@@ -118,7 +108,6 @@ function mergeEvents(
     workspaces: newWorkspaces,
     activeWorkspace: processed.activeWorkspace || workspaces.activeWorkspace,
     views: findViews(events).merge(processed.views),
-    relationTypes: findRelationTypes(events).merge(processed.relationTypes),
   };
 }
 
@@ -131,11 +120,6 @@ function processEventsByAuthor(
   const relations = findRelations(authorEvents);
   const workspaces = findWorkspaces(authorEvents);
   const views = findViews(authorEvents);
-  const authorRelationTypes = findRelationTypes(authorEvents);
-  const relationTypes =
-    authorRelationTypes.size === 0
-      ? OrderedMap({ "": { color: DEFAULT_COLOR, label: "" } })
-      : authorRelationTypes;
   const knowledgeDB = {
     nodes,
     relations,
@@ -149,7 +133,6 @@ function processEventsByAuthor(
     views,
     workspaces: workspaces ? workspaces.workspaces : List<ID>(),
     activeWorkspace: workspaces ? workspaces.activeWorkspace : undefined,
-    relationTypes,
   };
 }
 
@@ -291,17 +274,9 @@ function Data({ user, children }: DataProps): JSX.Element {
   );
   const knowledgeDBs = rDataEventsProcessed.map((data) => data.knowledgeDB);
 
-  const contactsRelationTypes = rDataEventsProcessed
-    .map((data) => data.relationTypes)
-    .filter((_, k) => k !== myPublicKey);
   const contactsWorkspaces = rDataEventsProcessed
     .map((data) => data.workspaces)
     .filter((_, k) => k !== myPublicKey);
-
-  const relationTypes =
-    processedMetaEvents.relationTypes.size === 0
-      ? OrderedMap({ "": { color: DEFAULT_COLOR, label: "" } })
-      : processedMetaEvents.relationTypes;
 
   return (
     <DataContextProvider
@@ -316,8 +291,6 @@ function Data({ user, children }: DataProps): JSX.Element {
       views={processedMetaEvents.views}
       workspaces={processedMetaEvents.workspaces}
       activeWorkspace={activeWorkspace}
-      relationTypes={relationTypes}
-      contactsRelationTypes={contactsRelationTypes}
       contactsWorkspaces={contactsWorkspaces}
     >
       <PlanningContextProvider setPublishEvents={setNewEventsAndPublishResults}>

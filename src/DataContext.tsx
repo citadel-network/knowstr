@@ -42,11 +42,9 @@ function mergeDBNodesAndRelations(
 export function MergeKnowledgeDB({
   children,
   knowledgeDBs,
-  relationTypes,
 }: {
   children: React.ReactNode;
   knowledgeDBs: KnowledgeDBs;
-  relationTypes: Map<PublicKey, RelationTypes>;
 }): JSX.Element {
   const data = useData();
 
@@ -67,19 +65,11 @@ export function MergeKnowledgeDB({
       ];
     })
   );
-  const contactsRelationTypes = relationTypes.filter(
-    (_, k) => k !== data.user.publicKey
-  );
-  const mergedRelationTypes = data.contactsRelationTypes.mergeWith(
-    (a, b) => a.merge(b),
-    contactsRelationTypes
-  );
   return (
     <DataContext.Provider
       value={{
         ...data,
         knowledgeDBs: mergedDBs,
-        contactsRelationTypes: mergedRelationTypes,
       }}
     >
       {children}

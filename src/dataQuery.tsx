@@ -1,13 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Filter } from "nostr-tools";
-import { List, Map, Set } from "immutable";
+import { List, Set } from "immutable";
 import { useEventQuery } from "citadel-commons";
-import {
-  KIND_DELETE,
-  KIND_KNOWLEDGE_LIST,
-  KIND_KNOWLEDGE_NODE,
-  KIND_RELATION_TYPES,
-} from "./nostr";
+import { KIND_DELETE, KIND_KNOWLEDGE_LIST, KIND_KNOWLEDGE_NODE } from "./nostr";
 import { splitID, REFERENCED_BY, SOCIAL } from "./connections";
 import { ADD_TO_NODE, getNodeFromID, useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
@@ -58,7 +53,6 @@ type Filters = {
   referencedBy: Filter;
   deleteFilter: Filter;
   authors: PublicKey[];
-  relationTypes: Omit<Filter, "authors"> & { authors: string[] };
 };
 
 export function sanitizeFilter(
@@ -83,9 +77,6 @@ export function filtersToFilterArray(filters: Filters): Filter[] {
     sanitizeFilter({ ...filters.knowledgeListByHead, authors }, "#k"),
     sanitizeFilter({ ...filters.referencedBy, authors }, "#i"),
     { ...filters.deleteFilter, authors },
-    filters.relationTypes.authors?.length > 0
-      ? filters.relationTypes
-      : undefined,
   ].filter((f) => f !== undefined) as Filter[];
 }
 
@@ -96,17 +87,10 @@ function addAuthorFromIDToFilters(filters: Filters, id: LongID | ID): Filters {
   const author = splitID(id)[0];
   const isNewAuthor = author && !filters.authors.includes(author);
   const authors = isNewAuthor ? [...filters.authors, author] : filters.authors;
-  const relationTypesFilter = isNewAuthor
-    ? {
-        ...filters.relationTypes,
-        authors: [...filters.relationTypes.authors, author],
-      }
-    : filters.relationTypes;
 
   return {
     ...filters,
     authors,
-    relationTypes: relationTypesFilter,
   };
 }
 
@@ -198,10 +182,6 @@ export function createBaseFilter(
     deleteFilter: {
       kinds: [KIND_DELETE],
     },
-    relationTypes: {
-      kinds: [KIND_RELATION_TYPES],
-      authors: [],
-    },
     authors,
   } as Filters;
 }
@@ -216,7 +196,6 @@ function isOnlyDelete(filters: Filter[]): boolean {
 
 export function useQueryKnowledgeData(filters: Filter[]): {
   knowledgeDBs: KnowledgeDBs;
-  relationTypes: Map<PublicKey, RelationTypes>;
   eose: boolean;
   allEventsProcessed: boolean;
 } {
@@ -255,8 +234,7 @@ export function useQueryKnowledgeData(filters: Filter[]): {
     events.valueSeq().toList().merge(unpublishedEvents)
   );
   const knowledgeDBs = processedEvents.map((data) => data.knowledgeDB);
-  const relationTypes = processedEvents.map((data) => data.relationTypes);
-  return { knowledgeDBs, eose, allEventsProcessed, relationTypes };
+  return { knowledgeDBs, eose, allEventsProcessed };
 }
 
 export function LoadNode({
@@ -279,7 +257,7 @@ export function LoadNode({
     ? addReferencedByToFilters(nodeFilter, nodeID)
     : nodeFilter;
   const filterArray = filtersToFilterArray(filter);
-  const { knowledgeDBs, eose, allEventsProcessed, relationTypes } =
+  const { knowledgeDBs, eose, allEventsProcessed } =
     useQueryKnowledgeData(filterArray);
   if (isUserLoggedIn(user) && waitForEose === true && !eose) {
     const haveNode = getNodeFromID(knowledgeDBs, nodeID, user.publicKey);
@@ -293,10 +271,7 @@ export function LoadNode({
       nodesBeeingQueried={extractNodesFromQueries(filterArray)}
       allEventsProcessed={allEventsProcessed}
     >
-      <MergeKnowledgeDB
-        knowledgeDBs={knowledgeDBs}
-        relationTypes={relationTypes}
-      >
+      <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>
         {children}
       </MergeKnowledgeDB>
     </RegisterQuery>

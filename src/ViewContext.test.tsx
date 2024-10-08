@@ -1,7 +1,7 @@
 import React from "react";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { List, Map, OrderedMap } from "immutable";
+import { List, Map } from "immutable";
 import Data from "./Data";
 import {
   newNode,
@@ -92,7 +92,7 @@ test("Move View Settings on Delete", async () => {
     alice()
   );
   fireEvent.click(
-    await screen.findByLabelText("show list items of C", undefined, {
+    await screen.findByLabelText("show Relevant For C", undefined, {
       timeout: 5000,
     })
   );
@@ -105,10 +105,10 @@ test("Move View Settings on Delete", async () => {
   await userEvent.click(screen.getByLabelText("disconnect 1 selected nodes"));
   // Ensure C is still expanded
   await screen.findByText("C++");
-  screen.getByLabelText("hide list items of C");
+  screen.getByLabelText("hide Relevant For C");
 
-  await userEvent.click(screen.getByLabelText("hide list items of C"));
-  screen.getByLabelText("show list items of C");
+  await userEvent.click(screen.getByLabelText("hide Relevant For C"));
+  screen.getByLabelText("show Relevant For C");
   expect(screen.queryByText("C++")).toBeNull();
 });
 
@@ -141,7 +141,7 @@ test("Move Node Up", async () => {
   );
   await screen.findByText("FPL");
   expect(extractNodes(utils.container)).toEqual(["FPL", "OOP"]);
-  await userEvent.click(screen.getByLabelText("show list items of OOP"));
+  await userEvent.click(screen.getByLabelText("show Relevant For OOP"));
   expect(extractNodes(utils.container)).toEqual(["FPL", "OOP", "C++", "Java"]);
 
   const oop = screen.getByText("OOP");
@@ -201,7 +201,7 @@ test("Contact reorders list", async () => {
   );
   await screen.findByText("FPL");
   expect(extractNodes(utils.container)).toEqual(["OOP", "FPL"]);
-  await userEvent.click(screen.getByLabelText("show list items of OOP"));
+  await userEvent.click(screen.getByLabelText("show Relevant For OOP"));
   await screen.findByText("C++");
   expect(extractNodes(utils.container)).toEqual(["OOP", "C++", "Java", "FPL"]);
   cleanup();
@@ -318,16 +318,11 @@ test("Parse View path", () => {
 test("Default Relations are deterministic", () => {
   const node = newNode("Node", ALICE.publicKey);
   const nodes = Map<KnowNode>({ [node.id]: node });
-  const relationTypes = OrderedMap<{ color: string; label: string }>({
-    "": { color: "", label: "Default" },
-  })
-    .set("pro", { color: "green", label: "Pro" })
-    .set("contra", { color: "red", label: "Contra" });
 
   const pro = {
     items: List<LongID>(),
-    id: "pro" as LongID,
-    type: "pro",
+    id: "confirms" as LongID,
+    type: "confirms",
     head: shortID(node.id),
     updated: 0,
     author: ALICE.publicKey,
@@ -361,9 +356,7 @@ test("Default Relations are deterministic", () => {
       PublicKey,
       KnowledgeData
     ][]),
-    ALICE.publicKey,
-    relationTypes,
-    Map<PublicKey, RelationTypes>()
+    ALICE.publicKey
   );
   expect(defaultRelation).toEqual("default");
 });
@@ -386,7 +379,7 @@ test("View doesn't change if list is copied from contact", async () => {
 
   await screen.findByText("Bobs Workspace");
   expect(extractNodes(utils.container)).toEqual(["OOP", "FPL"]);
-  await userEvent.click(screen.getByLabelText("show list items of OOP"));
+  await userEvent.click(screen.getByLabelText("show Relevant For OOP"));
   expect(extractNodes(utils.container)).toEqual(["OOP", "C++", "Java", "FPL"]);
 
   // add node to Programming Languages and check if view stays the same

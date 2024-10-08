@@ -6,7 +6,6 @@ import Data from "../Data";
 import {
   ALICE,
   setup,
-  expectTextContent,
   renderApp,
   typeNewNode,
   matchSplitText,
@@ -51,10 +50,10 @@ test("Multiple connections to same node", async () => {
   });
   await userEvent.click(screen.getAllByText(matchSplitText("Java"))[1]);
 
-  expectTextContent(
-    await screen.findByLabelText("related to Programming Languages"),
-    ["Java", "+", "Unnamed Type", "Java", "+", "Unnamed Type"]
-  );
+  expect(
+    (await screen.findByLabelText("related to Programming Languages"))
+      .textContent
+  ).toMatch(/Java(.*)Java/);
 });
 
 test("Change Column width", async () => {
@@ -104,17 +103,9 @@ test("Show Referenced By", async () => {
   await screen.findByText("Bitcoin");
   const references = await screen.findByLabelText("show references to Bitcoin");
   await userEvent.click(references);
-  expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
-    "Money1",
-    "+",
-    "Unnamed Type",
-    "Alice Workspace2",
-    "+",
-    "Unnamed Type",
-    "P2P Apps1",
-    "+",
-    "Unnamed Type",
-  ]);
+  expect(
+    (await screen.findByLabelText("related to Bitcoin")).textContent
+  ).toMatch(/Money1(.*)Alice Workspace2(.*)P2P Apps1/);
   // 3 References: WS, P2P Apps and Money, sorted according to relations.updated
   screen.getByText("Referenced By (3)");
 });
@@ -139,11 +130,9 @@ test("Don't show Referenced By if parent relation is the only reference", async 
     }
   );
   await screen.findByText("Money");
-  expectTextContent(await screen.findByLabelText("related to Money"), [
-    "Bitcoin",
-    "+",
-    "Unnamed Type",
-  ]);
+  expect(
+    (await screen.findByLabelText("related to Money")).textContent
+  ).toMatch(/Bitcoin(.*)Contradicts$/);
 });
 
 test("If Node is the root we always show references when there are more than 0", async () => {
@@ -168,10 +157,8 @@ test("If Node is the root we always show references when there are more than 0",
   await screen.findByText("Bitcoin");
   const references = await screen.findByLabelText("show references to Bitcoin");
   await userEvent.click(references);
-  expectTextContent(await screen.findByLabelText("related to Bitcoin"), [
-    "Money1",
-    "+",
-    "Unnamed Type",
-  ]);
+  expect(
+    (await screen.findByLabelText("related to Bitcoin")).textContent
+  ).toMatch(/Money1(.*)/);
   screen.getByText("Referenced By (1)");
 });

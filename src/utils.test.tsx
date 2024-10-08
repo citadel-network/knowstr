@@ -1,7 +1,7 @@
 import React from "react";
 // eslint-disable-next-line import/no-unresolved
 import { RelayInformation } from "nostr-tools/lib/types/nip11";
-import { List, Map, OrderedMap } from "immutable";
+import { List, Map } from "immutable";
 import {
   render,
   screen,
@@ -313,8 +313,6 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   views: Map<string, View>(),
   workspaces: List<ID>(),
   activeWorkspace: fallbackWorkspace(ALICE.publicKey),
-  relationTypes: OrderedMap<ID, RelationType>(),
-  contactsRelationTypes: Map<PublicKey, RelationTypes>(),
   contactsWorkspaces: Map<PublicKey, List<ID>>(),
 };
 
@@ -432,6 +430,7 @@ export function renderWithTestData(
   return { ...props, ...utils };
 }
 
+// @Deprecated
 export function expectTextContent(
   element: HTMLElement,
   textContent: Array<string>

@@ -59,8 +59,6 @@ declare global {
     views: Views;
     workspaces: List<ID>;
     activeWorkspace: LongID;
-    relationTypes: RelationTypes;
-    contactsRelationTypes: Map<PublicKey, RelationTypes>;
     contactsWorkspaces: Map<PublicKey, List<ID>>;
   };
 

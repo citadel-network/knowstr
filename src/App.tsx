@@ -10,7 +10,6 @@ import { RequireLogin } from "./AppState";
 import { SignUp } from "./SignUp";
 import { SignInModal } from "./SignIn";
 import { Profile } from "./components/Profile";
-import { RelationTypesWrapper } from "./components/RelationTypesWrapper";
 
 export const FULL_SCREEN_PATH = "/d/:openNodeID";
 
@@ -25,7 +24,6 @@ export function App(): JSX.Element {
           <Route path="/profile" element={<Profile />} />
           <Route path="/follow" element={<Follow />} />
           <Route path="/relays" element={<RelaysWrapper />} />
-          <Route path="/relationTypes" element={<RelationTypesWrapper />} />
           <Route path={FULL_SCREEN_PATH} element={<DesktopView />} />
           <Route path="/signin" element={<SignInModal />} />
           <Route path="/signup" element={<SignUp />} />

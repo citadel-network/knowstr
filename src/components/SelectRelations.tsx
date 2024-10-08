@@ -1,7 +1,6 @@
 import React, { CSSProperties } from "react";
 import { Dropdown } from "react-bootstrap";
 import { List } from "immutable";
-import { v4 } from "uuid";
 import {
   addAddToNodeToPath,
   deleteChildViews,
@@ -28,48 +27,17 @@ import {
   splitID,
 } from "../connections";
 import { useData } from "../DataContext";
-import {
-  planDeleteRelations,
-  planUpdateRelationTypes,
-  planUpdateViews,
-  usePlanner,
-} from "../planner";
+import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import {
   AddNewRelationsToNodeItem,
-  NewRelationType,
+  RELATION_TYPES,
   getRelationTypeByRelationsID,
-  planAddNewRelationToNode,
-  useGetAllRelationTypes,
 } from "./RelationTypes";
 
 function AddRelationsButton(): JSX.Element {
-  const { relationTypes } = useData();
-  const { createPlan, executePlan } = usePlanner();
-  const [node, view] = useNode();
-  const viewPath = useViewPath();
-  const allRelationTypes = useGetAllRelationTypes();
+  const [node] = useNode();
   const ariaLabel = `Add new Relations to ${node?.text || ""}`;
 
-  const onSubmit = (relationType: RelationType): void => {
-    const id = v4();
-    const updateRelationTypesPlan = planUpdateRelationTypes(
-      createPlan(),
-      relationTypes.set(id, relationType)
-    );
-    if (node && view) {
-      executePlan(
-        planAddNewRelationToNode(
-          updateRelationTypesPlan,
-          node.id,
-          id,
-          view,
-          viewPath
-        )
-      );
-    } else {
-      executePlan(updateRelationTypesPlan);
-    }
-  };
   return (
     <Dropdown>
       <Dropdown.Toggle
@@ -80,18 +48,7 @@ function AddRelationsButton(): JSX.Element {
         <span>+</span>
       </Dropdown.Toggle>
       <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
-        <div className="dropdown-item-wide">
-          <NewRelationType
-            onAddRelationType={onSubmit}
-            usedColors={relationTypes
-              .toArray()
-              .map(([, relType]) => relType.color)}
-            className="m-1 ms-0"
-          />
-        </div>
-        <Dropdown.Divider />
-        {allRelationTypes
-          .keySeq()
+        {RELATION_TYPES.keySeq()
           .toArray()
           .map((id) => (
             <AddNewRelationsToNodeItem key={id} relationTypeID={id} />
@@ -103,7 +60,7 @@ function AddRelationsButton(): JSX.Element {
 
 function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
   const { createPlan, executePlan } = usePlanner();
-  const { user, views, relationTypes, contactsRelationTypes } = useData();
+  const { user, views } = useData();
   const viewPath = useViewPath();
   const [nodeID, view] = useNodeID();
 
@@ -117,9 +74,7 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
         relations: getDefaultRelationForNode(
           nodeID,
           deleteRelationsPlan.knowledgeDBs,
-          user.publicKey,
-          relationTypes,
-          contactsRelationTypes
+          user.publicKey
         ),
       })
     );
@@ -493,8 +448,8 @@ function SelectRelationsButton({
   const isExpanded = view.expanded === true;
   const ariaLabel =
     isExpanded && isSelected
-      ? `hide ${relationType?.label || "list"} items of ${node.text}`
-      : `show ${relationType?.label || "list"} items of ${node.text}`;
+      ? `hide ${relationType?.label || "list"} ${node.text}`
+      : `show ${relationType?.label || "list"} ${node.text}`;
 
   const isActive = (isExpanded || !!alwaysOneSelected) && isSelected;
   const className = `btn select-relation ${
@@ -551,8 +506,7 @@ export function SelectRelations({
   readonly?: boolean;
   alwaysOneSelected?: boolean;
 }): JSX.Element | null {
-  const { knowledgeDBs, user, relationTypes, contactsRelationTypes } =
-    useData();
+  const { knowledgeDBs, user } = useData();
   const [nodeID, view] = useNodeID();
   const currentRelations = getRelations(
     knowledgeDBs,
@@ -563,9 +517,7 @@ export function SelectRelations({
   const relations = getAvailableRelationsForNode(
     knowledgeDBs,
     user.publicKey,
-    nodeID,
-    relationTypes,
-    contactsRelationTypes
+    nodeID
   );
   const groupedByType = relations.groupBy((r) => r.type);
   return (
