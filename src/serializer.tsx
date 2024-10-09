@@ -151,9 +151,7 @@ function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
   const image = findTag(e, "headerImage");
   const perpetualVotes = findTag(e, "perpetualVotes") as LongID | undefined;
   const quarterlyVotes = findTag(e, "quarterlyVotes") as LongID | undefined;
-  const dashboardInternal = findTag(e, "dashboardInternal") as
-    | LongID
-    | undefined;
+  const dashboardInternal = findTag(e, "c") as LongID | undefined;
   const dashboardPublic = findTag(e, "dashboardPublic") as LongID | undefined;
   const tokenSupply = parseNumber(findTag(e, "tokenSupply"));
   return {

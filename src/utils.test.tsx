@@ -632,9 +632,8 @@ export function planUpsertProjectNode(plan: Plan, node: ProjectNode): Plan {
       ...(node.image ? [["headerImage", node.image]] : []),
       ...(node.perpetualVotes ? [["perpetualVotes", node.perpetualVotes]] : []),
       ...(node.quarterlyVotes ? [["quarterlyVotes", node.quarterlyVotes]] : []),
-      ...(node.dashboardInternal
-        ? [["dashboardInternal", node.dashboardInternal]]
-        : []),
+      // Needs to be indexed by relays so we can see if a dashboard is part of a project
+      ...(node.dashboardInternal ? [["c", node.dashboardInternal]] : []),
       ...(node.dashboardPublic
         ? [["dashboardPublic", node.dashboardPublic]]
         : []),
