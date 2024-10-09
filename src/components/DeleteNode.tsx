@@ -5,7 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "citadel-commons";
 import { deleteRelations, isRemote, splitID } from "../connections";
 import { getWorkspacesWithNodes } from "../KnowledgeDataContext";
-import { updateViewPathsAfterDeleteNode, useNodeID } from "../ViewContext";
+import {
+  updateViewPathsAfterDeleteNode,
+  useNode,
+  useNodeID,
+} from "../ViewContext";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import {
@@ -17,6 +21,7 @@ import {
   usePlanner,
 } from "../planner";
 import { isUserLoggedIn, useDefaultWorkspace } from "../NostrAuthContext";
+import { isMutableNode } from "./TemporaryViewContext";
 
 function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
@@ -36,6 +41,7 @@ function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
 
 function useDeleteNode(): undefined | (() => void) {
   const [nodeID] = useNodeID();
+  const [node] = useNode();
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const data = useData();
@@ -55,10 +61,9 @@ function useDeleteNode(): undefined | (() => void) {
   return () => {
     navigate("/");
     const planWithDisconnectedNode = disconnectNode(createPlan(), nodeID);
-    const planWithDeletedNode = planDeleteNode(
-      planWithDisconnectedNode,
-      nodeID
-    );
+    const planWithDeletedNode = isMutableNode(node, data.user)
+      ? planDeleteNode(planWithDisconnectedNode, nodeID)
+      : planWithDisconnectedNode;
     if (
       data.workspaces.filter((id) => id === nodeID).size > 0 ||
       data.activeWorkspace === nodeID

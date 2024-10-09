@@ -31,6 +31,7 @@ import {
   useTemporaryView,
   useIsEditingOn,
   useIsParentMultiselectBtnOn,
+  isMutableNode,
 } from "./TemporaryViewContext";
 import { IS_MOBILE } from "./responsive";
 import { AddNodeToNode } from "./AddNode";
@@ -164,28 +165,18 @@ function BionicText({ nodeText }: { nodeText: string }): JSX.Element {
   return <div dangerouslySetInnerHTML={{ __html: bionicNodeText }} />;
 }
 
-function NodeContent({ editOnClick }: { editOnClick?: boolean }): JSX.Element {
-  const { settings } = useData();
-  const [node] = useNode();
-  const isLoading = useNodeIsLoading();
-  const viewKey = useViewKey();
+function EditableNodeContent({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element {
   const { editingViews, setEditingState } = useTemporaryView();
-  if (isLoading) {
-    return <LoadingNode />;
-  }
-  if (!node) {
-    return <ErrorContent />;
-  }
-  const isBionic = settings.bionicReading;
-
+  const viewKey = useViewKey();
   const handleInteraction = (
     event:
       | React.KeyboardEvent<HTMLButtonElement>
       | React.MouseEvent<HTMLButtonElement>
   ): void => {
-    if (!editOnClick) {
-      return;
-    }
     if (
       (event instanceof KeyboardEvent && event.key === "Enter") ||
       event.type === "click"
@@ -199,16 +190,44 @@ function NodeContent({ editOnClick }: { editOnClick?: boolean }): JSX.Element {
       type="button"
       onClick={handleInteraction}
       onKeyDown={handleInteraction}
-      className={`node-content-button ${
-        editOnClick ? "cursor-on-hover w-100" : ""
-      }`}
+      className="node-content-button cursor-on-hover w-100"
     >
-      <span className="break-word">
-        <NodeIcon node={node} />
-        {isBionic ? <BionicText nodeText={node.text} /> : node.text}
-      </span>
+      {children}
     </button>
   );
+}
+
+function NodeContent({ node }: { node: KnowNode }): JSX.Element {
+  const { settings } = useData();
+  const isBionic = settings.bionicReading;
+  return (
+    <span className="break-word">
+      <NodeIcon node={node} />
+      {isBionic ? <BionicText nodeText={node.text} /> : node.text}
+    </span>
+  );
+}
+
+function InteractiveNodeContent({
+  editOnClick,
+}: {
+  editOnClick?: boolean;
+}): JSX.Element {
+  const { user } = useData();
+  const [node] = useNode();
+  const isLoading = useNodeIsLoading();
+  if (isLoading) {
+    return <LoadingNode />;
+  }
+  if (!node) {
+    return <ErrorContent />;
+  }
+  if (editOnClick && isMutableNode(node, user)) {
+    <EditableNodeContent>
+      <NodeContent node={node} />
+    </EditableNodeContent>;
+  }
+  return <NodeContent node={node} />;
 }
 
 function NodeAutoLink({
@@ -358,11 +377,11 @@ export function Node({
             {isNodeBeingEdited && <EditingNodeContent />}
             {!isNodeBeingEdited && !isDesktopFullScreenTitleNode && (
               <NodeAutoLink>
-                <NodeContent />
+                <InteractiveNodeContent />
               </NodeAutoLink>
             )}
             {!isNodeBeingEdited && isDesktopFullScreenTitleNode && (
-              <NodeContent editOnClick />
+              <InteractiveNodeContent editOnClick />
             )}
             {displayMenu && <NodeMenu />}
           </div>
