@@ -96,7 +96,15 @@ test("Render Project", async () => {
   await screen.findByText("Winchester Mystery House");
 });
 
-const EDIT_MY_NOTE = "edit My Note";
+async function expectNode(text: string, editable: boolean): Promise<void> {
+  await screen.findByText(text);
+  const edit = `edit ${text}`;
+  if (editable) {
+    await screen.findByLabelText(edit);
+  } else {
+    expect(screen.queryByLabelText(edit)).toBeNull();
+  }
+}
 
 test("Edit node via Column Menu", async () => {
   const [alice] = setup([ALICE]);
@@ -121,14 +129,39 @@ test("Edit node via Column Menu", async () => {
       initialRoute: `/w/${note.id}`,
     }
   );
-  await screen.findByText("My Note");
-  fireEvent.click(screen.getByLabelText(EDIT_MY_NOTE));
+  await expectNode("My Note", true);
+  fireEvent.click(screen.getByLabelText("edit My Note"));
   await userEvent.keyboard(
     "{backspace}{backspace}{backspace}{backspace}edited Note{enter}"
   );
   fireEvent.click(screen.getByLabelText("save"));
   expect(screen.queryByText("Save")).toBeNull();
   await screen.findByText("My edited Note");
+});
+
+test("Can't edit Projects", async () => {
+  const [alice] = setup([ALICE]);
+  const project = createExampleProject(alice().user.publicKey);
+  await execute({
+    ...alice(),
+    plan: planUpsertProjectNode(createPlan(alice()), project),
+  });
+  renderWithTestData(
+    <RootViewContextProvider root={project.id}>
+      <LoadNode>
+        <TemporaryViewProvider>
+          <DND>
+            <Column />
+          </DND>
+        </TemporaryViewProvider>
+      </LoadNode>
+    </RootViewContextProvider>,
+    {
+      ...alice(),
+      initialRoute: `/w/${project.id}`,
+    }
+  );
+  await expectNode("Winchester Mystery House", false);
 });
 
 test("Load Note from other User which is not a contact", async () => {
@@ -174,8 +207,7 @@ test("Cannot edit remote Note", async () => {
       initialRoute: `/w/${note.id}`,
     }
   );
-  await screen.findByText("My Note");
-  expect(screen.queryByLabelText(EDIT_MY_NOTE)).toBeNull();
+  await expectNode("My Note", false);
 });
 
 test("Edit node inline", async () => {

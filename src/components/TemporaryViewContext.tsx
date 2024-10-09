@@ -9,7 +9,6 @@ import {
   useParentNode,
   useRelationIndex,
   getRelationIndex,
-  useNodeID,
 } from "../ViewContext";
 import { getRelations, splitID } from "../connections";
 import { useData } from "../DataContext";
@@ -205,15 +204,19 @@ export function toggleEditing(
   };
 }
 
+export function isMutableNode(node: KnowNode | undefined, user: User): boolean {
+  return (
+    !!node && node.type === "text" && splitID(node.id)[0] === user.publicKey
+  );
+}
+
 export function ToggleEditing(): JSX.Element | null {
   const { user } = useData();
-  const [nodeID] = useNodeID();
   const [node] = useNode();
   const ariaLabel = node ? `edit ${node.text}` : undefined;
   const { editingViews, setEditingState } = useTemporaryView();
   const viewKey = useViewKey();
-  const [remote] = splitID(nodeID);
-  if (remote !== user.publicKey) {
+  if (!isMutableNode(node, user)) {
     return null;
   }
   const onClick = (): void =>
