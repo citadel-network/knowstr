@@ -20,31 +20,46 @@ import {
 } from "./serializer";
 import { joinID, splitID } from "./connections";
 
+function isTextNode(kind: number | string): boolean {
+  const kindAsNumber = typeof kind === "string" ? parseInt(kind, 10) : kind;
+  return kindAsNumber === KIND_KNOWLEDGE_NODE;
+}
+
+// Only listen to delete events where the signer created the node or relation
+function isDeletable(
+  event: UnsignedEvent | undefined,
+  nodes: Map<string, { id: LongID }>
+): [false] | [true, string, string] {
+  if (!event) {
+    return [false];
+  }
+  const deleteTag = findTag(event, "a");
+  if (!deleteTag) {
+    return [false];
+  }
+  const [deleteKind, userPublicKey, eventToDeleteId] = deleteTag.split(":");
+  const itemToDelete = nodes.get(eventToDeleteId);
+  if (!itemToDelete) {
+    return [false];
+  }
+  const isDeletedByAuthor = userPublicKey === splitID(itemToDelete.id)[0];
+  if (isDeletedByAuthor && eventToDeleteId) {
+    return [true, eventToDeleteId, deleteKind];
+  }
+  return [false];
+}
+
 export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
   const sorted = sortEvents(
     events.filter(
-      (event) =>
-        event.kind === KIND_KNOWLEDGE_NODE || event.kind === KIND_DELETE
+      (event) => isTextNode(event.kind) || event.kind === KIND_DELETE
     )
   );
   // use reduce in case of duplicate nodes, the newer version wins
   return sorted.reduce((rdx, event) => {
     if (event.kind === KIND_DELETE) {
-      const deleteTag = findTag(event, "a");
-      if (!deleteTag) {
-        return rdx;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [deleteKind, userPublicKey, eventToDeleteId] = deleteTag.split(":");
-      const eventToDelete = rdx.get(eventToDeleteId);
-      const isDeletedByAuthor =
-        !!eventToDelete && userPublicKey === eventToDelete.id.split(":")[0];
-      const isDeletedByMyself = userPublicKey === event.pubkey;
-      // ignore delete events if not done by the author or by myself
-      if (
-        deleteKind === `${KIND_KNOWLEDGE_NODE}` &&
-        (isDeletedByAuthor || isDeletedByMyself)
-      ) {
+      const [deletable, eventToDeleteId, deleteKind] = isDeletable(event, rdx);
+      if (deletable && isTextNode(deleteKind)) {
         return rdx.remove(eventToDeleteId);
       }
       return rdx;
@@ -71,21 +86,8 @@ export function findRelations(
   );
   return sorted.reduce((rdx, event) => {
     if (event.kind === KIND_DELETE) {
-      const deleteTag = findTag(event, "a");
-      if (!deleteTag) {
-        return rdx;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [deleteKind, userPublicKey, eventToDeleteId] = deleteTag.split(":");
-      const eventToDelete = rdx.get(eventToDeleteId);
-      const isDeletedByAuthor =
-        !!eventToDelete && userPublicKey === eventToDelete.id.split(":")[0];
-      const isDeletedByMyself = userPublicKey === event.pubkey;
-      // ignore delete events if not done by the author or by myself
-      if (
-        deleteKind === `${KIND_KNOWLEDGE_LIST}` &&
-        (isDeletedByAuthor || isDeletedByMyself)
-      ) {
+      const [deletable, eventToDeleteId, deleteKind] = isDeletable(event, rdx);
+      if (deletable && deleteKind === `${KIND_KNOWLEDGE_LIST}`) {
         return rdx.remove(eventToDeleteId);
       }
       return rdx;
