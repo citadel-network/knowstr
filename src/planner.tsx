@@ -286,6 +286,7 @@ export function planUpsertFallbackWorkspaceIfNecessary(plan: Plan): Plan {
     ? planUpsertNode(plan, {
         id: plan.activeWorkspace,
         text: DEFAULT_WS_NAME,
+        type: "text",
       })
     : plan;
 }

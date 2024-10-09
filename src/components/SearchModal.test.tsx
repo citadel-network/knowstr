@@ -7,7 +7,9 @@ import { SearchModal } from "./SearchModal";
 import { newNode } from "../connections";
 import {
   ALICE,
+  createExampleProject,
   matchSplitText,
+  planUpsertProjectNode,
   renderApp,
   renderWithTestData,
   setup,
@@ -165,4 +167,22 @@ test("Client side filtering when relay does not support nip-50", async () => {
   await waitFor(() => {
     expect(screen.queryByText("Bircoin")).toBeNull();
   });
+});
+
+test("Search for Projects", async () => {
+  const [alice] = setup([ALICE]);
+  await execute({
+    ...alice(),
+    plan: planUpsertProjectNode(
+      createPlan(alice()),
+      createExampleProject(alice().user.publicKey)
+    ),
+  });
+  renderWithTestData(
+    <SearchModal onAddExistingNode={jest.fn()} onHide={jest.fn()} />,
+    alice()
+  );
+  const searchInput = await screen.findByLabelText("search input");
+  await userEvent.type(searchInput, "Winch");
+  await screen.findByText(matchSplitText("Winchester Mystery House"));
 });

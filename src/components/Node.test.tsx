@@ -7,8 +7,10 @@ import { DND } from "../dnd";
 import {
   ALICE,
   BOB,
+  createExampleProject,
   findNodeByText,
   follow,
+  planUpsertProjectNode,
   renderWithTestData,
   setup,
   setupTestDB,
@@ -67,6 +69,31 @@ test("Render non existing Node", async () => {
   );
   await screen.findByText("Programming Languages");
   await screen.findByText("Error: Node not found");
+});
+
+test("Render Project", async () => {
+  const [alice] = setup([ALICE]);
+  const project = createExampleProject(alice().user.publicKey);
+  await execute({
+    ...alice(),
+    plan: planUpsertProjectNode(createPlan(alice()), project),
+  });
+  renderWithTestData(
+    <RootViewContextProvider root={project.id}>
+      <TemporaryViewProvider>
+        <DND>
+          <LoadNode>
+            <Column />
+          </LoadNode>
+        </DND>
+      </TemporaryViewProvider>
+    </RootViewContextProvider>,
+    {
+      ...alice(),
+      initialRoute: `/w/${project.id}`,
+    }
+  );
+  await screen.findByText("Winchester Mystery House");
 });
 
 const EDIT_MY_NOTE = "edit My Note";

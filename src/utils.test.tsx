@@ -27,8 +27,13 @@ import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
-import { FocusContext, FocusContextProvider } from "citadel-commons";
-import { KIND_CONTACTLIST } from "./nostr";
+import {
+  FocusContext,
+  FocusContextProvider,
+  newTimestamp,
+} from "citadel-commons";
+import { v4 } from "uuid";
+import { KIND_CONTACTLIST, KIND_PROJECT } from "./nostr";
 import { RequireLogin, UNAUTHENTICATED_USER_PK } from "./AppState";
 import {
   Plan,
@@ -41,6 +46,7 @@ import {
   planUpsertFallbackWorkspaceIfNecessary,
   planUpsertNode,
   planUpsertRelations,
+  relayTags,
 } from "./planner";
 import { execute } from "./executor";
 import { ApiProvider, Apis, FinalizeEvent } from "./Apis";
@@ -55,7 +61,9 @@ import {
 import {
   addRelationToRelations,
   getRelationsNoSocial,
+  joinID,
   newNode,
+  shortID,
 } from "./connections";
 import { newRelations } from "./ViewContext";
 import { newDB } from "./knowledge";
@@ -604,6 +612,59 @@ export function hexToRgb(hex: string): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+// Move this to planner.tsx whenever we support creating projects
+export function planUpsertProjectNode(plan: Plan, node: ProjectNode): Plan {
+  const userDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
+  const updatedNodes = userDB.nodes.set(shortID(node.id), node);
+  const updatedDB = {
+    ...userDB,
+    nodes: updatedNodes,
+  };
+  const updateNodeEvent = {
+    kind: KIND_PROJECT,
+    pubkey: plan.user.publicKey,
+    created_at: newTimestamp(),
+    tags: [
+      ["d", shortID(node.id)],
+      ...(node.address ? [["address", node.address]] : []),
+      ...(node.image ? [["headerImage", node.image]] : []),
+      ...(node.perpetualVotes ? [["perpetualVotes", node.perpetualVotes]] : []),
+      ...(node.quarterlyVotes ? [["quarterlyVotes", node.quarterlyVotes]] : []),
+      ...(node.dashboardInternal
+        ? [["dashboardInternal", node.dashboardInternal]]
+        : []),
+      ...(node.dashboardPublic
+        ? [["dashboardPublic", node.dashboardPublic]]
+        : []),
+      ...(node.tokenSupply ? [["tokenSupply", `${node.tokenSupply}`]] : []),
+      ...relayTags(node.relays),
+    ],
+    content: node.text,
+  };
+  return {
+    ...plan,
+    knowledgeDBs: plan.knowledgeDBs.set(plan.user.publicKey, updatedDB),
+    publishEvents: plan.publishEvents.push(updateNodeEvent),
+  };
+}
+
+export function createExampleProject(publicKey: PublicKey): ProjectNode {
+  return {
+    createdAt: new Date(),
+    id: joinID(publicKey, v4()),
+    text: "Winchester Mystery House",
+    address: "525 S. Winchester Blvd. San Jose, CA 95128",
+    type: "project",
+    image:
+      "https://partnersinternational.pl/wp-content/uploads/2023/03/Premium-real-estate-office-Warsaw.jpg",
+    relays: [
+      { url: "wss://winchester.deedsats.com/", write: true, read: true },
+      { url: "wss://nos.lol/", write: false, read: true },
+    ],
+    tokenSupply: 1000000,
+  };
 }
 
 export { ALICE, UNAUTHENTICATED_BOB, UNAUTHENTICATED_CAROL, renderApp };

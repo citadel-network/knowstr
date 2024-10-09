@@ -40,6 +40,7 @@ import { useData } from "../DataContext";
 import { planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
 import { useNodeIsLoading } from "../LoadingStatus";
+import { NodeIcon } from "./NodeIcon";
 
 function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {
@@ -203,6 +204,7 @@ function NodeContent({ editOnClick }: { editOnClick?: boolean }): JSX.Element {
       }`}
     >
       <span className="break-word">
+        <NodeIcon node={node} />
         {isBionic ? <BionicText nodeText={node.text} /> : node.text}
       </span>
     </button>

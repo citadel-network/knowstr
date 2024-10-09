@@ -2,7 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { Filter } from "nostr-tools";
 import { List, Set } from "immutable";
 import { useEventQuery } from "citadel-commons";
-import { KIND_DELETE, KIND_KNOWLEDGE_LIST, KIND_KNOWLEDGE_NODE } from "./nostr";
+import {
+  KIND_DELETE,
+  KIND_KNOWLEDGE_LIST,
+  KIND_KNOWLEDGE_NODE,
+  KIND_PROJECT,
+} from "./nostr";
 import { splitID, REFERENCED_BY, SOCIAL } from "./connections";
 import { ADD_TO_NODE, getNodeFromID, useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
@@ -171,7 +176,7 @@ export function createBaseFilter(
       kinds: [KIND_KNOWLEDGE_LIST],
     },
     knowledgeNodesByID: {
-      kinds: [KIND_KNOWLEDGE_NODE],
+      kinds: [KIND_KNOWLEDGE_NODE, KIND_PROJECT],
     },
     knowledgeListByHead: {
       kinds: [KIND_KNOWLEDGE_LIST],

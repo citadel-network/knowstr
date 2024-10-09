@@ -7,6 +7,7 @@ import {
 } from "citadel-commons";
 import {
   KIND_DELETE,
+  KIND_PROJECT,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_VIEWS,
@@ -17,12 +18,13 @@ import {
   jsonToViews,
   jsonToWorkspace,
   eventToRelations,
+  eventToTextNodeOrProject,
 } from "./serializer";
-import { joinID, splitID } from "./connections";
+import { splitID } from "./connections";
 
-function isTextNode(kind: number | string): boolean {
+function isTextNodeOrProject(kind: number | string): boolean {
   const kindAsNumber = typeof kind === "string" ? parseInt(kind, 10) : kind;
-  return kindAsNumber === KIND_KNOWLEDGE_NODE;
+  return kindAsNumber === KIND_KNOWLEDGE_NODE || kindAsNumber === KIND_PROJECT;
 }
 
 // Only listen to delete events where the signer created the node or relation
@@ -52,26 +54,20 @@ function isDeletable(
 export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
   const sorted = sortEvents(
     events.filter(
-      (event) => isTextNode(event.kind) || event.kind === KIND_DELETE
+      (event) => isTextNodeOrProject(event.kind) || event.kind === KIND_DELETE
     )
   );
   // use reduce in case of duplicate nodes, the newer version wins
   return sorted.reduce((rdx, event) => {
     if (event.kind === KIND_DELETE) {
       const [deletable, eventToDeleteId, deleteKind] = isDeletable(event, rdx);
-      if (deletable && isTextNode(deleteKind)) {
+      if (deletable && isTextNodeOrProject(deleteKind)) {
         return rdx.remove(eventToDeleteId);
       }
       return rdx;
     }
-    const id = findTag(event, "d");
-    if (!id) {
-      return rdx;
-    }
-    return rdx.set(id, {
-      id: joinID(event.pubkey, id),
-      text: event.content,
-    });
+    const [id, node] = eventToTextNodeOrProject(event);
+    return id ? rdx.set(id, node) : rdx;
   }, Map<string, KnowNode>());
 }
 

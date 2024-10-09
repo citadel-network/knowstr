@@ -1,8 +1,9 @@
 import { Map, List } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
-import { findAllTags, findTag } from "citadel-commons";
+import { findAllRelays, findAllTags, findTag } from "citadel-commons";
 import { parseViewPath } from "./ViewContext";
 import { joinID } from "./connections";
+import { KIND_PROJECT } from "./nostr";
 
 export type Serializable =
   | string
@@ -41,6 +42,13 @@ function asNumber(obj: Serializable | undefined): number {
     return obj;
   }
   throw new Error(`${toString(obj)} is not a number`);
+}
+
+function parseNumber(obj: Serializable | undefined): number {
+  if (typeof obj === "string") {
+    return parseFloat(obj);
+  }
+  return asNumber(obj);
 }
 
 function asBoolean(obj: Serializable | undefined): boolean {
@@ -131,4 +139,45 @@ export function eventToRelations(e: UnsignedEvent): Relations | undefined {
     items,
     author: e.pubkey as PublicKey,
   };
+}
+function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
+  const address = findTag(e, "address");
+  const image = findTag(e, "headerImage");
+  const perpetualVotes = findTag(e, "perpetualVotes") as LongID | undefined;
+  const quarterlyVotes = findTag(e, "quarterlyVotes") as LongID | undefined;
+  const dashboardInternal = findTag(e, "dashboardInternal") as
+    | LongID
+    | undefined;
+  const dashboardPublic = findTag(e, "dashboardPublic") as LongID | undefined;
+  const tokenSupply = parseNumber(findTag(e, "tokenSupply"));
+  return {
+    address,
+    image,
+    relays: findAllRelays(e),
+    perpetualVotes,
+    quarterlyVotes,
+    dashboardInternal,
+    dashboardPublic,
+    tokenSupply,
+    createdAt: new Date(e.created_at * 1000),
+    type: "project",
+  };
+}
+
+export function eventToTextNodeOrProject(
+  e: UnsignedEvent
+): [id: string, node: KnowNode] | [undefined] {
+  const id = findTag(e, "d");
+  if (id === undefined) {
+    return [undefined];
+  }
+  const base = {
+    id: joinID(e.pubkey, id),
+    text: e.content,
+    // ts doesn't recognise this as a valid type
+    type: "text" as "text" | "project",
+  };
+  return e.kind === KIND_PROJECT
+    ? [id, { ...base, ...parseProject(e) }]
+    : [id, base];
 }

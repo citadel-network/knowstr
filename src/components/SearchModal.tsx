@@ -7,12 +7,13 @@ import {
   ModalNodeTitle,
 } from "citadel-commons";
 import { useDebounce } from "use-debounce";
-import { KIND_DELETE, KIND_KNOWLEDGE_NODE } from "../nostr";
+import { KIND_DELETE, KIND_KNOWLEDGE_NODE, KIND_PROJECT } from "../nostr";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
 import { useApis } from "../Apis";
 import { KIND_SEARCH } from "../Data";
 import { findNodes } from "../knowledgeEvents";
+import { NodeIcon } from "./NodeIcon";
 
 const KEY_DOWN = 40;
 const KEY_UP = 38;
@@ -34,7 +35,7 @@ function HighlightedText({
 }): JSX.Element {
   // don't highlight too much
   if (searchInput.length < 3) {
-    return <div>{nodeText}</div>;
+    return <span>{nodeText}</span>;
   }
   const highlightedText = nodeText.replace(
     new RegExp(searchInput, "gi"),
@@ -43,7 +44,7 @@ function HighlightedText({
   );
   return (
     // eslint-disable-next-line react/no-danger
-    <div dangerouslySetInnerHTML={{ __html: highlightedText }} />
+    <span dangerouslySetInnerHTML={{ __html: highlightedText }} />
   );
 }
 
@@ -107,11 +108,14 @@ function useSearchQuery(
 
   const groupByKind = events.groupBy((event) => event.kind);
   const knowledgeEvents = groupByKind.get(KIND_KNOWLEDGE_NODE);
+  const projectEvents = groupByKind.get(KIND_PROJECT);
   const deleteEvents = groupByKind.get(KIND_DELETE);
 
   const nodesFromKnowledgeEvents = findNodes(
-    (knowledgeEvents?.toList() || List()).merge(
-      deleteEvents?.toList() || List()
+    (projectEvents?.toList() || List()).merge(
+      (knowledgeEvents?.toList() || List()).merge(
+        deleteEvents?.toList() || List()
+      )
     )
   );
 
@@ -245,6 +249,7 @@ function Search({
               >
                 {" "}
                 <div className="white-space-normal">
+                  <NodeIcon node={node} />
                   <HighlightedText nodeText={node.text} searchInput={filter} />
                 </div>
               </div>

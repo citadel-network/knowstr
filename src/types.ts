@@ -105,10 +105,31 @@ declare global {
     author: PublicKey;
   };
 
-  type KnowNode = {
+  type BasicNode = {
     id: LongID;
     text: string;
+    type: "text" | "project";
   };
+
+  type TextNode = BasicNode;
+
+  // Other Fields which we don't use
+  // - contract
+  // - geo
+  type ProjectNode = BasicNode & {
+    tokenSupply?: number;
+    address?: string;
+    image?: string;
+    // Ideally this should be changeable through a running election
+    relays: Relays;
+    perpetualVotes?: LongID;
+    quarterlyVotes?: LongID;
+    dashboardInternal?: LongID;
+    dashboardPublic?: LongID;
+    createdAt: Date;
+  };
+
+  type KnowNode = TextNode | ProjectNode;
 
   type Views = Map<string, View>;
 
