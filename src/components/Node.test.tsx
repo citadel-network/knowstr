@@ -279,7 +279,6 @@ test("Edited node is shown in Tree View", async () => {
         { nodeID: oop.id, nodeIndex: 0 as NodeIndex },
       ])]: {
         expanded: true,
-        displaySubjects: false,
         width: 1,
         relations: "" as LongID,
       },
