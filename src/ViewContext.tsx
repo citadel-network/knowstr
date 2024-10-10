@@ -160,7 +160,6 @@ function getDefaultView(
 ): View {
   return {
     relations: getDefaultRelationForNode(id, knowledgeDBs, myself),
-    displaySubjects: false,
     width: 1,
     expanded: false,
   };
