@@ -256,6 +256,28 @@ export function aggregateWeightedVotes(
   return votesPerItem;
 }
 
+export function aggregateNegativeWeightedVotes(
+  listsOfVotes: List<{ items: List<LongID | ID>; weight: number }>
+): Map<LongID | ID, number> {
+  const votesPerItem = listsOfVotes.reduce((rdx, v) => {
+    const { weight } = v;
+    const length = v.items.size;
+    if (length === 0) {
+      return rdx;
+    }
+    const updatedVotes = v.items.map((item) => {
+      // vote negative with half of the weight on each item
+      const newVotes = -weight / 2;
+      const initialVotes = rdx.get(item) || 0;
+      return { item, votes: initialVotes + newVotes };
+    });
+    return updatedVotes.reduce((red, { item, votes }) => {
+      return red.set(item, votes);
+    }, rdx);
+  }, Map<LongID | ID, number>());
+  return votesPerItem;
+}
+
 export function countRelationVotes(
   relations: List<Relations>,
   head: ID,
@@ -273,7 +295,21 @@ export function countRelationVotes(
       };
     })
     .toList();
-  return aggregateWeightedVotes(listsOfVotes);
+  return type === "not_relevant"
+    ? aggregateNegativeWeightedVotes(listsOfVotes)
+    : aggregateWeightedVotes(listsOfVotes);
+}
+
+export function countRelevanceVoting(
+  relations: List<Relations>,
+  head: ID
+): Map<LongID | ID, number> {
+  const positiveVotes = countRelationVotes(relations, head, "");
+  const negativeVotes = countRelationVotes(relations, head, "not_relevant");
+  return negativeVotes.reduce((rdx, negativeVote, key) => {
+    const positiveVote = positiveVotes.get(key, 0);
+    return rdx.set(key, positiveVote + negativeVote);
+  }, positiveVotes);
 }
 
 export function addRelationToRelations(
