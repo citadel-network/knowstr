@@ -101,38 +101,19 @@ test("Show Referenced By", async () => {
     }
   );
   await screen.findByText("Bitcoin");
-  const references = await screen.findByLabelText("show references to Bitcoin");
-  await userEvent.click(references);
+  fireEvent.click(screen.getByLabelText("Add new Relations to Bitcoin"));
+  fireEvent.click((await screen.findAllByText("Referenced By"))[0]);
+  screen.getByLabelText("hide references to Bitcoin");
   expect(
     (await screen.findByLabelText("related to Bitcoin")).textContent
   ).toMatch(/Money1(.*)Alice Workspace2(.*)P2P Apps1/);
   // 3 References: WS, P2P Apps and Money, sorted according to relations.updated
   screen.getByText("Referenced By (3)");
-});
 
-test("Don't show Referenced By if parent relation is the only reference", async () => {
-  const [alice] = setup([ALICE]);
-  const db = await setupTestDB(alice(), [["Money", ["Bitcoin"]]]);
-  const money = findNodeByText(db, "Money") as KnowNode;
-  renderWithTestData(
-    <Data user={alice().user}>
-      <RootViewContextProvider root={money.id}>
-        <TemporaryViewProvider>
-          <DND>
-            <WorkspaceColumnView />
-          </DND>
-        </TemporaryViewProvider>
-      </RootViewContextProvider>
-    </Data>,
-    {
-      ...alice(),
-      initialRoute: `/d/${money.id}`,
-    }
-  );
-  await screen.findByText("Money");
-  expect(
-    (await screen.findByLabelText("related to Money")).textContent
-  ).toMatch(/Bitcoin(.*)Contradicts$/);
+  // Delete Referenced By
+  fireEvent.click(screen.getByLabelText("edit virtual list"));
+  fireEvent.click(await screen.findByText("Delete"));
+  expect(screen.queryByText("Referenced By (3)")).toBeNull();
 });
 
 test("If Node is the root we always show references when there are more than 0", async () => {
@@ -155,8 +136,10 @@ test("If Node is the root we always show references when there are more than 0",
     }
   );
   await screen.findByText("Bitcoin");
-  const references = await screen.findByLabelText("show references to Bitcoin");
-  await userEvent.click(references);
+  await screen.findByText("Bitcoin");
+  fireEvent.click(screen.getByLabelText("Add new Relations to Bitcoin"));
+  fireEvent.click(await screen.findByText("Referenced By"));
+  screen.getByLabelText("hide references to Bitcoin");
   expect(
     (await screen.findByLabelText("related to Bitcoin")).textContent
   ).toMatch(/Money1(.*)/);

@@ -1,6 +1,6 @@
 import React from "react";
 import { Dropdown } from "react-bootstrap";
-import { OrderedMap } from "immutable";
+import { OrderedMap, Set } from "immutable";
 import {
   Plan,
   planUpdateViews,
@@ -10,6 +10,7 @@ import {
 import { REFERENCED_BY, SOCIAL, getRelationsNoSocial } from "../connections";
 import {
   ViewPath,
+  getDefaultRelationForNode,
   newRelations,
   updateView,
   useNode,
@@ -49,8 +50,16 @@ export const RELATION_TYPES = OrderedMap<RelationType>({
   contra: { color: COLORS[15], label: "Contradicts" },
 });
 
+export const VIRTUAL_LISTS = OrderedMap<RelationType>({
+  [REFERENCED_BY]: { color: "black", label: "Referenced By" },
+});
+
 export function useGetAllRelationTypes(): RelationTypes {
   return RELATION_TYPES;
+}
+
+export function useGetAllVirtualLists(): RelationTypes {
+  return VIRTUAL_LISTS;
 }
 
 export function planAddNewRelationToNode(
@@ -67,6 +76,45 @@ export function planAddNewRelationToNode(
     updateView(plan.views, viewPath, {
       ...view,
       relations: relations.id,
+      expanded: true,
+    })
+  );
+}
+
+export function planAddVirtualListToView(
+  plan: Plan,
+  virtualList: LongID,
+  view: View,
+  viewPath: ViewPath
+): Plan {
+  return planUpdateViews(
+    plan,
+    updateView(plan.views, viewPath, {
+      ...view,
+      virtualLists: Set(view.virtualLists).add(virtualList).toArray(),
+      relations: REFERENCED_BY,
+      expanded: true,
+    })
+  );
+}
+
+export function planRemoveVirtualListFromView(
+  plan: Plan,
+  virtualList: LongID,
+  view: View,
+  viewPath: ViewPath,
+  nodeID: LongID
+): Plan {
+  return planUpdateViews(
+    plan,
+    updateView(plan.views, viewPath, {
+      ...view,
+      virtualLists: Set(view.virtualLists).remove(virtualList).toArray(),
+      relations: getDefaultRelationForNode(
+        nodeID,
+        plan.knowledgeDBs,
+        plan.user.publicKey
+      ),
       expanded: true,
     })
   );
@@ -141,6 +189,47 @@ export function AddNewRelationsToNodeItem({
         }
       >
         {relationType.label || "Unnamed Type"}
+      </div>
+    </Dropdown.Item>
+  );
+}
+
+export function AddVirtualListToNodeItem({
+  virtualListID,
+}: {
+  virtualListID: LongID;
+}): JSX.Element | null {
+  const [node, view] = useNode();
+  const viewPath = useViewPath();
+  const { createPlan, executePlan } = usePlanner();
+  const allVirtualLists = useGetAllVirtualLists();
+  const virtualList = allVirtualLists.get(virtualListID, {
+    color: DEFAULT_COLOR,
+    label: "unknown",
+  });
+  const onClick = (): void => {
+    if (!node) {
+      throw new Error("Node not found");
+    }
+    const plan = planAddVirtualListToView(
+      createPlan(),
+      virtualListID,
+      view,
+      viewPath
+    );
+    executePlan(plan);
+  };
+
+  return (
+    <Dropdown.Item className="d-flex workspace-selection" onClick={onClick}>
+      <div
+        className="relation-type-selection-color"
+        style={{
+          backgroundColor: virtualList.color,
+        }}
+      />
+      <div className="workspace-selection-text">
+        {virtualList.label || "Unnamed List"}
       </div>
     </Dropdown.Item>
   );

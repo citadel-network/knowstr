@@ -1,6 +1,6 @@
 import React from "react";
 import { List } from "immutable";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   ALICE,
@@ -44,8 +44,9 @@ test("Load Referenced By Nodes", async () => {
     }
   );
   await screen.findByText("Bitcoin");
-  screen.getByText("3");
-  await userEvent.click(screen.getByLabelText("show references to Bitcoin"));
+  fireEvent.click(screen.getByLabelText("Add new Relations to Bitcoin"));
+  fireEvent.click((await screen.findAllByText("Referenced By"))[0]);
+  screen.getByText("Referenced By (3)");
   await screen.findByText("Cryptocurrencies");
   await screen.findByText("P2P Apps");
 });
