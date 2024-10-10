@@ -89,6 +89,7 @@ declare global {
   type LongID = string & { readonly "": unique symbol };
 
   type View = {
+    virtualLists?: Array<LongID>;
     relations?: LongID;
     width: number;
     // Show children, only relevant for inner nodes

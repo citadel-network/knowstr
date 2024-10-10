@@ -9,7 +9,6 @@ import {
   updateView,
   useNode,
   useNodeID,
-  useParentNode,
   useViewKey,
   useViewPath,
   viewPathToString,
@@ -30,8 +29,10 @@ import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import {
   AddNewRelationsToNodeItem,
+  AddVirtualListToNodeItem,
   RELATION_TYPES,
   getRelationTypeByRelationsID,
+  planRemoveVirtualListFromView,
 } from "./RelationTypes";
 
 function AddRelationsButton(): JSX.Element {
@@ -53,6 +54,8 @@ function AddRelationsButton(): JSX.Element {
           .map((id) => (
             <AddNewRelationsToNodeItem key={id} relationTypeID={id} />
           ))}
+        <Dropdown.Divider />
+        <AddVirtualListToNodeItem virtualListID={REFERENCED_BY} />
       </Dropdown.Menu>
     </Dropdown>
   );
@@ -77,6 +80,32 @@ function DeleteRelationItem({ id }: { id: LongID }): JSX.Element | null {
           user.publicKey
         ),
       })
+    );
+    executePlan(plan);
+  };
+  return (
+    <Dropdown.Item onClick={onClick}>
+      <span className="simple-icon-trash" />
+      <span className="ms-2">Delete</span>
+    </Dropdown.Item>
+  );
+}
+
+function DeleteVirtualListItem({ id }: { id: LongID }): JSX.Element | null {
+  const { createPlan, executePlan } = usePlanner();
+  const viewPath = useViewPath();
+  const [node, view] = useNode();
+
+  const onClick = (): void => {
+    if (!node) {
+      throw new Error("Node not found");
+    }
+    const plan = planRemoveVirtualListFromView(
+      createPlan(),
+      id,
+      view,
+      viewPath,
+      node.id
     );
     executePlan(plan);
   };
@@ -194,6 +223,45 @@ function EditRelationsDropdown({
   );
 }
 
+function EditVirtualListDropdown({
+  className,
+  style,
+}: {
+  className: string;
+  style: CSSProperties;
+}): JSX.Element | null {
+  const view = useNodeID()[1];
+  if (!view.relations) {
+    return null;
+  }
+
+  const isDeleteAvailable = view.relations !== SOCIAL;
+  if (!isDeleteAvailable) {
+    return null;
+  }
+
+  return (
+    <Dropdown>
+      <Dropdown.Toggle
+        as="button"
+        className={className}
+        aria-label="edit virtual list"
+        style={{
+          ...style,
+          borderLeftWidth: "1px",
+          borderLeftStyle: "solid",
+          borderLeftColor: "white",
+        }}
+      >
+        <span className="iconsminds-arrow-down" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
+        {isDeleteAvailable && <DeleteVirtualListItem id={view.relations} />}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+}
+
 type ShowRelationsButtonProps = {
   relationList: List<Relations>;
   readonly?: boolean;
@@ -290,6 +358,9 @@ function AutomaticRelationsButton({
         {children}
         <span>{lbl}</span>
       </button>
+      {isActive && (
+        <EditVirtualListDropdown className={className} style={style} />
+      )}
     </div>
   );
 }
@@ -304,7 +375,6 @@ function ReferencedByRelationsButton({
   currentRelations?: Relations;
 }): JSX.Element | null {
   const [node] = useNode();
-  const [parentNode] = useParentNode();
   const { knowledgeDBs, user } = useData();
   if (!node) {
     return null;
@@ -316,14 +386,6 @@ function ReferencedByRelationsButton({
     node.id
   );
   if (!referencedByRelations) {
-    return null;
-  }
-  // Don't show this button if the only reference is the parent
-  const haveParent = parentNode !== undefined;
-  const showBtn =
-    (haveParent && referencedByRelations.items.size > 1) ||
-    (!haveParent && referencedByRelations.items.size > 0);
-  if (!showBtn) {
     return null;
   }
   return (
@@ -508,6 +570,8 @@ export function SelectRelations({
 }): JSX.Element | null {
   const { knowledgeDBs, user } = useData();
   const [nodeID, view] = useNodeID();
+  const displayReferencedByRelationsButton =
+    view.virtualLists && view.virtualLists.includes(REFERENCED_BY);
   const currentRelations = getRelations(
     knowledgeDBs,
     view.relations,
@@ -536,11 +600,13 @@ export function SelectRelations({
         alwaysOneSelected={alwaysOneSelected}
         currentRelations={currentRelations}
       />
-      <ReferencedByRelationsButton
-        readonly={readonly}
-        alwaysOneSelected={alwaysOneSelected}
-        currentRelations={currentRelations}
-      />
+      {displayReferencedByRelationsButton && (
+        <ReferencedByRelationsButton
+          readonly={readonly}
+          alwaysOneSelected={alwaysOneSelected}
+          currentRelations={currentRelations}
+        />
+      )}
       {!readonly && <AddRelationsButton />}
     </>
   );
