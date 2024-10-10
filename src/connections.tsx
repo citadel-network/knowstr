@@ -214,20 +214,37 @@ function getLatestvoteRelationListPerAuthor(
   }, Map<PublicKey, Relations>());
 }
 
+function fib(n: number): number {
+  // fibonacci sequence starting with 1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,...
+  if (n <= 1) {
+    return n;
+  }
+  if (n === 2) {
+    return 2;
+  }
+  return fib(n - 1) + fib(n - 2);
+}
+
+function fibsum(n: number): number {
+  // sum of fibonacci sequence
+  // sequence starting with 1,3,6,11,19,32,53,87, 142, 231, 375, 608, 985, 1595,...
+  // fibsum(n) = fibsum(n - 1) + fib(n), with induction and the definition of fib() it follows that
+  // fibsum(n) = fib(n + 2) - 2
+  return fib(n + 2) - 2;
+}
+
 export function aggregateWeightedVotes(
   listsOfVotes: List<{ items: List<LongID | ID>; weight: number }>
 ): Map<LongID | ID, number> {
   const votesPerItem = listsOfVotes.reduce((rdx, v) => {
     const { weight } = v;
     const length = v.items.size;
-    const denominator = 2 ** length - 1;
+    const denominator = fibsum(length);
     if (length === 0) {
       return rdx;
     }
     const updatedVotes = v.items.map((item, index) => {
-      // calculate (2 ^ (length-index-1)) / (2 ^ length - 1)
-      // so with 3 items, the first item gets 4/7, the second 2/7 and the last 1/7
-      const numerator = 2 ** (length - index - 1);
+      const numerator = fib(length - index);
       const newVotes = (numerator / denominator) * weight;
       const initialVotes = rdx.get(item) || 0;
       return { item, votes: initialVotes + newVotes };

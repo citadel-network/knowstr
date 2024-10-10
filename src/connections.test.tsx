@@ -116,25 +116,25 @@ test("count relation votes", () => {
 
   const aliceVotes = bulkAddRelations(
     newRelations(vote.id, "PRO", ALICE.publicKey),
-    [optionA.id, optionB.id, optionC.id, optionD.id] // 8/15, 4/15, 2/15, 1/15 *10000
+    [optionA.id, optionB.id, optionC.id, optionD.id] // 5/11, 3/11, 2/11, 1/11 *10000
   );
   const bobVotes = bulkAddRelations(
     newRelations(vote.id, "PRO", BOB.publicKey),
-    [optionD.id, optionB.id, optionC.id, optionA.id] // 8/15, 4/15, 2/15, 1/15 *10000
+    [optionD.id, optionB.id, optionC.id, optionA.id] // 5/11, 3/11, 2/11, 1/11 *10000
   );
   const carolVotes = bulkAddRelations(
     newRelations(vote.id, "PRO", CAROL.publicKey),
-    [optionA.id, optionB.id, optionC.id] // 4/7, 2/7, 1/7 *10000
+    [optionA.id, optionB.id, optionC.id] // 3/6, 2/6, 1/6 *10000
   );
 
   expect(
     countRelationVotes(List([aliceVotes, bobVotes, carolVotes]), vote.id, "PRO")
   ).toEqual(
     Map({
-      [optionA.id]: 11714.285714285714, // 8/15+1/15+4/7 *10000 = 11714,285714285714
-      [optionB.id]: 8190.47619047619, // 4/15+4/15+2/7 *10000 = 8190,47619047619
-      [optionC.id]: 4095.238095238095, // 2/15+2/15+1/7 *10000 = 4095,238095238095
-      [optionD.id]: 6000, // 8/15+1/15 * 10000 = 6000
+      [optionA.id]: 10454.545454545454, // 5/11+1/11+3/6 *10000 = 10454.545454545454
+      [optionB.id]: 8787.878787878788, // 3/11+3/11+2/6 *10000 = 8787.878787878788
+      [optionC.id]: 5303.030303030303, // 2/11+2/11+1/6 *10000 = 5303.030303030303
+      [optionD.id]: 5454.545454545454, // 5/11+1/11 * 10000 = 5454.545454545454
     })
   );
 });
@@ -153,10 +153,10 @@ test("aggregate weighted votes", () => {
   ]);
   expect(aggregateWeightedVotes(listsOfVotes)).toEqual(
     Map({
-      A: 20.19047619047619,
-      B: 60.0952380952381,
-      C: 35.04761904761905,
-      D: 15.666666666666668,
+      A: 21.515151515151512, // 5/11*20 + 1/11*100 + 2/6*10
+      B: 52.57575757575757, // 3/11*20 + 5/11*100 + 1/6*10
+      C: 35.90909090909091, // 2/11*20 + 3/11*100 + 3/6*10
+      D: 21, //20+1
     })
   );
 });
