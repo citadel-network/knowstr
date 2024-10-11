@@ -1,4 +1,4 @@
-import { Map } from "immutable";
+import { Map, Set } from "immutable";
 import {
   Event,
   Filter,
@@ -12,6 +12,8 @@ import { v4 } from "uuid";
 
 export type MockRelayPool = SimplePool & {
   getEvents: () => Array<Event>;
+  getPublishedOnRelays: () => Array<string>;
+  resetPublishedOnRelays: () => void;
 };
 
 function fireEose(sub: Subscription): Promise<void> {
@@ -51,6 +53,8 @@ async function broadcastEvents(
 export function mockRelayPool(): MockRelayPool {
   // eslint-disable-next-line functional/no-let
   let subs = Map<string, Subscription>();
+  // eslint-disable-next-line functional/no-let
+  let publishedOnRelays: Array<string> = [];
   const events: Array<Event> = [];
 
   return {
@@ -81,9 +85,14 @@ export function mockRelayPool(): MockRelayPool {
     publish: (relays: string[], event: Event): Promise<string>[] => {
       // eslint-disable-next-line functional/immutable-data
       events.push(event);
+      publishedOnRelays = Set([...publishedOnRelays, ...relays]).toArray();
       return relays.map(() => broadcastEvents(subs, [event]));
     },
     getEvents: () => events,
+    getPublishedOnRelays: () => publishedOnRelays,
+    resetPublishedOnRelays: () => {
+      publishedOnRelays = [];
+    },
   } as unknown as MockRelayPool;
 }
 

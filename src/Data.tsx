@@ -3,13 +3,9 @@ import "./App.css";
 import {
   sortEventsDescending,
   useEventQuery,
-  createRelaysQuery,
   findRelays,
-  mergeRelays,
   sanitizeRelays,
   getReadRelays,
-  getMostRecentReplacableEvent,
-  findAllRelays,
   KIND_RELAY_METADATA_EVENT,
 } from "citadel-commons";
 import { List, Map } from "immutable";
@@ -48,7 +44,8 @@ import {
   filtersToFilterArray,
 } from "./dataQuery";
 import { useWorkspaceFromURL } from "./KnowledgeDataContext";
-import { useDefaultRelays, useDefaultWorkspace } from "./NostrAuthContext";
+import { useDefaultWorkspace } from "./NostrAuthContext";
+import { useProjectContext } from "./ProjectContext";
 
 type DataProps = {
   user: User;
@@ -184,7 +181,6 @@ export function useRelaysInfo(
 }
 
 function Data({ user, children }: DataProps): JSX.Element {
-  const defaultRelays = useDefaultRelays();
   const defaultWorkspace = useDefaultWorkspace();
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] =
@@ -194,23 +190,13 @@ function Data({ user, children }: DataProps): JSX.Element {
       isLoading: false,
       preLoginEvents: List(),
     });
+  const { relays, isRelaysLoaded } = useProjectContext();
+  const relaysInfo = useRelaysInfo(relays, isRelaysLoaded);
+
   const [fallbackWSID] = useState(fallbackWorkspace(myPublicKey));
   const { relayPool } = useApis();
-  const { events: relaysEvents, eose: relaysEose } = useEventQuery(
-    relayPool,
-    [createRelaysQuery([myPublicKey])],
-    { enabled: true, readFromRelays: defaultRelays }
-  );
 
-  const newestEvent = getMostRecentReplacableEvent(relaysEvents);
-  const myRelays = newestEvent ? findAllRelays(newestEvent) : defaultRelays;
-
-  const mergedRelays = mergeRelays(
-    sanitizeRelays(defaultRelays),
-    sanitizeRelays(myRelays)
-  );
-  const readFromRelays = getReadRelays(mergedRelays);
-  const relaysInfo = useRelaysInfo(mergedRelays, relaysEose);
+  const readFromRelays = getReadRelays(relays);
   const { events: mE, eose: metaEventsEose } = useEventQuery(
     relayPool,
     [
@@ -284,7 +270,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       contacts={contacts}
       user={user}
       settings={processedMetaEvents.settings}
-      relays={sanitizeRelays(myRelays)}
+      relays={sanitizeRelays(relays)}
       contactsRelays={contactsRelays}
       knowledgeDBs={knowledgeDBs}
       relaysInfos={relaysInfo}

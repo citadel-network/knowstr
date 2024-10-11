@@ -4,13 +4,18 @@ import { Relays, mergeRelays } from "citadel-commons";
 import { useData } from "../DataContext";
 import { useDefaultRelays } from "../NostrAuthContext";
 import { planPublishRelayMetadata, usePlanner } from "../planner";
+import { useProjectContext } from "../ProjectContext";
 
 export function RelaysWrapper(): JSX.Element {
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const defaultRelays = useDefaultRelays();
   const { relays, contactsRelays } = useData();
+  const { projectID } = useProjectContext();
   const submit = async (relayState: Relays): Promise<void> => {
+    if (projectID) {
+      return;
+    }
     // publish on old and new relays as well as default relays
     const allRelays = mergeRelays(
       defaultRelays,
@@ -25,6 +30,7 @@ export function RelaysWrapper(): JSX.Element {
   };
   return (
     <Relays
+      readonly={!!projectID}
       defaultRelays={defaultRelays}
       relays={relays}
       contactsRelays={contactsRelays}

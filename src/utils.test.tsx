@@ -70,6 +70,7 @@ import { newDB } from "./knowledge";
 import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 import { findContacts } from "./contacts";
+import { ProjectContextProvider } from "./ProjectContext";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});
@@ -250,23 +251,25 @@ function renderApis(
           }
           defaultWorkspace={options?.defaultWorkspace}
         >
-          <VirtuosoMockContext.Provider
-            value={{ viewportHeight: 10000, itemHeight: 100 }}
-          >
-            {" "}
-            {options?.includeFocusContext === true ? (
-              <FocusContextProvider>{children}</FocusContextProvider>
-            ) : (
-              <FocusContext.Provider
-                value={{
-                  isInputElementInFocus: true,
-                  setIsInputElementInFocus: jest.fn(),
-                }}
-              >
-                {children}
-              </FocusContext.Provider>
-            )}
-          </VirtuosoMockContext.Provider>
+          <ProjectContextProvider>
+            <VirtuosoMockContext.Provider
+              value={{ viewportHeight: 10000, itemHeight: 100 }}
+            >
+              {" "}
+              {options?.includeFocusContext === true ? (
+                <FocusContextProvider>{children}</FocusContextProvider>
+              ) : (
+                <FocusContext.Provider
+                  value={{
+                    isInputElementInFocus: true,
+                    setIsInputElementInFocus: jest.fn(),
+                  }}
+                >
+                  {children}
+                </FocusContext.Provider>
+              )}
+            </VirtuosoMockContext.Provider>
+          </ProjectContextProvider>
         </NostrAuthContextProvider>
       </ApiProvider>
     </BrowserRouter>

@@ -11,10 +11,16 @@ import {
   Button,
   getReadRelays,
 } from "citadel-commons";
-import { usePlanner, planAddContact, planRemoveContact } from "../planner";
+import {
+  usePlanner,
+  planAddContact,
+  planRemoveContact,
+  Plan,
+} from "../planner";
 import { useData } from "../DataContext";
 import { useApis } from "../Apis";
 import { useNip05Query } from "./useNip05Query";
+import { useProjectContext } from "../ProjectContext";
 
 type Nip05EventContent = {
   nip05?: string;
@@ -79,6 +85,7 @@ export function Follow(): JSX.Element {
   const { relayPool } = useApis();
   const { user, contacts, relays } = useData();
   const { createPlan, executePlan } = usePlanner();
+  const { userRelays } = useProjectContext();
   const { search } = useLocation();
   const params = new URLSearchParams(search);
   const rawPublicKey = params.get("publicKey");
@@ -205,14 +212,23 @@ export function Follow(): JSX.Element {
   const npub = nip19.npubEncode(publicKey);
   const isFollowing = privateContact !== undefined;
 
-  const followContact = async (): Promise<void> => {
-    await executePlan(planAddContact(createPlan(), publicKey));
+  const followUnfollow = async (
+    exec: (basePlan: Plan, publicKey: PublicKey) => Plan
+  ): Promise<void> => {
+    const basePlan = {
+      ...createPlan(),
+      relays: userRelays,
+    };
+    await executePlan(exec(basePlan, publicKey));
     navigate(`/follow?publicKey=${publicKey}`);
   };
 
+  const followContact = async (): Promise<void> => {
+    await followUnfollow(planAddContact);
+  };
+
   const unfollowContact = async (): Promise<void> => {
-    await executePlan(planRemoveContact(createPlan(), publicKey));
-    navigate(`/follow?publicKey=${publicKey}`);
+    await followUnfollow(planRemoveContact);
   };
 
   return (

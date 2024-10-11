@@ -9,6 +9,8 @@ import {
   renderApp,
   typeNewNode,
   follow,
+  createExampleProject,
+  planUpsertProjectNode,
 } from "../utils.test";
 import { execute } from "../executor";
 import { createPlan, planUpsertNode, planUpsertRelations } from "../planner";
@@ -18,6 +20,24 @@ test("Add New Note", async () => {
   const [alice] = setup([ALICE]);
   const view = renderApp(alice());
   await typeNewNode(view, "Hello World");
+});
+
+test("Write on Project Relays only", async () => {
+  const [alice] = setup([ALICE]);
+  const project = createExampleProject(alice().user.publicKey);
+  await execute({
+    ...alice(),
+    plan: planUpsertProjectNode(createPlan(alice()), project),
+  });
+  alice().relayPool.resetPublishedOnRelays();
+  const view = renderApp({
+    ...alice(),
+    initialRoute: `/?project=${project.id}`,
+  });
+  await typeNewNode(view, "Very secret project info");
+  expect(view.relayPool.getPublishedOnRelays()).toEqual([
+    "wss://winchester.deedsats.com/",
+  ]);
 });
 
 test("Link Nodes from other Users", async () => {

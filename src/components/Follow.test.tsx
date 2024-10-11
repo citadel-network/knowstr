@@ -18,9 +18,13 @@ import {
   ANON,
   ALICE_PRIVATE_KEY,
   CAROL,
+  createExampleProject,
+  planUpsertProjectNode,
 } from "../utils.test";
 import { Follow } from "./Follow";
 import { App } from "../App";
+import { execute } from "../executor";
+import { createPlan } from "../planner";
 
 beforeEach(() => {
   nip05.useFetchImplementation(async () =>
@@ -198,6 +202,33 @@ test("follow sends nip-02 event", async () => {
       tags: [["p", `${BOB.publicKey}`]],
       content: "",
     })
+  );
+});
+
+test("Following in Project Context uses users relays and not projects relays", async () => {
+  const [alice] = setup([ALICE]);
+  const project = createExampleProject(alice().user.publicKey);
+  await execute({
+    ...alice(),
+    plan: planUpsertProjectNode(createPlan(alice()), project),
+  });
+
+  const npub = nip19.npubEncode(BOB_PUBLIC_KEY);
+
+  const { relayPool } = renderWithTestData(<Follow />, {
+    ...alice(),
+    initialRoute: `/?project=${project.id}`,
+  });
+  const input = await screen.findByLabelText("find user");
+  await userEvent.type(input, npub);
+  fireEvent.click(screen.getByText("Find"));
+  relayPool.resetPublishedOnRelays();
+
+  const followBtn = await screen.findByLabelText("follow user");
+  fireEvent.click(followBtn);
+  await screen.findByText("You follow this User");
+  expect(relayPool.getPublishedOnRelays()).toEqual(
+    TEST_RELAYS.map((r) => r.url)
   );
 });
 
