@@ -449,6 +449,13 @@ export function expectTextContent(
   expect(element.textContent).toEqual(textContent.join(""));
 }
 
+export function expectTextContentNotToContain(
+  element: HTMLElement,
+  text: string
+): void {
+  expect(element.textContent).not.toContain(text);
+}
+
 function isElementMatchingSearchText(
   text: string,
   element: Element | null

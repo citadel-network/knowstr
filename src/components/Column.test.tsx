@@ -12,6 +12,7 @@ import {
   renderWithTestData,
   setupTestDB,
   findNodeByText,
+  expectTextContentNotToContain,
 } from "../utils.test";
 import { newNode } from "../connections";
 import { execute } from "../executor";
@@ -109,6 +110,10 @@ test("Show Referenced By", async () => {
   ).toMatch(/Money1(.*)Alice Workspace2(.*)P2P Apps1/);
   // 3 References: WS, P2P Apps and Money, sorted according to relations.updated
   screen.getByText("Referenced By (3)");
+
+  // Can't find Add Note Button when referencedBy is selected
+  const bitcoinColumn = screen.getByTestId("ws-col");
+  expectTextContentNotToContain(bitcoinColumn, "Add Note");
 
   // Delete Referenced By
   fireEvent.click(screen.getByLabelText("edit virtual list"));
