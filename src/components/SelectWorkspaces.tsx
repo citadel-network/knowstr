@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Dropdown, Modal, Form, InputGroup, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { FormControlWrapper } from "citadel-commons";
-import { getWorkspaces } from "../KnowledgeDataContext";
 import { isIDRemote, newNode } from "../connections";
 import { useData } from "../DataContext";
 import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
+import { useUserWorkspaces, useWorkspaceNodes } from "../WorkspaceContext";
 
 type NewWorkspaceProps = {
   onHide: () => void;
@@ -69,7 +69,7 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
 }
 
 function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
-  const { workspaces } = useData();
+  const workspaces = useUserWorkspaces();
   const { createPlan, executePlan } = usePlanner();
   const navigate = useNavigate();
 
@@ -94,17 +94,18 @@ function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
 export function SelectWorkspaces(): JSX.Element {
   const [newWorkspace, setNewWorkspace] = useState<boolean>(false);
   const data = useData();
-  const workspaces = getWorkspaces(data);
+  const userWorkspaces = useUserWorkspaces();
+  const workspaceNodes = useWorkspaceNodes();
 
-  const localWorkspaces = workspaces.filter(
+  const localWorkspaces = workspaceNodes.filter(
     (node) =>
       !isIDRemote(node.id, data.user.publicKey) ||
-      data.workspaces.includes(node.id)
+      userWorkspaces.includes(node.id)
   );
-  const remoteOnlyWorkspaces = workspaces.filter(
+  const remoteOnlyWorkspaces = workspaceNodes.filter(
     (node) =>
       isIDRemote(node.id, data.user.publicKey) &&
-      !data.workspaces.includes(node.id)
+      !userWorkspaces.includes(node.id)
   );
 
   return (

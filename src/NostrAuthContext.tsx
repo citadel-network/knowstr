@@ -46,6 +46,10 @@ export function useUser(): User | undefined {
   return context.user;
 }
 
+export function useUserOrAnon(): User {
+  return useUser() || { publicKey: UNAUTHENTICATED_USER_PK };
+}
+
 export function useDefaultRelays(): Relays {
   const context = React.useContext(NostrAuthContext);
   if (!context) {

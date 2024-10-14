@@ -26,9 +26,12 @@ import { newDB } from "./knowledge";
 import { isIDRemote, joinID, shortID, splitID } from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
+import { useUserWorkspaces, useWorkspaceContext } from "./WorkspaceContext";
 
 export type Plan = Data & {
   publishEvents: List<UnsignedEvent>;
+  activeWorkspace: LongID;
+  workspaces: List<ID>;
 };
 
 function newContactListEvent(contacts: Contacts, user: User): UnsignedEvent {
@@ -480,7 +483,7 @@ export function PlanningContextProvider({
 }
 
 export function createPlan(
-  props: Data & {
+  props: Data & { activeWorkspace: LongID; workspaces: List<ID> } & {
     publishEvents?: List<UnsignedEvent>;
   }
 ): Plan {
@@ -492,9 +495,13 @@ export function createPlan(
 
 export function usePlanner(): Planner {
   const data = useData();
+  const { activeWorkspace } = useWorkspaceContext();
+  const workspaces = useUserWorkspaces();
   const createPlanningContext = (): Plan => {
     return createPlan({
       ...data,
+      activeWorkspace,
+      workspaces,
     });
   };
   const planningContext = React.useContext(PlanningContext);

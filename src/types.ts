@@ -57,9 +57,6 @@ declare global {
     publishEventsStatus: EventState;
 
     views: Views;
-    workspaces: List<ID>;
-    activeWorkspace: LongID;
-    contactsWorkspaces: Map<PublicKey, List<ID>>;
   };
 
   type LocalStorage = {

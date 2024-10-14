@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useData } from "./DataContext";
 import { getNodeFromID } from "./ViewContext";
+import { useWorkspaceContext } from "./WorkspaceContext";
 
 export function shorten(nodeText: string): string {
   return nodeText.substr(0, 30);
@@ -19,17 +20,6 @@ export function getWorkspacesWithNodes(
       )
       .filter((n) => n !== undefined) as Set<KnowNode>
   ).toList();
-}
-
-export function getWorkspaces(data: Data): List<KnowNode> {
-  const allWorkspaces: Set<LongID | ID> = (
-    data.contactsWorkspaces.valueSeq().toList().flatten(1) as List<LongID>
-  )
-    .concat(data.workspaces)
-    .concat([data.activeWorkspace as LongID])
-    .toSet();
-
-  return getWorkspacesWithNodes(allWorkspaces, data);
 }
 
 export function useWorkspaceFromURL(): LongID | undefined {
@@ -49,7 +39,8 @@ export function useWorkspaceFromURL(): LongID | undefined {
 export const DEFAULT_WS_NAME = "My first Workspace";
 
 export function useWorkspace(): string {
-  const { knowledgeDBs, user, activeWorkspace: a } = useData();
+  const { knowledgeDBs, user } = useData();
+  const { activeWorkspace: a } = useWorkspaceContext();
   const activeWorkspace = useWorkspaceFromURL() || a;
   const node = getNodeFromID(knowledgeDBs, activeWorkspace, user.publicKey);
   if (!node) {

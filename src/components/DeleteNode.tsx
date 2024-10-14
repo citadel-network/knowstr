@@ -22,6 +22,7 @@ import {
 } from "../planner";
 import { isUserLoggedIn, useDefaultWorkspace } from "../NostrAuthContext";
 import { isMutableNode } from "./TemporaryViewContext";
+import { useUserWorkspaces, useWorkspaceContext } from "../WorkspaceContext";
 
 function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
@@ -47,12 +48,14 @@ function useDeleteNode(): undefined | (() => void) {
   const data = useData();
   const defaultWorkspace = useDefaultWorkspace();
   const isLoggedIn = isUserLoggedIn(data.user);
+  const { activeWorkspace } = useWorkspaceContext();
+  const userWorkspaces = useUserWorkspaces();
 
   // Can't delete my contacts nodes, except for active workspace
   // Can't delete the default workspace if not logged in
   if (
     (isRemote(splitID(nodeID)[0], data.user.publicKey) &&
-      data.activeWorkspace !== nodeID) ||
+      activeWorkspace !== nodeID) ||
     (defaultWorkspace === nodeID && !isLoggedIn)
   ) {
     return undefined;
@@ -65,26 +68,24 @@ function useDeleteNode(): undefined | (() => void) {
       ? planDeleteNode(planWithDisconnectedNode, nodeID)
       : planWithDisconnectedNode;
     if (
-      data.workspaces.filter((id) => id === nodeID).size > 0 ||
-      data.activeWorkspace === nodeID
+      userWorkspaces.filter((id) => id === nodeID).size > 0 ||
+      activeWorkspace === nodeID
     ) {
-      const updatedWorkspaces = data.workspaces.filter((id) => id !== nodeID);
+      const updatedWorkspaces = userWorkspaces.filter((id) => id !== nodeID);
       const newActiveWs = getWorkspacesWithNodes(
         updatedWorkspaces.toSet(),
         data
       ).first(undefined);
-      const activeWorkspace =
-        data.activeWorkspace === nodeID
-          ? newActiveWs?.id
-          : data.activeWorkspace;
+      const newActiveWorkspace =
+        activeWorkspace === nodeID ? newActiveWs?.id : activeWorkspace;
       executePlan(
         planUpdateWorkspaces(
           planWithDeletedNode,
           updatedWorkspaces,
-          activeWorkspace
+          newActiveWorkspace
         )
       );
-      navigate(activeWorkspace ? `/w/${activeWorkspace}` : "/");
+      navigate(newActiveWorkspace ? `/w/${newActiveWorkspace}` : "/");
     } else {
       executePlan(planWithDeletedNode);
     }

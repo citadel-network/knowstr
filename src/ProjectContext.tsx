@@ -13,9 +13,8 @@ import { UnsignedEvent } from "nostr-tools";
 import { KIND_PROJECT } from "./nostr";
 import { splitID } from "./connections";
 import { findNodes } from "./knowledgeEvents";
-import { useDefaultRelays, useUser } from "./NostrAuthContext";
+import { useDefaultRelays, useUserOrAnon } from "./NostrAuthContext";
 import { useApis } from "./Apis";
-import { UNAUTHENTICATED_USER_PK } from "./AppState";
 
 function getProjectFromURLSearchParam(): string | undefined {
   const urlSearchParams = new URLSearchParams(window.location.search);
@@ -56,7 +55,7 @@ export function ProjectContextProvider({
   const [projectID, setProjectID] = useState<string | undefined>(
     getProjectFromURLSearchParam()
   );
-  const user = useUser() || { publicKey: UNAUTHENTICATED_USER_PK };
+  const user = useUserOrAnon();
   const [userID, id] = projectID ? splitID(projectID) : [undefined, undefined];
   const defaultRelays = useDefaultRelays();
   const { relayPool } = useApis();

@@ -307,7 +307,12 @@ export function waitForLoadingToBeNull(): Promise<void> {
   );
 }
 
-const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
+type TestDataProps = DataContextProps & {
+  activeWorkspace: LongID;
+  workspaces: List<ID>;
+};
+
+const DEFAULT_DATA_CONTEXT_PROPS: TestDataProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
   settings: DEFAULT_SETTINGS,
@@ -324,10 +329,9 @@ const DEFAULT_DATA_CONTEXT_PROPS: DataContextProps = {
   views: Map<string, View>(),
   workspaces: List<ID>(),
   activeWorkspace: fallbackWorkspace(ALICE.publicKey),
-  contactsWorkspaces: Map<PublicKey, List<ID>>(),
 };
 
-type TestAppState = DataContextProps & TestApis;
+type TestAppState = TestDataProps & TestApis;
 
 function applyDefaults(props?: Partial<TestAppState>): TestAppState {
   return {

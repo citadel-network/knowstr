@@ -32,20 +32,9 @@ import {
 } from "./knowledgeEvents";
 import { DEFAULT_SETTINGS, findSettings } from "./settings";
 import { newDB } from "./knowledge";
-import {
-  PlanningContextProvider,
-  fallbackWorkspace,
-  replaceUnauthenticatedUser,
-} from "./planner";
-import { RootViewContextProvider } from "./ViewContext";
-import {
-  addWorkspacesToFilter,
-  createBaseFilter,
-  filtersToFilterArray,
-} from "./dataQuery";
-import { useWorkspaceFromURL } from "./KnowledgeDataContext";
-import { useDefaultWorkspace } from "./NostrAuthContext";
+import { PlanningContextProvider } from "./planner";
 import { useProjectContext } from "./ProjectContext";
+import { WorkspaceContextProvider } from "./WorkspaceContext";
 
 type DataProps = {
   user: User;
@@ -63,7 +52,7 @@ type ProcessedEvents = {
   activeWorkspace: LongID | undefined;
 };
 
-function newProcessedEvents(): ProcessedEvents {
+export function newProcessedEvents(): ProcessedEvents {
   return {
     settings: DEFAULT_SETTINGS,
     knowledgeDB: newDB(),
@@ -76,8 +65,6 @@ function newProcessedEvents(): ProcessedEvents {
 }
 
 export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE, KIND_DELETE, KIND_PROJECT];
-
-const KINDS_CONTACTS_META = [KIND_WORKSPACES, KIND_RELAY_METADATA_EVENT];
 
 export const KINDS_META = [
   KIND_SETTINGS,
@@ -181,7 +168,6 @@ export function useRelaysInfo(
 }
 
 function Data({ user, children }: DataProps): JSX.Element {
-  const defaultWorkspace = useDefaultWorkspace();
   const myPublicKey = user.publicKey;
   const [newEventsAndPublishResults, setNewEventsAndPublishResults] =
     useState<EventState>({
@@ -192,8 +178,6 @@ function Data({ user, children }: DataProps): JSX.Element {
     });
   const { relays, isRelaysLoaded } = useProjectContext();
   const relaysInfo = useRelaysInfo(relays, isRelaysLoaded);
-
-  const [fallbackWSID] = useState(fallbackWorkspace(myPublicKey));
   const { relayPool } = useApis();
 
   const readFromRelays = getReadRelays(relays);
@@ -202,7 +186,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     [
       {
         authors: [myPublicKey],
-        kinds: KINDS_META,
+        kinds: [KIND_SETTINGS, KIND_CONTACTLIST, KIND_VIEWS, KIND_WORKSPACES],
       },
     ],
     { readFromRelays }
@@ -220,50 +204,24 @@ function Data({ user, children }: DataProps): JSX.Element {
     (_, k) => k !== myPublicKey
   );
 
-  const { events: contactMetaEvents, eose: contactsMetaEventsEose } =
-    useEventQuery(
-      relayPool,
-      [{ authors: contacts.keySeq().toArray(), kinds: KINDS_CONTACTS_META }],
-      { readFromRelays, enabled: metaEventsEose }
-    );
-
-  const processedContactMetaEvents = useEventProcessor(
-    contactMetaEvents.valueSeq().toList()
+  const { events: contactRelayEvents } = useEventQuery(
+    relayPool,
+    [
+      {
+        authors: contacts.keySeq().toArray(),
+        kinds: [KIND_RELAY_METADATA_EVENT],
+      },
+    ],
+    { readFromRelays, enabled: metaEventsEose }
   );
 
-  const contactsRelays = processedContactMetaEvents.reduce((rdx, p, key) => {
+  const processedContactRelayEvents = useEventProcessor(
+    contactRelayEvents.valueSeq().toList()
+  );
+
+  const contactsRelays = processedContactRelayEvents.reduce((rdx, p, key) => {
     return rdx.set(key, p.relays);
   }, Map<PublicKey, Relays>());
-
-  const wsFromURL = useWorkspaceFromURL();
-  const activeWorkspace =
-    wsFromURL !== undefined
-      ? replaceUnauthenticatedUser(wsFromURL, user.publicKey)
-      : processedMetaEvents.activeWorkspace || defaultWorkspace || fallbackWSID;
-
-  const workspaceFilters = processedContactMetaEvents.reduce((rdx, p) => {
-    return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
-  }, addWorkspacesToFilter(createBaseFilter(contacts, myPublicKey), processedMetaEvents.workspaces as List<LongID>));
-
-  const { events: workspaceEvents } = useEventQuery(
-    relayPool,
-    filtersToFilterArray(workspaceFilters),
-    {
-      readFromRelays,
-      enabled: metaEventsEose && contactsMetaEventsEose,
-    }
-  );
-
-  const rDataEventsProcessed = useEventProcessor(
-    metaEvents
-      .merge(contactMetaEvents.valueSeq().toList())
-      .merge(workspaceEvents.valueSeq().toList())
-  );
-  const knowledgeDBs = rDataEventsProcessed.map((data) => data.knowledgeDB);
-
-  const contactsWorkspaces = rDataEventsProcessed
-    .map((data) => data.workspaces)
-    .filter((_, k) => k !== myPublicKey);
 
   return (
     <DataContextProvider
@@ -272,19 +230,18 @@ function Data({ user, children }: DataProps): JSX.Element {
       settings={processedMetaEvents.settings}
       relays={sanitizeRelays(relays)}
       contactsRelays={contactsRelays}
-      knowledgeDBs={knowledgeDBs}
+      knowledgeDBs={Map<PublicKey, KnowledgeData>()}
       relaysInfos={relaysInfo}
       publishEventsStatus={newEventsAndPublishResults}
       views={processedMetaEvents.views}
-      workspaces={processedMetaEvents.workspaces}
-      activeWorkspace={activeWorkspace}
-      contactsWorkspaces={contactsWorkspaces}
     >
-      <PlanningContextProvider setPublishEvents={setNewEventsAndPublishResults}>
-        <RootViewContextProvider root={activeWorkspace}>
+      <WorkspaceContextProvider>
+        <PlanningContextProvider
+          setPublishEvents={setNewEventsAndPublishResults}
+        >
           {children}
-        </RootViewContextProvider>
-      </PlanningContextProvider>
+        </PlanningContextProvider>
+      </WorkspaceContextProvider>
     </DataContextProvider>
   );
 }
