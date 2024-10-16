@@ -104,7 +104,6 @@ export async function execute({
         return { event, writeRelayConf };
       });
 
-  // const writeRelayUrls = relays.map((r) => r.url);
   const results = await Promise.all(
     finalizedEvents.toArray().map(({ event, writeRelayConf }) => {
       const writeRelayUrls = applyWriteRelayConfig(
