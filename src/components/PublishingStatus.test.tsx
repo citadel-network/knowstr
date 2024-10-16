@@ -28,7 +28,7 @@ test("Publishing Status", async () => {
 });
 
 test("Details of Publishing Status", async () => {
-  const [alice] = setup([ALICE], { relays: TEST_RELAYS });
+  const [alice] = setup([ALICE]);
   const utils = alice();
   const view = renderWithTestData(
     <>
@@ -56,7 +56,7 @@ test("Details of Publishing Status", async () => {
           ];
         },
       } as unknown as MockRelayPool,
-      relays: TEST_RELAYS,
+      relays: { ...utils.relays, userRelays: TEST_RELAYS },
     }
   );
   await typeNewNode(view, "Hello World");

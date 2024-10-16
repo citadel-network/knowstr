@@ -42,15 +42,33 @@ declare global {
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
-  type EventState = PublishEvents & {
-    preLoginEvents: List<UnsignedEvent>;
+  type WriteRelayConf = {
+    defaultRelays?: boolean;
+    user?: boolean;
+    project?: boolean;
+    contacts?: boolean;
+    extraRelays?: Relays;
+  };
+
+  type EventAttachment = {
+    writeRelayConf?: WriteRelayConf;
+  };
+
+  type EventState = PublishEvents<EventAttachment> & {
+    preLoginEvents: List<UnsignedEvent & EventAttachment>;
+  };
+
+  type AllRelays = {
+    defaultRelays: Relays;
+    userRelays: Relays;
+    projectRelays: Relays;
+    contactsRelays: Relays;
   };
 
   type Data = {
     contacts: Contacts;
     user: User;
     settings: Settings;
-    relays: Relays;
     contactsRelays: Map<PublicKey, Relays>;
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
@@ -123,6 +141,8 @@ declare global {
     quarterlyVotes?: LongID;
     dashboardInternal?: LongID;
     dashboardPublic?: LongID;
+    website?: LongID;
+    app?: LongID;
     createdAt: Date;
   };
 

@@ -310,13 +310,13 @@ export function waitForLoadingToBeNull(): Promise<void> {
 type TestDataProps = DataContextProps & {
   activeWorkspace: LongID;
   workspaces: List<ID>;
+  relays: AllRelays;
 };
 
 const DEFAULT_DATA_CONTEXT_PROPS: TestDataProps = {
   user: ALICE,
   contacts: Map<PublicKey, Contact>(),
   settings: DEFAULT_SETTINGS,
-  relays: TEST_RELAYS,
   contactsRelays: Map<PublicKey, Relays>(),
   knowledgeDBs: Map<PublicKey, KnowledgeData>(),
   relaysInfos: Map<string, RelayInformation | undefined>(),
@@ -329,6 +329,12 @@ const DEFAULT_DATA_CONTEXT_PROPS: TestDataProps = {
   views: Map<string, View>(),
   workspaces: List<ID>(),
   activeWorkspace: fallbackWorkspace(ALICE.publicKey),
+  relays: {
+    defaultRelays: [{ url: "wss://default.relay", read: true, write: true }],
+    userRelays: [{ url: "wss://user.relay", read: true, write: true }],
+    projectRelays: [{ url: "wss://project.relay", read: true, write: true }],
+    contactsRelays: [{ url: "wss://contacts.relay", read: true, write: true }],
+  },
 };
 
 type TestAppState = TestDataProps & TestApis;
@@ -671,6 +677,21 @@ export function createExampleProject(publicKey: PublicKey): ProjectNode {
     ],
     tokenSupply: 1000000,
   };
+}
+
+export async function findEvent(
+  relayPool: MockRelayPool,
+  kind: number
+): Promise<(Event & { relays?: string[] }) | undefined> {
+  await waitFor(() => {
+    expect(
+      relayPool
+        .getEvents()
+        .map((e) => e.kind)
+        .includes(kind)
+    ).toBeTruthy();
+  });
+  return relayPool.getEvents().find((e) => e.kind === kind);
 }
 
 export { ALICE, UNAUTHENTICATED_BOB, UNAUTHENTICATED_CAROL, renderApp };

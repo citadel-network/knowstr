@@ -4,8 +4,6 @@ import {
   sortEventsDescending,
   useEventQuery,
   findRelays,
-  sanitizeRelays,
-  getReadRelays,
   KIND_RELAY_METADATA_EVENT,
 } from "citadel-commons";
 import { List, Map } from "immutable";
@@ -35,6 +33,7 @@ import { newDB } from "./knowledge";
 import { PlanningContextProvider } from "./planner";
 import { useProjectContext } from "./ProjectContext";
 import { WorkspaceContextProvider } from "./WorkspaceContext";
+import { flattenRelays, usePreloadRelays } from "./relays";
 
 type DataProps = {
   user: User;
@@ -176,20 +175,22 @@ function Data({ user, children }: DataProps): JSX.Element {
       isLoading: false,
       preLoginEvents: List(),
     });
-  const { relays, isRelaysLoaded } = useProjectContext();
-  const relaysInfo = useRelaysInfo(relays, isRelaysLoaded);
+  const { isRelaysLoaded } = useProjectContext();
   const { relayPool } = useApis();
 
-  const readFromRelays = getReadRelays(relays);
   const { events: mE, eose: metaEventsEose } = useEventQuery(
     relayPool,
     [
       {
         authors: [myPublicKey],
-        kinds: [KIND_SETTINGS, KIND_CONTACTLIST, KIND_VIEWS, KIND_WORKSPACES],
+        kinds: [KIND_SETTINGS, KIND_CONTACTLIST, KIND_VIEWS],
       },
     ],
-    { readFromRelays }
+    {
+      readFromRelays: usePreloadRelays({
+        user: true,
+      }),
+    }
   );
   const metaEvents = mE
     .valueSeq()
@@ -212,7 +213,14 @@ function Data({ user, children }: DataProps): JSX.Element {
         kinds: [KIND_RELAY_METADATA_EVENT],
       },
     ],
-    { readFromRelays, enabled: metaEventsEose }
+    {
+      readFromRelays: usePreloadRelays({
+        defaultRelays: true,
+        user: true,
+        project: true,
+      }),
+      enabled: metaEventsEose,
+    }
   );
 
   const processedContactRelayEvents = useEventProcessor(
@@ -222,16 +230,26 @@ function Data({ user, children }: DataProps): JSX.Element {
   const contactsRelays = processedContactRelayEvents.reduce((rdx, p, key) => {
     return rdx.set(key, p.relays);
   }, Map<PublicKey, Relays>());
+  const searchRelaysInfo = useRelaysInfo(
+    [
+      ...usePreloadRelays({
+        defaultRelays: false,
+        user: true,
+        project: true,
+      }),
+      ...flattenRelays(contactsRelays),
+    ],
+    isRelaysLoaded
+  );
 
   return (
     <DataContextProvider
       contacts={contacts}
       user={user}
       settings={processedMetaEvents.settings}
-      relays={sanitizeRelays(relays)}
       contactsRelays={contactsRelays}
       knowledgeDBs={Map<PublicKey, KnowledgeData>()}
-      relaysInfos={relaysInfo}
+      relaysInfos={searchRelaysInfo}
       publishEventsStatus={newEventsAndPublishResults}
       views={processedMetaEvents.views}
     >

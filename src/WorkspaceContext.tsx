@@ -1,9 +1,8 @@
 import { List, Map, Set } from "immutable";
 import React, { createContext, useState } from "react";
-import { getReadRelays, useEventQuery } from "citadel-commons";
+import { useEventQuery } from "citadel-commons";
 import { useDefaultWorkspace } from "./NostrAuthContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
-import { useProjectContext } from "./ProjectContext";
 import { useApis } from "./Apis";
 import { KIND_WORKSPACES } from "./nostr";
 import { newProcessedEvents, useEventProcessor } from "./Data";
@@ -18,6 +17,7 @@ import {
   filtersToFilterArray,
 } from "./dataQuery";
 import { RootViewContextProvider } from "./ViewContext";
+import { useReadRelays } from "./relays";
 
 type WorkspaceContextType = {
   activeWorkspace: LongID;
@@ -38,9 +38,7 @@ export function WorkspaceContextProvider({
   const { relayPool } = useApis();
   // If there is no workspace to be found, we create a new one with this ID
   const [fallbackWSID] = useState(fallbackWorkspace(user.publicKey));
-  const { userRelays } = useProjectContext();
 
-  const readFromRelays = getReadRelays(userRelays);
   const { events, eose: workspaceConfigEose } = useEventQuery(
     relayPool,
     [
@@ -49,7 +47,13 @@ export function WorkspaceContextProvider({
         kinds: [KIND_WORKSPACES],
       },
     ],
-    { readFromRelays }
+    {
+      readFromRelays: useReadRelays({
+        user: true,
+        project: true,
+        contacts: true,
+      }),
+    }
   );
   const workspaceEvents = events
     .valueSeq()
@@ -74,11 +78,14 @@ export function WorkspaceContextProvider({
     relayPool,
     filtersToFilterArray(workspaceFilters),
     {
-      readFromRelays,
+      readFromRelays: useReadRelays({
+        user: true,
+        project: true,
+        contacts: true,
+      }),
       enabled: workspaceConfigEose,
     }
   );
-
   const knowledgeDBs = useEventProcessor(
     workspaceNodesEvents
       .valueSeq()

@@ -6,6 +6,7 @@ import {
   isUserLoggedIn,
   isUserLoggedInWithExtension,
 } from "./NostrAuthContext";
+import { applyWriteRelayConfig } from "./relays";
 
 // Timeout in ms for pulish() on a relay
 export const PUBLISH_TIMEOUT = 5000;
@@ -53,12 +54,10 @@ async function publishEvent(
 export async function execute({
   plan,
   relayPool,
-  relays,
   finalizeEvent,
 }: {
   plan: Plan;
   relayPool: SimplePool;
-  relays: Relays;
   finalizeEvent: FinalizeEvent;
 }): Promise<PublishResultsEventMap> {
   if (plan.publishEvents.size === 0) {
@@ -83,24 +82,48 @@ export async function execute({
     }
   };
   const finalizedEvents = isUserLoggedInWithExtension(user)
-    ? List(
+    ? List<{ event: VerifiedEvent; writeRelayConf?: WriteRelayConf }>(
         await Promise.all(
-          plan.publishEvents.map((e) => signEventWithExtension(e))
+          plan.publishEvents.map(async (e) => {
+            const { writeRelayConf } = e;
+            // eslint-disable-next-line functional/immutable-data
+            delete e.writeRelayConf;
+            const signedEvent = await signEventWithExtension(e);
+            return { event: signedEvent as VerifiedEvent, writeRelayConf };
+          })
         )
-      ).map((e) => e as VerifiedEvent)
-    : plan.publishEvents.map((e) =>
-        finalizeEvent(e, (user as KeyPair).privateKey)
-      );
+      )
+    : plan.publishEvents.map((e) => {
+        const { writeRelayConf } = e;
+        // eslint-disable-next-line functional/immutable-data
+        delete e.writeRelayConf;
+        const event = finalizeEvent(
+          e,
+          (user as KeyPair).privateKey
+        ) as VerifiedEvent;
+        return { event, writeRelayConf };
+      });
 
-  const writeRelayUrls = relays.map((r) => r.url);
   const results = await Promise.all(
-    finalizedEvents
-      .toArray()
-      .map((event) => publishEvent(relayPool, event, writeRelayUrls))
+    finalizedEvents.toArray().map(({ event, writeRelayConf }) => {
+      const writeRelayUrls = applyWriteRelayConfig(
+        plan.relays.defaultRelays,
+        plan.relays.userRelays,
+        plan.relays.projectRelays,
+        plan.relays.contactsRelays,
+        plan.projectID !== undefined,
+        writeRelayConf
+      );
+      return publishEvent(
+        relayPool,
+        event,
+        Array.from(new Set(writeRelayUrls.map((r) => r.url)))
+      );
+    })
   );
 
   return results.reduce((rdx, result, index) => {
-    const eventId = finalizedEvents.get(index)?.id;
+    const eventId = finalizedEvents.get(index)?.event.id;
     return eventId ? rdx.set(eventId, result) : rdx;
   }, Map<string, PublishResultsOfEvent>());
 }

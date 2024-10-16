@@ -128,6 +128,11 @@ test("Add a new Relay", async () => {
       content: "",
     })
   );
+  expect(event.relays).toEqual([
+    ...TEST_RELAYS.map((r) => r.url),
+    // new relays
+    "wss://relay.test.fifth/",
+  ]);
 });
 
 test("Stop writing to an existing Nostr Relay", async () => {
