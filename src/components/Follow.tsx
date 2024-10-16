@@ -9,7 +9,6 @@ import {
   FormControlWrapper,
   pasteFromClipboard,
   Button,
-  getReadRelays,
 } from "citadel-commons";
 import {
   usePlanner,
@@ -20,7 +19,6 @@ import {
 import { useData } from "../DataContext";
 import { useApis } from "../Apis";
 import { useNip05Query } from "./useNip05Query";
-import { useProjectContext } from "../ProjectContext";
 
 type Nip05EventContent = {
   nip05?: string;
@@ -83,9 +81,8 @@ async function decodeInput(
 export function Follow(): JSX.Element {
   const navigate = useNavigate();
   const { relayPool } = useApis();
-  const { user, contacts, relays } = useData();
+  const { user, contacts } = useData();
   const { createPlan, executePlan } = usePlanner();
-  const { userRelays } = useProjectContext();
   const { search } = useLocation();
   const params = new URLSearchParams(search);
   const rawPublicKey = params.get("publicKey");
@@ -98,8 +95,7 @@ export function Follow(): JSX.Element {
   const [debouncedInput] = useDebounce(input, 500);
   const { events: nip05Events, eose: nip05Eose } = useNip05Query(
     relayPool,
-    lookupPublicKey || ("" as PublicKey),
-    getReadRelays(relays)
+    lookupPublicKey || ("" as PublicKey)
   );
 
   useEffect(() => {
@@ -217,7 +213,12 @@ export function Follow(): JSX.Element {
   ): Promise<void> => {
     const basePlan = {
       ...createPlan(),
-      relays: userRelays,
+      writeRelayConf: {
+        user: true,
+        defaultRelays: false,
+        project: false,
+        contacts: false,
+      },
     };
     await executePlan(exec(basePlan, publicKey));
     navigate(`/follow?publicKey=${publicKey}`);

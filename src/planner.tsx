@@ -6,7 +6,6 @@ import {
   newTimestamp,
   KIND_RELAY_METADATA_EVENT,
   mergePublishResultsOfEvents,
-  getWriteRelays,
 } from "citadel-commons";
 import { v4 } from "uuid";
 import {
@@ -27,11 +26,15 @@ import { isIDRemote, joinID, shortID, splitID } from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { useUserWorkspaces, useWorkspaceContext } from "./WorkspaceContext";
+import { useRelaysToCreatePlan } from "./relays";
+import { useProjectContext } from "./ProjectContext";
 
 export type Plan = Data & {
-  publishEvents: List<UnsignedEvent>;
+  publishEvents: List<UnsignedEvent & EventAttachment>;
   activeWorkspace: LongID;
   workspaces: List<ID>;
+  projectID: LongID | undefined;
+  relays: AllRelays;
 };
 
 function newContactListEvent(contacts: Contacts, user: User): UnsignedEvent {
@@ -59,6 +62,16 @@ function newContactListEvent(contacts: Contacts, user: User): UnsignedEvent {
   };
 }
 
+function setRelayConf(
+  event: UnsignedEvent,
+  conf: WriteRelayConf
+): UnsignedEvent & EventAttachment {
+  return {
+    ...event,
+    writeRelayConf: conf,
+  };
+}
+
 export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
   if (plan.contacts.has(publicKey)) {
     return plan;
@@ -70,7 +83,14 @@ export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
   const contactListEvent = newContactListEvent(newContacts, plan.user);
   return {
     ...plan,
-    publishEvents: plan.publishEvents.push(contactListEvent),
+    publishEvents: plan.publishEvents.push(
+      setRelayConf(contactListEvent, {
+        defaultRelays: false,
+        user: true,
+        project: false,
+        contacts: false,
+      })
+    ),
   };
 }
 
@@ -220,7 +240,14 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
   return {
     ...plan,
     views,
-    publishEvents: publishEvents.push(writeViewEvent),
+    publishEvents: publishEvents.push(
+      setRelayConf(writeViewEvent, {
+        defaultRelays: false,
+        user: true,
+        project: false,
+        contacts: false,
+      })
+    ),
   };
 }
 
@@ -361,7 +388,14 @@ export function planPublishSettings(plan: Plan, settings: Settings): Plan {
   };
   return {
     ...plan,
-    publishEvents: plan.publishEvents.push(publishSettingsEvent),
+    publishEvents: plan.publishEvents.push(
+      setRelayConf(publishSettingsEvent, {
+        defaultRelays: false,
+        user: true,
+        project: false,
+        contacts: false,
+      })
+    ),
   };
 }
 
@@ -388,6 +422,11 @@ export function planPublishRelayMetadata(plan: Plan, relays: Relays): Plan {
     created_at: Math.floor(Date.now() / 1000),
     tags,
     content: "",
+    writeRelayConf: {
+      defaultRelays: true,
+      user: true,
+      extraRelays: relays,
+    },
   };
   return {
     ...plan,
@@ -436,7 +475,6 @@ export function PlanningContextProvider({
     const results = await execute({
       plan: planWithWs,
       relayPool,
-      relays: getWriteRelays(plan.relays),
       finalizeEvent,
     });
 
@@ -483,13 +521,19 @@ export function PlanningContextProvider({
 }
 
 export function createPlan(
-  props: Data & { activeWorkspace: LongID; workspaces: List<ID> } & {
-    publishEvents?: List<UnsignedEvent>;
+  props: Data & {
+    activeWorkspace: LongID;
+    workspaces: List<ID>;
+    publishEvents?: List<UnsignedEvent & EventAttachment>;
+    relays: AllRelays;
+    projectID?: LongID;
   }
 ): Plan {
   return {
     ...props,
-    publishEvents: props.publishEvents || List<UnsignedEvent>([]),
+    projectID: props.projectID || undefined,
+    publishEvents:
+      props.publishEvents || List<UnsignedEvent & EventAttachment>([]),
   };
 }
 
@@ -497,11 +541,15 @@ export function usePlanner(): Planner {
   const data = useData();
   const { activeWorkspace } = useWorkspaceContext();
   const workspaces = useUserWorkspaces();
+  const relays = useRelaysToCreatePlan();
+  const { projectID } = useProjectContext();
   const createPlanningContext = (): Plan => {
     return createPlan({
       ...data,
       activeWorkspace,
       workspaces,
+      relays,
+      projectID,
     });
   };
   const planningContext = React.useContext(PlanningContext);

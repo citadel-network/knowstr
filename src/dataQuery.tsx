@@ -15,6 +15,7 @@ import { useApis } from "./Apis";
 import { useEventProcessor } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
 import { isUserLoggedIn } from "./NostrAuthContext";
+import { useReadRelays } from "./relays";
 
 function addIDToFilter(
   filter: Filter,
@@ -204,7 +205,7 @@ export function useQueryKnowledgeData(filters: Filter[]): {
   eose: boolean;
   allEventsProcessed: boolean;
 } {
-  const { relays, publishEventsStatus } = useData();
+  const { publishEventsStatus } = useData();
   const unpublishedEvents = publishEventsStatus.unsignedEvents;
   const { relayPool, eventLoadingTimeout } = useApis();
   const [allEventsProcessed, setAllEventsProcessed] = useState(false);
@@ -212,7 +213,11 @@ export function useQueryKnowledgeData(filters: Filter[]): {
 
   const disabled = isOnlyDelete(filters);
   const { events, eose } = useEventQuery(relayPool, filters, {
-    readFromRelays: relays,
+    readFromRelays: useReadRelays({
+      user: true,
+      project: true,
+      contacts: true,
+    }),
     enabled: !disabled,
   });
 

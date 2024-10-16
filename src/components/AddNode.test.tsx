@@ -11,10 +11,12 @@ import {
   follow,
   createExampleProject,
   planUpsertProjectNode,
+  findEvent,
 } from "../utils.test";
 import { execute } from "../executor";
 import { createPlan, planUpsertNode, planUpsertRelations } from "../planner";
 import { newRelations } from "../ViewContext";
+import { KIND_KNOWLEDGE_NODE } from "../nostr";
 
 test("Add New Note", async () => {
   const [alice] = setup([ALICE]);
@@ -22,7 +24,7 @@ test("Add New Note", async () => {
   await typeNewNode(view, "Hello World");
 });
 
-test("Write on Project Relays only", async () => {
+test("Write Nodes & List on Project Relays only", async () => {
   const [alice] = setup([ALICE]);
   const project = createExampleProject(alice().user.publicKey);
   await execute({
@@ -34,10 +36,9 @@ test("Write on Project Relays only", async () => {
     ...alice(),
     initialRoute: `/?project=${project.id}`,
   });
-  await typeNewNode(view, "Very secret project info");
-  expect(view.relayPool.getPublishedOnRelays()).toEqual([
-    "wss://winchester.deedsats.com/",
-  ]);
+  await typeNewNode(view, "Hello World");
+  const node = await findEvent(view.relayPool, KIND_KNOWLEDGE_NODE);
+  expect(node?.relays).toEqual(["wss://winchester.deedsats.com/"]);
 });
 
 test("Link Nodes from other Users", async () => {

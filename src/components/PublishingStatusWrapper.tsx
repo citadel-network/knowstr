@@ -7,13 +7,12 @@ import { usePlanner } from "../planner";
 
 export function PublishingStatusWrapper(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
-  const { publishEventsStatus, relays } = useData();
+  const { publishEventsStatus } = useData();
   const { republishEvents } = usePlanner();
   return (
     <PublishingStatus
       isMobile={isMobile}
       publishEventsStatus={publishEventsStatus}
-      relays={relays}
       republishEvents={republishEvents}
     />
   );

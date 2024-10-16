@@ -1,7 +1,6 @@
 import React from "react";
 import { List } from "immutable";
 import { useDebouncedCallback } from "use-debounce";
-import { getWriteRelays } from "citadel-commons";
 import { useApis } from "./Apis";
 import { KIND_CONTACTLIST, KIND_VIEWS, KIND_WORKSPACES } from "./nostr";
 import {
@@ -52,7 +51,6 @@ export function StorePreLoginContext({
       const results = await execute({
         plan: withContacts,
         relayPool,
-        relays: getWriteRelays(plan.relays),
         finalizeEvent,
       });
       setPublishEvents((current) => {

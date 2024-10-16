@@ -14,6 +14,7 @@ import { useApis } from "../Apis";
 import { KIND_SEARCH } from "../Data";
 import { findNodes } from "../knowledgeEvents";
 import { NodeIcon } from "./NodeIcon";
+import { useReadRelays } from "../relays";
 
 const KEY_DOWN = 40;
 const KEY_UP = 38;
@@ -95,7 +96,11 @@ function useSearchQuery(
     [filter],
     {
       enabled,
-      readFromRelays: relays,
+      readFromRelays: useReadRelays({
+        user: true,
+        project: true,
+        contacts: true,
+      }),
       discardOld: true,
     }
   );
@@ -136,7 +141,13 @@ function Search({
   const [selectedSuggestion, setSelectedSuggestion] = useState<number>(0);
   const ref = React.createRef<HTMLInputElement>();
   const searchResultRef = useRef<HTMLDivElement>(null);
-  const { relaysInfos, relays } = useData();
+  const { relaysInfos } = useData();
+  const relays = useReadRelays({
+    defaultRelays: false,
+    user: true,
+    project: true,
+    contacts: true,
+  });
 
   const nip50Relays = relays.filter((r) => {
     return relaysInfos.get(r.url)?.supported_nips?.includes(50);

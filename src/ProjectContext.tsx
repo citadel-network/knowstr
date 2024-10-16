@@ -24,10 +24,10 @@ function getProjectFromURLSearchParam(): string | undefined {
 
 type ProjectInfo = {
   project: ProjectNode | undefined;
-  projectID: string | undefined;
-  relays: Relays;
+  projectID: LongID | undefined;
   // The relays the user configures for himself, equal to relays except in project context
   userRelays: Relays;
+  projectRelays: Relays;
   isRelaysLoaded: boolean;
   setProjectID: React.Dispatch<React.SetStateAction<string | undefined>>;
 };
@@ -97,18 +97,17 @@ export function ProjectContextProvider({
     return <LoadProject />;
   }
   // if there is a projectID there is a project at this point
-  const relays = projectID ? project?.relays || [] : userRelays;
   const isRelaysLoaded = projectID ? !!project : relaysEose;
 
   return (
     <ProjectContext.Provider
       value={{
-        projectID,
+        projectID: projectID ? (projectID as LongID) : undefined,
         project,
         setProjectID,
-        relays,
         isRelaysLoaded,
         userRelays,
+        projectRelays: projectID ? project?.relays || [] : [],
       }}
     >
       {children}

@@ -20,6 +20,7 @@ import {
   CAROL,
   createExampleProject,
   planUpsertProjectNode,
+  findEvent,
 } from "../utils.test";
 import { Follow } from "./Follow";
 import { App } from "../App";
@@ -227,9 +228,8 @@ test("Following in Project Context uses users relays and not projects relays", a
   const followBtn = await screen.findByLabelText("follow user");
   fireEvent.click(followBtn);
   await screen.findByText("You follow this User");
-  expect(relayPool.getPublishedOnRelays()).toEqual(
-    TEST_RELAYS.map((r) => r.url)
-  );
+  const event = await findEvent(relayPool, KIND_CONTACTLIST);
+  expect(event?.relays).toEqual(TEST_RELAYS.map((r) => r.url));
 });
 
 test("unfollow sends nip-02 event", async () => {

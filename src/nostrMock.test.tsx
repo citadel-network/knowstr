@@ -11,7 +11,7 @@ import {
 import { v4 } from "uuid";
 
 export type MockRelayPool = SimplePool & {
-  getEvents: () => Array<Event>;
+  getEvents: () => Array<Event & { relays?: string[] }>;
   getPublishedOnRelays: () => Array<string>;
   resetPublishedOnRelays: () => void;
 };
@@ -55,7 +55,7 @@ export function mockRelayPool(): MockRelayPool {
   let subs = Map<string, Subscription>();
   // eslint-disable-next-line functional/no-let
   let publishedOnRelays: Array<string> = [];
-  const events: Array<Event> = [];
+  const events: Array<Event & { relays?: string[] }> = [];
 
   return {
     subscribeMany: (
@@ -84,7 +84,7 @@ export function mockRelayPool(): MockRelayPool {
     },
     publish: (relays: string[], event: Event): Promise<string>[] => {
       // eslint-disable-next-line functional/immutable-data
-      events.push(event);
+      events.push({ ...event, relays });
       publishedOnRelays = Set([...publishedOnRelays, ...relays]).toArray();
       return relays.map(() => broadcastEvents(subs, [event]));
     },
