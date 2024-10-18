@@ -24,6 +24,7 @@ import {
   addAddToNodeToPath,
   getNodeIDFromView,
   useNodeID,
+  useParentNode,
 } from "../ViewContext";
 import {
   NodeSelectbox,
@@ -42,6 +43,7 @@ import { planUpsertNode, usePlanner } from "../planner";
 import { ReactQuillWrapper } from "./ReactQuillWrapper";
 import { useNodeIsLoading } from "../LoadingStatus";
 import { NodeIcon } from "./NodeIcon";
+import { getRelationTypeByRelationsID } from "./RelationTypes";
 
 function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {
@@ -282,9 +284,20 @@ function EditingNodeContent(): JSX.Element | null {
 }
 
 const INDENTATION = 10;
-const ARROW_WIDTH = 6;
+const ARROW_WIDTH = 0;
 
 export function Indent({ levels }: { levels: number }): JSX.Element {
+  const parentView = useParentNode()[1];
+  const data = useData();
+  const [relationType] = parentView?.relations
+    ? getRelationTypeByRelationsID(data, parentView.relations)
+    : [undefined];
+  const color = relationType?.color || undefined;
+  const style = color
+    ? {
+        borderLeft: `2px solid ${color}`,
+      }
+    : {};
   return (
     <>
       {Array.from(Array(levels).keys()).map((k) => {
@@ -293,7 +306,7 @@ export function Indent({ levels }: { levels: number }): JSX.Element {
             <div style={{ width: INDENTATION }} />
             {k !== 0 && (
               <div>
-                <div className="vl" />
+                <div className="vl" style={style} />
               </div>
             )}
           </div>
@@ -363,10 +376,13 @@ export function Node({
   const isMultiselect = useIsParentMultiselectBtnOn();
   const displayMenu = levels > 0;
   const cls = !isMobile ? `${className || ""} hover-light-bg` : className;
+
   return (
     <NodeCard
       className={cls}
-      cardBodyClassName={isDesktopFullScreen ? "ps-2 pt-2 pb-2" : undefined}
+      cardBodyClassName={
+        isDesktopFullScreen ? "ps-2 pt-2 pb-0" : `ps-0 pt-4 pb-0`
+      }
     >
       {levels > 0 && <Indent levels={levels} />}
       {isAddToNode && levels !== 1 && <AddNodeToNode />}

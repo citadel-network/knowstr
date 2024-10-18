@@ -18,7 +18,7 @@ export function ColumnMenu(): JSX.Element {
   const isMultiSelectToggled = temporaryView.multiselectBtns.has(viewKey);
   return (
     <div className="flex-row-space-between font-size-big">
-      <div className="flex-row-start p-1">
+      <div className="flex-row-start">
         <ToggleMultiselect />
         <div className="vertical-line ms-2 me-2" />
         {!isMultiSelectToggled && (

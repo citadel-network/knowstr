@@ -39,11 +39,20 @@ function AddRelationsButton(): JSX.Element {
   const [node] = useNode();
   const ariaLabel = `Add new Relations to ${node?.text || ""}`;
 
+  const style = {
+    border: "0px",
+    color: "black",
+    backgroundColor: "inherit",
+    minHeight: "35px",
+    fontSize: "1.5rem",
+  };
+
   return (
     <Dropdown>
       <Dropdown.Toggle
         as="button"
-        className="btn new-relation"
+        className="no-shadow"
+        style={style}
         aria-label={ariaLabel}
       >
         <span>+</span>
@@ -203,13 +212,13 @@ function EditRelationsDropdown({
         className={className}
         style={{
           ...style,
-          borderLeftWidth: "1px",
-          borderLeftStyle: "solid",
-          borderLeftColor: "white",
+          borderLeftWidth: "0px",
+          borderLeftStyle: "none",
+          borderLeftColor: "none",
         }}
       >
         {isRemoteRelation && <span className="iconsminds-conference" />}
-        <span className="iconsminds-arrow-down" />
+        <span className="iconsminds-gear" />
       </Dropdown.Toggle>
       <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
         {otherRelations.map((r) => (
@@ -327,12 +336,11 @@ function AutomaticRelationsButton({
     isActive ? "opacity-none" : "deselected"
   }`;
   const style = {
-    backgroundColor: "black",
-    borderTopColor: "black",
-    borderRightColor: "black",
-    borderBottomColor: "black",
-    borderLeftColor: "black",
-    color: "white",
+    border: "0px",
+    borderLeft: `2px solid black`,
+    color: "black",
+    backgroundColor: "inherit",
+    minHeight: "25px",
   };
   const preventDeselect = isActive && alwaysOneSelected;
   const onClick = preventDeselect
@@ -346,11 +354,10 @@ function AutomaticRelationsButton({
       };
   const lbl = isActive ? label : relations.items.size;
   return (
-    <div className="btn-group select-relation">
+    <>
       <button
         type="button"
         aria-label={ariaLabel}
-        className={className}
         disabled={preventDeselect || readonly}
         style={style}
         onClick={onClick}
@@ -361,7 +368,7 @@ function AutomaticRelationsButton({
       {isActive && (
         <EditVirtualListDropdown className={className} style={style} />
       )}
-    </div>
+    </>
   );
 }
 
@@ -463,13 +470,13 @@ function relationLabel(
   relationSize: number
 ): string {
   if (!isActive) {
-    return `${relationSize}`;
+    return relationSize === 0 ? "" : `${relationSize}`;
   }
   if (!relationType) {
     return `Unknown (${relationSize})`;
   }
   if (relationType.label === "") {
-    return `${relationSize}`;
+    return relationSize === 0 ? "" : `${relationSize}`;
   }
   return `${relationType.label} (${relationSize})`;
 }
@@ -514,17 +521,18 @@ function SelectRelationsButton({
       : `show ${relationType?.label || "list"} ${node.text}`;
 
   const isActive = (isExpanded || !!alwaysOneSelected) && isSelected;
-  const className = `btn select-relation ${
+  const className = `btn select-relation no-shadow ${
     isActive ? "opacity-none" : "deselected"
   }`;
+
   const style = relationType
     ? {
-        backgroundColor: relationType.color,
         borderTopColor: relationType.color,
         borderRightColor: relationType.color,
-        borderBottomColor: relationType.color,
-        borderLeftColor: relationType.color,
-        color: "white",
+        border: "0px",
+        borderLeft: `2px solid ${relationType.color}`,
+        color: relationType.color,
+        backgroundColor: "inherit",
       }
     : {};
   const label = relationLabel(isActive, relationType, relationSize);
@@ -539,16 +547,14 @@ function SelectRelationsButton({
         }
       };
   return (
-    <div className="btn-group select-relation">
+    <>
       <button
         type="button"
-        aria-label={ariaLabel}
-        className={className}
-        disabled={preventDeselect}
-        style={style}
         onClick={onClick}
+        style={style}
+        aria-label={ariaLabel}
       >
-        <span className="">{label}</span>
+        {label}
       </button>
       {isActive && (
         <EditRelationsDropdown
@@ -557,7 +563,7 @@ function SelectRelationsButton({
           otherRelations={otherRelations}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -583,31 +589,37 @@ export function SelectRelations({
     user.publicKey,
     nodeID
   );
-  const groupedByType = relations.groupBy((r) => r.type);
+
+  const groupedByType = relations
+    .groupBy((r) => r.type)
+    .sortBy((r, t) => (currentRelations?.type === t ? 0 : 1));
+
   return (
-    <>
-      {groupedByType.toArray().map(([type, r]) => (
-        <SelectRelationsButton
-          relationList={r.toList()}
-          readonly={readonly}
-          alwaysOneSelected={alwaysOneSelected}
-          currentSelectedRelations={currentRelations}
-          key={type}
-        />
-      ))}
-      <SocialRelationsButton
-        readonly={readonly}
-        alwaysOneSelected={alwaysOneSelected}
-        currentRelations={currentRelations}
-      />
-      {displayReferencedByRelationsButton && (
-        <ReferencedByRelationsButton
+    <div className="menu-layout font-size-small">
+      <ul className="nav nav-underline gap-0">
+        {groupedByType.toArray().map(([type, r]) => (
+          <SelectRelationsButton
+            relationList={r.toList()}
+            readonly={readonly}
+            alwaysOneSelected={alwaysOneSelected}
+            currentSelectedRelations={currentRelations}
+            key={type}
+          />
+        ))}
+        <SocialRelationsButton
           readonly={readonly}
           alwaysOneSelected={alwaysOneSelected}
           currentRelations={currentRelations}
         />
-      )}
-      {!readonly && <AddRelationsButton />}
-    </>
+        {displayReferencedByRelationsButton && (
+          <ReferencedByRelationsButton
+            readonly={readonly}
+            alwaysOneSelected={alwaysOneSelected}
+            currentRelations={currentRelations}
+          />
+        )}
+        {!readonly && <AddRelationsButton />}
+      </ul>
+    </div>
   );
 }
