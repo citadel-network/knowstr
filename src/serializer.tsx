@@ -146,11 +146,18 @@ export function eventToRelations(e: UnsignedEvent): Relations | undefined {
     author: e.pubkey as PublicKey,
   };
 }
+
+function parseImageUrl(e: UnsignedEvent): string | undefined {
+  const imageUrl = findTag(e, "imeta");
+  return !!imageUrl && imageUrl.startsWith("url ")
+    ? imageUrl.slice(4)
+    : undefined;
+}
+
 function parseProject(
   e: UnsignedEvent
 ): Omit<ProjectNode, "id" | "text"> | undefined {
   const address = findTag(e, "address");
-  const image = findTag(e, "headerImage");
   const perpetualVotes = findTag(e, "perpetualVotes") as LongID | undefined;
   const quarterlyVotes = findTag(e, "quarterlyVotes") as LongID | undefined;
   const dashboardInternal = findTag(e, "c") as LongID | undefined;
@@ -166,8 +173,8 @@ function parseProject(
   }
   return {
     address,
-    image,
     relays: findAllRelays(e),
+    imageUrl: parseImageUrl(e),
     perpetualVotes,
     quarterlyVotes,
     dashboardInternal,
@@ -179,7 +186,7 @@ function parseProject(
   };
 }
 
-export function eventToTextNodeOrProject(
+export function eventToTextOrProjectNode(
   e: UnsignedEvent
 ): [id: string, node: KnowNode] | [undefined] {
   const id = findTag(e, "d");
@@ -192,9 +199,10 @@ export function eventToTextNodeOrProject(
     // ts doesn't recognise this as a valid type
     type: "text" as "text" | "project",
   };
+
   if (e.kind === KIND_PROJECT) {
     const project = parseProject(e);
     return project ? [id, { ...base, ...project }] : [undefined];
   }
-  return [id, base];
+  return [id, { ...base, imageUrl: parseImageUrl(e) }];
 }

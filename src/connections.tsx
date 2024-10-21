@@ -342,10 +342,18 @@ export function bulkAddRelations(
   }, relations);
 }
 
+export function getImageUrlFromText(text: string): string | undefined {
+  const imageUrlRegex =
+    /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|bmp|webp|svg))/;
+  const isContainingImageUrl = text.match(imageUrlRegex);
+  return isContainingImageUrl ? isContainingImageUrl[0] : undefined;
+}
+
 export function newNode(text: string, myself: PublicKey): KnowNode {
   return {
     text,
     id: joinID(myself, v4()),
     type: "text",
+    imageUrl: getImageUrlFromText(text),
   };
 }

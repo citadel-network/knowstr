@@ -128,7 +128,9 @@ declare global {
     type: "text" | "project";
   };
 
-  type TextNode = BasicNode;
+  type TextNode = BasicNode & {
+    imageUrl?: string;
+  };
 
   // Other Fields which we don't use
   // - contract
@@ -136,7 +138,7 @@ declare global {
   type ProjectNode = BasicNode & {
     tokenSupply?: number;
     address?: string;
-    image?: string;
+    imageUrl?: string;
     // Ideally this should be changeable through a running election
     relays: Relays;
     perpetualVotes?: LongID;

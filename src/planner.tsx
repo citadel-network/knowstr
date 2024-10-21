@@ -194,7 +194,13 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
     kind: KIND_KNOWLEDGE_NODE,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [["d", shortID(node.id)]],
+    tags:
+      node.imageUrl !== undefined
+        ? [
+            ["d", shortID(node.id)],
+            ["imeta", `url ${node.imageUrl}`],
+          ]
+        : [["d", shortID(node.id)]],
     content: node.text,
   };
   return {

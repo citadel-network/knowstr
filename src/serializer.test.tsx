@@ -1,6 +1,6 @@
 import { joinID } from "./connections";
 import { KIND_PROJECT } from "./nostr";
-import { eventToTextNodeOrProject } from "./serializer";
+import { eventToTextOrProjectNode } from "./serializer";
 import { ALICE } from "./utils.test";
 
 test("parse project", () => {
@@ -9,7 +9,7 @@ test("parse project", () => {
     tags: [
       ["d", "123"],
       ["address", "525 S. Winchester Blvd. San Jose, CA 95128"],
-      ["headerImage", "https://winchestermysteryhouse.com/wp"],
+      ["imeta", "url https://winchestermysteryhouse.com/wp"],
       ["r", "wss://winchester.deedsats.com/"],
       ["r", "wss://nos.lol/", "read"],
       ["c", "dashboard-internal"],
@@ -23,7 +23,7 @@ test("parse project", () => {
     content: "Winchester Mystery House",
     created_at: Math.floor(new Date("2009-01-03T18:15:05Z").getTime() / 1000),
   };
-  const [id, p] = eventToTextNodeOrProject(event);
+  const [id, p] = eventToTextOrProjectNode(event);
   const project = p as ProjectNode;
   expect(id).toEqual("123");
 
@@ -34,7 +34,7 @@ test("parse project", () => {
       { url: "wss://nos.lol/", write: false, read: true },
     ],
     address: "525 S. Winchester Blvd. San Jose, CA 95128",
-    image: "https://winchestermysteryhouse.com/wp",
+    imageUrl: "https://winchestermysteryhouse.com/wp",
     perpetualVotes: "d",
     quarterlyVotes: "e",
     dashboardInternal: "dashboard-internal",

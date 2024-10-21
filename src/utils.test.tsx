@@ -644,7 +644,7 @@ export function planUpsertProjectNode(plan: Plan, node: ProjectNode): Plan {
       ["d", shortID(node.id)],
       ["memberListProvider", node.memberListProvider],
       ...(node.address ? [["address", node.address]] : []),
-      ...(node.image ? [["headerImage", node.image]] : []),
+      ...(node.imageUrl ? [["imageUrl", `url ${node.imageUrl}`]] : []),
       ...(node.perpetualVotes ? [["perpetualVotes", node.perpetualVotes]] : []),
       ...(node.quarterlyVotes ? [["quarterlyVotes", node.quarterlyVotes]] : []),
       // Needs to be indexed by relays so we can see if a dashboard is part of a project
@@ -672,8 +672,8 @@ export function createExampleProject(publicKey: PublicKey): ProjectNode {
     address: "525 S. Winchester Blvd. San Jose, CA 95128",
     memberListProvider: CAROL.publicKey,
     type: "project",
-    image:
-      "https://partnersinternational.pl/wp-content/uploads/2023/03/Premium-real-estate-office-Warsaw.jpg",
+    imageUrl:
+      "url https://partnersinternational.pl/wp-content/uploads/2023/03/Premium-real-estate-office-Warsaw.jpg",
     relays: [
       { url: "wss://winchester.deedsats.com/", write: true, read: true },
       { url: "wss://nos.lol/", write: false, read: true },

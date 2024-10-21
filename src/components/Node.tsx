@@ -1,5 +1,5 @@
 import { List } from "immutable";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { Link, matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
@@ -202,10 +202,43 @@ function EditableNodeContent({
 function NodeContent({ node }: { node: KnowNode }): JSX.Element {
   const { settings } = useData();
   const isBionic = settings.bionicReading;
+  const [isImageAccessible, setIsImageAccessible] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkImageAccessibility = async (): Promise<void> => {
+      if (node.imageUrl) {
+        try {
+          await fetch(node.imageUrl, {
+            method: "HEAD",
+            mode: "no-cors",
+          });
+          // Since the response is opaque, we assume the image is accessible
+          setIsImageAccessible(true);
+        } catch {
+          setIsImageAccessible(false);
+          // eslint-disable-next-line no-console
+          console.warn(`Invalid URL: ${node.imageUrl}`);
+        }
+      }
+    };
+
+    checkImageAccessibility();
+  }, [node.imageUrl]);
+  const textToDisplay = node.imageUrl
+    ? node.text.replace(node.imageUrl, "")
+    : node.text;
+
   return (
     <span className="break-word">
       <NodeIcon node={node} />
-      {isBionic ? <BionicText nodeText={node.text} /> : node.text}
+      {isBionic ? <BionicText nodeText={textToDisplay} /> : textToDisplay}
+      {isImageAccessible && (
+        <img
+          src={node.imageUrl}
+          alt={node.imageUrl || ""}
+          style={{ maxWidth: "100%", height: "auto", marginTop: "10px" }}
+        />
+      )}
     </span>
   );
 }
