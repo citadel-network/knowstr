@@ -170,7 +170,8 @@ function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
 function parseImage(e: UnsignedEvent): Omit<ImageNode, "id" | "text"> {
   const imageUrl = findTag(e, "imeta");
   return {
-    imageUrl: imageUrl || "",
+    imageUrl:
+      !!imageUrl && imageUrl.startsWith("url ") ? imageUrl.slice(4) : "",
     type: "image",
   };
 }

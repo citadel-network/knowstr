@@ -180,7 +180,7 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
     tags: isImage
       ? [
           ["d", shortID(node.id)],
-          ["imeta", node.imageUrl],
+          ["imeta", `url ${node.imageUrl}`],
         ]
       : [["d", shortID(node.id)]],
     content: node.text,
