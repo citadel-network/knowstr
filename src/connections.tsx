@@ -343,9 +343,24 @@ export function bulkAddRelations(
 }
 
 export function newNode(text: string, myself: PublicKey): KnowNode {
+  const imageUrlRegex =
+    /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|bmp|webp|svg))/;
+  const isContainingImageUrl = text.match(imageUrlRegex);
+  if (isContainingImageUrl) {
+    return {
+      text,
+      id: joinID(myself, v4()),
+      type: "image",
+      imageUrl: isContainingImageUrl[0],
+    };
+  }
   return {
     text,
     id: joinID(myself, v4()),
     type: "text",
   };
+}
+
+export function isImageNode(node: KnowNode): node is ImageNode {
+  return node.type === "image";
 }

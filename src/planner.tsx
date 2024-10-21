@@ -22,7 +22,13 @@ import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";
 import { viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
-import { isIDRemote, joinID, shortID, splitID } from "./connections";
+import {
+  isIDRemote,
+  isImageNode,
+  joinID,
+  shortID,
+  splitID,
+} from "./connections";
 import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { useUserWorkspaces, useWorkspaceContext } from "./WorkspaceContext";
@@ -165,11 +171,17 @@ export function planUpsertNode(plan: Plan, node: KnowNode): Plan {
     ...userDB,
     nodes: updatedNodes,
   };
+  const isImage = isImageNode(node);
   const updateNodeEvent = {
     kind: KIND_KNOWLEDGE_NODE,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [["d", shortID(node.id)]],
+    tags: isImage
+      ? [
+          ["d", shortID(node.id)],
+          ["imeta", `url ${node.imageUrl}`],
+        ]
+      : [["d", shortID(node.id)]],
     content: node.text,
   };
   return {

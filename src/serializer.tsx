@@ -167,8 +167,16 @@ function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
     type: "project",
   };
 }
+function parseImage(e: UnsignedEvent): Omit<ImageNode, "id" | "text"> {
+  const imageUrl = findTag(e, "imeta");
+  return {
+    imageUrl:
+      !!imageUrl && imageUrl.startsWith("url ") ? imageUrl.slice(4) : "",
+    type: "image",
+  };
+}
 
-export function eventToTextNodeOrProject(
+export function eventToTextOrProjectOrImageNode(
   e: UnsignedEvent
 ): [id: string, node: KnowNode] | [undefined] {
   const id = findTag(e, "d");
@@ -179,9 +187,15 @@ export function eventToTextNodeOrProject(
     id: joinID(e.pubkey, id),
     text: e.content,
     // ts doesn't recognise this as a valid type
-    type: "text" as "text" | "project",
+    type: "text" as "text" | "project" | "image",
   };
-  return e.kind === KIND_PROJECT
-    ? [id, { ...base, ...parseProject(e) }]
-    : [id, base];
+
+  if (findTag(e, "imeta")) {
+    return [id, { ...base, ...parseImage(e) }];
+  }
+  if (e.kind === KIND_PROJECT) {
+    const project = parseProject(e);
+    return project ? [id, { ...base, ...project }] : [undefined];
+  }
+  return [id, base];
 }

@@ -123,7 +123,7 @@ declare global {
   type BasicNode = {
     id: LongID;
     text: string;
-    type: "text" | "project";
+    type: "text" | "project" | "image";
   };
 
   type TextNode = BasicNode;
@@ -146,7 +146,11 @@ declare global {
     createdAt: Date;
   };
 
-  type KnowNode = TextNode | ProjectNode;
+  type ImageNode = BasicNode & {
+    imageUrl: string;
+  };
+
+  type KnowNode = TextNode | ProjectNode | ImageNode;
 
   type Views = Map<string, View>;
 

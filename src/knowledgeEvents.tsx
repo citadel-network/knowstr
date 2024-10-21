@@ -18,7 +18,7 @@ import {
   jsonToViews,
   jsonToWorkspace,
   eventToRelations,
-  eventToTextNodeOrProject,
+  eventToTextOrProjectOrImageNode,
 } from "./serializer";
 import { splitID } from "./connections";
 
@@ -66,7 +66,7 @@ export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
       }
       return rdx;
     }
-    const [id, node] = eventToTextNodeOrProject(event);
+    const [id, node] = eventToTextOrProjectOrImageNode(event);
     return id ? rdx.set(id, node) : rdx;
   }, Map<string, KnowNode>());
 }
