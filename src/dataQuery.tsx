@@ -4,6 +4,7 @@ import { List, Set } from "immutable";
 import { useEventQuery } from "citadel-commons";
 import {
   KIND_DELETE,
+  KIND_IMAGE,
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_PROJECT,
@@ -177,7 +178,7 @@ export function createBaseFilter(
       kinds: [KIND_KNOWLEDGE_LIST],
     },
     knowledgeNodesByID: {
-      kinds: [KIND_KNOWLEDGE_NODE, KIND_PROJECT],
+      kinds: [KIND_KNOWLEDGE_NODE, KIND_PROJECT, KIND_IMAGE],
     },
     knowledgeListByHead: {
       kinds: [KIND_KNOWLEDGE_LIST],

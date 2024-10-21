@@ -12,6 +12,7 @@ import {
   KIND_KNOWLEDGE_NODE,
   KIND_VIEWS,
   KIND_WORKSPACES,
+  KIND_IMAGE,
 } from "./nostr";
 import {
   Serializable,
@@ -22,9 +23,13 @@ import {
 } from "./serializer";
 import { splitID } from "./connections";
 
-function isTextNodeOrProject(kind: number | string): boolean {
+function isTextNodeOrProjectOrImage(kind: number | string): boolean {
   const kindAsNumber = typeof kind === "string" ? parseInt(kind, 10) : kind;
-  return kindAsNumber === KIND_KNOWLEDGE_NODE || kindAsNumber === KIND_PROJECT;
+  return (
+    kindAsNumber === KIND_KNOWLEDGE_NODE ||
+    kindAsNumber === KIND_PROJECT ||
+    kindAsNumber === KIND_IMAGE
+  );
 }
 
 // Only listen to delete events where the signer created the node or relation
@@ -54,14 +59,15 @@ function isDeletable(
 export function findNodes(events: List<UnsignedEvent>): Map<string, KnowNode> {
   const sorted = sortEvents(
     events.filter(
-      (event) => isTextNodeOrProject(event.kind) || event.kind === KIND_DELETE
+      (event) =>
+        isTextNodeOrProjectOrImage(event.kind) || event.kind === KIND_DELETE
     )
   );
   // use reduce in case of duplicate nodes, the newer version wins
   return sorted.reduce((rdx, event) => {
     if (event.kind === KIND_DELETE) {
       const [deletable, eventToDeleteId, deleteKind] = isDeletable(event, rdx);
-      if (deletable && isTextNodeOrProject(deleteKind)) {
+      if (deletable && isTextNodeOrProjectOrImage(deleteKind)) {
         return rdx.remove(eventToDeleteId);
       }
       return rdx;
