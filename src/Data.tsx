@@ -18,6 +18,7 @@ import {
   KIND_SETTINGS,
   KIND_DELETE,
   KIND_PROJECT,
+  KIND_IMAGE,
 } from "./nostr";
 import { DataContextProvider } from "./DataContext";
 import { findContacts } from "./contacts";
@@ -63,7 +64,12 @@ export function newProcessedEvents(): ProcessedEvents {
   };
 }
 
-export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE, KIND_DELETE, KIND_PROJECT];
+export const KIND_SEARCH = [
+  KIND_KNOWLEDGE_NODE,
+  KIND_IMAGE,
+  KIND_DELETE,
+  KIND_PROJECT,
+];
 
 export const KINDS_META = [
   KIND_SETTINGS,
