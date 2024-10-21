@@ -349,3 +349,7 @@ export function newNode(text: string, myself: PublicKey): KnowNode {
     type: "text",
   };
 }
+
+export function isImageNode(node: KnowNode): node is ImageNode {
+  return node.type === "image";
+}

@@ -1,5 +1,5 @@
 import { List } from "immutable";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { Link, matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
@@ -12,7 +12,7 @@ import {
   Button,
 } from "citadel-commons";
 import { FULL_SCREEN_PATH } from "../App";
-import { getRelations } from "../connections";
+import { getRelations, isImageNode } from "../connections";
 import {
   useNode,
   useViewKey,
@@ -202,10 +202,39 @@ function EditableNodeContent({
 function NodeContent({ node }: { node: KnowNode }): JSX.Element {
   const { settings } = useData();
   const isBionic = settings.bionicReading;
+  const imageUrl = isImageNode(node) ? node.imageUrl : undefined;
+  const [isImageAccessible, setIsImageAccessible] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (imageUrl) {
+      fetch(imageUrl, { method: "HEAD" })
+        .then((response: Response) => {
+          if (response.ok) {
+            setIsImageAccessible(true);
+          } else {
+            setIsImageAccessible(false);
+            // eslint-disable-next-line no-console
+            console.warn(`Invalid URL: ${imageUrl}`);
+          }
+        })
+        .catch(() => {
+          setIsImageAccessible(false);
+          // eslint-disable-next-line no-console
+          console.warn(`Invalid URL: ${imageUrl}`);
+        });
+    }
+  }, [imageUrl]);
   return (
     <span className="break-word">
       <NodeIcon node={node} />
       {isBionic ? <BionicText nodeText={node.text} /> : node.text}
+      {isImageAccessible && (
+        <img
+          src={imageUrl}
+          alt="displayed from url"
+          style={{ maxWidth: "100%", height: "auto", marginTop: "10px" }}
+        />
+      )}
     </span>
   );
 }

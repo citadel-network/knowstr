@@ -3,7 +3,7 @@ import { UnsignedEvent } from "nostr-tools";
 import { findAllRelays, findAllTags, findTag } from "citadel-commons";
 import { parseViewPath } from "./ViewContext";
 import { joinID } from "./connections";
-import { KIND_PROJECT } from "./nostr";
+import { KIND_IMAGE, KIND_PROJECT } from "./nostr";
 
 export type Serializable =
   | string
@@ -167,8 +167,15 @@ function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
     type: "project",
   };
 }
+function parseImage(e: UnsignedEvent): Omit<ImageNode, "id" | "text"> {
+  const imageUrl = findTag(e, "imeta");
+  return {
+    imageUrl: imageUrl || "",
+    type: "image",
+  };
+}
 
-export function eventToTextNodeOrProject(
+export function eventToTextOrProjectOrImageNode(
   e: UnsignedEvent
 ): [id: string, node: KnowNode] | [undefined] {
   const id = findTag(e, "d");
@@ -179,9 +186,14 @@ export function eventToTextNodeOrProject(
     id: joinID(e.pubkey, id),
     text: e.content,
     // ts doesn't recognise this as a valid type
-    type: "text" as "text" | "project",
+    type: "text" as "text" | "project" | "image",
   };
-  return e.kind === KIND_PROJECT
-    ? [id, { ...base, ...parseProject(e) }]
-    : [id, base];
+  if (e.kind === KIND_IMAGE) {
+    return [id, { ...base, ...parseImage(e) }];
+  }
+
+  if (e.kind === KIND_PROJECT) {
+    return [id, { ...base, ...parseProject(e) }];
+  }
+  return [id, base];
 }

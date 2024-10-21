@@ -1,6 +1,6 @@
 import { joinID } from "./connections";
 import { KIND_PROJECT } from "./nostr";
-import { eventToTextNodeOrProject } from "./serializer";
+import { eventToTextOrProjectOrImageNode } from "./serializer";
 import { ALICE } from "./utils.test";
 
 test("parse project", () => {
@@ -22,7 +22,7 @@ test("parse project", () => {
     content: "Winchester Mystery House",
     created_at: Math.floor(new Date("2009-01-03T18:15:05Z").getTime() / 1000),
   };
-  const [id, p] = eventToTextNodeOrProject(event);
+  const [id, p] = eventToTextOrProjectOrImageNode(event);
   const project = p as ProjectNode;
   expect(id).toEqual("123");
 
