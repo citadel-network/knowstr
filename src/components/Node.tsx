@@ -206,23 +206,24 @@ function NodeContent({ node }: { node: KnowNode }): JSX.Element {
   const [isImageAccessible, setIsImageAccessible] = useState<boolean>(false);
 
   useEffect(() => {
-    if (imageUrl) {
-      fetch(imageUrl, { method: "HEAD" })
-        .then((response: Response) => {
-          if (response.ok) {
-            setIsImageAccessible(true);
-          } else {
-            setIsImageAccessible(false);
-            // eslint-disable-next-line no-console
-            console.warn(`Invalid URL: ${imageUrl}`);
-          }
-        })
-        .catch(() => {
+    const checkImageAccessibility = async (): Promise<void> => {
+      if (imageUrl) {
+        try {
+          await fetch(imageUrl, {
+            method: "HEAD",
+            mode: "no-cors",
+          });
+          // Since the response is opaque, we assume the image is accessible
+          setIsImageAccessible(true);
+        } catch {
           setIsImageAccessible(false);
           // eslint-disable-next-line no-console
           console.warn(`Invalid URL: ${imageUrl}`);
-        });
-    }
+        }
+      }
+    };
+
+    checkImageAccessibility();
   }, [imageUrl]);
   return (
     <span className="break-word">
