@@ -18,9 +18,10 @@ import {
   KIND_SETTINGS,
   KIND_DELETE,
   KIND_PROJECT,
+  KIND_MEMBERLIST,
 } from "./nostr";
 import { DataContextProvider } from "./DataContext";
-import { findContacts } from "./contacts";
+import { findContacts, findMembers } from "./contacts";
 import { useApis } from "./Apis";
 import {
   findNodes,
@@ -49,6 +50,7 @@ type ProcessedEvents = {
   views: Views;
   workspaces: List<ID>;
   activeWorkspace: LongID | undefined;
+  projectMembers: Members;
 };
 
 export function newProcessedEvents(): ProcessedEvents {
@@ -60,6 +62,7 @@ export function newProcessedEvents(): ProcessedEvents {
     views: Map<string, View>(),
     activeWorkspace: undefined,
     workspaces: List<ID>(),
+    projectMembers: Map<PublicKey, Member>(),
   };
 }
 
@@ -104,6 +107,7 @@ function processEventsByAuthor(
   const relations = findRelations(authorEvents);
   const workspaces = findWorkspaces(authorEvents);
   const views = findViews(authorEvents);
+  const projectMembers = findMembers(authorEvents);
   const knowledgeDB = {
     nodes,
     relations,
@@ -117,10 +121,11 @@ function processEventsByAuthor(
     views,
     workspaces: workspaces ? workspaces.workspaces : List<ID>(),
     activeWorkspace: workspaces ? workspaces.activeWorkspace : undefined,
+    projectMembers,
   };
 }
 
-export function useEventProcessor(
+export function processEvents(
   events: List<UnsignedEvent>
 ): Map<PublicKey, ProcessedEvents> {
   const groupedByAuthor = events.groupBy((e) => e.pubkey as PublicKey);
@@ -198,7 +203,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     .merge(newEventsAndPublishResults.unsignedEvents);
 
   const processedMetaEvents = mergeEvents(
-    useEventProcessor(metaEvents).get(myPublicKey, newProcessedEvents()),
+    processEvents(metaEvents).get(myPublicKey, newProcessedEvents()),
     newEventsAndPublishResults.preLoginEvents
   );
   const contacts = processedMetaEvents.contacts.filter(
@@ -223,7 +228,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     }
   );
 
-  const processedContactRelayEvents = useEventProcessor(
+  const processedContactRelayEvents = processEvents(
     contactRelayEvents.valueSeq().toList()
   );
 
@@ -242,6 +247,34 @@ function Data({ user, children }: DataProps): JSX.Element {
     isRelaysLoaded
   );
 
+  const { project } = useProjectContext();
+
+  // Load Projects members
+  const { events: membersEvents } = useEventQuery(
+    relayPool,
+    [
+      {
+        authors: project ? [project.memberListProvider] : [],
+        kinds: [KIND_MEMBERLIST],
+      },
+    ],
+    {
+      enabled: !!project,
+      readFromRelays: usePreloadRelays({
+        user: true,
+        project: true,
+      }),
+    }
+  );
+  const processedEvents = project?.memberListProvider
+    ? processEvents(membersEvents.valueSeq().toList()).get(
+        project.memberListProvider,
+        newProcessedEvents()
+      )
+    : newProcessedEvents();
+  const projectMembers =
+    processedEvents.projectMembers || Map<PublicKey, Member>();
+
   return (
     <DataContextProvider
       contacts={contacts}
@@ -252,6 +285,7 @@ function Data({ user, children }: DataProps): JSX.Element {
       relaysInfos={searchRelaysInfo}
       publishEventsStatus={newEventsAndPublishResults}
       views={processedMetaEvents.views}
+      projectMembers={projectMembers}
     >
       <WorkspaceContextProvider>
         <PlanningContextProvider

@@ -5,7 +5,7 @@ import { useDefaultWorkspace } from "./NostrAuthContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
 import { KIND_WORKSPACES } from "./nostr";
-import { newProcessedEvents, useEventProcessor } from "./Data";
+import { newProcessedEvents, processEvents } from "./Data";
 import { fallbackWorkspace, replaceUnauthenticatedUser } from "./planner";
 import {
   getWorkspacesWithNodes,
@@ -34,7 +34,7 @@ export function WorkspaceContextProvider({
   children: React.ReactNode;
 }): JSX.Element {
   const defaultWorkspace = useDefaultWorkspace();
-  const { user, contacts, publishEventsStatus } = useData();
+  const { user, contacts, projectMembers, publishEventsStatus } = useData();
   const { relayPool } = useApis();
   // If there is no workspace to be found, we create a new one with this ID
   const [fallbackWSID] = useState(fallbackWorkspace(user.publicKey));
@@ -59,7 +59,7 @@ export function WorkspaceContextProvider({
     .valueSeq()
     .toList()
     .merge(publishEventsStatus.unsignedEvents);
-  const processedEvents = useEventProcessor(workspaceEvents);
+  const processedEvents = processEvents(workspaceEvents);
   const myProcessedEvents = processedEvents.get(
     user.publicKey,
     newProcessedEvents()
@@ -72,7 +72,7 @@ export function WorkspaceContextProvider({
 
   const workspaceFilters = processedEvents.reduce((rdx, p) => {
     return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
-  }, createBaseFilter(contacts, user.publicKey));
+  }, createBaseFilter(contacts, projectMembers, user.publicKey));
 
   const { events: workspaceNodesEvents } = useEventQuery(
     relayPool,
@@ -86,7 +86,7 @@ export function WorkspaceContextProvider({
       enabled: workspaceConfigEose,
     }
   );
-  const knowledgeDBs = useEventProcessor(
+  const knowledgeDBs = processEvents(
     workspaceNodesEvents
       .valueSeq()
       .toList()

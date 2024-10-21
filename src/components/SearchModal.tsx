@@ -73,8 +73,13 @@ function useSearchQuery(
   nip50: boolean
 ): [Map<string, KnowNode>, boolean] {
   const { relayPool, nip11 } = useApis();
-  const { contacts, user } = useData();
-  const authors = contacts.keySeq().toSet().add(user.publicKey).toArray();
+  const { contacts, user, projectMembers } = useData();
+  const authors = contacts
+    .keySeq()
+    .toSet()
+    .merge(projectMembers.keySeq().toSet())
+    .add(user.publicKey)
+    .toArray();
   const [search] = useDebounce(query, nip11.searchDebounce);
   const enabled = search !== "" && relays.length > 0;
 

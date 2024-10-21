@@ -12,7 +12,7 @@ import { splitID, REFERENCED_BY, SOCIAL } from "./connections";
 import { ADD_TO_NODE, getNodeFromID, useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
-import { useEventProcessor } from "./Data";
+import { processEvents } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
 import { isUserLoggedIn } from "./NostrAuthContext";
 import { useReadRelays } from "./relays";
@@ -78,8 +78,9 @@ export function sanitizeFilter(
 export function filtersToFilterArray(filters: Filters): Filter[] {
   const { authors } = filters;
   return [
-    sanitizeFilter({ ...filters.knowledgeListbyID, authors }, "#d"),
-    sanitizeFilter({ ...filters.knowledgeNodesByID, authors }, "#d"),
+    // No need for an author filter when loading a specific ID
+    sanitizeFilter({ ...filters.knowledgeListbyID }, "#d"),
+    sanitizeFilter({ ...filters.knowledgeNodesByID }, "#d"),
     sanitizeFilter({ ...filters.knowledgeListByHead, authors }, "#k"),
     sanitizeFilter({ ...filters.referencedBy, authors }, "#i"),
     { ...filters.deleteFilter, authors },
@@ -169,9 +170,14 @@ export function addWorkspacesToFilter(
 
 export function createBaseFilter(
   contacts: Contacts,
+  projectMembers: Members,
   myself: PublicKey
 ): Filters {
-  const authors = [...contacts.keySeq().toArray(), myself];
+  const authors = [
+    ...contacts.keySeq().toArray(),
+    ...projectMembers.keySeq().toArray(),
+    myself,
+  ];
   return {
     knowledgeListbyID: {
       kinds: [KIND_KNOWLEDGE_LIST],
@@ -240,7 +246,7 @@ export function useQueryKnowledgeData(filters: Filter[]): {
     }, eventLoadingTimeout) as unknown as number;
   }, [events.size, eose, JSON.stringify(filters), disabled]);
 
-  const processedEvents = useEventProcessor(
+  const processedEvents = processEvents(
     events.valueSeq().toList().merge(unpublishedEvents)
   );
   const knowledgeDBs = processedEvents.map((data) => data.knowledgeDB);
@@ -257,10 +263,10 @@ export function LoadNode({
   referencedBy?: boolean;
 }): JSX.Element {
   const [nodeID] = useNodeID();
-  const { user, contacts } = useData();
+  const { user, contacts, projectMembers } = useData();
 
   const nodeFilter = addNodeToFilters(
-    createBaseFilter(contacts, user.publicKey),
+    createBaseFilter(contacts, projectMembers, user.publicKey),
     nodeID
   );
   const filter = referencedBy

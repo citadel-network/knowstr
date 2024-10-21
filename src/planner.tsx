@@ -16,6 +16,7 @@ import {
   KIND_VIEWS,
   KIND_WORKSPACES,
   KIND_SETTINGS,
+  KIND_MEMBERLIST,
 } from "./nostr";
 import { useData } from "./DataContext";
 import { execute, republishEvents } from "./executor";
@@ -88,6 +89,30 @@ export function planAddContact(plan: Plan, publicKey: PublicKey): Plan {
         defaultRelays: false,
         user: true,
         project: false,
+        contacts: false,
+      })
+    ),
+  };
+}
+
+export function planUpsertMemberlist(plan: Plan, members: Members): Plan {
+  const votesTags = members
+    .valueSeq()
+    .toArray()
+    .map((v) => ["votes", v.publicKey, `${v.votes}`]);
+  const contactListEvent = newContactListEvent(members, plan.user);
+  const memberListEvent = {
+    ...contactListEvent,
+    kind: KIND_MEMBERLIST,
+    tags: [...contactListEvent.tags, ...votesTags],
+  };
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(
+      setRelayConf(memberListEvent, {
+        defaultRelays: false,
+        user: false,
+        project: true,
         contacts: false,
       })
     ),

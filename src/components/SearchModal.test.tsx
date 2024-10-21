@@ -3,10 +3,13 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // eslint-disable-next-line import/no-unresolved
 import { BasicRelayInformation } from "nostr-tools/lib/types/nip11";
+import { Map } from "immutable";
 import { SearchModal } from "./SearchModal";
 import { newNode } from "../connections";
 import {
   ALICE,
+  BOB,
+  CAROL,
   createExampleProject,
   matchSplitText,
   planUpsertProjectNode,
@@ -19,6 +22,7 @@ import {
   planBulkUpsertNodes,
   planUpdateWorkspaceIfNecessary,
   planUpsertFallbackWorkspaceIfNecessary,
+  planUpsertMemberlist,
   planUpsertNode,
 } from "../planner";
 import { execute } from "../executor";
@@ -185,4 +189,46 @@ test("Search for Projects", async () => {
   const searchInput = await screen.findByLabelText("search input");
   await userEvent.type(searchInput, "Winch");
   await screen.findByText(matchSplitText("Winchester Mystery House"));
+});
+
+test("Find Project Members Notes", async () => {
+  const [alice, bob, carol] = setup([ALICE, BOB, CAROL]);
+  const project = createExampleProject(CAROL.publicKey);
+  await execute({
+    ...carol(),
+    plan: planUpsertProjectNode(createPlan(carol()), project),
+  });
+  await execute({
+    ...carol(),
+    plan: planUpsertMemberlist(
+      createPlan(carol()),
+      Map<PublicKey, Member>({
+        [ALICE.publicKey]: {
+          ...ALICE,
+          votes: 10000,
+        },
+        [BOB.publicKey]: {
+          ...BOB,
+          votes: 10000,
+        },
+      })
+    ),
+  });
+  await execute({
+    ...bob(),
+    plan: planBulkUpsertNodes(createPlan(bob()), [
+      newNode("Bitcoin", bob().user.publicKey),
+    ]),
+  });
+  // Alice finds Bob's notes because he is a project member as well
+  renderWithTestData(
+    <SearchModal onAddExistingNode={jest.fn()} onHide={jest.fn()} />,
+    {
+      ...alice(),
+      initialRoute: `/?project=${project.id}`,
+    }
+  );
+  const searchInput = await screen.findByLabelText("search input");
+  await userEvent.type(searchInput, "Bit");
+  await screen.findByText(matchSplitText("Bitcoin"));
 });

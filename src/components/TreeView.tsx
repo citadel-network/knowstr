@@ -196,7 +196,11 @@ export function TreeViewNodeLoader({
   nodes: List<ViewPath>;
 }): JSX.Element {
   const data = useData();
-  const baseFilter = createBaseFilter(data.contacts, data.user.publicKey);
+  const baseFilter = createBaseFilter(
+    data.contacts,
+    data.projectMembers,
+    data.user.publicKey
+  );
 
   const nodeIDs = nodes.map((path) => getNodeIDFromView(data, path)[0]);
 
@@ -289,7 +293,11 @@ function Tree(): JSX.Element | null {
 export function TreeView(): JSX.Element {
   const data = useData();
   const key = useViewKey();
-  const filter = createBaseFilter(data.contacts, data.user.publicKey);
+  const filter = createBaseFilter(
+    data.contacts,
+    data.projectMembers,
+    data.user.publicKey
+  );
 
   // Find all Lists attached to all Nodes and subnodes of this tree
   const lists = data.views

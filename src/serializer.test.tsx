@@ -17,6 +17,7 @@ test("parse project", () => {
       ["quarterlyVotes", "e"],
       ["dashboardPublic", "f"],
       ["tokenSupply", "1000000"],
+      ["memberListProvider", ALICE.publicKey],
     ],
     pubkey: ALICE.publicKey,
     content: "Winchester Mystery House",
@@ -41,6 +42,7 @@ test("parse project", () => {
     text: "Winchester Mystery House",
     tokenSupply: 1000000,
     createdAt: new Date("2009-01-03T18:15:05Z"),
+    memberListProvider: ALICE.publicKey,
     type: "project",
   });
 });

@@ -146,7 +146,9 @@ export function eventToRelations(e: UnsignedEvent): Relations | undefined {
     author: e.pubkey as PublicKey,
   };
 }
-function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
+function parseProject(
+  e: UnsignedEvent
+): Omit<ProjectNode, "id" | "text"> | undefined {
   const address = findTag(e, "address");
   const image = findTag(e, "headerImage");
   const perpetualVotes = findTag(e, "perpetualVotes") as LongID | undefined;
@@ -154,6 +156,14 @@ function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
   const dashboardInternal = findTag(e, "c") as LongID | undefined;
   const dashboardPublic = findTag(e, "dashboardPublic") as LongID | undefined;
   const tokenSupply = parseNumber(findTag(e, "tokenSupply"));
+  const memberListProvider = findTag(e, "memberListProvider") as
+    | PublicKey
+    | undefined;
+  if (!memberListProvider) {
+    // eslint-disable-next-line no-console
+    console.error("Can't parse project, memberListProvider is missing");
+    return undefined;
+  }
   return {
     address,
     image,
@@ -164,6 +174,7 @@ function parseProject(e: UnsignedEvent): Omit<ProjectNode, "id" | "text"> {
     dashboardPublic,
     tokenSupply,
     createdAt: new Date(e.created_at * 1000),
+    memberListProvider,
     type: "project",
   };
 }
@@ -181,7 +192,9 @@ export function eventToTextNodeOrProject(
     // ts doesn't recognise this as a valid type
     type: "text" as "text" | "project",
   };
-  return e.kind === KIND_PROJECT
-    ? [id, { ...base, ...parseProject(e) }]
-    : [id, base];
+  if (e.kind === KIND_PROJECT) {
+    const project = parseProject(e);
+    return project ? [id, { ...base, ...project }] : [undefined];
+  }
+  return [id, base];
 }

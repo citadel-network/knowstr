@@ -30,8 +30,8 @@ declare global {
     userName?: string;
   };
 
-  export type ContactOfContact = Contact & {
-    commonContact: PublicKey;
+  export type Member = Contact & {
+    votes: number;
   };
 
   export type HasPublicKey = {
@@ -39,6 +39,7 @@ declare global {
   };
 
   type Contacts = Map<PublicKey, Contact>;
+  type Members = Map<PublicKey, Member>;
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
@@ -73,6 +74,7 @@ declare global {
     knowledgeDBs: KnowledgeDBs;
     relaysInfos: Map<string, RelayInformation | undefined>;
     publishEventsStatus: EventState;
+    projectMembers: Members;
 
     views: Views;
   };
@@ -144,6 +146,7 @@ declare global {
     website?: LongID;
     app?: LongID;
     createdAt: Date;
+    memberListProvider: PublicKey;
   };
 
   type KnowNode = TextNode | ProjectNode;

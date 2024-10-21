@@ -81,8 +81,8 @@ export function ProjectContextProvider({
       ? [
           {
             kinds: [KIND_PROJECT],
-            "#d": [id], // THis filter breaks it
-            ...(userID ? { authors: [userID] } : {}), // this too
+            "#d": [id],
+            ...(userID ? { authors: [userID] } : {}),
           },
         ]
       : [],

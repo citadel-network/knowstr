@@ -1,7 +1,7 @@
 import { List, Map } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
 import { findAllTags, getMostRecentReplacableEvent } from "citadel-commons";
-import { KIND_CONTACTLIST } from "./nostr";
+import { KIND_CONTACTLIST, KIND_MEMBERLIST } from "./nostr";
 
 type FollowList = Array<Contact>;
 
@@ -26,6 +26,26 @@ export function parseFollowListEvent(event: UnsignedEvent): FollowList {
     });
 }
 
+export function parseVotes(event: UnsignedEvent): Map<PublicKey, number> {
+  const votesTags = findAllTags(event, "votes");
+  if (!votesTags) {
+    return Map<PublicKey, number>();
+  }
+  return Map(
+    votesTags
+      .map((tag) => {
+        const { length } = tag;
+        if (length < 2) {
+          return undefined;
+        }
+        const publicKey = tag[0] as PublicKey;
+        const vote = parseInt(tag[1], 10);
+        return [publicKey, vote];
+      })
+      .filter((v) => v !== undefined) as Array<[PublicKey, number]>
+  );
+}
+
 function getContactsFromFollowList(followList: FollowList): Contacts {
   return Map<PublicKey, Contact>(
     followList.map((contact) => {
@@ -48,4 +68,26 @@ export function findContacts(events: List<UnsignedEvent>): Contacts {
   }
   const followList = parseFollowListEvent(contactListEvent);
   return getContactsFromFollowList(followList);
+}
+
+export function findMembers(events: List<UnsignedEvent>): Members {
+  const memebrListEvent = getMostRecentReplacableEvent(
+    events.filter((event) => event.kind === KIND_MEMBERLIST)
+  );
+  if (!memebrListEvent) {
+    return Map<PublicKey, Member>();
+  }
+  const memberList = parseFollowListEvent(memebrListEvent);
+  const votes = parseVotes(memebrListEvent);
+  return Map<PublicKey, Member>(
+    memberList.map((contact) => {
+      return [
+        contact.publicKey,
+        {
+          publicKey: contact.publicKey,
+          votes: votes.get(contact.publicKey, 0),
+        },
+      ];
+    })
+  );
 }

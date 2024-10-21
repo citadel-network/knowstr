@@ -335,6 +335,7 @@ const DEFAULT_DATA_CONTEXT_PROPS: TestDataProps = {
     projectRelays: [{ url: "wss://project.relay", read: true, write: true }],
     contactsRelays: [{ url: "wss://contacts.relay", read: true, write: true }],
   },
+  projectMembers: Map<PublicKey, Member>(),
 };
 
 type TestAppState = TestDataProps & TestApis;
@@ -641,6 +642,7 @@ export function planUpsertProjectNode(plan: Plan, node: ProjectNode): Plan {
     created_at: newTimestamp(),
     tags: [
       ["d", shortID(node.id)],
+      ["memberListProvider", node.memberListProvider],
       ...(node.address ? [["address", node.address]] : []),
       ...(node.image ? [["headerImage", node.image]] : []),
       ...(node.perpetualVotes ? [["perpetualVotes", node.perpetualVotes]] : []),
@@ -668,6 +670,7 @@ export function createExampleProject(publicKey: PublicKey): ProjectNode {
     id: joinID(publicKey, v4()),
     text: "Winchester Mystery House",
     address: "525 S. Winchester Blvd. San Jose, CA 95128",
+    memberListProvider: CAROL.publicKey,
     type: "project",
     image:
       "https://partnersinternational.pl/wp-content/uploads/2023/03/Premium-real-estate-office-Warsaw.jpg",
