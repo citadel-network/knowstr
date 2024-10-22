@@ -201,8 +201,14 @@ export function eventToTextOrProjectNode(
   };
 
   if (e.kind === KIND_PROJECT) {
-    const project = parseProject(e);
-    return project ? [id, { ...base, ...project }] : [undefined];
+    try {
+      const project = parseProject(e);
+      return project ? [id, { ...base, ...project }] : [undefined];
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+      return [undefined];
+    }
   }
   return [id, { ...base, imageUrl: parseImageUrl(e) }];
 }
