@@ -12,18 +12,65 @@ import { planPublishSettings, usePlanner } from "../planner";
 import { PublishingStatusWrapper } from "./PublishingStatusWrapper";
 import { SignInMenuBtn } from "../SignIn";
 import { isUserLoggedIn } from "../NostrAuthContext";
+import { useProjectContext } from "../ProjectContext";
 
 type NavBarProps = {
   logout: () => void;
 };
 
-export function NavBar({ logout }: NavBarProps): JSX.Element {
+function Deedsats(): JSX.Element | null {
+  const { projectID } = useProjectContext();
+  const isProject = projectID !== undefined;
+  if (!isProject) {
+    return null;
+  }
+  return <span>Deedsats | </span>;
+}
+
+function ProjectName(): JSX.Element | null {
+  const { projectID, project } = useProjectContext();
+  const isProject = projectID !== undefined;
+  if (!isProject) {
+    return null;
+  }
+  if (!project) {
+    return (
+      <>
+        <span className="spinner-border spinner-navbar" /> |{" "}
+      </>
+    );
+  }
+  return <span>{project.text} | </span>;
+}
+
+function Title(): JSX.Element | null {
+  const isMobile = useMediaQuery(IS_MOBILE);
+  const { projectID } = useProjectContext();
+  const isProject = projectID !== undefined;
   const title = useWorkspace();
+  if (isMobile) {
+    return null;
+  }
+  return (
+    <div className="navbar-title d-flex align-center">
+      <div className={`${isProject ? "bitcoin-orange" : ""} workspace-title`}>
+        <Deedsats />
+        <ProjectName />
+        {title}
+      </div>
+      <DeleteNode />
+    </div>
+  );
+}
+
+export function NavBar({ logout }: NavBarProps): JSX.Element {
   const navigate = useNavigate();
   const { createPlan, executePlan } = usePlanner();
   const [isError, setIsError] = useState<boolean>(false);
   const { settings, user } = useData();
   const isBionic = settings.bionicReading;
+  const { projectID } = useProjectContext();
+  const isProject = projectID !== undefined;
   const onToggleBionic = async (): Promise<void> => {
     try {
       await executePlan(
@@ -40,8 +87,6 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
   };
   const isLoggedIn = isUserLoggedIn(user);
 
-  const isMobile = useMediaQuery(IS_MOBILE);
-
   return (
     <>
       <Modal show={isError} onHide={() => setIsError(false)}>
@@ -57,16 +102,11 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
           </Alert>
         </Modal.Body>
       </Modal>
-      <nav className="navbar">
+      <nav className={`${isProject ? "navbar-project" : ""} navbar`}>
         <div className="navbar-left d-flex align-center">
           <SelectWorkspaces />
         </div>
-        {!isMobile && (
-          <div className="navbar-title d-flex align-center">
-            <div className="workspace-title">{title}</div>
-            <DeleteNode />
-          </div>
-        )}
+        <Title />
         <div className="navbar-right">
           <PublishingStatusWrapper />
           <SignInMenuBtn />

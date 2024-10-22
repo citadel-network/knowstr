@@ -93,10 +93,6 @@ export function ProjectContextProvider({
   ) as Map<string, ProjectNode>;
   const project = projects.first(undefined);
 
-  if (projectID && !project) {
-    return <LoadProject />;
-  }
-  // if there is a projectID there is a project at this point
   const isRelaysLoaded = projectID ? !!project : relaysEose;
 
   return (
