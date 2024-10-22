@@ -19,12 +19,14 @@ export function useReadRelays({
   contacts,
 }: WriteRelayConf): Relays {
   const { userRelays, projectRelays } = useProjectContext();
-  return getReadRelays([
-    ...(defaultRelays ? useDefaultRelays() : []),
-    ...(user ? userRelays : []),
-    ...(project ? projectRelays : []),
-    ...(contacts ? useContactsRelays() : []),
-  ]);
+  return [
+    ...getReadRelays([
+      ...(defaultRelays ? useDefaultRelays() : []),
+      ...(user ? userRelays : []),
+      ...(project ? projectRelays : []),
+    ]),
+    ...getWriteRelays(contacts ? useContactsRelays() : []),
+  ];
 }
 
 // This can be called while contacts is not loaded yet
