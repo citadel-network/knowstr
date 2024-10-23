@@ -204,9 +204,9 @@ export function eventToTextOrProjectNode(
     try {
       const project = parseProject(e);
       return project ? [id, { ...base, ...project }] : [undefined];
-    } catch (e) {
+    } catch (err) {
       // eslint-disable-next-line no-console
-      console.error(e);
+      console.error(err);
       return [undefined];
     }
   }
