@@ -8,8 +8,8 @@ import {
   getLast,
   updateViewPathsAfterDisconnect,
   parseViewPath,
-  popPath,
   calculateIndexFromNodeIndex,
+  getParentView,
 } from "../ViewContext";
 import {
   switchOffMultiselect,
@@ -75,7 +75,7 @@ export function DisconnectNodeBtn(): JSX.Element | null {
   const { createPlan, executePlan } = usePlanner();
   const viewPath = useViewPath();
   const { nodeID, nodeIndex } = getLast(viewPath);
-  const parentPath = popPath(viewPath);
+  const parentPath = getParentView(viewPath);
   if (!parentPath) {
     return null;
   }

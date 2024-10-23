@@ -330,12 +330,16 @@ export function popPath(viewContext: ViewPath): ViewPath | undefined {
   ];
 }
 
+export function getParentView(viewContext: ViewPath): ViewPath | undefined {
+  return popPath(viewContext);
+}
+
 export function getRelationIndex(
   data: Data,
   viewPath: ViewPath
 ): number | undefined {
   const { nodeIndex, nodeID } = getLast(viewPath);
-  const parentPath = popPath(viewPath);
+  const parentPath = getParentView(viewPath);
   if (!parentPath) {
     return undefined;
   }
@@ -407,7 +411,7 @@ export function getParentNode(
   data: Data,
   viewPath: ViewPath
 ): [KnowNode, View] | [undefined, undefined] {
-  const parentPath = popPath(viewPath);
+  const parentPath = getParentView(viewPath);
   if (!parentPath) {
     return [undefined, undefined];
   }
@@ -418,7 +422,7 @@ export function getParentNodeID(
   data: Data,
   viewPath: ViewPath
 ): [LongID | ID, View] | [undefined, undefined] {
-  const parentPath = popPath(viewPath);
+  const parentPath = getParentView(viewPath);
   if (!parentPath) {
     return [undefined, undefined];
   }
@@ -440,10 +444,6 @@ export function useViewKey(): string {
 
 export function getParentKey(viewKey: string): string {
   return viewKey.split(":").slice(0, -3).join(":");
-}
-
-export function getParentView(viewContext: ViewPath): ViewPath | undefined {
-  return popPath(viewContext);
 }
 
 export function updateView(views: Views, path: ViewPath, view: View): Views {
