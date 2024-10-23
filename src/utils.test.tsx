@@ -60,7 +60,7 @@ import {
 } from "./NostrAuthContext";
 import {
   addRelationToRelations,
-  getRelationsNoSocial,
+  getRelationsNoReferencedBy,
   joinID,
   newNode,
   shortID,
@@ -533,7 +533,7 @@ function createNodesAndRelations(
 ): Plan {
   return List(nodes).reduce((rdx: Plan, nodeDescription: NodeDescription) => {
     const currentRelations = currentRelationsID
-      ? getRelationsNoSocial(
+      ? getRelationsNoReferencedBy(
           rdx.knowledgeDBs,
           currentRelationsID,
           rdx.user.publicKey

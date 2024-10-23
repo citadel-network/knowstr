@@ -8,7 +8,7 @@ import {
   KIND_KNOWLEDGE_NODE,
   KIND_PROJECT,
 } from "./nostr";
-import { splitID, REFERENCED_BY, SOCIAL } from "./connections";
+import { splitID, REFERENCED_BY } from "./connections";
 import { ADD_TO_NODE, getNodeFromID, useNodeID } from "./ViewContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
@@ -125,20 +125,6 @@ export function addReferencedByToFilters(
   };
 }
 
-function addSocialListToFilters(
-  filters: Filters,
-  nodeID: LongID | ID
-): Filters {
-  return {
-    ...addAuthorFromIDToFilters(filters, nodeID),
-    knowledgeListByHead: addIDToFilter(
-      filters.knowledgeListByHead,
-      nodeID,
-      "#k"
-    ),
-  };
-}
-
 export function addListToFilters(
   filters: Filters,
   listID: LongID,
@@ -146,9 +132,6 @@ export function addListToFilters(
 ): Filters {
   if (listID === REFERENCED_BY) {
     return addReferencedByToFilters(filters, nodeID);
-  }
-  if (listID === SOCIAL) {
-    return addSocialListToFilters(filters, nodeID);
   }
 
   return {

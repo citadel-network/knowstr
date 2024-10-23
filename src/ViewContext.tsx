@@ -484,8 +484,8 @@ function createUpdatableRelations(
   relationTypeID: ID
 ): Relations {
   const [remote, id] = splitID(relationsID);
-  if (relationsID === "social" || (remote && isRemote(remote, myself))) {
-    // copy remote or social relations
+  if (remote && isRemote(remote, myself)) {
+    // copy remote relations
     const remoteRelations = getRelations(
       knowledgeDBs,
       relationsID,
@@ -499,7 +499,6 @@ function createUpdatableRelations(
     // Make a copy
     return {
       ...remoteRelations,
-      type: remoteRelations.type === "social" ? "" : remoteRelations.type,
       id: joinID(myself, v4()),
     };
   }

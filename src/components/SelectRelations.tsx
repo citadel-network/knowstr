@@ -18,13 +18,7 @@ import {
   useDeselectAllInView,
   useTemporaryView,
 } from "./TemporaryViewContext";
-import {
-  REFERENCED_BY,
-  SOCIAL,
-  getRelations,
-  isRemote,
-  splitID,
-} from "../connections";
+import { REFERENCED_BY, getRelations, isRemote, splitID } from "../connections";
 import { useData } from "../DataContext";
 import { planDeleteRelations, planUpdateViews, usePlanner } from "../planner";
 import {
@@ -198,9 +192,7 @@ function EditRelationsDropdown({
   const isRemoteRelation = isRemote(splitID(view.relations)[0], user.publicKey);
 
   const isDeleteAvailable =
-    view.relations !== SOCIAL &&
-    view.relations !== REFERENCED_BY &&
-    !isRemoteRelation;
+    view.relations !== REFERENCED_BY && !isRemoteRelation;
   if (!isDeleteAvailable && otherRelations.size === 0) {
     return null;
   }
@@ -244,11 +236,6 @@ function EditVirtualListDropdown({
     return null;
   }
 
-  const isDeleteAvailable = view.relations !== SOCIAL;
-  if (!isDeleteAvailable) {
-    return null;
-  }
-
   return (
     <Dropdown>
       <Dropdown.Toggle
@@ -265,7 +252,7 @@ function EditVirtualListDropdown({
         <span className="iconsminds-arrow-down" />
       </Dropdown.Toggle>
       <Dropdown.Menu popperConfig={{ strategy: "fixed" }} renderOnMount>
-        {isDeleteAvailable && <DeleteVirtualListItem id={view.relations} />}
+        <DeleteVirtualListItem id={view.relations} />
       </Dropdown.Menu>
     </Dropdown>
   );
@@ -405,45 +392,6 @@ function ReferencedByRelationsButton({
       label={`Referenced By (${referencedByRelations.items.size})`}
     >
       <span className="iconsminds-link" />
-    </AutomaticRelationsButton>
-  );
-}
-
-function SocialRelationsButton({
-  alwaysOneSelected,
-  currentRelations,
-  readonly,
-}: {
-  readonly?: boolean;
-  alwaysOneSelected?: boolean;
-  currentRelations?: Relations;
-}): JSX.Element | null {
-  const [node] = useNode();
-  const { knowledgeDBs, user } = useData();
-  const onChangeRelations = useOnChangeRelations();
-  const onToggleExpanded = useOnToggleExpanded();
-  if (!node || !onChangeRelations || !onToggleExpanded) {
-    return null;
-  }
-  const socialRelations = getRelations(
-    knowledgeDBs,
-    SOCIAL,
-    user.publicKey,
-    node.id
-  );
-  if (!socialRelations || socialRelations.items.size === 0) {
-    return null;
-  }
-  return (
-    <AutomaticRelationsButton
-      hideShowLabel={`items created by contacts of ${node.text}`}
-      relations={socialRelations}
-      readonly={readonly}
-      alwaysOneSelected={alwaysOneSelected}
-      currentRelations={currentRelations}
-      label={`By Contacts (${socialRelations.items.size})`}
-    >
-      <span className="iconsminds-conference" />
     </AutomaticRelationsButton>
   );
 }
@@ -606,11 +554,6 @@ export function SelectRelations({
             key={type}
           />
         ))}
-        <SocialRelationsButton
-          readonly={readonly}
-          alwaysOneSelected={alwaysOneSelected}
-          currentRelations={currentRelations}
-        />
         {displayReferencedByRelationsButton && (
           <ReferencedByRelationsButton
             readonly={readonly}

@@ -7,7 +7,7 @@ import {
   planUpsertRelations,
   usePlanner,
 } from "../planner";
-import { REFERENCED_BY, SOCIAL, getRelationsNoSocial } from "../connections";
+import { REFERENCED_BY, getRelationsNoReferencedBy } from "../connections";
 import {
   ViewPath,
   getDefaultRelationForNode,
@@ -131,12 +131,12 @@ export function getRelationTypeByRelationsID(
   data: Data,
   relationsID: ID
 ): [RelationType | undefined, ID] | [undefined, undefined] {
-  const relations = getRelationsNoSocial(
+  const relations = getRelationsNoReferencedBy(
     data.knowledgeDBs,
     relationsID,
     data.user.publicKey
   );
-  if (!relations || relationsID === SOCIAL || relationsID === REFERENCED_BY) {
+  if (!relations || relationsID === REFERENCED_BY) {
     return [undefined, undefined];
   }
   const relationTypeID = relations.type;
