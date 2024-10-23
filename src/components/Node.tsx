@@ -9,7 +9,7 @@ import {
   useInputElementFocus,
   NodeCard,
   CloseButton,
-  Button,
+  LoadingSpinnerButton,
 } from "citadel-commons";
 import { FULL_SCREEN_PATH } from "../App";
 import { getRelations } from "../connections";
@@ -35,7 +35,7 @@ import {
   isMutableNode,
 } from "./TemporaryViewContext";
 import { IS_MOBILE } from "./responsive";
-import { AddNodeToNode } from "./AddNode";
+import { AddNodeToNode, getImageUrlFromText } from "./AddNode";
 import { NodeMenu } from "./Menu";
 import { DeleteNode } from "./DeleteNode";
 import { useData } from "../DataContext";
@@ -94,7 +94,7 @@ function ErrorContent(): JSX.Element {
 }
 
 type InlineEditorProps = {
-  onCreateNode: (text: string) => void;
+  onCreateNode: (text: string, imageUrl?: string) => void;
   onStopEditing: () => void;
 };
 
@@ -115,13 +115,14 @@ function InlineEditor({
       quill.insertText(0, node.text);
     }
   }, []);
-  const onSave = (): void => {
+  const onSave = async (): Promise<void> => {
     if (!ref.current) {
       return;
     }
     const text = ref.current.getEditor().getText();
+    const imageUrl = await getImageUrlFromText(text);
     const isNewLineAdded = text.endsWith("\n");
-    onCreateNode(isNewLineAdded ? text.slice(0, -1) : text);
+    onCreateNode(isNewLineAdded ? text.slice(0, -1) : text, imageUrl);
   };
   return (
     <>
@@ -137,13 +138,13 @@ function InlineEditor({
           }}
         />
         <div className="flex-row-end">
-          <Button
+          <LoadingSpinnerButton
             className="btn font-size-small"
-            onClick={onSave}
+            onClick={() => onSave()}
             ariaLabel="save"
           >
             <span>Save</span>
-          </Button>
+          </LoadingSpinnerButton>
           <CloseButton
             onClose={() => {
               onStopEditing();
@@ -293,11 +294,12 @@ function EditingNodeContent(): JSX.Element | null {
   if (!node) {
     return null;
   }
-  const editNodeText = (text: string): void => {
+  const editNodeText = (text: string, imageUrl?: string): void => {
     executePlan(
       planUpsertNode(createPlan(), {
         ...node,
         text,
+        imageUrl,
       })
     );
   };
@@ -307,8 +309,8 @@ function EditingNodeContent(): JSX.Element | null {
   };
   return (
     <InlineEditor
-      onCreateNode={(text) => {
-        editNodeText(text);
+      onCreateNode={(text, imageUrl) => {
+        editNodeText(text, imageUrl);
         closeEditor();
       }}
       onStopEditing={closeEditor}

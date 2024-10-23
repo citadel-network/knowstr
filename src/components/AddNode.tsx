@@ -4,9 +4,9 @@ import { matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import {
   useInputElementFocus,
-  Button,
   CloseButton,
   NodeCard,
+  LoadingSpinnerButton,
 } from "citadel-commons";
 import { shorten } from "../KnowledgeDataContext";
 import { newNode } from "../connections";
@@ -74,8 +74,37 @@ function SearchButton({ onClick }: { onClick: () => void }): JSX.Element {
   );
 }
 
+function getUrlFromText(text: string): string | undefined {
+  const urlRegex = /(https?:\/\/[^\s/$.?#].[^\s]*|www\.[^\s/$.?#].[^\s]*)/i;
+  const match = text.match(urlRegex);
+  return match ? match[0] : undefined;
+}
+
+export async function getImageUrlFromText(
+  text: string
+): Promise<string | undefined> {
+  const url = getUrlFromText(text);
+  if (!url) {
+    return Promise.resolve(undefined);
+  }
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+    });
+    return response.headers.get("Content-Type")?.startsWith("image") === true
+      ? url
+      : undefined;
+  } catch {
+    return Promise.resolve(undefined);
+  }
+}
+
 type EditorProps = {
-  onCreateNode: (text: string, relationType?: RelationType) => void;
+  onCreateNode: (
+    text: string,
+    imageUrl?: string,
+    relationType?: RelationType
+  ) => void;
   onClose: () => void;
 };
 
@@ -88,13 +117,18 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
     }
   }, []);
 
-  const onSave = (relationType?: RelationType): void => {
+  const onSave = async (relationType?: RelationType): Promise<void> => {
     if (!ref.current) {
       return;
     }
     const text = ref.current.getEditor().getText();
+    const imageUrl = await getImageUrlFromText(text);
     const isNewLineAdded = text.endsWith("\n");
-    onCreateNode(isNewLineAdded ? text.slice(0, -1) : text, relationType);
+    onCreateNode(
+      isNewLineAdded ? text.slice(0, -1) : text,
+      imageUrl,
+      relationType
+    );
   };
 
   return (
@@ -111,7 +145,9 @@ function Editor({ onCreateNode, onClose }: EditorProps): JSX.Element {
         />
       </div>
       <div>
-        <Button onClick={() => onSave()}>Add Note</Button>
+        <LoadingSpinnerButton onClick={() => onSave()}>
+          Add Note
+        </LoadingSpinnerButton>
         <CloseButton
           onClose={() => {
             onClose();
@@ -136,7 +172,7 @@ function useGetFullScreenViewRepo(): string | undefined {
 }
 
 type AddNodeProps = {
-  onCreateNewNode: (text: string) => void;
+  onCreateNewNode: (text: string, imageUrl?: string) => void;
   onAddExistingNode: (nodeID: LongID) => void;
   ariaLabel: string;
   isSearchEnabledByShortcut?: boolean;
@@ -182,8 +218,8 @@ function AddNode({
     return undefined;
   }, [disableSearchModal, isInputElementInFocus]);
 
-  const createNewNode = (text: string): void => {
-    onCreateNewNode(text);
+  const createNewNode = (text: string, imageUrl?: string): void => {
+    onCreateNewNode(text, imageUrl);
     reset();
   };
 
@@ -241,9 +277,9 @@ export function AddColumn(): JSX.Element {
     executePlan(updateRelationsPlan);
   };
 
-  const onCreateNewNode = (text: string): void => {
+  const onCreateNewNode = (text: string, imageUrl?: string): void => {
     const plan = createPlan();
-    const node = newNode(text, plan.user.publicKey);
+    const node = newNode(text, plan.user.publicKey, imageUrl);
     onAddNode(planUpsertNode(plan, node), node.id);
   };
 
@@ -283,9 +319,9 @@ export function AddNodeToNode(): JSX.Element | null {
     executePlan(updateRelationsPlan);
   };
 
-  const onCreateNewNode = (text: string): void => {
+  const onCreateNewNode = (text: string, imageUrl?: string): void => {
     const plan = createPlan();
-    const n = newNode(text, plan.user.publicKey);
+    const n = newNode(text, plan.user.publicKey, imageUrl);
     onAddNode(planUpsertNode(plan, n), n.id);
   };
 
