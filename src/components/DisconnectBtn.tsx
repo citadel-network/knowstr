@@ -8,6 +8,8 @@ import {
   getLast,
   updateViewPathsAfterDisconnect,
   parseViewPath,
+  popPath,
+  calculateIndexFromNodeIndex,
 } from "../ViewContext";
 import {
   switchOffMultiselect,
@@ -62,6 +64,60 @@ export function DisconnectBtn(): JSX.Element | null {
       className="btn btn-borderless p-0"
       onClick={onDisconnect}
       aria-label={`disconnect ${selectedIndices.size} selected nodes`}
+    >
+      <span style={{ fontSize: "1.4rem" }}>×</span>
+    </button>
+  );
+}
+
+export function DisconnectNodeBtn(): JSX.Element | null {
+  const data = useData();
+  const { createPlan, executePlan } = usePlanner();
+  const viewPath = useViewPath();
+  const { nodeID, nodeIndex } = getLast(viewPath);
+  const parentPath = popPath(viewPath);
+  if (!parentPath) {
+    return null;
+  }
+  const { nodeID: parentNodeID } = getLast(parentPath);
+  const relations = getRelationsFromView(data, parentPath);
+  if (!relations) {
+    return null;
+  }
+  const index = calculateIndexFromNodeIndex(relations, nodeID, nodeIndex);
+  if (index === undefined) {
+    return null;
+  }
+
+  const onDisconnect = (): void => {
+    const disconnectPlan = upsertRelations(
+      createPlan(),
+      parentPath,
+      (rel): Relations => {
+        return {
+          ...rel,
+          items: rel.items.delete(index),
+        };
+      }
+    );
+    const finalPlan = planUpdateViews(
+      disconnectPlan,
+      updateViewPathsAfterDisconnect(
+        disconnectPlan.views,
+        parentNodeID,
+        relations.id,
+        nodeIndex
+      )
+    );
+    executePlan(finalPlan);
+  };
+
+  return (
+    <button
+      type="button"
+      className="btn btn-borderless p-0"
+      onClick={onDisconnect}
+      aria-label={`disconnect node ${nodeIndex}`}
     >
       <span style={{ fontSize: "1.4rem" }}>×</span>
     </button>

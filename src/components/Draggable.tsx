@@ -6,6 +6,7 @@ import { useDroppable } from "./DroppableContainer";
 import { ToggleEditing, useIsEditingOn } from "./TemporaryViewContext";
 import { RemoveColumnButton } from "./RemoveColumnButton";
 import { ChangeColumnWidth } from "./ChangeColumnWidth";
+import { DisconnectNodeBtn } from "./DisconnectBtn";
 
 export type DragItemType = {
   path: ViewPath;
@@ -81,6 +82,7 @@ export function ListItem({
       <Draggable ref={ref} className={className} />
       <div className="on-hover-menu right">
         <ToggleEditing />
+        <DisconnectNodeBtn />
       </div>
     </div>
   );

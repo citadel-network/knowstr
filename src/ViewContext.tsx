@@ -318,7 +318,7 @@ export function addNodeToPath(
   return [...pathWithRelations, { nodeID, nodeIndex }];
 }
 
-function popPath(viewContext: ViewPath): ViewPath | undefined {
+export function popPath(viewContext: ViewPath): ViewPath | undefined {
   const pathWithoutLast = viewContext.slice(0, -1) as SubPathWithRelations[];
   const parent = pathWithoutLast[pathWithoutLast.length - 1];
   if (!parent) {
