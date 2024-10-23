@@ -9,7 +9,7 @@ import {
   NodeCard,
 } from "citadel-commons";
 import { shorten } from "../KnowledgeDataContext";
-import { newNode } from "../connections";
+import { newNode, REFERENCED_BY } from "../connections";
 import {
   useIsAddToNode,
   useParentNode,
@@ -266,8 +266,9 @@ export function AddNodeToNode(): JSX.Element | null {
   const vContext = useViewPath();
   const { createPlan, executePlan } = usePlanner();
   const viewContext = isAddToNode ? getParentView(vContext) : vContext;
-  const [node] = isAddToNode ? useParentNode() : useNode();
-  if (!node || !viewContext) {
+  const [node, view] = isAddToNode ? useParentNode() : useNode();
+  const isReferencedByVirtualList = view?.virtualLists?.includes(REFERENCED_BY);
+  if (!node || !viewContext || isReferencedByVirtualList) {
     return null;
   }
 
