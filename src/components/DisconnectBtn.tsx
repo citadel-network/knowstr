@@ -1,5 +1,5 @@
 import React from "react";
-import { deleteRelations } from "../connections";
+import { deleteRelations, getRelations } from "../connections";
 import {
   useViewPath,
   useViewKey,
@@ -10,6 +10,7 @@ import {
   parseViewPath,
   calculateIndexFromNodeIndex,
   getParentView,
+  getNodeIDFromView,
 } from "../ViewContext";
 import {
   switchOffMultiselect,
@@ -79,8 +80,16 @@ export function DisconnectNodeBtn(): JSX.Element | null {
   if (!parentPath) {
     return null;
   }
-  const { nodeID: parentNodeID } = getLast(parentPath);
-  const relations = getRelationsFromView(data, parentPath);
+  const [parentNodeID, parentView] = getNodeIDFromView(data, parentPath);
+  if (!parentNodeID || !parentView) {
+    return null;
+  }
+  const relations = getRelations(
+    data.knowledgeDBs,
+    parentView.relations,
+    data.user.publicKey,
+    parentNodeID
+  );
   if (!relations) {
     return null;
   }
