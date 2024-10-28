@@ -2,13 +2,6 @@
 
 - node v16.14.2
 
-### Init submodules:
-
-```
-git submodule init
-git submodule update
-```
-
 ### Build workspaces
 
 Before starting or testing the App, run:
