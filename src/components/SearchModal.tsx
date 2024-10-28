@@ -89,7 +89,7 @@ function useSearchQuery(
   const filter = nip50
     ? {
         ...basicFilter,
-        query,
+        search: query,
       }
     : basicFilter;
   // Slow search will never discard, cause the search query is not part of the filter. Slow search fetches all events from contacts and filters client side
