@@ -6,7 +6,6 @@ import {
   ModalNodeBody,
   ModalNodeTitle,
 } from "citadel-commons";
-import { useDebounce } from "use-debounce";
 import { KIND_DELETE, KIND_KNOWLEDGE_NODE, KIND_PROJECT } from "../nostr";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";
@@ -72,7 +71,7 @@ function useSearchQuery(
   relays: Relays,
   nip50: boolean
 ): [Map<string, KnowNode>, boolean] {
-  const { relayPool, nip11 } = useApis();
+  const { relayPool } = useApis();
   const { contacts, user, projectMembers } = useData();
   const authors = contacts
     .keySeq()
@@ -80,8 +79,7 @@ function useSearchQuery(
     .merge(projectMembers.keySeq().toSet())
     .add(user.publicKey)
     .toArray();
-  const [search] = useDebounce(query, nip11.searchDebounce);
-  const enabled = search !== "" && relays.length > 0;
+  const enabled = query !== "" && relays.length > 0;
 
   const basicFilter = {
     authors,
@@ -91,7 +89,7 @@ function useSearchQuery(
   const filter = nip50
     ? {
         ...basicFilter,
-        search,
+        query,
       }
     : basicFilter;
   // Slow search will never discard, cause the search query is not part of the filter. Slow search fetches all events from contacts and filters client side
@@ -113,7 +111,7 @@ function useSearchQuery(
   const events = nip50
     ? preFilteredEvents
     : preFilteredEvents.filter(
-        (event) => event.kind === KIND_DELETE || isMatch(search, event.content)
+        (event) => event.kind === KIND_DELETE || isMatch(query, event.content)
       );
 
   const groupByKind = events.groupBy((event) => event.kind);
@@ -130,7 +128,7 @@ function useSearchQuery(
   );
 
   // If the search !== query debounce will trigger a filter change soon
-  const isQueryFinished = eose && query === search;
+  const isQueryFinished = eose;
   const isEose = isQueryFinished || relays.length === 0;
   return [nodesFromKnowledgeEvents, isEose];
 }
