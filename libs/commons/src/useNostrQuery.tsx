@@ -67,6 +67,15 @@ export function getMostRecentReplacableEvent<T extends EventTemplate>(
   return sortEventsDescending(listOfEvents).first(undefined);
 }
 
+function isValidWsUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    return ["ws:", "wss:"].includes(parsedUrl.protocol);
+  } catch {
+    return false;
+  }
+}
+
 export function useEventQuery(
   relayPool: SimplePool,
   filters: Filter[],
@@ -91,7 +100,16 @@ export function useEventQuery(
     filter?: (event: Event) => boolean;
   };
   const { enabled } = options;
-  const relayUrls = options.readFromRelays.map((r) => r.url);
+
+  // Find all duplicates and eliminate them, some urls contain a trailing slash and some not
+  const relayUrls = [
+    ...new Set(
+      options.readFromRelays
+        .map((r) => r.url)
+        .map((url) => url.trim().replace(/\/$/, ""))
+        .filter(isValidWsUrl)
+    ),
+  ];
 
   useEffect(() => {
     if (!enabled) {
