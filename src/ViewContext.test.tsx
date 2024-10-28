@@ -40,6 +40,7 @@ import {
 import { WorkspaceView } from "./components/Workspace";
 import { TreeView } from "./components/TreeView";
 import { LoadNode } from "./dataQuery";
+import { App } from "./App";
 
 test("Move View Settings on Delete", async () => {
   const [alice] = setup([ALICE]);
@@ -400,5 +401,43 @@ test("View doesn't change if list is copied from contact", async () => {
     "FPL",
     "\nadded programming language",
   ]);
+  cleanup();
+});
+
+test("Disconnect Nodes", async () => {
+  const [alice] = setup([ALICE]);
+  await setupTestDB(
+    alice(),
+    [
+      [
+        "My Workspace",
+        [["Programming Languages", ["C", "C++", "Java", "Rust"]]],
+      ],
+    ],
+    {
+      activeWorkspace: "My Workspace",
+    }
+  );
+  const { container } = renderWithTestData(<App />, alice());
+  await screen.findByText("Programming Languages");
+  fireEvent.click(
+    screen.getByLabelText("show Relevant For Programming Languages")
+  );
+
+  // disconnect nodes from relevant moves nodes to not relevant
+  fireEvent.click(await screen.findByLabelText("disconnect node Java"));
+  expect(screen.queryByText("Java")).toBeNull();
+  expect(extractNodes(container)).toEqual(["C", "C++", "Rust"]);
+  fireEvent.click(await screen.findByLabelText("disconnect node C"));
+  expect(screen.queryByText("C")).toBeNull();
+  fireEvent.click(
+    await screen.findByLabelText("show Not Relevant For Programming Languages")
+  );
+  expect(extractNodes(container)).toEqual(["Java", "C"]);
+
+  // disconnect node from not relevant removes node completely
+  fireEvent.click(await screen.findByLabelText("disconnect node C"));
+  expect(screen.queryByText("C")).toBeNull();
+
   cleanup();
 });

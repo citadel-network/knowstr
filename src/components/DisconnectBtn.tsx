@@ -13,6 +13,7 @@ import {
   getNodeIDFromView,
   getAvailableRelationsForNode,
   newRelations,
+  getNodeFromView,
 } from "../ViewContext";
 import {
   switchOffMultiselect,
@@ -156,7 +157,7 @@ export function DisconnectNodeBtn(): JSX.Element | null {
       type="button"
       className="btn btn-borderless p-0"
       onClick={onDisconnect}
-      aria-label={`disconnect node ${nodeIndex}`}
+      aria-label={`disconnect node ${getNodeFromView(data, viewPath)[0]?.text}`}
     >
       <span style={{ fontSize: "1.4rem" }}>×</span>
     </button>
