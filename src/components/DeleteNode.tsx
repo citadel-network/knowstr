@@ -4,7 +4,6 @@ import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Button } from "citadel-commons";
 import { deleteRelations, isRemote, splitID } from "../connections";
-import { getWorkspacesWithNodes } from "../KnowledgeDataContext";
 import {
   updateViewPathsAfterDeleteNode,
   useNode,
@@ -15,14 +14,16 @@ import { newDB } from "../knowledge";
 import {
   Plan,
   planDeleteNode,
+  planDeleteWorkspace,
   planUpdateViews,
-  planUpdateWorkspaces,
   planUpsertRelations,
   usePlanner,
 } from "../planner";
-import { isUserLoggedIn, useDefaultWorkspace } from "../NostrAuthContext";
 import { isMutableNode } from "./TemporaryViewContext";
-import { useUserWorkspaces, useWorkspaceContext } from "../WorkspaceContext";
+import {
+  findNewActiveWorkspace,
+  useWorkspaceContext,
+} from "../WorkspaceContext";
 
 function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
   const myDB = plan.knowledgeDBs.get(plan.user.publicKey, newDB());
@@ -40,71 +41,32 @@ function disconnectNode(plan: Plan, toDisconnect: LongID | ID): Plan {
   }, planUpdateViews(plan, updateViewPathsAfterDeleteNode(plan.views, toDisconnect)));
 }
 
-function useDeleteNode(): undefined | (() => void) {
-  const [nodeID] = useNodeID();
-  const [node] = useNode();
-  const navigate = useNavigate();
-  const { createPlan, executePlan } = usePlanner();
-  const data = useData();
-  const defaultWorkspace = useDefaultWorkspace();
-  const isLoggedIn = isUserLoggedIn(data.user);
-  const { activeWorkspace } = useWorkspaceContext();
-  const userWorkspaces = useUserWorkspaces();
-
-  // Can't delete my contacts nodes, except for active workspace
-  // Can't delete the default workspace if not logged in
-  if (
-    (isRemote(splitID(nodeID)[0], data.user.publicKey) &&
-      activeWorkspace !== nodeID) ||
-    (defaultWorkspace === nodeID && !isLoggedIn)
-  ) {
-    return undefined;
-  }
-
-  return () => {
-    navigate("/");
-    const planWithDisconnectedNode = disconnectNode(createPlan(), nodeID);
-    const planWithDeletedNode = isMutableNode(node, data.user)
-      ? planDeleteNode(planWithDisconnectedNode, nodeID)
-      : planWithDisconnectedNode;
-    if (
-      userWorkspaces.filter((id) => id === nodeID).size > 0 ||
-      activeWorkspace === nodeID
-    ) {
-      const updatedWorkspaces = userWorkspaces.filter((id) => id !== nodeID);
-      const newActiveWs = getWorkspacesWithNodes(
-        updatedWorkspaces.toSet(),
-        data
-      ).first(undefined);
-      const newActiveWorkspace =
-        activeWorkspace === nodeID ? newActiveWs?.id : activeWorkspace;
-      executePlan(
-        planUpdateWorkspaces(
-          planWithDeletedNode,
-          updatedWorkspaces,
-          newActiveWorkspace
-        )
-      );
-      navigate(newActiveWorkspace ? `/w/${newActiveWorkspace}` : "/");
-    } else {
-      executePlan(planWithDeletedNode);
-    }
-  };
-}
-
-export function DeleteNode({
+export function DeleteWorkspace({
   as,
   withCaption,
-  afterOnClick,
 }: {
   as?: "button" | "item";
   withCaption?: boolean;
-  afterOnClick?: () => void;
 }): JSX.Element | null {
-  const deleteNode = useDeleteNode();
-  if (!deleteNode) {
+  const { activeWorkspace, setCurrentWorkspace } = useWorkspaceContext();
+  const data = useData();
+  const { createPlan, executePlan } = usePlanner();
+  const navigate = useNavigate();
+
+  if (isRemote(splitID(activeWorkspace)[0], data.user.publicKey)) {
     return null;
   }
+
+  const deleteCurrentWorkspace = (): void => {
+    const plan = createPlan();
+    const deletePlan = planDeleteWorkspace(plan, activeWorkspace);
+
+    executePlan(deletePlan);
+    const newActiveWs = findNewActiveWorkspace(deletePlan);
+    // new active ws
+    setCurrentWorkspace(newActiveWs);
+    navigate(newActiveWs ? `/w/${newActiveWs}` : "/");
+  };
 
   if (as === "item") {
     return (
@@ -117,14 +79,51 @@ export function DeleteNode({
       </Dropdown.Item>
     );
   }
+  return (
+    <Button
+      onClick={() => {
+        deleteCurrentWorkspace();
+      }}
+      className="btn font-size-small"
+      ariaLabel="delete workspace"
+    >
+      <span className="simple-icon-trash" />
+      {withCaption && <span className="ms-2">Delete Workspace</span>}
+    </Button>
+  );
+}
+
+export function DeleteNode({
+  withCaption,
+  afterOnClick,
+}: {
+  withCaption?: boolean;
+  afterOnClick: () => void;
+}): JSX.Element | null {
+  const data = useData();
+  const [nodeID] = useNodeID();
+  const [node] = useNode();
+  const navigate = useNavigate();
+  const { createPlan, executePlan } = usePlanner();
+
+  if (!isMutableNode(node, data.user)) {
+    return null;
+  }
+  const deleteNode = (): void => {
+    const planWithDisconnectedNode = disconnectNode(createPlan(), nodeID);
+    const planWithDeletedNode = planDeleteNode(
+      planWithDisconnectedNode,
+      nodeID
+    );
+    executePlan(planWithDeletedNode);
+    navigate("/");
+  };
 
   return (
     <Button
       onClick={() => {
         deleteNode();
-        if (afterOnClick !== undefined) {
-          afterOnClick();
-        }
+        afterOnClick();
       }}
       className="btn font-size-small"
       ariaLabel="delete node"

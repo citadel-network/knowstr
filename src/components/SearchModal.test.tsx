@@ -20,8 +20,6 @@ import {
 import {
   createPlan,
   planBulkUpsertNodes,
-  planUpdateWorkspaceIfNecessary,
-  planUpsertFallbackWorkspaceIfNecessary,
   planUpsertMemberlist,
   planUpsertNode,
 } from "../planner";
@@ -36,14 +34,11 @@ test("Search works like spotlight", async () => {
   const thirdNote = newNode("My third search note made", publicKey);
   const topic = newNode("My very first topic", publicKey);
 
-  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
-    planUpdateWorkspaceIfNecessary(createPlan(alice()))
-  );
   await execute({
     ...alice(),
     plan: planUpsertNode(
       planUpsertNode(
-        planUpsertNode(planUpsertNode(planWithWS, note), secondNote),
+        planUpsertNode(planUpsertNode(createPlan(alice()), note), secondNote),
         thirdNote
       ),
       topic
@@ -54,7 +49,7 @@ test("Search works like spotlight", async () => {
 
   // Pressing enter adds first search result -which is a topic) to Column
   const searchButton = await screen.findByLabelText(
-    "search and attach to My first Workspace"
+    "search and attach to Default Workspace"
   );
   fireEvent.click(searchButton);
   const searchInput = await screen.findByLabelText("search input");
@@ -88,7 +83,7 @@ test("Search works like spotlight", async () => {
   await screen.findByText("My second search note ever made");
 
   const allSearchButtons = await screen.findByLabelText(
-    "search and attach to My first Workspace"
+    "search and attach to Default Workspace"
   );
   fireEvent.click(allSearchButtons);
   const searchInputField = await screen.findByLabelText("search input");
@@ -110,7 +105,7 @@ test("On Fullscreen, search also starts with press on slash key", async () => {
     ),
   });
   renderApp({ ...alice(), includeFocusContext: true });
-  await userEvent.type(await screen.findByText("My first Workspace"), "/");
+  await userEvent.type(await screen.findByText("Default Workspace"), "/");
   screen.getByPlaceholderText("Search");
   const searchInput = await screen.findByLabelText("search input");
   await userEvent.type(searchInput, "My s");

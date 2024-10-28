@@ -2,13 +2,8 @@ import React from "react";
 import { List } from "immutable";
 import { useDebouncedCallback } from "use-debounce";
 import { useApis } from "./Apis";
-import { KIND_CONTACTLIST, KIND_VIEWS, KIND_WORKSPACES } from "./nostr";
-import {
-  planAddContacts,
-  planUpdateViews,
-  planUpdateWorkspaces,
-  usePlanner,
-} from "./planner";
+import { KIND_CONTACTLIST, KIND_VIEWS } from "./nostr";
+import { planAddContacts, planUpdateViews, usePlanner } from "./planner";
 import { execute } from "./executor";
 
 type StorePreLoginData = (eventKinds: List<number>) => void;
@@ -39,12 +34,9 @@ export function StorePreLoginContext({
         return;
       }
       const plan = createPlan();
-      const withWorkspaces = eventKinds.includes(KIND_WORKSPACES)
-        ? planUpdateWorkspaces(plan, plan.workspaces, plan.activeWorkspace)
-        : plan;
       const withViews = eventKinds.includes(KIND_VIEWS)
-        ? planUpdateViews(withWorkspaces, withWorkspaces.views)
-        : withWorkspaces;
+        ? planUpdateViews(plan, plan.views)
+        : plan;
       const withContacts = eventKinds.includes(KIND_CONTACTLIST)
         ? planAddContacts(withViews, withViews.contacts.keySeq().toList())
         : withViews;

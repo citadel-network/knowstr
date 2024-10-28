@@ -1,27 +1,56 @@
-import { List, Map, Set } from "immutable";
-import React, { createContext, useState } from "react";
+import { Map } from "immutable";
+import React, { createContext, useEffect, useState } from "react";
 import { useEventQuery } from "citadel-commons";
 import { useDefaultWorkspace } from "./NostrAuthContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";
-import { KIND_WORKSPACES } from "./nostr";
-import { newProcessedEvents, processEvents } from "./Data";
-import { fallbackWorkspace, replaceUnauthenticatedUser } from "./planner";
+import { KIND_DELETE, KIND_WORKSPACE } from "./nostr";
+import { processEvents } from "./Data";
+import { fallbackWorkspace, Plan, replaceUnauthenticatedUser } from "./planner";
+import { useWorkspaceFromURL } from "./KnowledgeDataContext";
 import {
-  getWorkspacesWithNodes,
-  useWorkspaceFromURL,
-} from "./KnowledgeDataContext";
-import {
-  addWorkspacesToFilter,
+  addWorkspaceNodesToFilter,
   createBaseFilter,
   filtersToFilterArray,
 } from "./dataQuery";
-import { RootViewContextProvider } from "./ViewContext";
+import { getNodeFromID, RootViewContextProvider } from "./ViewContext";
 import { useReadRelays } from "./relays";
+import { shortID, splitID } from "./connections";
+import { UNAUTHENTICATED_USER_PK } from "./AppState";
+
+function getWorkspaceFromID(
+  workspaces: Map<PublicKey, Workspaces>,
+  id: LongID,
+  myself: PublicKey
+): Workspace | undefined {
+  const [remote, wsID] = splitID(id);
+  if (!remote) {
+    return workspaces.get(myself)?.get(wsID);
+  }
+  return workspaces.get(remote)?.get(wsID);
+}
+
+export function getWorkspaceNode(
+  workspaces: Map<PublicKey, Workspaces>,
+  activeWorkspace: LongID,
+  knowledgeDBs: KnowledgeDBs,
+  user: User
+): KnowNode | undefined {
+  const workspace = getWorkspaceFromID(
+    workspaces,
+    activeWorkspace,
+    user.publicKey
+  );
+  if (!workspace) {
+    return undefined;
+  }
+  return getNodeFromID(knowledgeDBs, workspace.node, user.publicKey);
+}
 
 type WorkspaceContextType = {
   activeWorkspace: LongID;
-  workspaces: Map<PublicKey, List<ID>>;
+  workspaces: Map<PublicKey, Workspaces>;
+  setCurrentWorkspace: React.Dispatch<React.SetStateAction<LongID | undefined>>;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
@@ -35,55 +64,84 @@ export function WorkspaceContextProvider({
 }): JSX.Element {
   const defaultWorkspace = useDefaultWorkspace();
   const { user, contacts, projectMembers, publishEventsStatus } = useData();
-  const { relayPool } = useApis();
+  const { relayPool, fileStore } = useApis();
   // If there is no workspace to be found, we create a new one with this ID
   const [fallbackWSID] = useState(fallbackWorkspace(user.publicKey));
-
-  const { events, eose: workspaceConfigEose } = useEventQuery(
-    relayPool,
-    [
-      {
-        authors: [user.publicKey, ...contacts.keySeq().toArray()],
-        kinds: [KIND_WORKSPACES],
-      },
-    ],
-    {
-      readFromRelays: useReadRelays({
-        user: true,
-        project: true,
-        contacts: true,
-      }),
-    }
+  const wsFromURL = useWorkspaceFromURL();
+  const [currentWorkspace, setCurrentWorkspace] = useState<LongID | undefined>(
+    wsFromURL
+      ? replaceUnauthenticatedUser(wsFromURL, user.publicKey)
+      : undefined
   );
+  const defaultWSAuthor = defaultWorkspace && splitID(defaultWorkspace)[0];
+
+  const authors = [
+    user.publicKey,
+    ...contacts.keySeq().toArray(),
+    ...(defaultWSAuthor ? [defaultWSAuthor] : []),
+  ];
+
+  const baseFilters = [
+    {
+      authors,
+      kinds: [KIND_WORKSPACE],
+    },
+    {
+      authors,
+      kinds: [KIND_DELETE],
+    },
+  ];
+  const activeWorkspace =
+    wsFromURL !== undefined
+      ? replaceUnauthenticatedUser(wsFromURL, user.publicKey)
+      : currentWorkspace ||
+        ((user.publicKey !== UNAUTHENTICATED_USER_PK &&
+          fileStore.getLocalStorage(
+            `${user.publicKey}:activeWs`
+          )) as LongID | null) ||
+        defaultWorkspace ||
+        fallbackWSID;
+
+  const authorActiveWorkspace = splitID(activeWorkspace)[0];
+  const filters = activeWorkspace
+    ? [
+        ...baseFilters,
+        {
+          ...(authorActiveWorkspace
+            ? { authors: [authorActiveWorkspace] }
+            : {}),
+          "#d": [shortID(activeWorkspace)],
+          kinds: [KIND_WORKSPACE],
+        },
+      ]
+    : baseFilters;
+
+  const { events } = useEventQuery(relayPool, filters, {
+    readFromRelays: useReadRelays({
+      user: true,
+      project: true,
+      contacts: true,
+    }),
+  });
   const workspaceEvents = events
     .valueSeq()
     .toList()
     .merge(publishEventsStatus.unsignedEvents);
   const processedEvents = processEvents(workspaceEvents);
-  const myProcessedEvents = processedEvents.get(
-    user.publicKey,
-    newProcessedEvents()
-  );
-  const wsFromURL = useWorkspaceFromURL();
-  const activeWorkspace =
-    wsFromURL !== undefined
-      ? replaceUnauthenticatedUser(wsFromURL, user.publicKey)
-      : myProcessedEvents.activeWorkspace || defaultWorkspace || fallbackWSID;
 
-  const workspaceFilters = processedEvents.reduce((rdx, p) => {
-    return addWorkspacesToFilter(rdx, p.workspaces as List<LongID>);
+  const workspaceNodesFilters = processedEvents.reduce((rdx, p) => {
+    return addWorkspaceNodesToFilter(rdx, p.workspaces);
   }, createBaseFilter(contacts, projectMembers, user.publicKey));
 
   const { events: workspaceNodesEvents } = useEventQuery(
     relayPool,
-    filtersToFilterArray(workspaceFilters),
+    filtersToFilterArray(workspaceNodesFilters),
     {
       readFromRelays: useReadRelays({
         user: true,
         project: true,
         contacts: true,
       }),
-      enabled: workspaceConfigEose,
     }
   );
   const knowledgeDBs = processEvents(
@@ -94,16 +152,30 @@ export function WorkspaceContextProvider({
   ).map((data) => data.knowledgeDB);
 
   const workspaces = processedEvents.map((p) => p.workspaces);
+  const workspace = getWorkspaceFromID(
+    workspaces,
+    activeWorkspace,
+    user.publicKey
+  );
+  useEffect(() => {
+    if (workspace && user.publicKey !== UNAUTHENTICATED_USER_PK) {
+      fileStore.setLocalStorage(`${user.publicKey}:activeWs`, workspace.id);
+    }
+  }, [workspace, user.publicKey]);
+  if (!workspace) {
+    return <div className="spinner-border" />;
+  }
 
   return (
     <WorkspaceContext.Provider
       value={{
         activeWorkspace,
         workspaces,
+        setCurrentWorkspace,
       }}
     >
       <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>
-        <RootViewContextProvider root={activeWorkspace}>
+        <RootViewContextProvider root={workspace.node}>
           {children}
         </RootViewContextProvider>
       </MergeKnowledgeDB>
@@ -121,20 +193,41 @@ export function useWorkspaceContext(): WorkspaceContextType {
   return context;
 }
 
-export function useUserWorkspaces(): List<ID> {
+export function useUserWorkspaces(): Workspaces {
   return useWorkspaceContext().workspaces.get(
     useData().user.publicKey,
-    List<ID>()
+    Map<ID, Workspace>()
   );
 }
 
-export function useWorkspaceNodes(): List<KnowNode> {
-  const { workspaces, activeWorkspace } = useWorkspaceContext();
-  const data = useData();
-  const allWorkspaces = Set<LongID | ID>(
-    workspaces.valueSeq().toList().flatten(1) as List<LongID>
-  )
-    .concat([activeWorkspace])
-    .toSet();
-  return getWorkspacesWithNodes(allWorkspaces, data);
+export function CurrentWorkspaceTitle(): JSX.Element {
+  const { knowledgeDBs, user } = useData();
+  const { activeWorkspace: activeWorkspaceID, workspaces } =
+    useWorkspaceContext();
+  const activeWorksapce = getWorkspaceFromID(
+    workspaces,
+    activeWorkspaceID,
+    user.publicKey
+  );
+  if (!activeWorksapce) {
+    return <span className="spinner-border spinner-navbar" />;
+  }
+  const node = getNodeFromID(
+    knowledgeDBs,
+    activeWorksapce.node,
+    user.publicKey
+  );
+  if (!node) {
+    return <span className="spinner-border spinner-navbar" />;
+  }
+  return <span>{node.text}</span>;
+}
+
+export function findNewActiveWorkspace(plan: Plan): LongID | undefined {
+  return plan.workspaces.reduce(
+    (rdx: LongID | undefined, workspaces): LongID | undefined => {
+      return rdx || workspaces.first()?.id;
+    },
+    undefined
+  );
 }

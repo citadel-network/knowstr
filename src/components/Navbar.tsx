@@ -4,15 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
 import { NotificationCenter } from "citadel-commons";
 import { SelectWorkspaces } from "./SelectWorkspaces";
-import { useWorkspace } from "../KnowledgeDataContext";
 import { IS_MOBILE } from "./responsive";
-import { DeleteNode } from "./DeleteNode";
+import { DeleteWorkspace } from "./DeleteNode";
 import { useData } from "../DataContext";
 import { planPublishSettings, usePlanner } from "../planner";
 import { PublishingStatusWrapper } from "./PublishingStatusWrapper";
 import { SignInMenuBtn } from "../SignIn";
 import { isUserLoggedIn } from "../NostrAuthContext";
 import { useProjectContext } from "../ProjectContext";
+import { CurrentWorkspaceTitle } from "../WorkspaceContext";
 
 type NavBarProps = {
   logout: () => void;
@@ -47,7 +47,6 @@ function Title(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
   const { projectID } = useProjectContext();
   const isProject = projectID !== undefined;
-  const title = useWorkspace();
   if (isMobile) {
     return null;
   }
@@ -56,9 +55,9 @@ function Title(): JSX.Element | null {
       <div className={`${isProject ? "bitcoin-orange" : ""} workspace-title`}>
         <Deedsats />
         <ProjectName />
-        {title}
+        <CurrentWorkspaceTitle />
       </div>
-      <DeleteNode />
+      <DeleteWorkspace />
     </div>
   );
 }
@@ -121,7 +120,7 @@ export function NavBar({ logout }: NavBarProps): JSX.Element {
               <span className="simple-icon-options-vertical" />
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              <DeleteNode as="item" />
+              <DeleteWorkspace as="item" />
               <Dropdown.Item
                 className="d-flex workspace-selection"
                 onClick={() => navigate("/profile")}

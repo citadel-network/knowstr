@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Filter } from "nostr-tools";
-import { List, Set } from "immutable";
+import { Set } from "immutable";
 import { useEventQuery } from "citadel-commons";
 import {
   KIND_DELETE,
@@ -140,15 +140,13 @@ export function addListToFilters(
   };
 }
 
-export function addWorkspaceToFilter(filters: Filters, id: LongID): Filters {
-  return addNodeToFilters(filters, id);
-}
-
-export function addWorkspacesToFilter(
+export function addWorkspaceNodesToFilter(
   filters: Filters,
-  workspaces: List<LongID>
+  workspaces: Workspaces
 ): Filters {
-  return workspaces.reduce((rdx, id) => addWorkspaceToFilter(rdx, id), filters);
+  return workspaces.reduce((rdx, workspace) => {
+    return addNodeToFilters(rdx, workspace.node);
+  }, filters);
 }
 
 export function createBaseFilter(
@@ -264,7 +262,6 @@ export function LoadNode({
       return <div className="loading" aria-label="loading" />;
     }
   }
-
   return (
     <RegisterQuery
       nodesBeeingQueried={extractNodesFromQueries(filterArray)}

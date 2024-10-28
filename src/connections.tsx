@@ -306,3 +306,11 @@ export function newNode(
     imageUrl,
   };
 }
+
+export function newWorkspace(nodeId: LongID, myself: PublicKey): Workspace {
+  return {
+    id: joinID(myself, v4()),
+    node: nodeId,
+    project: undefined,
+  };
+}

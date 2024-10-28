@@ -37,7 +37,10 @@ test("Write Nodes & List on Project Relays only", async () => {
     initialRoute: `/?project=${project.id}`,
   });
   await typeNewNode(view, "Hello World");
-  const node = await findEvent(view.relayPool, KIND_KNOWLEDGE_NODE);
+  const node = await findEvent(view.relayPool, {
+    kinds: [KIND_KNOWLEDGE_NODE],
+    authors: [alice().user.publicKey],
+  });
   expect(node?.relays).toEqual(["wss://winchester.deedsats.com/"]);
 });
 
@@ -97,7 +100,7 @@ test("Default Relations are shown when adding a node from other User via search"
   });
 
   renderApp({ ...alice(), includeFocusContext: true });
-  await userEvent.type(await screen.findByText("My first Workspace"), "/");
+  await userEvent.type(await screen.findByText("Default Workspace"), "/");
   screen.getByPlaceholderText("Search");
   const searchInput = await screen.findByLabelText("search input");
   await userEvent.type(searchInput, "Object");

@@ -15,8 +15,6 @@ import { useData } from "./DataContext";
 import {
   planRewriteUnpublishedEvents,
   planRewriteWorkspaceIDs,
-  planUpdateWorkspaceIfNecessary,
-  planUpsertFallbackWorkspaceIfNecessary,
   usePlanner,
 } from "./planner";
 import { execute } from "./executor";
@@ -201,7 +199,6 @@ export function SignInModal(): JSX.Element {
   const { publishEventsStatus } = useData();
   const { relayPool, finalizeEvent } = useApis();
   const { createPlan, setPublishEvents } = usePlanner();
-  const isUnsavedChanges = useIsUnsavedChanges();
   const referrer = (location.state as LocationState | undefined)?.referrer;
   const onHide = (): void => {
     navigate(referrer || "/");
@@ -218,13 +215,8 @@ export function SignInModal(): JSX.Element {
     const user = withExtension
       ? loginWithExtension(key as PublicKey)
       : login(key as string);
-    const planWithNewWSIfNecessary = isUnsavedChanges
-      ? planUpsertFallbackWorkspaceIfNecessary(
-          planUpdateWorkspaceIfNecessary(createPlan())
-        )
-      : createPlan();
     const planWithRewrittenEvents = planRewriteUnpublishedEvents(
-      { ...planWithNewWSIfNecessary, user },
+      { ...createPlan(), user },
       publishEventsStatus.unsignedEvents
     );
     const plan = planRewriteWorkspaceIDs(planWithRewrittenEvents);

@@ -2,7 +2,7 @@ import React from "react";
 import { fireEvent, screen } from "@testing-library/react";
 import { List, Map } from "immutable";
 import userEvent from "@testing-library/user-event";
-import { addRelationToRelations, newNode } from "../connections";
+import { addRelationToRelations, newNode, newWorkspace } from "../connections";
 import { DND } from "../dnd";
 import {
   ALICE,
@@ -26,6 +26,7 @@ import { Column } from "./Column";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import {
   createPlan,
+  planAddWorkspace,
   planBulkUpsertNodes,
   planUpdateViews,
   planUpsertNode,
@@ -62,10 +63,7 @@ test("Render non existing Node", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    {
-      ...alice(),
-      initialRoute: `/w/${pl.id}`,
-    }
+    alice()
   );
   await screen.findByText("Programming Languages");
   await screen.findByText("Error: Node not found");
@@ -88,10 +86,7 @@ test("Render Project", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    {
-      ...alice(),
-      initialRoute: `/w/${project.id}`,
-    }
+    alice()
   );
   await screen.findByText("Winchester Mystery House");
 });
@@ -124,10 +119,7 @@ test("Edit node via Column Menu", async () => {
         </TemporaryViewProvider>
       </LoadNode>
     </RootViewContextProvider>,
-    {
-      ...alice(),
-      initialRoute: `/w/${note.id}`,
-    }
+    alice()
   );
   await expectNode("My Note", true);
   fireEvent.click(screen.getByLabelText("edit My Note"));
@@ -156,10 +148,7 @@ test("Can't edit Projects", async () => {
         </TemporaryViewProvider>
       </LoadNode>
     </RootViewContextProvider>,
-    {
-      ...alice(),
-      initialRoute: `/w/${project.id}`,
-    }
+    alice()
   );
   await expectNode("Winchester Mystery House", false);
 });
@@ -179,10 +168,7 @@ test("Load Note from other User which is not a contact", async () => {
         </TemporaryViewProvider>
       </LoadNode>
     </RootViewContextProvider>,
-    {
-      ...alice(),
-      initialRoute: `/w/${node.id}`,
-    }
+    alice()
   );
   await screen.findByText("Bobs Note");
 });
@@ -202,10 +188,7 @@ test("Cannot edit remote Note", async () => {
         </TemporaryViewProvider>
       </LoadNode>
     </RootViewContextProvider>,
-    {
-      ...alice(),
-      initialRoute: `/w/${note.id}`,
-    }
+    alice()
   );
   await expectNode("My Note", false);
 });
@@ -264,9 +247,11 @@ test("Edited node is shown in Tree View", async () => {
   const oop = newNode("Object Oriented Programming languages", publicKey);
   const java = newNode("Java", publicKey);
 
+  const ws = newWorkspace(pl.id, publicKey);
+
   const plan = planUpsertRelations(
     planUpsertRelations(
-      createPlan(alice()),
+      planAddWorkspace(createPlan(alice()), ws),
       addRelationToRelations(newRelations(pl.id, "", publicKey), oop.id)
     ),
     addRelationToRelations(newRelations(oop.id, "", publicKey), java.id)
@@ -302,7 +287,7 @@ test("Edited node is shown in Tree View", async () => {
     </LoadNode>,
     {
       ...alice(),
-      initialRoute: `/w/${pl.id}`,
+      initialRoute: `/w/${ws.id}`,
     }
   );
   fireEvent.click(await screen.findByLabelText("edit Java"));
@@ -333,10 +318,7 @@ test("Delete node", async () => {
         </DND>
       </TemporaryViewProvider>
     </RootViewContextProvider>,
-    {
-      ...alice(),
-      initialRoute: `/d/${note.id}`,
-    }
+    alice()
   );
   await screen.findByText("My Note");
   await userEvent.click(screen.getByLabelText("edit My Note"));

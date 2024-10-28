@@ -8,12 +8,13 @@ import {
   addRelationToRelations,
   bulkAddRelations,
   shortID,
+  newWorkspace,
 } from "./connections";
 import { execute } from "./executor";
 import {
   createPlan,
+  planAddWorkspace,
   planBulkUpsertNodes,
-  planUpdateWorkspaces,
   planUpsertRelations,
 } from "./planner";
 import {
@@ -36,6 +37,7 @@ import {
   updateViewPathsAfterDisconnect,
   NodeIndex,
   getDefaultRelationForNode,
+  PushNode,
 } from "./ViewContext";
 import { WorkspaceView } from "./components/Workspace";
 import { TreeView } from "./components/TreeView";
@@ -50,24 +52,21 @@ test("Move View Settings on Delete", async () => {
   const cpp = newNode("C++", publicKey);
   const java = newNode("Java", publicKey);
   const pl = newNode("Programming Languages", publicKey);
-  const newWS = newNode("My Workspace", publicKey);
+  const newWSNode = newNode("My Workspace", publicKey);
 
   const planWithNodes = planBulkUpsertNodes(createPlan(alice()), [
     c,
     cpp,
     java,
     pl,
-    newWS,
+    newWSNode,
   ]);
 
-  const planWithWs = planUpdateWorkspaces(
-    planWithNodes,
-    List([newWS.id]),
-    newWS.id
-  );
+  const newWS = newWorkspace(newWSNode.id, publicKey);
+  const planWithWs = planAddWorkspace(planWithNodes, newWS);
 
   const wsRelations = addRelationToRelations(
-    newRelations(newWS.id, "", publicKey),
+    newRelations(newWSNode.id, "", publicKey),
     pl.id
   );
   const planWithRelations = planUpsertRelations(
@@ -90,7 +89,10 @@ test("Move View Settings on Delete", async () => {
     <Data user={alice().user}>
       <WorkspaceView />
     </Data>,
-    alice()
+    {
+      ...alice(),
+      initialRoute: `/w/${newWS.id}`,
+    }
   );
   fireEvent.click(
     await screen.findByLabelText("show Relevant For C", undefined, {
@@ -172,32 +174,37 @@ test("Move Node Up", async () => {
 test("Contact reorders list", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
   await follow(alice, bob().user.publicKey);
-  const bobsKnowledgeDB = await setupTestDB(bob(), [
+  const bobsKnowledgeDB = await setupTestDB(
+    bob(),
     [
-      "Bobs Workspace",
-      [["Programming Languages", [["OOP", ["C++", "Java"]], ["FPL"]]]],
+      [
+        "Bobs Workspace",
+        [["Programming Languages", [["OOP", ["C++", "Java"]], ["FPL"]]]],
+      ],
     ],
-  ]);
+    { activeWorkspace: "Bobs Workspace" }
+  );
   const pl = findNodeByText(
     bobsKnowledgeDB,
     "Programming Languages"
   ) as KnowNode;
 
-  const aliceDB = await setupTestDB(alice(), [["My Workspace", [pl]]]);
-  const root = (findNodeByText(aliceDB, "My Workspace") as KnowNode).id;
+  const aliceDB = await setupTestDB(alice(), [["My Workspace", [pl]]], {
+    activeWorkspace: "My Workspace",
+  });
   const utils = renderWithTestData(
     <Data user={alice().user}>
       <LoadNode waitForEose>
-        <RootViewContextProvider root={root} indices={List([0])}>
+        <PushNode push={List([0])}>
           <LoadNode>
             <TreeView />
           </LoadNode>
-        </RootViewContextProvider>
+        </PushNode>
       </LoadNode>
     </Data>,
     {
       ...alice(),
-      initialRoute: `/w/${root}`,
+      initialRoute: `/w/${aliceDB.activeWorkspace}`,
     }
   );
   await screen.findByText("FPL");
@@ -208,23 +215,19 @@ test("Contact reorders list", async () => {
   cleanup();
 
   // let bob remove OOP
-  const bobsWorkspace = findNodeByText(
-    bobsKnowledgeDB,
-    "Bobs Workspace"
-  ) as KnowNode;
   renderWithTestData(
     <Data user={bob().user}>
       <LoadNode waitForEose>
-        <RootViewContextProvider root={bobsWorkspace.id} indices={List([0])}>
+        <PushNode push={List([0])}>
           <LoadNode>
             <TreeView />
           </LoadNode>
-        </RootViewContextProvider>
+        </PushNode>
       </LoadNode>
     </Data>,
     {
       ...bob(),
-      initialRoute: `/w/${bobsWorkspace.id}`,
+      initialRoute: `/w/${bobsKnowledgeDB.activeWorkspace}`,
     }
   );
   await userEvent.click(await screen.findByLabelText("edit OOP"));
@@ -234,16 +237,16 @@ test("Contact reorders list", async () => {
   const { container } = renderWithTestData(
     <Data user={alice().user}>
       <LoadNode waitForEose>
-        <RootViewContextProvider root={root} indices={List([0])}>
+        <PushNode push={List([0])}>
           <LoadNode>
             <TreeView />
           </LoadNode>
-        </RootViewContextProvider>
+        </PushNode>
       </LoadNode>
     </Data>,
     {
       ...alice(),
-      initialRoute: `/w/${root}`,
+      initialRoute: `/w/${aliceDB.activeWorkspace}`,
     }
   );
   // OOP is gone, so are it's children
@@ -365,17 +368,20 @@ test("Default Relations are deterministic", () => {
 test("View doesn't change if list is copied from contact", async () => {
   const [alice, bob] = setup([ALICE, BOB]);
   await follow(alice, bob().user.publicKey);
-  const bobsKnowledgeDB = await setupTestDB(bob(), [
+  const bobsKnowledgeDB = await setupTestDB(
+    bob(),
     [
-      "Bobs Workspace",
-      [["Programming Languages", [["OOP", ["C++", "Java"]], ["FPL"]]]],
+      [
+        "Bobs Workspace",
+        [["Programming Languages", [["OOP", ["C++", "Java"]], ["FPL"]]]],
+      ],
     ],
-  ]);
-  const bobsWS = findNodeByText(bobsKnowledgeDB, "Bobs Workspace") as KnowNode;
+    { activeWorkspace: "Bobs Workspace" }
+  );
 
   const utils = renderApp({
     ...alice(),
-    initialRoute: `/w/${bobsWS.id}`,
+    initialRoute: `/w/${bobsKnowledgeDB.activeWorkspace}`,
   });
 
   await screen.findByText("Bobs Workspace");
@@ -406,7 +412,7 @@ test("View doesn't change if list is copied from contact", async () => {
 
 test("Disconnect Nodes", async () => {
   const [alice] = setup([ALICE]);
-  await setupTestDB(
+  const aliceDB = await setupTestDB(
     alice(),
     [
       [
@@ -418,7 +424,10 @@ test("Disconnect Nodes", async () => {
       activeWorkspace: "My Workspace",
     }
   );
-  const { container } = renderWithTestData(<App />, alice());
+  const { container } = renderWithTestData(<App />, {
+    ...alice(),
+    initialRoute: `/w/${aliceDB.activeWorkspace}`,
+  });
   await screen.findByText("Programming Languages");
   fireEvent.click(
     screen.getByLabelText("show Relevant For Programming Languages")

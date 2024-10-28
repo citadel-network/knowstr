@@ -7,7 +7,6 @@ import {
   ALICE_PRIVATE_KEY,
   ANON,
   BOB,
-  findNodeByText,
   renderApp,
   renderWithTestData,
   setup,
@@ -30,7 +29,7 @@ test("Login and logout with seed phrase", async () => {
     "leader monkey parrot ring guide accident before fence cannon height naive bean{enter}"
   );
 
-  await screen.findByText("My first Workspace", undefined, {
+  await screen.findByText("Default Workspace", undefined, {
     timeout: 5000,
   });
 
@@ -99,7 +98,7 @@ test("Sign in persists created Notes", async () => {
   );
 
   // After login the note is still there
-  screen.getByText("Hello World!");
+  await screen.findByText("Hello World!");
   // Logout and clear screen
   fireEvent.click(await screen.findByLabelText("open menu"));
   fireEvent.click(await screen.findByLabelText("logout"));
@@ -108,6 +107,7 @@ test("Sign in persists created Notes", async () => {
   // Open App
   renderWithTestData(<App />, {
     relayPool: view.relayPool,
+    fileStore: view.fileStore,
     user: undefined,
   });
   expect(screen.queryAllByText("Hello World!").length).toBe(0);
@@ -125,13 +125,14 @@ test("Sign in persists created Notes", async () => {
 
 test("Merge Views", async () => {
   const [bob, alice] = setup([BOB, ALICE]);
-  const bobsDB = await setupTestDB(bob(), [
-    ["Default Workspace", [["Bitcoin"], ["Nostr"]]],
-  ]);
-  const wsNode = findNodeByText(bobsDB, "Default Workspace") as KnowNode;
+  const bobsDB = await setupTestDB(
+    bob(),
+    [["Default Workspace", [["Bitcoin"], ["Nostr"]]]],
+    { activeWorkspace: "Default Workspace" }
+  );
   renderApp({
     ...alice(),
-    defaultWorkspace: wsNode.id,
+    defaultWorkspace: bobsDB.activeWorkspace,
   });
   await userEvent.click(
     await screen.findByLabelText("increase width of Bitcoin")
@@ -143,7 +144,7 @@ test("Merge Views", async () => {
   renderWithTestData(<App />, {
     relayPool: bob().relayPool,
     user: undefined,
-    defaultWorkspace: wsNode.id,
+    defaultWorkspace: bobsDB.activeWorkspace,
   });
   await userEvent.click(
     await screen.findByLabelText("increase width of Nostr")
@@ -188,5 +189,5 @@ test("Don't change workspace title after signin", async () => {
   );
   await screen.findAllByText("My Brand New Workspace");
   // After login there is not default workspace name to be seen
-  expect(screen.queryByText("My first Workspace")).toBeNull();
+  expect(screen.queryByText("Default Workspace")).toBeNull();
 });

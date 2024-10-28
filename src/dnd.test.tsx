@@ -21,17 +21,19 @@ test("Dragging Source not available at Destination", async () => {
   ]);
   const btc = findNodeByText(executedPlan, "Bitcoin");
   const money = findNodeByText(executedPlan, "Money");
-  const planWithWs = await setupTestDB(alice(), [
-    ["My Workspace", [btc as KnowNode, money as KnowNode]],
-  ]);
-  const root = (findNodeByText(planWithWs, "My Workspace") as KnowNode).id;
+  const planWithWs = await setupTestDB(
+    alice(),
+    [["My Workspace", [btc as KnowNode, money as KnowNode]]],
+
+    { activeWorkspace: "My Workspace" }
+  );
   renderWithTestData(
     <LoadNode waitForEose>
       <WorkspaceView />
     </LoadNode>,
     {
       ...alice(),
-      initialRoute: `/w/${root}`,
+      initialRoute: `/w/${planWithWs.activeWorkspace}`,
     }
   );
 

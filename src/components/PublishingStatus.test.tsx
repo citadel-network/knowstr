@@ -9,10 +9,11 @@ import {
   typeNewNode,
   renderWithTestData,
   TEST_RELAYS,
+  createOrLoadDefaultWorkspace,
 } from "../utils.test";
 import { PublishingStatusWrapper } from "./PublishingStatusWrapper";
 import { WorkspaceView } from "./Workspace";
-import { MockRelayPool, mockRelayPool } from "../nostrMock.test";
+import { MockRelayPool } from "../nostrMock.test";
 
 test("Publishing Status", async () => {
   const [alice] = setup([ALICE]);
@@ -23,13 +24,16 @@ test("Publishing Status", async () => {
   expect(await screen.findAllByText("100%")).toHaveLength(4);
   screen.getByText("Relay wss://relay.test.first.success/:");
   expect(
-    screen.getAllByText("5 of the last 5 events have been published")
+    screen.getAllByText("3 of the last 3 events have been published")
   ).toHaveLength(4);
 });
 
 test("Details of Publishing Status", async () => {
   const [alice] = setup([ALICE]);
   const utils = alice();
+  const defaultWS = createOrLoadDefaultWorkspace({
+    relayPool: utils.relayPool,
+  });
   const view = renderWithTestData(
     <>
       <PublishingStatusWrapper />
@@ -38,7 +42,7 @@ test("Details of Publishing Status", async () => {
     {
       ...utils,
       relayPool: {
-        ...mockRelayPool(),
+        ...utils.relayPool,
         publish: (relays: Array<string>, event: Event): Promise<string>[] => {
           if (event.kind === 34751) {
             return [
@@ -57,6 +61,7 @@ test("Details of Publishing Status", async () => {
         },
       } as unknown as MockRelayPool,
       relays: { ...utils.relays, userRelays: TEST_RELAYS },
+      defaultWorkspace: defaultWS,
     }
   );
   await typeNewNode(view, "Hello World");
@@ -67,14 +72,14 @@ test("Details of Publishing Status", async () => {
   );
   screen.getByText("Relay wss://relay.test.fourth.success/:");
   expect(
-    screen.getAllByText("5 of the last 5 events have been published")
+    screen.getAllByText("3 of the last 3 events have been published")
   ).toHaveLength(2);
 
   screen.getByText("Relay wss://relay.test.third.rand/:");
-  screen.getByText("3 of the last 5 events have been published");
+  screen.getByText("0 of the last 3 events have been published");
   screen.getByText("Last rejection reason: Error: too many requests");
 
   screen.getByText("Relay wss://relay.test.second.fail/:");
-  screen.getByText("0 of the last 5 events have been published");
+  screen.getByText("0 of the last 3 events have been published");
   screen.getAllByText("Last rejection reason: Error: paid relay");
 });

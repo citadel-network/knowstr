@@ -151,6 +151,13 @@ declare global {
     memberListProvider: PublicKey;
   };
 
+  type Workspace = {
+    id: LongID;
+    node: LongID;
+    project: LongID | undefined;
+  };
+  type Workspaces = Map<ID, Workspace>;
+
   type KnowNode = TextNode | ProjectNode;
 
   type Views = Map<string, View>;

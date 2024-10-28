@@ -13,7 +13,6 @@ import { RelayInformation } from "nostr-tools/lib/types/nip11";
 import {
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
-  KIND_WORKSPACES,
   KIND_VIEWS,
   KIND_SETTINGS,
   KIND_DELETE,
@@ -48,8 +47,7 @@ type ProcessedEvents = {
   relays: Relays;
 
   views: Views;
-  workspaces: List<ID>;
-  activeWorkspace: LongID | undefined;
+  workspaces: Map<ID, Workspace>;
   projectMembers: Members;
 };
 
@@ -60,40 +58,22 @@ export function newProcessedEvents(): ProcessedEvents {
     contacts: Map<PublicKey, Contact>(),
     relays: [],
     views: Map<string, View>(),
-    activeWorkspace: undefined,
-    workspaces: List<ID>(),
+    workspaces: Map<ID, Workspace>(),
     projectMembers: Map<PublicKey, Member>(),
   };
 }
 
 export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE, KIND_DELETE, KIND_PROJECT];
 
-export const KINDS_META = [
-  KIND_SETTINGS,
-  KIND_CONTACTLIST,
-  KIND_WORKSPACES,
-  KIND_VIEWS,
-];
+export const KINDS_META = [KIND_SETTINGS, KIND_CONTACTLIST, KIND_VIEWS];
 
 function mergeEvents(
   processed: ProcessedEvents,
   events: List<UnsignedEvent | Event>
 ): ProcessedEvents {
-  const workspaces = findWorkspaces(events) || {
-    workspaces: List<ID>(),
-    activeWorkspace: undefined,
-  };
-
-  const newWorkspaces = processed.workspaces
-    .merge(workspaces.workspaces)
-    .toSet()
-    .toList();
-
   return {
     ...processed,
     contacts: processed.contacts.merge(findContacts(events)),
-    workspaces: newWorkspaces,
-    activeWorkspace: processed.activeWorkspace || workspaces.activeWorkspace,
     views: findViews(events).merge(processed.views),
   };
 }
@@ -119,8 +99,7 @@ function processEventsByAuthor(
     knowledgeDB,
     relays,
     views,
-    workspaces: workspaces ? workspaces.workspaces : List<ID>(),
-    activeWorkspace: workspaces ? workspaces.activeWorkspace : undefined,
+    workspaces,
     projectMembers,
   };
 }

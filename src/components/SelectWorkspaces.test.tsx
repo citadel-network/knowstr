@@ -29,12 +29,23 @@ test("Distinguish between local and remote dashboards", async () => {
   cleanup();
   renderWithTestData(<SelectWorkspaces />, alice());
   await userEvent.click(await screen.findByLabelText("switch workspace"));
+
+  await userEvent.click(switchWsBtn);
+  const newWsBtnAlice = screen.getByText("New Workspace");
+  await userEvent.click(newWsBtnAlice);
+  await userEvent.type(
+    screen.getByLabelText("title of new workspace"),
+    "Alice Workspace"
+  );
+  await userEvent.click(screen.getByText("Create Workspace"));
+
   await waitFor(() => {
     const selection = screen.getByLabelText("workspace selection");
     expectTextContent(selection, [
       "Your Workspaces",
-      "My first Workspace",
-      "Your Contacts Workspaces",
+      "Alice Workspace",
+      "Other Users Workspaces",
+      "Default Workspace",
       "Bobs Workspace",
       "New Workspace",
     ]);

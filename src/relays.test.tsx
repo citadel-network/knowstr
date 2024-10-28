@@ -82,7 +82,7 @@ test("Write Settings on user relays", async () => {
   });
   fireEvent.click(screen.getByLabelText("open menu"));
   fireEvent.click(await screen.findByLabelText("switch bionic reading on"));
-  const event = await findEvent(utils.relayPool, KIND_SETTINGS);
+  const event = await findEvent(utils.relayPool, { kinds: [KIND_SETTINGS] });
   await screen.findByLabelText("switch bionic reading off");
   expect(event?.relays).toEqual(TEST_RELAYS.map((r) => r.url));
 });
@@ -102,9 +102,9 @@ test("Write views on user relays", async () => {
   );
   utils.relayPool.resetPublishedOnRelays();
   await userEvent.click(
-    await screen.findByLabelText("increase width of My first Workspace")
+    await screen.findByLabelText("increase width of Default Workspace")
   );
-  await findEvent(utils.relayPool, KIND_VIEWS);
+  await findEvent(utils.relayPool, { kinds: [KIND_VIEWS] });
   expect(utils.relayPool.getPublishedOnRelays()).toEqual(
     TEST_RELAYS.map((r) => r.url)
   );

@@ -1,11 +1,11 @@
 export const KIND_SETTINGS = 11071;
 
 export const KIND_VIEWS = 11074;
-export const KIND_WORKSPACES = 11075;
 
 export const KIND_KNOWLEDGE_LIST = 34750;
 export const KIND_KNOWLEDGE_NODE = 34751;
 export const KIND_PROJECT = 34752;
+export const KIND_WORKSPACE = 34753;
 // Essentially a markdown which is not editable
 export const KIND_KNOWLEDGE_NODE_COLLECTION = 2945;
 

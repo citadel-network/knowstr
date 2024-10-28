@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { Dropdown, Modal, Form, InputGroup, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { FormControlWrapper } from "citadel-commons";
-import { isIDRemote, newNode } from "../connections";
+import { Map } from "immutable";
+import { newNode, newWorkspace } from "../connections";
 import { useData } from "../DataContext";
-import { planUpdateWorkspaces, planUpsertNode, usePlanner } from "../planner";
-import { useUserWorkspaces, useWorkspaceNodes } from "../WorkspaceContext";
+import { planAddWorkspace, planUpsertNode, usePlanner } from "../planner";
+import { useWorkspaceContext } from "../WorkspaceContext";
+import { getNodeFromID } from "../ViewContext";
 
 type NewWorkspaceProps = {
   onHide: () => void;
@@ -25,20 +27,12 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
     }
     const title = (form.elements.namedItem("title") as HTMLInputElement).value;
     const node = newNode(title, user.publicKey);
+    const workspace = newWorkspace(node.id, user.publicKey);
+
     const newNodePlan = planUpsertNode(createPlan(), node);
-    // set node as active
-    const myDB = newNodePlan.knowledgeDBs.get(newNodePlan.user.publicKey);
-    if (!myDB) {
-      executePlan(newNodePlan);
-      return;
-    }
-    const setActivePlan = planUpdateWorkspaces(
-      newNodePlan,
-      newNodePlan.workspaces.push(node.id),
-      node.id
-    );
-    executePlan(setActivePlan);
-    navigate(`/w/${node.id}`);
+    const newWorkspacePlan = planAddWorkspace(newNodePlan, workspace);
+    executePlan(newWorkspacePlan);
+    navigate(`/w/${workspace.id}`);
     onHide();
   };
 
@@ -68,49 +62,62 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   );
 }
 
-function ListItem({ id, title }: { id: LongID; title: string }): JSX.Element {
-  const workspaces = useUserWorkspaces();
-  const { createPlan, executePlan } = usePlanner();
+function ListItem({ workspace }: { workspace: Workspace }): JSX.Element {
+  const { setCurrentWorkspace } = useWorkspaceContext();
   const navigate = useNavigate();
+  const { knowledgeDBs, user } = useData();
+  const node = getNodeFromID(knowledgeDBs, workspace.node, user.publicKey);
 
   const onClick = (): void => {
-    executePlan(planUpdateWorkspaces(createPlan(), workspaces, id));
-    navigate(`/w/${id}`);
+    setCurrentWorkspace(workspace.id);
+    navigate(`/w/${workspace.id}`);
   };
 
   return (
     <Dropdown.Item
       className="d-flex workspace-selection"
       onClick={onClick}
-      key={id}
       tabIndex={0}
     >
-      <div className="workspace-selection-text">{title}</div>
+      <div className="workspace-selection-text">
+        {node?.text || "Loading..."}
+      </div>
     </Dropdown.Item>
   );
 }
 
 /* eslint-disable react/no-array-index-key */
 export function SelectWorkspaces(): JSX.Element {
-  const [newWorkspace, setNewWorkspace] = useState<boolean>(false);
+  const [showNewWorkspaceModal, setShowNewWorkspaceModal] =
+    useState<boolean>(false);
   const data = useData();
-  const userWorkspaces = useUserWorkspaces();
-  const workspaceNodes = useWorkspaceNodes();
 
-  const localWorkspaces = workspaceNodes.filter(
-    (node) =>
-      !isIDRemote(node.id, data.user.publicKey) ||
-      userWorkspaces.includes(node.id)
-  );
-  const remoteOnlyWorkspaces = workspaceNodes.filter(
-    (node) =>
-      isIDRemote(node.id, data.user.publicKey) &&
-      !userWorkspaces.includes(node.id)
-  );
+  const { localWorkspaces, remoteOnlyWorkspaces } =
+    useWorkspaceContext().workspaces.reduce(
+      (acc, workspaces, author) => {
+        const isRemote = author !== data.user.publicKey;
+        if (isRemote) {
+          return {
+            ...acc,
+            remoteOnlyWorkspaces: acc.remoteOnlyWorkspaces.merge(workspaces),
+          };
+        }
+        return {
+          ...acc,
+          localWorkspaces: acc.localWorkspaces.merge(workspaces),
+        };
+      },
+      {
+        localWorkspaces: Map<ID, Workspace>(),
+        remoteOnlyWorkspaces: Map<ID, Workspace>(),
+      }
+    );
 
   return (
     <Dropdown aria-label="workspace selection">
-      {newWorkspace && <NewWorkspace onHide={() => setNewWorkspace(false)} />}
+      {showNewWorkspaceModal && (
+        <NewWorkspace onHide={() => setShowNewWorkspaceModal(false)} />
+      )}
       <Dropdown.Toggle
         as="button"
         className="btn"
@@ -120,34 +127,34 @@ export function SelectWorkspaces(): JSX.Element {
         <span className="simple-icon-layers" />
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        <Dropdown.Item className="project-selection">
-          <div>Your Workspaces</div>
-        </Dropdown.Item>
-        {localWorkspaces.toArray().map((workspace) => (
-          <ListItem
-            key={workspace.id}
-            id={workspace.id}
-            title={workspace.text}
-          />
-        ))}
+        {localWorkspaces.size > 0 && (
+          <Dropdown.Item className="project-selection">
+            <div>Your Workspaces</div>
+          </Dropdown.Item>
+        )}
+        {localWorkspaces
+          .valueSeq()
+          .toArray()
+          .map((workspace) => (
+            <ListItem workspace={workspace} key={workspace.id} />
+          ))}
         {remoteOnlyWorkspaces.size > 0 && (
           <>
             <Dropdown.Item className="project-selection">
-              <div>Your Contacts Workspaces</div>
+              <div>Other Users Workspaces</div>
             </Dropdown.Item>
-            {remoteOnlyWorkspaces.toArray().map((workspace) => (
-              <ListItem
-                key={workspace.id}
-                id={workspace.id}
-                title={workspace.text}
-              />
-            ))}
+            {remoteOnlyWorkspaces
+              .valueSeq()
+              .toArray()
+              .map((workspace) => (
+                <ListItem workspace={workspace} key={workspace.id} />
+              ))}
           </>
         )}
         <Dropdown.Divider />
         <Dropdown.Item
           className="d-flex workspace-selection"
-          onClick={() => setNewWorkspace(true)}
+          onClick={() => setShowNewWorkspaceModal(true)}
           tabIndex={0}
         >
           <div className="workspace-selection-text">New Workspace</div>

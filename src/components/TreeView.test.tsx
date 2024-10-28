@@ -15,9 +15,11 @@ import { TreeView } from "./TreeView";
 
 test("Load Referenced By Nodes", async () => {
   const [alice] = setup([ALICE]);
-  const aliceDB = await setupTestDB(alice(), [
-    ["Alice Workspace", [["Money", ["Bitcoin"]]]],
-  ]);
+  const aliceDB = await setupTestDB(
+    alice(),
+    [["Alice Workspace", [["Money", ["Bitcoin"]]]]],
+    { activeWorkspace: "Alice Workspace" }
+  );
   const bitcoin = findNodeByText(aliceDB, "Bitcoin") as KnowNode;
   const aliceWs = findNodeByText(aliceDB, "Alice Workspace") as KnowNode;
 
@@ -37,7 +39,7 @@ test("Load Referenced By Nodes", async () => {
     </Data>,
     {
       ...alice(),
-      initialRoute: `/w/${aliceWs.id}`,
+      initialRoute: `/w/${aliceDB.activeWorkspace}`,
     }
   );
   await screen.findByText("Bitcoin");

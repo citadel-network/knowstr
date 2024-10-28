@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction } from "react";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import { UnsignedEvent, Event } from "nostr-tools";
 import crypto from "crypto";
 import {
@@ -14,7 +14,7 @@ import {
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
   KIND_VIEWS,
-  KIND_WORKSPACES,
+  KIND_WORKSPACE,
   KIND_SETTINGS,
   KIND_MEMBERLIST,
 } from "./nostr";
@@ -23,17 +23,16 @@ import { execute, republishEvents } from "./executor";
 import { useApis } from "./Apis";
 import { viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
-import { isIDRemote, joinID, shortID, splitID } from "./connections";
-import { DEFAULT_WS_NAME } from "./KnowledgeDataContext";
+import { joinID, shortID } from "./connections";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
-import { useUserWorkspaces, useWorkspaceContext } from "./WorkspaceContext";
+import { useWorkspaceContext } from "./WorkspaceContext";
 import { useRelaysToCreatePlan } from "./relays";
 import { useProjectContext } from "./ProjectContext";
 
 export type Plan = Data & {
   publishEvents: List<UnsignedEvent & EventAttachment>;
   activeWorkspace: LongID;
-  workspaces: List<ID>;
+  workspaces: Map<PublicKey, Workspaces>;
   projectID: LongID | undefined;
   relays: AllRelays;
 };
@@ -256,6 +255,23 @@ export function planDeleteRelations(plan: Plan, relationsID: LongID): Plan {
   };
 }
 
+export function planDeleteWorkspace(plan: Plan, workspaceID: LongID): Plan {
+  const deletePlan = planDelete(plan, workspaceID, KIND_WORKSPACE);
+  const myWorkspaces = plan.workspaces.get(
+    plan.user.publicKey,
+    Map<ID, Workspace>()
+  );
+  const myWorkspacesUpdated = myWorkspaces.remove(shortID(workspaceID));
+  const workspacesUpdated = plan.workspaces.set(
+    plan.user.publicKey,
+    myWorkspacesUpdated
+  );
+  return {
+    ...deletePlan,
+    workspaces: workspacesUpdated,
+  };
+}
+
 export function planUpdateViews(plan: Plan, views: Views): Plan {
   // filter previous events for views
   const publishEvents = plan.publishEvents.filterNot(
@@ -286,70 +302,22 @@ export function fallbackWorkspace(publicKey: PublicKey): LongID {
   return joinID(publicKey, v4());
 }
 
-function isWsMissing(plan: Plan, workspace: LongID): boolean {
-  const remote = splitID(workspace)[0];
-  if (
-    isIDRemote(workspace, plan.user.publicKey) &&
-    remote &&
-    plan.contacts.has(remote)
-  ) {
-    return false;
-  }
-  return !plan.workspaces.includes(workspace);
-}
-
-export function planUpdateWorkspaces(
-  plan: Plan,
-  workspaces: List<ID>,
-  activeWorkspace: LongID | undefined
-): Plan {
-  const newActiveWs = activeWorkspace || fallbackWorkspace(plan.user.publicKey);
-  const newWorkspaces = isWsMissing({ ...plan, workspaces }, newActiveWs)
-    ? workspaces.push(newActiveWs)
-    : workspaces;
-  const serialized = {
-    w: newWorkspaces.toArray(),
-    a: newActiveWs,
-  };
-  const writeWorkspacesEvent = {
-    kind: KIND_WORKSPACES,
+export function planAddWorkspace(plan: Plan, workspace: Workspace): Plan {
+  const workspaceEvent = {
+    kind: KIND_WORKSPACE,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [],
-    content: JSON.stringify(serialized),
+    tags: [
+      ["d", shortID(workspace.id)],
+      ["node", workspace.node],
+      workspace.project ? ["project", workspace.project] : [],
+    ],
+    content: "",
   };
   return {
     ...plan,
-    workspaces: newWorkspaces,
-    activeWorkspace: newActiveWs,
-    publishEvents: plan.publishEvents.push(writeWorkspacesEvent),
+    publishEvents: plan.publishEvents.push(workspaceEvent),
   };
-}
-
-function isRemoteWorkspace(plan: Plan): boolean {
-  const isRemote = isIDRemote(plan.activeWorkspace, plan.user.publicKey);
-  const remote = splitID(plan.activeWorkspace)[0];
-  return isRemote && !!remote && plan.contacts.has(remote);
-}
-
-export function planUpdateWorkspaceIfNecessary(plan: Plan): Plan {
-  return !isRemoteWorkspace(plan) && isWsMissing(plan, plan.activeWorkspace)
-    ? planUpdateWorkspaces(plan, plan.workspaces, plan.activeWorkspace)
-    : plan;
-}
-
-export function planUpsertFallbackWorkspaceIfNecessary(plan: Plan): Plan {
-  // test if the node exists
-  const node = plan.knowledgeDBs
-    .get(plan.user.publicKey)
-    ?.nodes.get(shortID(plan.activeWorkspace));
-  return !isRemoteWorkspace(plan) && !node
-    ? planUpsertNode(plan, {
-        id: plan.activeWorkspace,
-        text: DEFAULT_WS_NAME,
-        type: "text",
-      })
-    : plan;
 }
 
 export function replaceUnauthenticatedUser<T extends string>(
@@ -372,17 +340,12 @@ function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
 }
 
 export function planRewriteWorkspaceIDs(plan: Plan): Plan {
-  const rewrittenWorkspaces = plan.workspaces.reduce((rdx, wsID) => {
-    return rdx.merge(replaceUnauthenticatedUser(wsID, plan.user.publicKey));
-  }, List<string>());
-  const rewrittenActiveWorkspace = replaceUnauthenticatedUser(
-    plan.activeWorkspace,
-    plan.user.publicKey
-  );
   return {
     ...plan,
-    workspaces: rewrittenWorkspaces,
-    activeWorkspace: rewrittenActiveWorkspace,
+    activeWorkspace: replaceUnauthenticatedUser(
+      plan.activeWorkspace,
+      plan.user.publicKey
+    ),
   };
 }
 
@@ -500,11 +463,8 @@ export function PlanningContextProvider({
       };
     });
 
-    const planWithWs = planUpsertFallbackWorkspaceIfNecessary(
-      planUpdateWorkspaceIfNecessary(plan)
-    );
     const results = await execute({
-      plan: planWithWs,
+      plan,
       relayPool,
       finalizeEvent,
     });
@@ -554,7 +514,7 @@ export function PlanningContextProvider({
 export function createPlan(
   props: Data & {
     activeWorkspace: LongID;
-    workspaces: List<ID>;
+    workspaces: Map<PublicKey, Workspaces>;
     publishEvents?: List<UnsignedEvent & EventAttachment>;
     relays: AllRelays;
     projectID?: LongID;
@@ -570,8 +530,7 @@ export function createPlan(
 
 export function usePlanner(): Planner {
   const data = useData();
-  const { activeWorkspace } = useWorkspaceContext();
-  const workspaces = useUserWorkspaces();
+  const { activeWorkspace, workspaces } = useWorkspaceContext();
   const relays = useRelaysToCreatePlan();
   const { projectID } = useProjectContext();
   const createPlanningContext = (): Plan => {

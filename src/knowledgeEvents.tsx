@@ -11,14 +11,14 @@ import {
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_VIEWS,
-  KIND_WORKSPACES,
+  KIND_WORKSPACE,
 } from "./nostr";
 import {
   Serializable,
   jsonToViews,
-  jsonToWorkspace,
   eventToRelations,
   eventToTextOrProjectNode,
+  eventToWorkspace,
 } from "./serializer";
 import { splitID } from "./connections";
 
@@ -97,22 +97,29 @@ export function findRelations(
   }, Map<string, Relations>());
 }
 
-type Workspaces = {
-  workspaces: List<LongID>;
-  activeWorkspace: LongID;
-};
-
-export function findWorkspaces(
-  events: List<UnsignedEvent>
-): Workspaces | undefined {
-  const workspaceEvent = getMostRecentReplacableEvent(
-    events.filter((event) => event.kind === KIND_WORKSPACES)
+export function findWorkspaces(events: List<UnsignedEvent>): Workspaces {
+  const sorted = sortEvents(
+    events.filter(
+      (event) => event.kind === KIND_WORKSPACE || event.kind === KIND_DELETE
+    )
   );
-  if (workspaceEvent === undefined) {
-    return undefined;
-  }
-  const parsed = JSON.parse(workspaceEvent.content) as Serializable;
-  return jsonToWorkspace(parsed);
+  return sorted.reduce((rdx, event) => {
+    if (event.kind === KIND_DELETE) {
+      const [deletable, eventToDeleteId, deleteKind] = isDeletable(event, rdx);
+      if (deletable && `${deleteKind}` === `${KIND_WORKSPACE}`) {
+        return rdx.remove(eventToDeleteId);
+      }
+      return rdx;
+    }
+    const [id, workspace] = eventToWorkspace(event);
+    return id
+      ? rdx.set(id, {
+          node: workspace.node,
+          id: workspace.id,
+          project: undefined,
+        })
+      : rdx;
+  }, Map<ID, Workspace>());
 }
 
 export function findViews(events: List<UnsignedEvent>): Views {

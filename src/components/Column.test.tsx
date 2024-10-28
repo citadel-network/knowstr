@@ -17,7 +17,7 @@ import { newNode } from "../connections";
 import { execute } from "../executor";
 import { createPlan, planUpsertNode } from "../planner";
 import { WorkspaceView } from "./Workspace";
-import { RootViewContextProvider } from "../ViewContext";
+import { PushNode, RootViewContextProvider } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import { DND } from "../dnd";
 import { WorkspaceColumnView } from "./WorkspaceColumn";
@@ -79,25 +79,26 @@ test("Show Referenced By", async () => {
   const [alice] = setup([ALICE]);
   const aliceKnowledgeDB = await setupTestDB(alice(), [["Money", ["Bitcoin"]]]);
   const btc = findNodeByText(aliceKnowledgeDB, "Bitcoin") as KnowNode;
-  const db = await setupTestDB(alice(), [
-    ["Alice Workspace", [[btc], ["P2P Apps", [btc]]]],
-  ]);
-  const aliceWs = findNodeByText(db, "Alice Workspace") as KnowNode;
+  const db = await setupTestDB(
+    alice(),
+    [["Alice Workspace", [[btc], ["P2P Apps", [btc]]]]],
+    { activeWorkspace: "Alice Workspace" }
+  );
   renderWithTestData(
     <Data user={alice().user}>
       <LoadNode waitForEose>
-        <RootViewContextProvider root={aliceWs.id} indices={List([0])}>
+        <PushNode push={List([0])}>
           <TemporaryViewProvider>
             <DND>
               <WorkspaceColumnView />
             </DND>
           </TemporaryViewProvider>
-        </RootViewContextProvider>
+        </PushNode>
       </LoadNode>
     </Data>,
     {
       ...alice(),
-      initialRoute: `/w/${aliceWs.id}`,
+      initialRoute: `/w/${db.activeWorkspace}`,
     }
   );
   await screen.findByText("Bitcoin");

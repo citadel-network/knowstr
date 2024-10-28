@@ -228,7 +228,7 @@ test("Following in Project Context uses users relays and not projects relays", a
   const followBtn = await screen.findByLabelText("follow user");
   fireEvent.click(followBtn);
   await screen.findByText("You follow this User");
-  const event = await findEvent(relayPool, KIND_CONTACTLIST);
+  const event = await findEvent(relayPool, { kinds: [KIND_CONTACTLIST] });
   expect(event?.relays).toEqual(TEST_RELAYS.map((r) => r.url));
 });
 

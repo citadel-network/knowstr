@@ -28,22 +28,20 @@ import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
 import {
+  findTag,
   FocusContext,
   FocusContextProvider,
   newTimestamp,
 } from "citadel-commons";
 import { v4 } from "uuid";
-import { KIND_CONTACTLIST, KIND_PROJECT } from "./nostr";
+import { KIND_CONTACTLIST, KIND_PROJECT, KIND_WORKSPACE } from "./nostr";
 import { RequireLogin, UNAUTHENTICATED_USER_PK } from "./AppState";
 import {
   Plan,
   createPlan,
-  fallbackWorkspace,
   planAddContact,
+  planAddWorkspace,
   planRemoveContact,
-  planUpdateWorkspaceIfNecessary,
-  planUpdateWorkspaces,
-  planUpsertFallbackWorkspaceIfNecessary,
   planUpsertNode,
   planUpsertRelations,
   relayTags,
@@ -63,6 +61,7 @@ import {
   getRelationsNoReferencedBy,
   joinID,
   newNode,
+  newWorkspace,
   shortID,
 } from "./connections";
 import { newRelations } from "./ViewContext";
@@ -88,6 +87,11 @@ export const CAROL_PRIVATE_KEY =
   "10000f1cf58c28647c7b7dc198dcbc4de860948933e56001ab9fc17e1b8d072e";
 export const CAROL_PUBLIC_KEY =
   "074eb94a7a3d34102b563b540ac505e4fa8f71e3091f1e39a77d32e813c707d2" as PublicKey;
+
+export const STASHMAP_PUBLIC_KEY =
+  "0d88016ab939e885e59c0cb7775fe06cdfa94bce46547c8b37a87a02130e4e76" as PublicKey;
+export const STASHMAP_PRIVATE_KEY =
+  "cdf051a1564177fa20bb831847011e8d4e5168ed8f74448c82c4279bf8766512";
 
 const UNAUTHENTICATED_ALICE: Contact = {
   publicKey:
@@ -200,6 +204,119 @@ function applyApis(props?: Partial<TestApis>): TestApis {
   };
 }
 
+export type UpdateState = () => TestAppState;
+
+type TestAppState = TestDataProps & TestApis;
+
+type TestDataProps = DataContextProps & {
+  activeWorkspace: LongID;
+  workspaces: Map<PublicKey, Workspaces>;
+  relays: AllRelays;
+};
+
+const DEFAULT_DATA_CONTEXT_PROPS: TestDataProps = {
+  user: ALICE,
+  contacts: Map<PublicKey, Contact>(),
+  settings: DEFAULT_SETTINGS,
+  contactsRelays: Map<PublicKey, Relays>(),
+  knowledgeDBs: Map<PublicKey, KnowledgeData>(),
+  relaysInfos: Map<string, RelayInformation | undefined>(),
+  publishEventsStatus: {
+    isLoading: false,
+    unsignedEvents: List<UnsignedEvent>(),
+    results: Map<string, PublishResultsOfEvent>(),
+    preLoginEvents: List<UnsignedEvent>(),
+  },
+  views: Map<string, View>(),
+  workspaces: Map<PublicKey, Workspaces>(),
+  activeWorkspace: joinID(STASHMAP_PUBLIC_KEY, "ws") as LongID,
+  relays: {
+    defaultRelays: [{ url: "wss://default.relay", read: true, write: true }],
+    userRelays: [{ url: "wss://user.relay", read: true, write: true }],
+    projectRelays: [{ url: "wss://project.relay", read: true, write: true }],
+    contactsRelays: [{ url: "wss://contacts.relay", read: true, write: true }],
+  },
+  projectMembers: Map<PublicKey, Member>(),
+};
+
+function applyDefaults(props?: Partial<TestAppState>): TestAppState {
+  return {
+    ...applyApis(props),
+    ...DEFAULT_DATA_CONTEXT_PROPS,
+    ...props,
+  };
+}
+
+function createContactsQuery(author: PublicKey): Filter {
+  return {
+    kinds: [KIND_CONTACTLIST],
+    authors: [author],
+  };
+}
+
+function getContactListEventsOfUser(
+  publicKey: PublicKey,
+  events: Array<Event>
+): List<Event> {
+  const query = createContactsQuery(publicKey);
+  return List<Event>(events).filter((e) => matchFilter(query, e));
+}
+
+function getContacts(appState: TestAppState): Contacts {
+  const events = getContactListEventsOfUser(
+    appState.user.publicKey,
+    appState.relayPool.getEvents()
+  );
+  return findContacts(events);
+}
+
+export function setup(
+  users: User[],
+  options?: Partial<TestAppState>
+): UpdateState[] {
+  const appState = applyDefaults(options);
+  return users.map((user): UpdateState => {
+    return (): TestAppState => {
+      const updatedState = {
+        ...appState,
+        user,
+      };
+      const contacts = appState.contacts.merge(getContacts(updatedState));
+      return {
+        ...updatedState,
+        contacts,
+      };
+    };
+  });
+}
+
+export function findNodeByText(plan: Plan, text: string): KnowNode | undefined {
+  const { knowledgeDBs, user } = plan;
+  return knowledgeDBs
+    .get(user.publicKey, newDB())
+    .nodes.find((node) => node.text === text);
+}
+
+function createInitialWorkspace(
+  plan: Plan,
+  activeWorkspace?: string
+): [Plan, workspaceID: LongID] {
+  const wsNode = activeWorkspace
+    ? findNodeByText(plan, activeWorkspace)
+    : newNode("Default Workspace", plan.user.publicKey);
+  if (!wsNode) {
+    throw new Error(
+      `Test Setup Error: No Node with text ${activeWorkspace} found`
+    );
+  }
+
+  const planWithNode = activeWorkspace ? plan : planUpsertNode(plan, wsNode);
+
+  const ws = newWorkspace(wsNode.id, plan.user.publicKey);
+  const planWithWS = planAddWorkspace(planWithNode, ws);
+  return [planWithWS, ws.id];
+}
+
 type RenderApis = Partial<TestApis> & {
   initialRoute?: string;
   includeFocusContext?: boolean;
@@ -208,11 +325,52 @@ type RenderApis = Partial<TestApis> & {
   defaultWorkspace?: LongID;
 };
 
-function renderApis(
+export function createOrLoadDefaultWorkspace({
+  relayPool,
+}: {
+  relayPool: MockRelayPool;
+}): LongID {
+  const [stashmaps] = setup(
+    [
+      {
+        publicKey: STASHMAP_PUBLIC_KEY,
+        privateKey: hexToBytes(STASHMAP_PRIVATE_KEY),
+      },
+    ],
+    {
+      relayPool,
+    }
+  );
+  const existingWs = relayPool.getEvents().find((e) =>
+    matchFilter(
+      {
+        kinds: [KIND_WORKSPACE],
+        authors: [STASHMAP_PUBLIC_KEY],
+      },
+      e
+    )
+  );
+
+  if (existingWs) {
+    return joinID(STASHMAP_PUBLIC_KEY, findTag(existingWs, "d") as LongID);
+  }
+
+  const [createWsPlan, wsID] = createInitialWorkspace(createPlan(stashmaps()));
+  execute({
+    ...stashmaps(),
+    plan: createWsPlan,
+  });
+  return wsID;
+}
+
+export function renderApis(
   children: React.ReactElement,
   options?: RenderApis
 ): TestApis & RenderResult {
   const { fileStore, relayPool, finalizeEvent, nip11 } = applyApis(options);
+  const defaultWorkspaceID =
+    options?.defaultWorkspace || createOrLoadDefaultWorkspace({ relayPool });
+
   // If user is explicity undefined it will be overwritten, if not set default Alice is used
   const optionsWithDefaultUser = {
     user: ALICE,
@@ -249,7 +407,7 @@ function renderApis(
             optionsWithDefaultUser.defaultRelays ||
             TEST_RELAYS.map((r) => r.url)
           }
-          defaultWorkspace={options?.defaultWorkspace}
+          defaultWorkspace={defaultWorkspaceID}
         >
           <ProjectContextProvider>
             <VirtuosoMockContext.Provider
@@ -306,105 +464,15 @@ export function waitForLoadingToBeNull(): Promise<void> {
     }
   );
 }
-
-type TestDataProps = DataContextProps & {
-  activeWorkspace: LongID;
-  workspaces: List<ID>;
-  relays: AllRelays;
-};
-
-const DEFAULT_DATA_CONTEXT_PROPS: TestDataProps = {
-  user: ALICE,
-  contacts: Map<PublicKey, Contact>(),
-  settings: DEFAULT_SETTINGS,
-  contactsRelays: Map<PublicKey, Relays>(),
-  knowledgeDBs: Map<PublicKey, KnowledgeData>(),
-  relaysInfos: Map<string, RelayInformation | undefined>(),
-  publishEventsStatus: {
-    isLoading: false,
-    unsignedEvents: List<UnsignedEvent>(),
-    results: Map<string, PublishResultsOfEvent>(),
-    preLoginEvents: List<UnsignedEvent>(),
-  },
-  views: Map<string, View>(),
-  workspaces: List<ID>(),
-  activeWorkspace: fallbackWorkspace(ALICE.publicKey),
-  relays: {
-    defaultRelays: [{ url: "wss://default.relay", read: true, write: true }],
-    userRelays: [{ url: "wss://user.relay", read: true, write: true }],
-    projectRelays: [{ url: "wss://project.relay", read: true, write: true }],
-    contactsRelays: [{ url: "wss://contacts.relay", read: true, write: true }],
-  },
-  projectMembers: Map<PublicKey, Member>(),
-};
-
-type TestAppState = TestDataProps & TestApis;
-
-function applyDefaults(props?: Partial<TestAppState>): TestAppState {
-  return {
-    ...applyApis(props),
-    ...DEFAULT_DATA_CONTEXT_PROPS,
-    ...props,
-  };
-}
-
-function createContactsQuery(author: PublicKey): Filter {
-  return {
-    kinds: [KIND_CONTACTLIST],
-    authors: [author],
-  };
-}
-
-function getContactListEventsOfUser(
-  publicKey: PublicKey,
-  events: Array<Event>
-): List<Event> {
-  const query = createContactsQuery(publicKey);
-  return List<Event>(events).filter((e) => matchFilter(query, e));
-}
-
-function getContacts(appState: TestAppState): Contacts {
-  const events = getContactListEventsOfUser(
-    appState.user.publicKey,
-    appState.relayPool.getEvents()
-  );
-  return findContacts(events);
-}
-
-export type UpdateState = () => TestAppState;
-
-export function setup(
-  users: User[],
-  options?: Partial<TestAppState>
-): UpdateState[] {
-  const appState = applyDefaults(options);
-  return users.map((user): UpdateState => {
-    return (): TestAppState => {
-      const updatedState = {
-        ...appState,
-        user,
-      };
-      const contacts = appState.contacts.merge(getContacts(updatedState));
-      return {
-        ...updatedState,
-        contacts,
-      };
-    };
-  });
-}
-
 export async function follow(
   cU: UpdateState,
   publicKey: PublicKey
 ): Promise<void> {
   const utils = cU();
   const plan = planAddContact(createPlan(utils), publicKey);
-  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
-    planUpdateWorkspaceIfNecessary(plan)
-  );
   await execute({
     ...utils,
-    plan: planWithWS,
+    plan,
   });
 }
 
@@ -414,12 +482,9 @@ export async function unfollow(
 ): Promise<void> {
   const utils = cU();
   const plan = planRemoveContact(createPlan(utils), publicKey);
-  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
-    planUpdateWorkspaceIfNecessary(plan)
-  );
   await execute({
     ...utils,
-    plan: planWithWS,
+    plan,
   });
 }
 
@@ -580,38 +645,25 @@ type Options = {
   activeWorkspace: string;
 };
 
-export function findNodeByText(plan: Plan, text: string): KnowNode | undefined {
-  const { knowledgeDBs, user } = plan;
-  return knowledgeDBs
-    .get(user.publicKey, newDB())
-    .nodes.find((node) => node.text === text);
-}
-
 export async function setupTestDB(
   appState: TestAppState,
   nodes: NodeDescription[],
   options?: Options
 ): Promise<Plan> {
   const plan = createNodesAndRelations(createPlan(appState), undefined, nodes);
+  const [planWithWs, id] = options?.activeWorkspace
+    ? createInitialWorkspace(plan, options?.activeWorkspace)
+    : [plan, appState.activeWorkspace];
 
-  const setNewWorkspace =
-    options?.activeWorkspace && findNodeByText(plan, options.activeWorkspace);
-  const planWithWorkspace = setNewWorkspace
-    ? planUpdateWorkspaces(
-        plan,
-        plan.workspaces.push(setNewWorkspace.id),
-        setNewWorkspace.id
-      )
-    : plan;
-  const planWithWS = planUpsertFallbackWorkspaceIfNecessary(
-    planUpdateWorkspaceIfNecessary(planWithWorkspace)
-  );
   await execute({
     ...appState,
-    plan: planWithWS,
+    plan: planWithWs,
     finalizeEvent: mockFinalizeEvent(),
   });
-  return planWithWorkspace;
+  return {
+    ...plan,
+    activeWorkspace: id,
+  };
 }
 
 export function extractNodes(container: Container): Array<string | null> {
@@ -684,17 +736,14 @@ export function createExampleProject(publicKey: PublicKey): ProjectNode {
 
 export async function findEvent(
   relayPool: MockRelayPool,
-  kind: number
+  filter: Filter
 ): Promise<(Event & { relays?: string[] }) | undefined> {
   await waitFor(() => {
     expect(
-      relayPool
-        .getEvents()
-        .map((e) => e.kind)
-        .includes(kind)
-    ).toBeTruthy();
+      relayPool.getEvents().filter((e) => matchFilter(filter, e)).length
+    ).toBeGreaterThan(0);
   });
-  return relayPool.getEvents().find((e) => e.kind === kind);
+  return relayPool.getEvents().find((e) => matchFilter(filter, e));
 }
 
 export { ALICE, UNAUTHENTICATED_BOB, UNAUTHENTICATED_CAROL, renderApp };
