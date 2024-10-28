@@ -477,7 +477,6 @@ export function newRelations(
 
 function createUpdatableRelations(
   knowledgeDBs: KnowledgeDBs,
-  viewContext: ViewPath,
   myself: PublicKey,
   relationsID: ID,
   head: LongID | ID,
@@ -533,7 +532,6 @@ export function upsertRelations(
   const relationsID = nodeView.relations || v4();
   const relations = createUpdatableRelations(
     plan.knowledgeDBs,
-    viewPath,
     plan.user.publicKey,
     relationsID,
     nodeID,
