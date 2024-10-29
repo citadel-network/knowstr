@@ -87,16 +87,14 @@ export async function getImageUrlFromText(
   if (!url) {
     return Promise.resolve(undefined);
   }
-  try {
-    const response = await fetch(url, {
-      method: "HEAD",
-    });
-    return response.headers.get("Content-Type")?.startsWith("image") === true
-      ? url
-      : undefined;
-  } catch {
-    return Promise.resolve(undefined);
-  }
+  /* eslint-disable functional/immutable-data */
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(url);
+    img.onerror = () => resolve(undefined);
+    img.src = url;
+  });
+  /* eslint-enable functional/immutable-data */
 }
 
 type EditorProps = {

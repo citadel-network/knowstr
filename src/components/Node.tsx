@@ -233,12 +233,14 @@ function NodeContent({ node }: { node: KnowNode }): JSX.Element {
     <span className="break-word">
       <NodeIcon node={node} />
       {isBionic ? <BionicText nodeText={textToDisplay} /> : textToDisplay}
-      {isImageAccessible && (
-        <img
-          src={node.imageUrl}
-          alt={node.imageUrl || ""}
-          style={{ maxWidth: "100%", height: "auto", marginTop: "10px" }}
-        />
+      {node.imageUrl && isImageAccessible && (
+        <div>
+          <img
+            src={node.imageUrl}
+            alt={node.imageUrl}
+            style={{ maxWidth: "100%", height: "auto", marginTop: "10px" }}
+          />
+        </div>
       )}
     </span>
   );
