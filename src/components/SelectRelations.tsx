@@ -473,16 +473,15 @@ function SelectRelationsButton({
     isActive ? "opacity-none" : "deselected"
   }`;
 
-  const style = relationType
-    ? {
-        borderTopColor: relationType.color,
-        borderRightColor: relationType.color,
-        border: "0px",
-        borderLeft: `2px solid ${relationType.color}`,
-        color: relationType.color,
-        backgroundColor: "inherit",
-      }
-    : {};
+  const color = relationType?.color || "black";
+  const style = {
+    borderTopColor: color,
+    borderRightColor: color,
+    border: "0px",
+    borderLeft: `2px solid ${color}`,
+    color,
+    backgroundColor: "inherit",
+  };
   const label = relationLabel(isActive, relationType, relationSize);
   const preventDeselect = isActive && alwaysOneSelected;
   const onClick = preventDeselect
