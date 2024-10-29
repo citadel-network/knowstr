@@ -15,7 +15,6 @@ import {
   KIND_CONTACTLIST,
   KIND_VIEWS,
   KIND_SETTINGS,
-  KIND_DELETE,
   KIND_PROJECT,
   KIND_MEMBERLIST,
 } from "./nostr";
@@ -63,7 +62,7 @@ export function newProcessedEvents(): ProcessedEvents {
   };
 }
 
-export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE, KIND_DELETE, KIND_PROJECT];
+export const KIND_SEARCH = [KIND_KNOWLEDGE_NODE, KIND_PROJECT];
 
 export const KINDS_META = [KIND_SETTINGS, KIND_CONTACTLIST, KIND_VIEWS];
 
