@@ -218,7 +218,10 @@ function planDelete(plan: Plan, id: LongID | ID, kind: number): Plan {
     kind: KIND_DELETE,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [["a", `${kind}:${plan.user.publicKey}:${shortID(id)}`]],
+    tags: [
+      ["a", `${kind}:${plan.user.publicKey}:${shortID(id)}`],
+      ["k", `${kind}`],
+    ],
     content: "",
   };
   return {

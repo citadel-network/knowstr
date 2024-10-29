@@ -86,17 +86,28 @@ function useSearchQuery(
     kinds: KIND_SEARCH,
     limit: 3000,
   };
+
   const filter = nip50
     ? {
         ...basicFilter,
         search: query,
       }
     : basicFilter;
+
+  const searchFilters = [
+    filter,
+    {
+      authors,
+      kinds: [KIND_DELETE],
+      "#k": [`${KIND_KNOWLEDGE_NODE}`, `${KIND_PROJECT}`],
+    },
+  ];
+
   // Slow search will never discard, cause the search query is not part of the filter. Slow search fetches all events from contacts and filters client side
   // We can not use the filter in the slow search, cause filter is only applied once when new events are received, which is not the case for slow search
   const { events: preFilteredEvents, eose } = useEventQuery(
     relayPool,
-    [filter],
+    searchFilters,
     {
       enabled,
       readFromRelays: useReadRelays({

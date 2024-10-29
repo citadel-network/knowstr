@@ -7,6 +7,7 @@ import {
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_PROJECT,
+  KIND_WORKSPACE,
 } from "./nostr";
 import { splitID, REFERENCED_BY } from "./connections";
 import { ADD_TO_NODE, getNodeFromID, useNodeID } from "./ViewContext";
@@ -83,7 +84,7 @@ export function filtersToFilterArray(filters: Filters): Filter[] {
     sanitizeFilter({ ...filters.knowledgeNodesByID, authors }, "#d"),
     sanitizeFilter({ ...filters.knowledgeListByHead, authors }, "#k"),
     sanitizeFilter({ ...filters.referencedBy, authors }, "#i"),
-    { ...filters.deleteFilter, authors },
+    sanitizeFilter({ ...filters.deleteFilter, authors }, "#k"),
   ].filter((f) => f !== undefined) as Filter[];
 }
 
@@ -174,6 +175,11 @@ export function createBaseFilter(
     },
     deleteFilter: {
       kinds: [KIND_DELETE],
+      "#k": [
+        `${KIND_KNOWLEDGE_LIST}`,
+        `${KIND_KNOWLEDGE_NODE}`,
+        `${KIND_WORKSPACE}`,
+      ],
     },
     authors,
   } as Filters;
@@ -198,7 +204,7 @@ export function useQueryKnowledgeData(filters: Filter[]): {
   const [allEventsProcessed, setAllEventsProcessed] = useState(false);
   const setAllEventsProcessedTimeout = useRef<number | undefined>(undefined);
 
-  const disabled = isOnlyDelete(filters);
+  const disabled = isOnlyDelete(filters) || filters.length === 0;
   const { events, eose } = useEventQuery(relayPool, filters, {
     readFromRelays: useReadRelays({
       user: true,

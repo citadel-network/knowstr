@@ -89,6 +89,7 @@ export function WorkspaceContextProvider({
     {
       authors,
       kinds: [KIND_DELETE],
+      "#k": [`${KIND_WORKSPACE}`],
     },
   ];
   const activeWorkspace =
