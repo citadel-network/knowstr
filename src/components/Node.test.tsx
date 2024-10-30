@@ -274,17 +274,19 @@ test("Edited node is shown in Tree View", async () => {
     plan: planBulkUpsertNodes(planWithViews, [pl, oop, java]),
   });
   renderWithTestData(
-    <LoadNode waitForEose>
-      <RootViewContextProvider root={pl.id} indices={List([0])}>
-        <TemporaryViewProvider>
-          <DND>
-            <LoadNode>
-              <TreeView />
-            </LoadNode>
-          </DND>
-        </TemporaryViewProvider>
-      </RootViewContextProvider>
-    </LoadNode>,
+    <RootViewContextProvider root={pl.id}>
+      <LoadNode waitForEose>
+        <PushNode push={List([0])}>
+          <TemporaryViewProvider>
+            <DND>
+              <LoadNode>
+                <TreeView />
+              </LoadNode>
+            </DND>
+          </TemporaryViewProvider>
+        </PushNode>
+      </LoadNode>
+    </RootViewContextProvider>,
     {
       ...alice(),
       initialRoute: `/w/${ws.id}`,

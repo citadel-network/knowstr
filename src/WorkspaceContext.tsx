@@ -13,7 +13,7 @@ import {
   createBaseFilter,
   filtersToFilterArray,
 } from "./dataQuery";
-import { getNodeFromID, RootViewContextProvider } from "./ViewContext";
+import { getNodeFromID } from "./ViewContext";
 import { useReadRelays } from "./relays";
 import { shortID, splitID } from "./connections";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
@@ -51,6 +51,7 @@ type WorkspaceContextType = {
   activeWorkspace: LongID;
   workspaces: Map<PublicKey, Workspaces>;
   setCurrentWorkspace: React.Dispatch<React.SetStateAction<LongID | undefined>>;
+  workspace?: Workspace;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
@@ -163,9 +164,6 @@ export function WorkspaceContextProvider({
       fileStore.setLocalStorage(`${user.publicKey}:activeWs`, workspace.id);
     }
   }, [workspace, user.publicKey]);
-  if (!workspace) {
-    return <div className="spinner-border" />;
-  }
 
   return (
     <WorkspaceContext.Provider
@@ -173,12 +171,11 @@ export function WorkspaceContextProvider({
         activeWorkspace,
         workspaces,
         setCurrentWorkspace,
+        workspace,
       }}
     >
       <MergeKnowledgeDB knowledgeDBs={knowledgeDBs}>
-        <RootViewContextProvider root={workspace.node}>
-          {children}
-        </RootViewContextProvider>
+        {children}
       </MergeKnowledgeDB>
     </WorkspaceContext.Provider>
   );

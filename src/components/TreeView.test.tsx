@@ -10,8 +10,9 @@ import {
 } from "../utils.test";
 import Data from "../Data";
 import { LoadNode } from "../dataQuery";
-import { RootViewContextProvider } from "../ViewContext";
+import { PushNode } from "../ViewContext";
 import { TreeView } from "./TreeView";
+import { RootViewOrWorkspaceIsLoading } from "./Dashboard";
 
 test("Load Referenced By Nodes", async () => {
   const [alice] = setup([ALICE]);
@@ -21,7 +22,6 @@ test("Load Referenced By Nodes", async () => {
     { activeWorkspace: "Alice Workspace" }
   );
   const bitcoin = findNodeByText(aliceDB, "Bitcoin") as KnowNode;
-  const aliceWs = findNodeByText(aliceDB, "Alice Workspace") as KnowNode;
 
   await setupTestDB(alice(), [
     ["Cryptocurrencies", [bitcoin]],
@@ -29,13 +29,13 @@ test("Load Referenced By Nodes", async () => {
   ]);
   renderWithTestData(
     <Data user={alice().user}>
-      <LoadNode waitForEose>
-        <RootViewContextProvider root={aliceWs.id} indices={List([0])}>
+      <RootViewOrWorkspaceIsLoading>
+        <PushNode push={List([0])}>
           <LoadNode>
             <TreeView />
           </LoadNode>
-        </RootViewContextProvider>
-      </LoadNode>
+        </PushNode>
+      </RootViewOrWorkspaceIsLoading>
     </Data>,
     {
       ...alice(),

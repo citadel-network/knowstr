@@ -43,6 +43,7 @@ import { WorkspaceView } from "./components/Workspace";
 import { TreeView } from "./components/TreeView";
 import { LoadNode } from "./dataQuery";
 import { App } from "./App";
+import { RootViewOrWorkspaceIsLoading } from "./components/Dashboard";
 
 test("Move View Settings on Delete", async () => {
   const [alice] = setup([ALICE]);
@@ -87,7 +88,9 @@ test("Move View Settings on Delete", async () => {
 
   renderWithTestData(
     <Data user={alice().user}>
-      <WorkspaceView />
+      <RootViewOrWorkspaceIsLoading>
+        <WorkspaceView />
+      </RootViewOrWorkspaceIsLoading>
     </Data>,
     {
       ...alice(),
@@ -117,28 +120,24 @@ test("Move View Settings on Delete", async () => {
 
 test("Move Node Up", async () => {
   const [alice] = setup([ALICE]);
-  const executedPlan = await setupTestDB(
-    alice(),
+  const executedPlan = await setupTestDB(alice(), [
     [
-      [
-        "My Workspace",
-        [["Programming Languages", [["FPL"], ["OOP", ["C++", "Java"]]]]],
-      ],
+      "My Workspace",
+      [["Programming Languages", [["FPL"], ["OOP", ["C++", "Java"]]]]],
     ],
-    {
-      activeWorkspace: "My Workspace",
-    }
-  );
+  ]);
   const root = (findNodeByText(executedPlan, "My Workspace") as KnowNode).id;
   const utils = renderWithTestData(
     <Data user={alice().user}>
-      <LoadNode waitForEose>
-        <RootViewContextProvider root={root} indices={List([0])}>
-          <LoadNode>
-            <TreeView />
-          </LoadNode>
-        </RootViewContextProvider>
-      </LoadNode>
+      <RootViewContextProvider root={root}>
+        <LoadNode waitForEose>
+          <PushNode push={List([0])}>
+            <LoadNode>
+              <TreeView />
+            </LoadNode>
+          </PushNode>
+        </LoadNode>
+      </RootViewContextProvider>
     </Data>,
     alice()
   );
@@ -157,13 +156,15 @@ test("Move Node Up", async () => {
 
   const { container } = renderWithTestData(
     <Data user={alice().user}>
-      <LoadNode waitForEose>
-        <RootViewContextProvider root={root} indices={List([0])}>
-          <LoadNode>
-            <TreeView />
-          </LoadNode>
-        </RootViewContextProvider>
-      </LoadNode>
+      <RootViewContextProvider root={root}>
+        <LoadNode waitForEose>
+          <PushNode push={List([0])}>
+            <LoadNode>
+              <TreeView />
+            </LoadNode>
+          </PushNode>
+        </LoadNode>
+      </RootViewContextProvider>
     </Data>,
     alice()
   );
@@ -194,13 +195,13 @@ test("Contact reorders list", async () => {
   });
   const utils = renderWithTestData(
     <Data user={alice().user}>
-      <LoadNode waitForEose>
+      <RootViewOrWorkspaceIsLoading>
         <PushNode push={List([0])}>
           <LoadNode>
             <TreeView />
           </LoadNode>
         </PushNode>
-      </LoadNode>
+      </RootViewOrWorkspaceIsLoading>
     </Data>,
     {
       ...alice(),
@@ -217,13 +218,13 @@ test("Contact reorders list", async () => {
   // let bob remove OOP
   renderWithTestData(
     <Data user={bob().user}>
-      <LoadNode waitForEose>
+      <RootViewOrWorkspaceIsLoading>
         <PushNode push={List([0])}>
           <LoadNode>
             <TreeView />
           </LoadNode>
         </PushNode>
-      </LoadNode>
+      </RootViewOrWorkspaceIsLoading>
     </Data>,
     {
       ...bob(),
@@ -236,13 +237,13 @@ test("Contact reorders list", async () => {
 
   const { container } = renderWithTestData(
     <Data user={alice().user}>
-      <LoadNode waitForEose>
+      <RootViewOrWorkspaceIsLoading>
         <PushNode push={List([0])}>
           <LoadNode>
             <TreeView />
           </LoadNode>
         </PushNode>
-      </LoadNode>
+      </RootViewOrWorkspaceIsLoading>
     </Data>,
     {
       ...alice(),

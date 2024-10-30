@@ -23,7 +23,7 @@ import { KIND_SETTINGS, KIND_VIEWS } from "./nostr";
 import { flattenRelays } from "./relays";
 import { WorkspaceColumnView } from "./components/WorkspaceColumn";
 import Data from "./Data";
-import { LoadNode } from "./dataQuery";
+import { RootViewOrWorkspaceIsLoading } from "./components/Dashboard";
 
 test("Flatten relays", () => {
   expect(
@@ -91,9 +91,9 @@ test("Write views on user relays", async () => {
   const { alice, project } = await setupTest();
   const utils = renderWithTestData(
     <Data user={alice().user}>
-      <LoadNode waitForEose>
+      <RootViewOrWorkspaceIsLoading>
         <WorkspaceColumnView />
-      </LoadNode>
+      </RootViewOrWorkspaceIsLoading>
     </Data>,
     {
       ...alice(),

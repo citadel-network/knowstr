@@ -14,6 +14,7 @@ import {
 import { PublishingStatusWrapper } from "./PublishingStatusWrapper";
 import { WorkspaceView } from "./Workspace";
 import { MockRelayPool } from "../nostrMock.test";
+import { RootViewOrWorkspaceIsLoading } from "./Dashboard";
 
 test("Publishing Status", async () => {
   const [alice] = setup([ALICE]);
@@ -36,8 +37,10 @@ test("Details of Publishing Status", async () => {
   });
   const view = renderWithTestData(
     <>
-      <PublishingStatusWrapper />
-      <WorkspaceView />
+      <RootViewOrWorkspaceIsLoading>
+        <PublishingStatusWrapper />
+        <WorkspaceView />
+      </RootViewOrWorkspaceIsLoading>
     </>,
     {
       ...utils,

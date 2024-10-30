@@ -21,7 +21,7 @@ import { PushNode, RootViewContextProvider } from "../ViewContext";
 import { TemporaryViewProvider } from "./TemporaryViewContext";
 import { DND } from "../dnd";
 import { WorkspaceColumnView } from "./WorkspaceColumn";
-import { LoadNode } from "../dataQuery";
+import { RootViewOrWorkspaceIsLoading } from "./Dashboard";
 
 test("Multiple connections to same node", async () => {
   const [alice] = setup([ALICE]);
@@ -60,7 +60,9 @@ test("Change Column width", async () => {
   const [alice] = setup([ALICE]);
   const view = renderWithTestData(
     <Data user={alice().user}>
-      <WorkspaceView />
+      <RootViewOrWorkspaceIsLoading>
+        <WorkspaceView />
+      </RootViewOrWorkspaceIsLoading>
     </Data>
   );
   await typeNewNode(view, "Hello World");
@@ -86,15 +88,11 @@ test("Show Referenced By", async () => {
   );
   renderWithTestData(
     <Data user={alice().user}>
-      <LoadNode waitForEose>
+      <RootViewOrWorkspaceIsLoading>
         <PushNode push={List([0])}>
-          <TemporaryViewProvider>
-            <DND>
-              <WorkspaceColumnView />
-            </DND>
-          </TemporaryViewProvider>
+          <WorkspaceColumnView />
         </PushNode>
-      </LoadNode>
+      </RootViewOrWorkspaceIsLoading>
     </Data>,
     {
       ...alice(),

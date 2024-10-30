@@ -9,7 +9,7 @@ import {
   setupTestDB,
 } from "./utils.test";
 import { WorkspaceView } from "./components/Workspace";
-import { LoadNode } from "./dataQuery";
+import { RootViewOrWorkspaceIsLoading } from "./components/Dashboard";
 
 test("Dragging Source not available at Destination", async () => {
   const [alice] = setup([ALICE]);
@@ -28,9 +28,9 @@ test("Dragging Source not available at Destination", async () => {
     { activeWorkspace: "My Workspace" }
   );
   renderWithTestData(
-    <LoadNode waitForEose>
+    <RootViewOrWorkspaceIsLoading>
       <WorkspaceView />
-    </LoadNode>,
+    </RootViewOrWorkspaceIsLoading>,
     {
       ...alice(),
       initialRoute: `/w/${planWithWs.activeWorkspace}`,
