@@ -122,7 +122,7 @@ export function DisconnectNodeBtn(): JSX.Element | null {
         nodeIndex
       )
     );
-    // add to node to not_relevant relations, in case relationtype is relevant for, little relevant or maybe relevant
+    // add to node to not_relevant relations, in case relationtype is relevant, little relevant or maybe relevant
     const existingNotRelevantRelations = getAvailableRelationsForNode(
       planAfterDisconnect.knowledgeDBs,
       planAfterDisconnect.user.publicKey,

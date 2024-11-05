@@ -465,8 +465,8 @@ function SelectRelationsButton({
   const isExpanded = view.expanded === true;
   const ariaLabel =
     isExpanded && isSelected
-      ? `hide ${relationType?.label || "list"} ${node.text}`
-      : `show ${relationType?.label || "list"} ${node.text}`;
+      ? `hide items ${relationType?.oppositeLabel || "list"} ${node.text}`
+      : `show items ${relationType?.oppositeLabel || "list"} ${node.text}`;
 
   const isActive = (isExpanded || !!alwaysOneSelected) && isSelected;
   const className = `btn select-relation no-shadow ${
