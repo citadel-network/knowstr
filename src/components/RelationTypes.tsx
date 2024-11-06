@@ -44,37 +44,37 @@ export const RELATION_TYPES = OrderedMap<RelationType>({
   "": {
     color: DEFAULT_COLOR,
     label: "relevant to",
-    oppositeLabel: "relevant for",
+    invertedRelationLabel: "relevant for",
   },
   little_relevant: {
     color: COLORS[3],
     label: "little relevant to",
-    oppositeLabel: "little relevant for",
+    invertedRelationLabel: "little relevant for",
   },
   maybe_relevant: {
     color: COLORS[5],
     label: "maybe relevant to",
-    oppositeLabel: "maybe relevant for",
+    invertedRelationLabel: "maybe relevant for",
   },
   not_relevant: {
     color: COLORS[0],
     label: "not relevant to",
-    oppositeLabel: "not relevant for",
+    invertedRelationLabel: "not relevant for",
   },
   confirms: {
     color: COLORS[9],
     label: "confirmed by",
-    oppositeLabel: "confirms",
+    invertedRelationLabel: "confirms",
   },
   contains: {
     color: COLORS[2],
     label: "contains",
-    oppositeLabel: "contained in",
+    invertedRelationLabel: "contained in",
   },
   contra: {
     color: COLORS[15],
     label: "contradicted by",
-    oppositeLabel: "contradicts",
+    invertedRelationLabel: "contradicts",
   },
 });
 
@@ -82,7 +82,7 @@ export const VIRTUAL_LISTS = OrderedMap<RelationType>({
   [REFERENCED_BY]: {
     color: "black",
     label: "Referenced By",
-    oppositeLabel: "references",
+    invertedRelationLabel: "references",
   },
 });
 
