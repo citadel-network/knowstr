@@ -8,7 +8,7 @@ import DOMPurify from "dompurify";
 import {
   useInputElementFocus,
   NodeCard,
-  CloseButton,
+  CancelButton,
   LoadingSpinnerButton,
 } from "citadel-commons";
 import { FULL_SCREEN_PATH } from "../App";
@@ -145,7 +145,7 @@ function InlineEditor({
           >
             <span>Save</span>
           </LoadingSpinnerButton>
-          <CloseButton
+          <CancelButton
             onClose={() => {
               onStopEditing();
             }}
