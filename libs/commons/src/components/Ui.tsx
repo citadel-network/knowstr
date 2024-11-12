@@ -231,10 +231,14 @@ export function CloseButton({ onClose }: { onClose: () => void }): JSX.Element {
   );
 }
 
-export function CancelButton({ onClose }: { onClose: () => void }): JSX.Element {
+export function CancelButton({
+  onClose,
+}: {
+  onClose: () => void;
+}): JSX.Element {
   return (
     <button className="btn btn-borderless p-0" type="button" onClick={onClose}>
-      <span className="simple-icon-ban"/>
+      <span className="simple-icon-ban" />
       <span className="visually-hidden">Cancel</span>
     </button>
   );

@@ -178,13 +178,6 @@ export function PublishingStatus<T = void>({
   publishEventsStatus,
   republishEvents,
 }: PublishingStatusProps<T>): JSX.Element | null {
-  if (publishEventsStatus.isLoading === true) {
-    return (
-      <div style={{ paddingTop: "6px", paddingBottom: "4px" }}>
-        <Spinner animation="border" role="status" />
-      </div>
-    );
-  }
   if (publishEventsStatus.results.size === 0) {
     return null;
   }
@@ -203,7 +196,11 @@ export function PublishingStatus<T = void>({
         aria-label="publishing status"
         tabIndex={0}
       >
-        <span className="simple-icon-info" style={{ color: warningColor }} />
+        {publishEventsStatus.isLoading === true ? (
+          <Spinner role="status" size="sm" />
+        ) : (
+          <span className="simple-icon-info" style={{ color: warningColor }} />
+        )}
       </Dropdown.Toggle>
       <Dropdown.Menu
         style={
