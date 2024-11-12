@@ -1,6 +1,6 @@
 import React from "react";
 import { useMediaQuery } from "react-responsive";
-import { WorkspaceColumn } from "citadel-commons";
+import { WorkspaceColumn } from "../commoncomponents/Ui";
 import { AddColumn } from "./AddNode";
 import { FileDropZone } from "./FileDropZone";
 import { Column } from "./Column";

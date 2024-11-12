@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Modal, Form, Button } from "react-bootstrap";
-import { ErrorMessage } from "../components/ErrorMessage";
+import { ErrorMessage } from "./ErrorMessage";
 import { createValidateHandler } from "./modalFormValidateHandler";
 import { createSubmitHandler } from "./modalFormSubmitHandler";
 

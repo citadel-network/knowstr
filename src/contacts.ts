@@ -1,7 +1,10 @@
 import { List, Map } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
-import { findAllTags, getMostRecentReplacableEvent } from "citadel-commons";
 import { KIND_CONTACTLIST, KIND_MEMBERLIST } from "./nostr";
+import {
+  findAllTags,
+  getMostRecentReplacableEvent,
+} from "./commoncomponents/useNostrQuery";
 
 type FollowList = Array<Contact>;
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
-import { NodeCard, UIColumn, UIColumnHeader } from "citadel-commons";
+import { NodeCard, UIColumn, UIColumnHeader } from "../commoncomponents/Ui";
 import { bulkAddRelations } from "../connections";
 import { FileDropZone } from "./FileDropZone";
 import { Indent } from "./Node";

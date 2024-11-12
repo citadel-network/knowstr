@@ -2,11 +2,6 @@ import React, { Dispatch, SetStateAction } from "react";
 import { List, Map } from "immutable";
 import { UnsignedEvent, Event } from "nostr-tools";
 import crypto from "crypto";
-import {
-  newTimestamp,
-  KIND_RELAY_METADATA_EVENT,
-  mergePublishResultsOfEvents,
-} from "citadel-commons";
 import { v4 } from "uuid";
 import {
   KIND_DELETE,
@@ -28,6 +23,11 @@ import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { useWorkspaceContext } from "./WorkspaceContext";
 import { useRelaysToCreatePlan } from "./relays";
 import { useProjectContext } from "./ProjectContext";
+import {
+  KIND_RELAY_METADATA_EVENT,
+  newTimestamp,
+} from "./commoncomponents/commonNostr";
+import { mergePublishResultsOfEvents } from "./commoncomponents/PublishingStatus";
 
 export type Plan = Data & {
   publishEvents: List<UnsignedEvent & EventAttachment>;

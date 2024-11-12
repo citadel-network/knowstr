@@ -1,6 +1,6 @@
 import { Map } from "immutable";
 import React, { createContext, useEffect, useState } from "react";
-import { useEventQuery } from "citadel-commons";
+import { useEventQuery } from "./commoncomponents/useNostrQuery";
 import { useDefaultWorkspace } from "./NostrAuthContext";
 import { MergeKnowledgeDB, useData } from "./DataContext";
 import { useApis } from "./Apis";

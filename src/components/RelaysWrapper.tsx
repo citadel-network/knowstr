@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Relays } from "citadel-commons";
+import { Relays } from "../commoncomponents/Relays";
 import { useData } from "../DataContext";
 import { useDefaultRelays } from "../NostrAuthContext";
 import { planPublishRelayMetadata, usePlanner } from "../planner";

@@ -117,7 +117,7 @@ export async function execute({
       return publishEvent(
         relayPool,
         event,
-        Array.from(new Set(writeRelayUrls.map((r) => r.url)))
+        Array.from(new Set(writeRelayUrls.map((r: Relay) => r.url)))
       );
     })
   );

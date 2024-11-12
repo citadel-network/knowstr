@@ -5,12 +5,6 @@ import { Link, matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import { textVide } from "text-vide";
 import DOMPurify from "dompurify";
-import {
-  useInputElementFocus,
-  NodeCard,
-  CancelButton,
-  LoadingSpinnerButton,
-} from "citadel-commons";
 import { FULL_SCREEN_PATH } from "../App";
 import { getRelations } from "../connections";
 import {
@@ -44,6 +38,9 @@ import { ReactQuillWrapper } from "./ReactQuillWrapper";
 import { useNodeIsLoading } from "../LoadingStatus";
 import { NodeIcon } from "./NodeIcon";
 import { getRelationTypeByRelationsID } from "./RelationTypes";
+import { LoadingSpinnerButton } from "../commoncomponents/LoadingSpinnerButton";
+import { useInputElementFocus } from "../commoncomponents/FocusContextProvider";
+import { CancelButton, NodeCard } from "../commoncomponents/Ui";
 
 function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {

@@ -1,6 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ModalNode, ModalNodeBody } from "citadel-commons";
+import {
+  ModalNode,
+  ModalNodeBody,
+} from "../commoncomponents/ModalNodeComponents";
 import { Node } from "./Node";
 import { NavBar } from "./Navbar";
 import { DetailViewMenu } from "./Menu";

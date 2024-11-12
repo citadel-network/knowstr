@@ -4,7 +4,7 @@ import {
   findTag,
   getMostRecentReplacableEvent,
   sortEvents,
-} from "citadel-commons";
+} from "./commoncomponents/useNostrQuery";
 import {
   KIND_DELETE,
   KIND_PROJECT,

@@ -2,8 +2,8 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 
 import { useMediaQuery } from "react-responsive";
-import { StandaloneCard } from "citadel-commons";
 import { Card } from "react-bootstrap";
+import { StandaloneCard } from "../commoncomponents/Ui";
 import { NavBar } from "./Navbar";
 
 import { WorkspaceView } from "./Workspace";

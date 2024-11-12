@@ -1,15 +1,17 @@
 import React, { createContext, useContext, useState } from "react";
+import { List, Map } from "immutable";
+import { UnsignedEvent } from "nostr-tools";
 import {
   createRelaysQuery,
   findAllRelays,
   getMostRecentReplacableEvent,
+  useEventQuery,
+} from "./commoncomponents/useNostrQuery";
+import {
   getReadRelays,
   mergeRelays,
   sanitizeRelays,
-  useEventQuery,
-} from "citadel-commons";
-import { List, Map } from "immutable";
-import { UnsignedEvent } from "nostr-tools";
+} from "./commoncomponents/relaysUtils";
 import { KIND_PROJECT } from "./nostr";
 import { splitID } from "./connections";
 import { findNodes } from "./knowledgeEvents";

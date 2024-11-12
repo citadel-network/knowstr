@@ -5,7 +5,9 @@ import { getPublicKey, nip19 } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
 import * as nip06 from "nostr-tools/nip06";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import { ErrorMessage, createSubmitHandler, Button } from "citadel-commons";
+import { ErrorMessage } from "./commoncomponents/ErrorMessage";
+import { Button } from "./commoncomponents/Ui";
+import { createSubmitHandler } from "./commoncomponents/modalFormSubmitHandler";
 import {
   isUserLoggedIn,
   useLogin,

@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import {
-  sortEventsDescending,
-  useEventQuery,
-  findRelays,
-  KIND_RELAY_METADATA_EVENT,
-} from "citadel-commons";
 import { List, Map } from "immutable";
 import { Event, UnsignedEvent } from "nostr-tools";
 // eslint-disable-next-line import/no-unresolved
@@ -33,6 +27,12 @@ import { PlanningContextProvider } from "./planner";
 import { useProjectContext } from "./ProjectContext";
 import { WorkspaceContextProvider } from "./WorkspaceContext";
 import { flattenRelays, usePreloadRelays } from "./relays";
+import { findRelays } from "./commoncomponents/relaysUtils";
+import {
+  sortEventsDescending,
+  useEventQuery,
+} from "./commoncomponents/useNostrQuery";
+import { KIND_RELAY_METADATA_EVENT } from "./commoncomponents/commonNostr";
 
 type DataProps = {
   user: User;

@@ -3,7 +3,7 @@ import { Card, InputGroup } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Map } from "immutable";
 import { Button } from "./Ui";
-import { ModalForm } from "../modals/ModalForm";
+import { ModalForm } from "./ModalForm";
 import { InputElementWrapper, pasteFromClipboard } from "./InputElementUtils";
 import { ErrorMessage } from "./ErrorMessage";
 import {
@@ -11,7 +11,7 @@ import {
   getSuggestedRelays,
   getIsNecessaryReadRelays,
   sanitizeRelayUrl,
-} from "../relaysUtils";
+} from "./relaysUtils";
 
 type ReadWriteButtonProps = {
   isPressed: boolean;

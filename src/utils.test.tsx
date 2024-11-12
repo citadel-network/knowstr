@@ -27,13 +27,12 @@ import { sha256 } from "@noble/hashes/sha256";
 import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
+import { v4 } from "uuid";
+import { findTag } from "./commoncomponents/useNostrQuery";
 import {
-  findTag,
   FocusContext,
   FocusContextProvider,
-  newTimestamp,
-} from "citadel-commons";
-import { v4 } from "uuid";
+} from "./commoncomponents/FocusContextProvider";
 import { KIND_CONTACTLIST, KIND_PROJECT, KIND_WORKSPACE } from "./nostr";
 import { RequireLogin, UNAUTHENTICATED_USER_PK } from "./AppState";
 import {
@@ -70,6 +69,7 @@ import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 import { findContacts } from "./contacts";
 import { ProjectContextProvider } from "./ProjectContext";
+import { newTimestamp } from "./commoncomponents/commonNostr";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});

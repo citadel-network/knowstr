@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Alert, Dropdown, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
-import { NotificationCenter } from "citadel-commons";
+import { NotificationCenter } from "../commoncomponents/NotificationCenter";
 import { SelectWorkspaces } from "./SelectWorkspaces";
 import { IS_MOBILE } from "./responsive";
 import { DeleteWorkspace } from "./DeleteNode";

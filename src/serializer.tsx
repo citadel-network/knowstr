@@ -1,9 +1,13 @@
 import { Map, List } from "immutable";
 import { UnsignedEvent } from "nostr-tools";
-import { findAllRelays, findAllTags, findTag } from "citadel-commons";
 import { parseViewPath } from "./ViewContext";
 import { joinID } from "./connections";
 import { KIND_PROJECT } from "./nostr";
+import {
+  findAllRelays,
+  findAllTags,
+  findTag,
+} from "./commoncomponents/useNostrQuery";
 
 export type Serializable =
   | string

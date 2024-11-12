@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Event, EventTemplate, Filter, SimplePool } from "nostr-tools";
 import { Collection, List, Map, OrderedMap } from "immutable";
-import { KIND_RELAY_METADATA_EVENT } from "./nostr";
+import { KIND_RELAY_METADATA_EVENT } from "./commonNostr";
 
 export type EventQueryResult = {
   events: OrderedMap<string, Event>;

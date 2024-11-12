@@ -1,6 +1,6 @@
 import { UnsignedEvent } from "nostr-tools";
-import { getMostRecentReplacableEvent } from "citadel-commons";
 import { List } from "immutable";
+import { getMostRecentReplacableEvent } from "./commoncomponents/useNostrQuery";
 import { KIND_SETTINGS } from "./nostr";
 
 function settingsFromEvent(event: UnsignedEvent): Settings {

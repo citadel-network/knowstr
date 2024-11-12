@@ -2,7 +2,7 @@ import { Set } from "immutable";
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { Button } from "citadel-commons";
+import { Button } from "../commoncomponents/Ui";
 import { deleteRelations, isRemote, splitID } from "../connections";
 import {
   updateViewPathsAfterDeleteNode,

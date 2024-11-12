@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Filter } from "nostr-tools";
 import { Set } from "immutable";
-import { useEventQuery } from "citadel-commons";
 import {
   KIND_DELETE,
   KIND_KNOWLEDGE_LIST,
@@ -17,6 +16,7 @@ import { processEvents } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
 import { isUserLoggedIn } from "./NostrAuthContext";
 import { useReadRelays } from "./relays";
+import { useEventQuery } from "./commoncomponents/useNostrQuery";
 
 function addIDToFilter(
   filter: Filter,

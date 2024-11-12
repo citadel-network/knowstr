@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Dropdown, Modal, Form, InputGroup, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { FormControlWrapper } from "citadel-commons";
 import { Map } from "immutable";
+import { FormControlWrapper } from "../commoncomponents/InputElementUtils";
 import { newNode, newWorkspace } from "../connections";
 import { useData } from "../DataContext";
 import { planAddWorkspace, planUpsertNode, usePlanner } from "../planner";

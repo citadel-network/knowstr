@@ -1,6 +1,6 @@
 import { Map } from "immutable";
 import { Filter, SimplePool, Event } from "nostr-tools";
-import { useEventQuery } from "citadel-commons";
+import { useEventQuery } from "../commoncomponents/useNostrQuery";
 import { KIND_NIP05 } from "../nostr";
 import { useReadRelays } from "../relays";
 

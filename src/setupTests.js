@@ -23,7 +23,7 @@ beforeAll(() => {
     if (
       !(
         (msg.toString().includes("An update to %s inside a test") &&
-          params === "Data") ||
+          (params === "NostrQueryProvider" || params === "Data")) ||
         params === "Transition" ||
         params === "DropdownMenu" ||
         params === "TreeViewNodeLoader"

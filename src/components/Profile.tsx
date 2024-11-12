@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { InputGroup, Modal } from "react-bootstrap";
 import { nip19 } from "nostr-tools";
 import QRCode from "react-qr-code";
-import { Button, FormControlWrapper } from "citadel-commons";
+import { Button } from "../commoncomponents/Ui";
 import { useData } from "../DataContext";
 import { isUserLoggedIn } from "../NostrAuthContext";
 import { SignInModal } from "../SignIn";
+import { FormControlWrapper } from "../commoncomponents/InputElementUtils";
 
 type Identifier = "none" | "npub" | "nprofile" | "invite";
 

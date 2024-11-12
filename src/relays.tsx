@@ -1,5 +1,5 @@
-import { getReadRelays, getWriteRelays, Relays } from "citadel-commons";
 import { Map } from "immutable";
+import { getReadRelays, getWriteRelays } from "./commoncomponents/relaysUtils";
 import { useProjectContext } from "./ProjectContext";
 import { useData } from "./DataContext";
 import { useDefaultRelays } from "./NostrAuthContext";
