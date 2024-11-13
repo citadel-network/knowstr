@@ -11,7 +11,7 @@ import {
   getSuggestedRelays,
   getIsNecessaryReadRelays,
   sanitizeRelayUrl,
-} from "./relaysUtils";
+} from "../relays";
 
 type ReadWriteButtonProps = {
   isPressed: boolean;

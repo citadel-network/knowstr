@@ -27,8 +27,7 @@ import { newDB } from "./knowledge";
 import { PlanningContextProvider } from "./planner";
 import { useProjectContext } from "./ProjectContext";
 import { WorkspaceContextProvider } from "./WorkspaceContext";
-import { flattenRelays, usePreloadRelays } from "./relays";
-import { findRelays } from "./commoncomponents/relaysUtils";
+import { flattenRelays, usePreloadRelays, findRelays } from "./relays";
 import {
   sortEventsDescending,
   useEventQuery,
