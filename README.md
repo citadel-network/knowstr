@@ -8,7 +8,6 @@ Before starting or testing the App, run:
 
 ```
 npm install
-npm run build --workspaces --if-present
 ```
 
 ## Available Scripts
