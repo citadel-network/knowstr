@@ -2,16 +2,24 @@ import React, { useState } from "react";
 import { Card, InputGroup } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Map } from "immutable";
-import { Button } from "./Ui";
-import { ModalForm } from "./ModalForm";
-import { InputElementWrapper, pasteFromClipboard } from "./InputElementUtils";
-import { ErrorMessage } from "./ErrorMessage";
+import { Button } from "../commoncomponents/Ui";
+import { ModalForm } from "../commoncomponents/ModalForm";
+import {
+  InputElementWrapper,
+  pasteFromClipboard,
+} from "../commoncomponents/InputElementUtils";
+import { ErrorMessage } from "../commoncomponents/ErrorMessage";
 import {
   mergeRelays,
   getSuggestedRelays,
   getIsNecessaryReadRelays,
   sanitizeRelayUrl,
+  useRelaysForRelayManagement,
 } from "../relays";
+import { useData } from "../DataContext";
+import { useDefaultRelays } from "../NostrAuthContext";
+import { planPublishRelayMetadata, usePlanner } from "../planner";
+import { useProjectContext } from "../ProjectContext";
 
 type ReadWriteButtonProps = {
   isPressed: boolean;
@@ -404,5 +412,31 @@ export function Relays({
         )}
       </div>
     </ModalForm>
+  );
+}
+
+export function RelaysWrapper(): JSX.Element {
+  const navigate = useNavigate();
+  const { createPlan, executePlan } = usePlanner();
+  const defaultRelays = useDefaultRelays();
+  const { contactsRelays } = useData();
+  const relays = useRelaysForRelayManagement();
+  const { projectID } = useProjectContext();
+  const submit = async (relayState: Relays): Promise<void> => {
+    if (projectID) {
+      return;
+    }
+    const plan = planPublishRelayMetadata(createPlan(), relayState);
+    await executePlan(plan);
+    navigate("/");
+  };
+  return (
+    <Relays
+      readonly={!!projectID}
+      defaultRelays={defaultRelays}
+      relays={relays}
+      contactsRelays={contactsRelays}
+      onSubmit={submit}
+    />
   );
 }

@@ -5,7 +5,7 @@ import Dashboard from "./components/Dashboard";
 import { Follow } from "./components/Follow";
 import { IS_MOBILE } from "./components/responsive";
 import { DesktopView, MobileView } from "./components/FullScreenViews";
-import { RelaysWrapper } from "./components/RelaysWrapper";
+import { RelaysWrapper } from "./components/Relays";
 import { RequireLogin } from "./AppState";
 import { SignUp } from "./SignUp";
 import { SignInModal } from "./SignIn";

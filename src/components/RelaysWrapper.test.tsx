@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { Map } from "immutable";
 import { Event } from "nostr-tools";
 import { KIND_RELAY_METADATA_EVENT } from "../nostr";
-import { Relays, addRelayWarningText } from "../commoncomponents/Relays";
+import { Relays, addRelayWarningText } from "../components/Relays";
 import {
   ALICE,
   setup,
