@@ -3,7 +3,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Map } from "immutable";
 import { Event } from "nostr-tools";
-import { KIND_RELAY_METADATA_EVENT } from "../commoncomponents/commonNostr";
+import { KIND_RELAY_METADATA_EVENT } from "../nostr";
 import { Relays, addRelayWarningText } from "../commoncomponents/Relays";
 import {
   ALICE,

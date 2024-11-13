@@ -11,6 +11,7 @@ import {
   KIND_SETTINGS,
   KIND_PROJECT,
   KIND_MEMBERLIST,
+  KIND_RELAY_METADATA_EVENT,
 } from "./nostr";
 import { DataContextProvider } from "./DataContext";
 import { findContacts, findMembers } from "./contacts";
@@ -32,7 +33,6 @@ import {
   sortEventsDescending,
   useEventQuery,
 } from "./commoncomponents/useNostrQuery";
-import { KIND_RELAY_METADATA_EVENT } from "./commoncomponents/commonNostr";
 
 type DataProps = {
   user: User;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { getPublicKey } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
-import { DEFAULT_RELAYS } from "./commoncomponents/commonNostr";
+import { DEFAULT_RELAYS } from "./nostr";
 import { useApis } from "./Apis";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { sanitizeRelays } from "./commoncomponents/relaysUtils";

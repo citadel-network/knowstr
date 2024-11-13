@@ -12,6 +12,8 @@ import {
   KIND_WORKSPACE,
   KIND_SETTINGS,
   KIND_MEMBERLIST,
+  KIND_RELAY_METADATA_EVENT,
+  newTimestamp,
 } from "./nostr";
 import { useData } from "./DataContext";
 import { execute, republishEvents } from "./executor";
@@ -23,10 +25,6 @@ import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { useWorkspaceContext } from "./WorkspaceContext";
 import { useRelaysToCreatePlan } from "./relays";
 import { useProjectContext } from "./ProjectContext";
-import {
-  KIND_RELAY_METADATA_EVENT,
-  newTimestamp,
-} from "./commoncomponents/commonNostr";
 import { mergePublishResultsOfEvents } from "./commoncomponents/PublishingStatus";
 
 export type Plan = Data & {

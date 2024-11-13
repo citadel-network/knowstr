@@ -2,8 +2,7 @@ import React from "react";
 import { screen, waitFor, fireEvent } from "@testing-library/react";
 import { Event, nip05, nip19 } from "nostr-tools";
 import userEvent from "@testing-library/user-event";
-import { newTimestamp } from "../commoncomponents/commonNostr";
-import { KIND_CONTACTLIST } from "../nostr";
+import { newTimestamp, KIND_CONTACTLIST } from "../nostr";
 import {
   renderWithTestData,
   renderApp,

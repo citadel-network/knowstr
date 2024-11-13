@@ -33,7 +33,12 @@ import {
   FocusContext,
   FocusContextProvider,
 } from "./commoncomponents/FocusContextProvider";
-import { KIND_CONTACTLIST, KIND_PROJECT, KIND_WORKSPACE } from "./nostr";
+import {
+  KIND_CONTACTLIST,
+  KIND_PROJECT,
+  KIND_WORKSPACE,
+  newTimestamp,
+} from "./nostr";
 import { RequireLogin, UNAUTHENTICATED_USER_PK } from "./AppState";
 import {
   Plan,
@@ -69,7 +74,6 @@ import { TemporaryViewProvider } from "./components/TemporaryViewContext";
 import { DND } from "./dnd";
 import { findContacts } from "./contacts";
 import { ProjectContextProvider } from "./ProjectContext";
-import { newTimestamp } from "./commoncomponents/commonNostr";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 test.skip("skip", () => {});

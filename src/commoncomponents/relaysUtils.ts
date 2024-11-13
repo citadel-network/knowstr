@@ -1,6 +1,6 @@
 import { EventTemplate } from "nostr-tools";
 import { List, Map } from "immutable";
-import { KIND_RELAY_METADATA_EVENT } from "./commonNostr";
+import { KIND_RELAY_METADATA_EVENT } from "../nostr";
 import { findAllRelays, getMostRecentReplacableEvent } from "./useNostrQuery";
 
 export function sanitizeRelayUrl(url: string): string | undefined {
