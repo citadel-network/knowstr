@@ -192,7 +192,7 @@ export function NodeCard({
   );
 }
 
-export type BtnProps = {
+type BtnProps = {
   onClick?: () => void;
   disabled?: boolean;
   ariaLabel?: string;
