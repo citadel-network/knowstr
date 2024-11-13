@@ -4,7 +4,7 @@ import { KIND_RELAY_METADATA_EVENT } from "./nostr";
 import {
   findAllRelays,
   getMostRecentReplacableEvent,
-} from "./commoncomponents/useNostrQuery";
+} from "./commons/useNostrQuery";
 import { useProjectContext } from "./ProjectContext";
 import { useData } from "./DataContext";
 import { useDefaultRelays } from "./NostrAuthContext";

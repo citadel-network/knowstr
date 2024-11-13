@@ -4,7 +4,7 @@ import {
   findTag,
   getMostRecentReplacableEvent,
   sortEvents,
-} from "./commoncomponents/useNostrQuery";
+} from "./commons/useNostrQuery";
 import {
   KIND_DELETE,
   KIND_PROJECT,

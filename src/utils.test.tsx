@@ -28,11 +28,11 @@ import { schnorr } from "@noble/curves/secp256k1";
 import { Container } from "react-dom";
 import { VirtuosoMockContext } from "react-virtuoso";
 import { v4 } from "uuid";
-import { findTag } from "./commoncomponents/useNostrQuery";
+import { findTag } from "./commons/useNostrQuery";
 import {
   FocusContext,
   FocusContextProvider,
-} from "./commoncomponents/FocusContextProvider";
+} from "./commons/FocusContextProvider";
 import {
   KIND_CONTACTLIST,
   KIND_PROJECT,

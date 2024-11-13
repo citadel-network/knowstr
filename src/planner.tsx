@@ -25,7 +25,7 @@ import { UNAUTHENTICATED_USER_PK } from "./AppState";
 import { useWorkspaceContext } from "./WorkspaceContext";
 import { useRelaysToCreatePlan } from "./relays";
 import { useProjectContext } from "./ProjectContext";
-import { mergePublishResultsOfEvents } from "./commoncomponents/PublishingStatus";
+import { mergePublishResultsOfEvents } from "./commons/PublishingStatus";
 
 export type Plan = Data & {
   publishEvents: List<UnsignedEvent & EventAttachment>;

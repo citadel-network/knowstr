@@ -16,7 +16,7 @@ import { processEvents } from "./Data";
 import { RegisterQuery, extractNodesFromQueries } from "./LoadingStatus";
 import { isUserLoggedIn } from "./NostrAuthContext";
 import { useReadRelays } from "./relays";
-import { useEventQuery } from "./commoncomponents/useNostrQuery";
+import { useEventQuery } from "./commons/useNostrQuery";
 
 function addIDToFilter(
   filter: Filter,

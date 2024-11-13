@@ -2,9 +2,9 @@ import React, { useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
 import { matchPath, useLocation, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
-import { CloseButton, NodeCard } from "../commoncomponents/Ui";
-import { LoadingSpinnerButton } from "../commoncomponents/LoadingSpinnerButton";
-import { useInputElementFocus } from "../commoncomponents/FocusContextProvider";
+import { CloseButton, NodeCard } from "../commons/Ui";
+import { LoadingSpinnerButton } from "../commons/LoadingSpinnerButton";
+import { useInputElementFocus } from "../commons/FocusContextProvider";
 import { shorten } from "../KnowledgeDataContext";
 import { newNode } from "../connections";
 import {

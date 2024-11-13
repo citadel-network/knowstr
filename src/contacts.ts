@@ -4,7 +4,7 @@ import { KIND_CONTACTLIST, KIND_MEMBERLIST } from "./nostr";
 import {
   findAllTags,
   getMostRecentReplacableEvent,
-} from "./commoncomponents/useNostrQuery";
+} from "./commons/useNostrQuery";
 
 type FollowList = Array<Contact>;
 

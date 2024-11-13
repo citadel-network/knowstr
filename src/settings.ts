@@ -1,6 +1,6 @@
 import { UnsignedEvent } from "nostr-tools";
 import { List } from "immutable";
-import { getMostRecentReplacableEvent } from "./commoncomponents/useNostrQuery";
+import { getMostRecentReplacableEvent } from "./commons/useNostrQuery";
 import { KIND_SETTINGS } from "./nostr";
 
 function settingsFromEvent(event: UnsignedEvent): Settings {

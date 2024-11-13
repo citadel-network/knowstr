@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { FocusContextProvider } from "./commoncomponents/FocusContextProvider";
+import { FocusContextProvider } from "./commons/FocusContextProvider";
 import * as serviceWorker from "./serviceWorker";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./assets/css/sass/themes/gogo.light.blue.scss";

@@ -6,7 +6,7 @@ import {
   findAllRelays,
   getMostRecentReplacableEvent,
   useEventQuery,
-} from "./commoncomponents/useNostrQuery";
+} from "./commons/useNostrQuery";
 import { getReadRelays, mergeRelays, sanitizeRelays } from "./relays";
 import { KIND_PROJECT } from "./nostr";
 import { splitID } from "./connections";

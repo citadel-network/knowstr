@@ -4,7 +4,7 @@ import { Form, InputGroup, Modal } from "react-bootstrap";
 import { Map } from "immutable";
 import { nip19, nip05, Event } from "nostr-tools";
 import { useDebounce } from "use-debounce";
-import { ErrorMessage } from "../commoncomponents/ErrorMessage";
+import { ErrorMessage } from "../commons/ErrorMessage";
 import {
   usePlanner,
   planAddContact,
@@ -17,8 +17,8 @@ import { useNip05Query } from "./useNip05Query";
 import {
   FormControlWrapper,
   pasteFromClipboard,
-} from "../commoncomponents/InputElementUtils";
-import { Button } from "../commoncomponents/Ui";
+} from "../commons/InputElementUtils";
+import { Button } from "../commons/Ui";
 
 type Nip05EventContent = {
   nip05?: string;

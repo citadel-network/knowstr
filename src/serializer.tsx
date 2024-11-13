@@ -3,11 +3,7 @@ import { UnsignedEvent } from "nostr-tools";
 import { parseViewPath } from "./ViewContext";
 import { joinID } from "./connections";
 import { KIND_PROJECT } from "./nostr";
-import {
-  findAllRelays,
-  findAllTags,
-  findTag,
-} from "./commoncomponents/useNostrQuery";
+import { findAllRelays, findAllTags, findTag } from "./commons/useNostrQuery";
 
 export type Serializable =
   | string

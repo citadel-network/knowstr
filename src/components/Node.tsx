@@ -38,9 +38,9 @@ import { ReactQuillWrapper } from "./ReactQuillWrapper";
 import { useNodeIsLoading } from "../LoadingStatus";
 import { NodeIcon } from "./NodeIcon";
 import { getRelationTypeByRelationsID } from "./RelationTypes";
-import { LoadingSpinnerButton } from "../commoncomponents/LoadingSpinnerButton";
-import { useInputElementFocus } from "../commoncomponents/FocusContextProvider";
-import { CancelButton, NodeCard } from "../commoncomponents/Ui";
+import { LoadingSpinnerButton } from "../commons/LoadingSpinnerButton";
+import { useInputElementFocus } from "../commons/FocusContextProvider";
+import { CancelButton, NodeCard } from "../commons/Ui";
 
 function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {

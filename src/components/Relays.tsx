@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Card, InputGroup } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Map } from "immutable";
-import { Button } from "../commoncomponents/Ui";
-import { ModalForm } from "../commoncomponents/ModalForm";
+import { Button } from "../commons/Ui";
+import { ModalForm } from "../commons/ModalForm";
 import {
   InputElementWrapper,
   pasteFromClipboard,
-} from "../commoncomponents/InputElementUtils";
-import { ErrorMessage } from "../commoncomponents/ErrorMessage";
+} from "../commons/InputElementUtils";
+import { ErrorMessage } from "../commons/ErrorMessage";
 import {
   mergeRelays,
   getSuggestedRelays,

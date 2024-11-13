@@ -1,11 +1,11 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { List, Map } from "immutable";
-import { useEventQuery } from "../commoncomponents/useNostrQuery";
+import { useEventQuery } from "../commons/useNostrQuery";
 import {
   ModalNode,
   ModalNodeBody,
   ModalNodeTitle,
-} from "../commoncomponents/ModalNodeComponents";
+} from "../commons/ModalNodeComponents";
 import { KIND_DELETE, KIND_KNOWLEDGE_NODE, KIND_PROJECT } from "../nostr";
 import { useData } from "../DataContext";
 import { newDB } from "../knowledge";

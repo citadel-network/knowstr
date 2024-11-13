@@ -28,10 +28,7 @@ import { PlanningContextProvider } from "./planner";
 import { useProjectContext } from "./ProjectContext";
 import { WorkspaceContextProvider } from "./WorkspaceContext";
 import { flattenRelays, usePreloadRelays, findRelays } from "./relays";
-import {
-  sortEventsDescending,
-  useEventQuery,
-} from "./commoncomponents/useNostrQuery";
+import { sortEventsDescending, useEventQuery } from "./commons/useNostrQuery";
 
 type DataProps = {
   user: User;

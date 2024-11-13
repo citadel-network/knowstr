@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 
 import { useMediaQuery } from "react-responsive";
 import { Card } from "react-bootstrap";
-import { StandaloneCard } from "../commoncomponents/Ui";
+import { StandaloneCard } from "../commons/Ui";
 import { NavBar } from "./Navbar";
 
 import { WorkspaceView } from "./Workspace";
