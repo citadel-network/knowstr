@@ -7,10 +7,9 @@ import {
   VirtuosoHandle,
 } from "react-virtuoso";
 import { useDndScrolling } from "react-dnd-scrolling";
-import { useMediaQuery } from "react-responsive";
 import { useLocation } from "react-router-dom";
 import { ListItem } from "./Draggable";
-import { Node, getNodesInTree, useIsOpenInFullScreen } from "./Node";
+import { getNodesInTree, useIsOpenInFullScreen } from "./Node";
 import {
   useNode,
   useViewPath,
@@ -34,7 +33,6 @@ import {
 import { RegisterQuery } from "../LoadingStatus";
 import { shortID } from "../connections";
 import { useApis } from "../Apis";
-import { IS_MOBILE } from "./responsive";
 
 const LOAD_EXTRA = 10;
 const MAX_MODAL_VERTICAL_HEIGHT = 0.75;
@@ -132,59 +130,6 @@ function VirtuosoForColumnAndFullScreenDesktop({
     </div>
   );
 }
-/* eslint-disable react/jsx-props-no-spreading */
-
-function VirtuosoForMobile({
-  nodes,
-  startIndexFromStorage,
-  range,
-  setRange,
-  onStopScrolling,
-}: {
-  nodes: List<ViewPath>;
-  startIndexFromStorage: number;
-  range: ListRange;
-  setRange: React.Dispatch<React.SetStateAction<ListRange>>;
-  onStopScrolling: (isScrolling: boolean) => void;
-}): JSX.Element {
-  const location = useLocation();
-  const virtuosoRef = useRef<VirtuosoHandle>(null); // Step 2
-  useEffect(() => {
-    if (virtuosoRef.current) {
-      virtuosoRef.current.scrollToIndex({
-        align: "start",
-        behavior: "auto",
-        index: startIndexFromStorage,
-      });
-    }
-  }, [location]);
-
-  return (
-    <Virtuoso
-      ref={virtuosoRef}
-      data={nodes.toArray()}
-      rangeChanged={(r): void => {
-        if (r.startIndex === 0 && r.endIndex === 0) {
-          return;
-        }
-        if (
-          // on mobile there is no decreasing or increasing column width, so no need to set the storage if only the endIndex changes
-          r.startIndex !== range.startIndex
-        ) {
-          setRange(r);
-        }
-      }}
-      isScrolling={onStopScrolling}
-      itemContent={(_, path) => {
-        return (
-          <ViewContext.Provider value={path} key={viewPathToString(path)}>
-            <Node />
-          </ViewContext.Provider>
-        );
-      }}
-    />
-  );
-}
 
 export function TreeViewNodeLoader({
   children,
@@ -238,7 +183,6 @@ function Tree(): JSX.Element | null {
   const { getLocalStorage, setLocalStorage } = fileStore;
   const scrollableId = useViewKey();
   const isOpenInFullScreen = useIsOpenInFullScreen();
-  const isMobile = useMediaQuery(IS_MOBILE);
   const startIndexFromStorage = Number(getLocalStorage(scrollableId)) || 0;
   const [range, setRange] = useState<ListRange>({
     startIndex: startIndexFromStorage,
@@ -267,25 +211,15 @@ function Tree(): JSX.Element | null {
 
   return (
     <TreeViewNodeLoader nodes={nodes} range={range}>
-      {isMobile ? (
-        <VirtuosoForMobile
-          nodes={nodes}
-          range={range}
-          setRange={setRange}
-          startIndexFromStorage={startIndexFromStorage}
-          onStopScrolling={onStopScrolling}
-        />
-      ) : (
-        <VirtuosoForColumnAndFullScreenDesktop
-          nodes={nodes}
-          range={range}
-          setRange={setRange}
-          startIndexFromStorage={startIndexFromStorage}
-          viewPath={viewPath}
-          onStopScrolling={onStopScrolling}
-          ariaLabel={ariaLabel}
-        />
-      )}
+      <VirtuosoForColumnAndFullScreenDesktop
+        nodes={nodes}
+        range={range}
+        setRange={setRange}
+        startIndexFromStorage={startIndexFromStorage}
+        viewPath={viewPath}
+        onStopScrolling={onStopScrolling}
+        ariaLabel={ariaLabel}
+      />
     </TreeViewNodeLoader>
   );
 }

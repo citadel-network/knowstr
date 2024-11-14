@@ -36,7 +36,9 @@ export function MobileView(): JSX.Element | null {
         <div className="background-white position-relative flex-grow-1">
           <div className="position-absolute board ps-2 overflow-y-hidden">
             <DetailView />
-            <TreeView />
+            <DND>
+              <TreeView />
+            </DND>
           </div>
         </div>
       </div>

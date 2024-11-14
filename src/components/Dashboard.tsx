@@ -1,15 +1,12 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 
-import { useMediaQuery } from "react-responsive";
 import { Card } from "react-bootstrap";
 import { StandaloneCard } from "../commons/Ui";
 import { NavBar } from "./Navbar";
 
 import { WorkspaceView } from "./Workspace";
 
-import { MobileView } from "./FullScreenViews";
-import { IS_MOBILE } from "./responsive";
 import { useLogout } from "../NostrAuthContext";
 import { LoadNode } from "../dataQuery";
 import { StorePreLoginContext } from "../StorePreLoginContext";
@@ -22,11 +19,7 @@ export function AppLayout({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  const isMobile = useMediaQuery(IS_MOBILE);
   const logout = useLogout();
-  if (isMobile) {
-    return <>{children}</>;
-  }
   return (
     <div className="h-100 w-100 position-absolute knowledge-exchange">
       <div
@@ -91,15 +84,7 @@ export function RootViewOrWorkspaceIsLoading({
 }
 
 function Dashboard(): JSX.Element {
-  const isMobile = useMediaQuery(IS_MOBILE);
-  return isMobile ? (
-    <RootViewOrWorkspaceIsLoading>
-      <AppLayout>
-        <Outlet />
-        <MobileView />
-      </AppLayout>
-    </RootViewOrWorkspaceIsLoading>
-  ) : (
+  return (
     <RootViewOrWorkspaceIsLoading>
       <AppLayout>
         <Outlet />

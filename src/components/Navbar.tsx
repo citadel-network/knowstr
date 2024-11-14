@@ -47,17 +47,14 @@ function Title(): JSX.Element | null {
   const isMobile = useMediaQuery(IS_MOBILE);
   const { projectID } = useProjectContext();
   const isProject = projectID !== undefined;
-  if (isMobile) {
-    return null;
-  }
   return (
     <div className="navbar-title d-flex align-center">
       <div className={`${isProject ? "bitcoin-orange" : ""} workspace-title`}>
-        <Deedsats />
+        {!isMobile && <Deedsats />}
         <ProjectName />
         <CurrentWorkspaceTitle />
       </div>
-      <DeleteWorkspace />
+      {!isMobile && <DeleteWorkspace />}
     </div>
   );
 }
