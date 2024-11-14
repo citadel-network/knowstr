@@ -41,6 +41,7 @@ import { getRelationTypeByRelationsID } from "./RelationTypes";
 import { LoadingSpinnerButton } from "../commons/LoadingSpinnerButton";
 import { useInputElementFocus } from "../commons/FocusContextProvider";
 import { CancelButton, NodeCard } from "../commons/Ui";
+import { useProjectContext } from "../ProjectContext";
 
 function getLevels(viewPath: ViewPath, isOpenInFullScreen: boolean): number {
   if (isOpenInFullScreen) {
@@ -273,7 +274,30 @@ function NodeAutoLink({
   const { openNodeID: id } = useParams<{
     openNodeID: string;
   }>();
+  const { bookmarkedProjects } = useProjectContext();
   const [nodeID] = useNodeID();
+  const [node] = useNode();
+  if (node && node.type === "project") {
+    const project = node as ProjectNode;
+    if (bookmarkedProjects.find((bookmark) => bookmark.project === nodeID)) {
+      return (
+        <Link
+          className="no-underline"
+          to={`/w/${escape(project.dashboardInternal)}?p=${escape(project.id)}`}
+        >
+          {children}
+        </Link>
+      );
+    }
+    /*
+    return (
+      <Link className="no-underline" to={`/join/${escape(project.id)}`}>
+        {children}
+      </Link>
+    );
+       */
+  }
+
   const isMainNodeInFullscreenView = id !== undefined && id === nodeID;
   return isMainNodeInFullscreenView ? (
     <>{children}</>
@@ -426,9 +450,11 @@ export function Node({
           <div className="flex-column w-100">
             {isNodeBeingEdited && <EditingNodeContent />}
             {!isNodeBeingEdited && !isDesktopFullScreenTitleNode && (
-              <NodeAutoLink>
-                <InteractiveNodeContent />
-              </NodeAutoLink>
+              <>
+                <NodeAutoLink>
+                  <InteractiveNodeContent />
+                </NodeAutoLink>
+              </>
             )}
             {!isNodeBeingEdited && isDesktopFullScreenTitleNode && (
               <InteractiveNodeContent editOnClick />

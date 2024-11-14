@@ -66,6 +66,10 @@ module.exports = {
         use: [MiniCssExtractPlugin.loader, "css-loader"],
         sideEffects: true,
       },
+      {
+        test: /\.(jpe?g|png|gif|svg)(\?[a-z0-9=.]+)?$/,
+        use: "url-loader",
+      },
     ],
   },
   resolve: {

@@ -28,6 +28,7 @@ type ProjectInfo = {
   projectRelays: Relays;
   isRelaysLoaded: boolean;
   setProjectID: React.Dispatch<React.SetStateAction<string | undefined>>;
+  bookmarkedProjects: BookmarkedProjects;
 };
 
 const ProjectContext = createContext<ProjectInfo | undefined>(undefined);
@@ -102,6 +103,7 @@ export function ProjectContextProvider({
         isRelaysLoaded,
         userRelays,
         projectRelays: projectID ? project?.relays || [] : [],
+        bookmarkedProjects: Map<string, ProjectBookmark>(),
       }}
     >
       {children}

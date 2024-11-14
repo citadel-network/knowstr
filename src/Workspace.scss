@@ -541,6 +541,10 @@ body {
     top: 1px;
     height: min-content;
     visibility: hidden;
+
+    .always-visible {
+      visibility: visible;
+    }
   }
 
   &:hover {
