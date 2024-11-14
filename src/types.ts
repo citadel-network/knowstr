@@ -93,6 +93,10 @@ declare global {
 
   type KnowledgeDBs = Map<PublicKey, KnowledgeData>;
 
+  type LocationState = {
+    referrer?: string;
+  };
+
   type WriteRelayConf = {
     defaultRelays?: boolean;
     user?: boolean;
@@ -207,6 +211,13 @@ declare global {
     project: LongID | undefined;
   };
   type Workspaces = Map<ID, Workspace>;
+
+  type ProjectBookmark = {
+    id: ID;
+    project: LongID;
+  };
+
+  type BookmarkedProjects = Map<ID, ProjectBookmark>;
 
   type KnowNode = TextNode | ProjectNode;
 

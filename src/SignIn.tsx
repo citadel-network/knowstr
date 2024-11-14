@@ -184,10 +184,6 @@ function SignInWithExtension({
   );
 }
 
-type LocationState = {
-  referrer?: string;
-};
-
 export function useIsUnsavedChanges(): boolean {
   const { publishEventsStatus } = useData();
   return publishEventsStatus.unsignedEvents.size > 0;
