@@ -162,7 +162,8 @@ function parseProject(
   const quarterlyVotes = findTag(e, "quarterlyVotes") as LongID | undefined;
   const dashboardInternal = findTag(e, "c") as LongID | undefined;
   const dashboardPublic = findTag(e, "dashboardPublic") as LongID | undefined;
-  const tokenSupply = parseNumber(findTag(e, "tokenSupply"));
+  const tokenSupplyTag = findTag(e, "tokenSupply");
+  const tokenSupply = tokenSupplyTag ? parseNumber(tokenSupplyTag) : undefined;
   const memberListProvider = findTag(e, "memberListProvider") as
     | PublicKey
     | undefined;
