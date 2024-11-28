@@ -205,6 +205,7 @@ declare global {
     id: LongID;
     node: LongID;
     project: LongID | undefined;
+    views: Views | undefined;
   };
   type Workspaces = Map<ID, Workspace>;
 
