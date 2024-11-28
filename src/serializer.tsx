@@ -93,7 +93,7 @@ function jsonToView(view: Serializable): View | undefined {
   };
 }
 
-export function jsonToViews(s: Serializable): Map<string, View> {
+function jsonToViews(s: Serializable): Map<string, View> {
   return Map(asObject(s))
     .map((v) => jsonToView(v))
     .filter((v, k) => {
