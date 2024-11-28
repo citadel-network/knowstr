@@ -8,7 +8,6 @@ import {
   KIND_KNOWLEDGE_LIST,
   KIND_KNOWLEDGE_NODE,
   KIND_CONTACTLIST,
-  KIND_VIEWS,
   KIND_WORKSPACE,
   KIND_SETTINGS,
   KIND_MEMBERLIST,
@@ -22,7 +21,7 @@ import { viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
 import { joinID, shortID } from "./connections";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
-import { useWorkspaceContext } from "./WorkspaceContext";
+import { getWorkspaceFromID, useWorkspaceContext } from "./WorkspaceContext";
 import { useRelaysToCreatePlan } from "./relays";
 import { useProjectContext } from "./ProjectContext";
 import { mergePublishResultsOfEvents } from "./commons/PublishingStatus";
@@ -276,13 +275,26 @@ export function planDeleteWorkspace(plan: Plan, workspaceID: LongID): Plan {
 export function planUpdateViews(plan: Plan, views: Views): Plan {
   // filter previous events for views
   const publishEvents = plan.publishEvents.filterNot(
-    (event) => event.kind === KIND_VIEWS
+    (event) => event.kind === KIND_WORKSPACE
   );
+  const workspace = getWorkspaceFromID(
+    plan.workspaces,
+    plan.activeWorkspace,
+    plan.user.publicKey
+  );
+  if (!workspace) {
+    return plan;
+  }
+
   const writeViewEvent = {
-    kind: KIND_VIEWS,
+    kind: KIND_WORKSPACE,
     pubkey: plan.user.publicKey,
     created_at: newTimestamp(),
-    tags: [],
+    tags: [
+      ["d", shortID(workspace.id)],
+      ["node", workspace.node],
+      workspace.project ? ["project", workspace.project] : [],
+    ],
     content: JSON.stringify(viewsToJSON(views)),
   };
   return {
@@ -313,7 +325,7 @@ export function planAddWorkspace(plan: Plan, workspace: Workspace): Plan {
       ["node", workspace.node],
       workspace.project ? ["project", workspace.project] : [],
     ],
-    content: "",
+    content: JSON.stringify(viewsToJSON(plan.views)), // TODO only workspace views
   };
   return {
     ...plan,
