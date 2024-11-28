@@ -18,7 +18,7 @@ import { useReadRelays } from "./relays";
 import { shortID, splitID } from "./connections";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
 
-function getWorkspaceFromID(
+export function getWorkspaceFromID(
   workspaces: Map<PublicKey, Workspaces>,
   id: LongID,
   myself: PublicKey
