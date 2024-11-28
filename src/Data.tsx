@@ -12,6 +12,7 @@ import {
   KIND_PROJECT,
   KIND_MEMBERLIST,
   KIND_RELAY_METADATA_EVENT,
+  KIND_WORKSPACE,
 } from "./nostr";
 import { DataContextProvider } from "./DataContext";
 import { findContacts, findMembers } from "./contacts";
@@ -162,7 +163,7 @@ function Data({ user, children }: DataProps): JSX.Element {
     [
       {
         authors: [myPublicKey],
-        kinds: [KIND_SETTINGS, KIND_CONTACTLIST, KIND_VIEWS],
+        kinds: [KIND_SETTINGS, KIND_CONTACTLIST, KIND_VIEWS, KIND_WORKSPACE],
       },
     ],
     {

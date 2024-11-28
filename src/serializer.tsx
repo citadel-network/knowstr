@@ -225,6 +225,9 @@ export function eventToWorkspace(
     id: joinID(e.pubkey, id),
     node: findTag(e, "node") as LongID,
     project: findTag(e, "project") as LongID | undefined,
+    views: e.content
+      ? jsonToViews(JSON.parse(e.content) as Serializable)
+      : undefined,
   };
   return [id, workspace];
 }

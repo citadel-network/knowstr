@@ -117,17 +117,28 @@ export function findWorkspaces(events: List<UnsignedEvent>): Workspaces {
           node: workspace.node,
           id: workspace.id,
           project: undefined,
+          views: workspace.views,
         })
       : rdx;
   }, Map<ID, Workspace>());
 }
 
+function getViewsFromWorkspaces(workspaces: Workspaces): Views {
+  return workspaces.reduce((rdx, ws) => {
+    return ws.views !== undefined ? rdx.merge(ws.views) : rdx;
+  }, Map<string, View>());
+}
+
 export function findViews(events: List<UnsignedEvent>): Views {
+  const workspaces = findWorkspaces(events);
+  const viewsFromWorkspaces = getViewsFromWorkspaces(workspaces);
   const viewEvent = getMostRecentReplacableEvent(
     events.filter((event) => event.kind === KIND_VIEWS)
   );
   if (viewEvent === undefined) {
-    return Map<string, View>();
+    return viewsFromWorkspaces;
   }
-  return jsonToViews(JSON.parse(viewEvent.content) as Serializable);
+  return jsonToViews(JSON.parse(viewEvent.content) as Serializable).merge(
+    viewsFromWorkspaces
+  );
 }
