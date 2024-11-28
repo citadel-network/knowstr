@@ -93,20 +93,7 @@ function jsonToView(view: Serializable): View | undefined {
   };
 }
 
-export function jsonToWorkspace(
-  workspaces: Serializable
-): { workspaces: List<LongID>; activeWorkspace: LongID } | undefined {
-  if (workspaces === undefined) {
-    return undefined;
-  }
-  const w = asObject(workspaces);
-  return {
-    workspaces: List<LongID>(asArray(w.w).map((i) => asString(i) as LongID)),
-    activeWorkspace: asString(w.a) as LongID,
-  };
-}
-
-export function jsonToViews(s: Serializable): Map<string, View> {
+function jsonToViews(s: Serializable): Map<string, View> {
   return Map(asObject(s))
     .map((v) => jsonToView(v))
     .filter((v, k) => {
