@@ -35,7 +35,7 @@ export function StorePreLoginContext({
       }
       const plan = createPlan();
       const withViews = eventKinds.includes(KIND_WORKSPACE)
-        ? planUpdateViews(plan, plan.views)
+        ? planUpdateViews(plan, plan.activeWorkspace, plan.views)
         : plan;
       const withContacts = eventKinds.includes(KIND_CONTACTLIST)
         ? planAddContacts(withViews, withViews.contacts.keySeq().toList())

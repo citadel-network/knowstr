@@ -277,14 +277,18 @@ export function planDeleteWorkspace(plan: Plan, workspaceID: LongID): Plan {
   };
 }
 
-export function planUpdateViews(plan: Plan, views: Views): Plan {
+export function planUpdateViews(
+  plan: Plan,
+  workspaceID: LongID,
+  views: Views
+): Plan {
   // filter previous events for views
   const publishEvents = plan.publishEvents.filterNot(
     (event) => event.kind === KIND_WORKSPACE
   );
   const workspace = getWorkspaceFromID(
     plan.workspaces,
-    plan.activeWorkspace,
+    workspaceID,
     plan.user.publicKey
   );
   if (!workspace) {
@@ -302,9 +306,18 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
     ],
     content: JSON.stringify(viewsToJSON(views)),
   };
+  const myWorkspaces = plan.workspaces.get(
+    plan.user.publicKey,
+    Map<ID, Workspace>()
+  );
+  const workspacesWithUpdatedViews = plan.workspaces.set(
+    plan.user.publicKey,
+    myWorkspaces.set(workspaceID, { ...workspace, views })
+  );
+
   return {
     ...plan,
-    views,
+    workspaces: workspacesWithUpdatedViews,
     publishEvents: publishEvents.push(
       setRelayConf(writeViewEvent, {
         defaultRelays: false,
@@ -344,7 +357,7 @@ export function planAddWorkspace(plan: Plan, workspace: Workspace): Plan {
       ["node", workspace.node],
       workspace.project ? ["project", workspace.project] : [],
     ],
-    content: JSON.stringify(viewsToJSON(plan.views)), // TODO only workspace views
+    content: JSON.stringify(viewsToJSON(workspace.views)),
   };
   return {
     ...plan,
