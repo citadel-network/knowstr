@@ -279,15 +279,19 @@ function NodeAutoLink({
   const [node] = useNode();
   if (node && node.type === "project") {
     const project = node as ProjectNode;
-    if (bookmarkedProjects.find((bookmark) => bookmark.project === nodeID)) {
-      return (
-        <Link
-          className="no-underline"
-          to={`/w/${escape(project.dashboardInternal)}?p=${escape(project.id)}`}
-        >
-          {children}
-        </Link>
-      );
+    if (bookmarkedProjects.find((bookmark) => bookmark === nodeID)) {
+      if (project.dashboardInternal) {
+        return (
+          <Link
+            className="no-underline"
+            to={`/w/${escape(project.dashboardInternal)}?p=${escape(
+              project.id
+            )}`}
+          >
+            {children}
+          </Link>
+        );
+      }
     }
     /*
     return (

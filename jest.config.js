@@ -24,6 +24,7 @@ module.exports = {
     "^react-native$": "react-native-web",
     "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy",
     uuid: require.resolve("uuid"),
+    "^.+\\.(png)$": "<rootDir>/config/jest/fileMock.js",
   },
   watchPlugins: [
     "jest-watch-typeahead/filename",

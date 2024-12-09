@@ -4,14 +4,19 @@ import { UnsignedEvent } from "nostr-tools";
 import {
   createRelaysQuery,
   findAllRelays,
+  findTag,
   getMostRecentReplacableEvent,
   useEventQuery,
 } from "./commons/useNostrQuery";
 import { getReadRelays, mergeRelays, sanitizeRelays } from "./relays";
-import { KIND_PROJECT } from "./nostr";
+import { KIND_JOIN_PROJECT, KIND_PROJECT } from "./nostr";
 import { splitID } from "./connections";
 import { findNodes } from "./knowledgeEvents";
-import { useDefaultRelays, useUserOrAnon } from "./NostrAuthContext";
+import {
+  isUserLoggedIn,
+  useDefaultRelays,
+  useUserOrAnon,
+} from "./NostrAuthContext";
 import { useApis } from "./Apis";
 
 function getProjectFromURLSearchParam(): string | undefined {
@@ -46,6 +51,27 @@ function processRelayEvents(
   return sanitizeRelays(myRelays);
 }
 
+function useLoadProjectBookmarks(relays: Relays): BookmarkedProjects {
+  const { relayPool } = useApis();
+  const user = useUserOrAnon();
+  const { events } = useEventQuery(
+    relayPool,
+    [
+      {
+        kinds: [KIND_JOIN_PROJECT],
+        authors: [user.publicKey],
+      },
+    ],
+    { enabled: isUserLoggedIn(user), readFromRelays: getReadRelays(relays) }
+  );
+  return events
+    .valueSeq()
+    .map((event) => findTag(event, "project") as LongID | undefined)
+    .toSet()
+    .remove(undefined)
+    .toList() as List<LongID>;
+}
+
 export function ProjectContextProvider({
   children,
 }: {
@@ -72,6 +98,8 @@ export function ProjectContextProvider({
     sanitizeRelays(userRelays)
   );
   const userRelaysRead = getReadRelays(mergedRelays);
+
+  const bookmarkedProjects = useLoadProjectBookmarks(mergedRelays);
 
   // Load project
   const { events } = useEventQuery(
@@ -103,7 +131,7 @@ export function ProjectContextProvider({
         isRelaysLoaded,
         userRelays,
         projectRelays: projectID ? project?.relays || [] : [],
-        bookmarkedProjects: Map<string, ProjectBookmark>(),
+        bookmarkedProjects,
       }}
     >
       {children}
