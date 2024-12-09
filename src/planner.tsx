@@ -14,6 +14,7 @@ import {
   KIND_MEMBERLIST,
   KIND_RELAY_METADATA_EVENT,
   newTimestamp,
+  KIND_JOIN_PROJECT,
 } from "./nostr";
 import { useData } from "./DataContext";
 import { execute, republishEvents } from "./executor";
@@ -301,6 +302,20 @@ export function planUpdateViews(plan: Plan, views: Views): Plan {
 
 export function fallbackWorkspace(publicKey: PublicKey): LongID {
   return joinID(publicKey, v4());
+}
+
+export function planBookmarkProject(plan: Plan, project: ProjectNode): Plan {
+  const bookmarkEvent = {
+    kind: KIND_JOIN_PROJECT,
+    pubkey: plan.user.publicKey,
+    created_at: newTimestamp(),
+    tags: [["project", project.id]],
+    content: "",
+  };
+  return {
+    ...plan,
+    publishEvents: plan.publishEvents.push(bookmarkEvent),
+  };
 }
 
 export function planAddWorkspace(plan: Plan, workspace: Workspace): Plan {

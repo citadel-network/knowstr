@@ -503,17 +503,19 @@ export function renderWithTestData(
   const utils = renderApis(
     <Routes>
       <Route element={<RequireLogin />}>
-        {["*", "w/:workspaceID/*", "d/:openNodeID"].map((path) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <TemporaryViewProvider>
-                <DND>{children}</DND>
-              </TemporaryViewProvider>
-            }
-          />
-        ))}
+        {["*", "w/:workspaceID/*", "d/:openNodeID", "join/:projectID"].map(
+          (path) => (
+            <Route
+              key={path}
+              path={path}
+              element={
+                <TemporaryViewProvider>
+                  <DND>{children}</DND>
+                </TemporaryViewProvider>
+              }
+            />
+          )
+        )}
       </Route>
     </Routes>,
     props

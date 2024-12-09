@@ -212,12 +212,7 @@ declare global {
   };
   type Workspaces = Map<ID, Workspace>;
 
-  type ProjectBookmark = {
-    id: ID;
-    project: LongID;
-  };
-
-  type BookmarkedProjects = Map<ID, ProjectBookmark>;
+  type BookmarkedProjects = List<LongID>;
 
   type KnowNode = TextNode | ProjectNode;
 
