@@ -30,23 +30,6 @@ function getWorkspaceFromID(
   return workspaces.get(remote)?.get(wsID);
 }
 
-export function getWorkspaceNode(
-  workspaces: Map<PublicKey, Workspaces>,
-  activeWorkspace: LongID,
-  knowledgeDBs: KnowledgeDBs,
-  user: User
-): KnowNode | undefined {
-  const workspace = getWorkspaceFromID(
-    workspaces,
-    activeWorkspace,
-    user.publicKey
-  );
-  if (!workspace) {
-    return undefined;
-  }
-  return getNodeFromID(knowledgeDBs, workspace.node, user.publicKey);
-}
-
 type WorkspaceContextType = {
   activeWorkspace: LongID;
   workspaces: Map<PublicKey, Workspaces>;
@@ -189,13 +172,6 @@ export function useWorkspaceContext(): WorkspaceContextType {
     );
   }
   return context;
-}
-
-export function useUserWorkspaces(): Workspaces {
-  return useWorkspaceContext().workspaces.get(
-    useData().user.publicKey,
-    Map<ID, Workspace>()
-  );
 }
 
 export function CurrentWorkspaceTitle(): JSX.Element {
