@@ -174,7 +174,7 @@ export function useWorkspaceContext(): WorkspaceContextType {
   return context;
 }
 
-function useActiveWorkspace(): Workspace | undefined {
+export function useActiveWorkspace(): Workspace | undefined {
   const { activeWorkspace, workspaces } = useWorkspaceContext();
   const { user } = useData();
   return getWorkspaceFromID(workspaces, activeWorkspace, user.publicKey);

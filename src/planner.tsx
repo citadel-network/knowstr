@@ -22,7 +22,11 @@ import { viewsToJSON } from "./serializer";
 import { newDB } from "./knowledge";
 import { joinID, shortID } from "./connections";
 import { UNAUTHENTICATED_USER_PK } from "./AppState";
-import { getWorkspaceFromID, useWorkspaceContext } from "./WorkspaceContext";
+import {
+  getWorkspaceFromID,
+  useActiveWorkspace,
+  useWorkspaceContext,
+} from "./WorkspaceContext";
 import { useRelaysToCreatePlan } from "./relays";
 import { useProjectContext } from "./ProjectContext";
 import { mergePublishResultsOfEvents } from "./commons/PublishingStatus";
@@ -558,16 +562,19 @@ export function createPlan(
 
 export function usePlanner(): Planner {
   const data = useData();
-  const { activeWorkspace, workspaces } = useWorkspaceContext();
+  const { activeWorkspace: activeWorksapceID, workspaces } =
+    useWorkspaceContext();
+  const activeWorkspace = useActiveWorkspace();
   const relays = useRelaysToCreatePlan();
   const { projectID } = useProjectContext();
   const createPlanningContext = (): Plan => {
     return createPlan({
       ...data,
-      activeWorkspace,
+      activeWorkspace: activeWorksapceID,
       workspaces,
       relays,
       projectID,
+      views: activeWorkspace?.views || Map<string, View>(),
     });
   };
   const planningContext = React.useContext(PlanningContext);
