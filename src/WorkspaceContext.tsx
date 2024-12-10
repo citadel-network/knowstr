@@ -174,15 +174,15 @@ export function useWorkspaceContext(): WorkspaceContextType {
   return context;
 }
 
+function useActiveWorkspace(): Workspace | undefined {
+  const { activeWorkspace, workspaces } = useWorkspaceContext();
+  const { user } = useData();
+  return getWorkspaceFromID(workspaces, activeWorkspace, user.publicKey);
+}
+
 export function CurrentWorkspaceTitle(): JSX.Element {
   const { knowledgeDBs, user } = useData();
-  const { activeWorkspace: activeWorkspaceID, workspaces } =
-    useWorkspaceContext();
-  const activeWorksapce = getWorkspaceFromID(
-    workspaces,
-    activeWorkspaceID,
-    user.publicKey
-  );
+  const activeWorksapce = useActiveWorkspace();
   if (!activeWorksapce) {
     return <span className="spinner-border spinner-navbar" />;
   }
