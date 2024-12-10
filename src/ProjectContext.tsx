@@ -115,10 +115,12 @@ export function ProjectContextProvider({
       : [],
     { enabled: !!id, readFromRelays: userRelaysRead }
   );
-  const projects = findNodes(
-    events.valueSeq().toList() || List<UnsignedEvent>()
-  ) as Map<string, ProjectNode>;
-  const project = projects.first(undefined);
+  const project = (
+    findNodes(events.valueSeq().toList() || List<UnsignedEvent>()) as Map<
+      string,
+      ProjectNode
+    >
+  ).first(undefined);
 
   const isRelaysLoaded = projectID ? !!project : relaysEose;
 

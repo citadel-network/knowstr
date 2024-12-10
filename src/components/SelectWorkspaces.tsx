@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { Dropdown, Modal, Form, InputGroup, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { Map } from "immutable";
 import { FormControlWrapper } from "../commons/InputElementUtils";
 import { newNode, newWorkspace } from "../connections";
 import { useData } from "../DataContext";
 import { planAddWorkspace, planUpsertNode, usePlanner } from "../planner";
-import { useWorkspaceContext } from "../WorkspaceContext";
-import { getNodeFromID } from "../ViewContext";
+import { RemoteWorkspaces, UserWorkspaces } from "./SelectWorkspaceSection";
 
 type NewWorkspaceProps = {
   onHide: () => void;
@@ -62,56 +60,10 @@ function NewWorkspace({ onHide }: NewWorkspaceProps): JSX.Element {
   );
 }
 
-function ListItem({ workspace }: { workspace: Workspace }): JSX.Element {
-  const { setCurrentWorkspace } = useWorkspaceContext();
-  const navigate = useNavigate();
-  const { knowledgeDBs, user } = useData();
-  const node = getNodeFromID(knowledgeDBs, workspace.node, user.publicKey);
-
-  const onClick = (): void => {
-    setCurrentWorkspace(workspace.id);
-    navigate(`/w/${workspace.id}`);
-  };
-
-  return (
-    <Dropdown.Item
-      className="d-flex workspace-selection"
-      onClick={onClick}
-      tabIndex={0}
-    >
-      <div className="workspace-selection-text">
-        {node?.text || "Loading..."}
-      </div>
-    </Dropdown.Item>
-  );
-}
-
 /* eslint-disable react/no-array-index-key */
 export function SelectWorkspaces(): JSX.Element {
   const [showNewWorkspaceModal, setShowNewWorkspaceModal] =
     useState<boolean>(false);
-  const data = useData();
-
-  const { localWorkspaces, remoteOnlyWorkspaces } =
-    useWorkspaceContext().workspaces.reduce(
-      (acc, workspaces, author) => {
-        const isRemote = author !== data.user.publicKey;
-        if (isRemote) {
-          return {
-            ...acc,
-            remoteOnlyWorkspaces: acc.remoteOnlyWorkspaces.merge(workspaces),
-          };
-        }
-        return {
-          ...acc,
-          localWorkspaces: acc.localWorkspaces.merge(workspaces),
-        };
-      },
-      {
-        localWorkspaces: Map<ID, Workspace>(),
-        remoteOnlyWorkspaces: Map<ID, Workspace>(),
-      }
-    );
 
   return (
     <Dropdown aria-label="workspace selection">
@@ -127,30 +79,8 @@ export function SelectWorkspaces(): JSX.Element {
         <span className="simple-icon-layers" />
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        {localWorkspaces.size > 0 && (
-          <Dropdown.Item className="project-selection">
-            <div>Your Workspaces</div>
-          </Dropdown.Item>
-        )}
-        {localWorkspaces
-          .valueSeq()
-          .toArray()
-          .map((workspace) => (
-            <ListItem workspace={workspace} key={workspace.id} />
-          ))}
-        {remoteOnlyWorkspaces.size > 0 && (
-          <>
-            <Dropdown.Item className="project-selection">
-              <div>Other Users Workspaces</div>
-            </Dropdown.Item>
-            {remoteOnlyWorkspaces
-              .valueSeq()
-              .toArray()
-              .map((workspace) => (
-                <ListItem workspace={workspace} key={workspace.id} />
-              ))}
-          </>
-        )}
+        <UserWorkspaces />
+        <RemoteWorkspaces />
         <Dropdown.Divider />
         <Dropdown.Item
           className="d-flex workspace-selection"
