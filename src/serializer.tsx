@@ -88,7 +88,7 @@ function jsonToView(view: Serializable): View | undefined {
         ? asArray(a.v).map((list) => asString(list) as LongID)
         : undefined,
     relations: a.o !== undefined ? (asString(a.o) as LongID) : undefined,
-    width: asNumber(a.w),
+    width: a.w !== undefined ? asNumber(a.w) : 1,
     expanded: a.e !== undefined ? asBoolean(a.e) : undefined,
   };
 }
