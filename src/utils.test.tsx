@@ -318,7 +318,10 @@ function createInitialWorkspace(
 
   const ws = newWorkspace(wsNode.id, plan.user.publicKey);
   const planWithWS = planAddWorkspace(planWithNode, ws);
-  return [planWithWS, ws.id];
+  const planWithActiveWS = activeWorkspace
+    ? { ...planWithWS, activeWorkspace: ws.id }
+    : planWithWS;
+  return [planWithActiveWS, ws.id];
 }
 
 type RenderApis = Partial<TestApis> & {

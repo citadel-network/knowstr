@@ -340,10 +340,14 @@ export function planAddWorkspace(plan: Plan, workspace: Workspace): Plan {
       ["node", workspace.node],
       workspace.project ? ["project", workspace.project] : [],
     ],
-    content: JSON.stringify(viewsToJSON(plan.views)), // TODO only workspace views
+    content: JSON.stringify(viewsToJSON(workspace.views)),
   };
+  const updatedUserWorkspaces = plan.workspaces
+    .get(plan.user.publicKey, Map<ID, Workspace>())
+    .set(shortID(workspace.id), workspace);
   return {
     ...plan,
+    workspaces: plan.workspaces.set(plan.user.publicKey, updatedUserWorkspaces),
     publishEvents: plan.publishEvents.push(workspaceEvent),
   };
 }
