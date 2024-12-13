@@ -372,12 +372,23 @@ function rewriteIDs(event: UnsignedEvent): UnsignedEvent {
 }
 
 export function planRewriteWorkspaceIDs(plan: Plan): Plan {
+  const rewrittenWorkspaces = plan.workspaces
+    .get(UNAUTHENTICATED_USER_PK, Map<ID, Workspace>())
+    .map((ws) => {
+      return {
+        ...ws,
+        id: replaceUnauthenticatedUser(ws.id, plan.user.publicKey),
+      };
+    });
   return {
     ...plan,
     activeWorkspace: replaceUnauthenticatedUser(
       plan.activeWorkspace,
       plan.user.publicKey
     ),
+    workspaces: plan.workspaces
+      .delete(UNAUTHENTICATED_USER_PK)
+      .set(plan.user.publicKey, rewrittenWorkspaces),
   };
 }
 
