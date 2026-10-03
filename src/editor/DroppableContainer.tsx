@@ -106,7 +106,7 @@ function calcDragDirection(
   return -1;
 }
 
-const INDICATOR_GUTTER_WIDTH = 20;
+const INDICATOR_GUTTER_WIDTH = 12;
 const INDENT_MARGIN = 5;
 
 const DEPTH_STEP = INDENTATION;
