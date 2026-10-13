@@ -182,14 +182,16 @@ test("a bare feed url becomes a real feed link row on every write path", () => {
     ?.nodes.valueSeq()
     .filter((node) =>
       node.spans.some(
-        (span) => span.kind === "link" && span.href === `feed:${url}`
+        (span) =>
+          span.kind === "link" &&
+          span.href === url.replace("https://", "webcal://")
       )
     )
     .toArray();
   expect(feedRows?.length).toBe(2);
   feedRows?.forEach((node) => {
     expect(node.spans).toEqual([
-      { kind: "link", href: `feed:${url}`, text: url },
+      { kind: "link", href: url.replace("https://", "webcal://"), text: url },
     ]);
     expect(node.extraAttrs?.embed).toBe("true");
   });

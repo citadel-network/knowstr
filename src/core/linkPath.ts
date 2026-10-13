@@ -1,5 +1,7 @@
 export const ENTITY_SCHEME_RE = /^(asset:|wd:|isbn:|doi:)/u;
 
+const WEBCAL_RE = /^webcal:\/\//iu;
+
 export function isEntityId(id: string): boolean {
   return ENTITY_SCHEME_RE.test(id);
 }
@@ -34,7 +36,7 @@ export function classifyLinkHref(
   if (isEntityLinkHref(href)) return "entity";
   if (href.startsWith("#ical:")) return "calendar";
   if (href.startsWith("#") && href.length > 1) return "node";
-  if (/^feed:https?:\/\//u.test(href)) return "feed";
+  if (WEBCAL_RE.test(href)) return "feed";
   if (/^https?:\/\//u.test(href)) return "website";
   const fragmentIndex = href.indexOf("#");
   const path = fragmentIndex < 0 ? href : href.slice(0, fragmentIndex);
@@ -53,10 +55,14 @@ export function isEmbeddableHref(href: string): boolean {
   );
 }
 
+export function feedHttpsUrl(href: string): string {
+  return href.replace(WEBCAL_RE, "https://");
+}
+
 export function externalLinkUrl(href: string): string | undefined {
   const targetClass = classifyLinkHref(href);
   if (targetClass === "website") return href;
-  return targetClass === "feed" ? href.slice("feed:".length) : undefined;
+  return targetClass === "feed" ? feedHttpsUrl(href) : undefined;
 }
 
 export function documentLinkHref(

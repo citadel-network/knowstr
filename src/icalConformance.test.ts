@@ -7,7 +7,12 @@
 import * as fs from "fs";
 import * as path from "path";
 import { icalEntryId } from "./core/icalId";
-import { feedLinkSpans, isBareIcalFeedUrl, parseIcalFeed } from "./core/ical";
+import {
+  feedLinkSpans,
+  feedUrlInSpans,
+  isBareIcalFeedUrl,
+  parseIcalFeed,
+} from "./core/ical";
 
 type IdCase = {
   name: string;
@@ -96,27 +101,40 @@ describe("feed-as-link form", () => {
     expect(isBareIcalFeedUrl("https://x.org/salon.ics")).toBe(true);
     expect(isBareIcalFeedUrl("  webcal://x.org/f.ics ")).toBe(true);
     expect(isBareIcalFeedUrl("Termine https://x.org/salon.ics")).toBe(false);
-    expect(isBareIcalFeedUrl("[x](feed:https://x.org/f.ics)")).toBe(false);
+    expect(isBareIcalFeedUrl("[x](webcal://x.org/f.ics)")).toBe(false);
     expect(feedLinkSpans("https://x.org/f.ics")).toEqual([
       {
         kind: "link",
-        href: "feed:https://x.org/f.ics",
+        href: "webcal://x.org/f.ics",
         text: "https://x.org/f.ics",
       },
     ]);
     expect(feedLinkSpans(" webcal://x.org/f.ics ")).toEqual([
       {
         kind: "link",
-        href: "feed:https://x.org/f.ics",
+        href: "webcal://x.org/f.ics",
         text: "webcal://x.org/f.ics",
       },
     ]);
     expect(feedLinkSpans("HTTPS://x.org/f.ics")).toEqual([
       {
         kind: "link",
-        href: "feed:https://x.org/f.ics",
+        href: "webcal://x.org/f.ics",
         text: "HTTPS://x.org/f.ics",
       },
     ]);
+  });
+
+  test("a calendar is addressed by webcal://; feed: is no calendar", () => {
+    expect(
+      feedUrlInSpans([
+        { kind: "link", href: "webcal://x.org/f.ics", text: "Salon" },
+      ])
+    ).toBe("https://x.org/f.ics");
+    expect(
+      feedUrlInSpans([
+        { kind: "link", href: "feed:https://x.org/f.ics", text: "Salon" },
+      ])
+    ).toBeUndefined();
   });
 });

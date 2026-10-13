@@ -187,7 +187,7 @@ test("deposit construction derives every ordered S tag from the workspace graph"
       "- [Target](#target) <!-- id:block -->",
       "- ![Target](#target) <!-- id:embed -->",
       "- My target ~~[Target](#target)~~ <!-- id:reword -->",
-      "- ![feed](feed:https://example.com/feed) <!-- id:feed -->",
+      "- ![feed](webcal://example.com/feed) <!-- id:feed -->",
       "- [web](https://example.com/) <!-- id:web -->",
       "",
       "# Second <!-- id:😀 -->",

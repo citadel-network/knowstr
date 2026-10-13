@@ -296,7 +296,10 @@ test("a feed present only in a pulled document projects its entries", async () =
       "---",
       "# Alice Salon <!-- id:alice-root -->",
       "- [Barcelona](#wd:Q1492) <!-- id:alice-link -->",
-      `- ![${url}](feed:${url}) <!-- id:alice-feed -->`,
+      `- ![${url}](${url.replace(
+        "https://",
+        "webcal://"
+      )}) <!-- id:alice-feed -->`,
       "",
     ].join("\n")
   );
@@ -429,7 +432,10 @@ test("a direct embed in a pulled document yields to the reader's authored node",
       "---",
       "# Alice Salon <!-- id:alice-root -->",
       "- [Barcelona](#wd:Q1492) <!-- id:alice-link -->",
-      `- ![cal](feed:${url}) <!-- id:alice-feed -->`,
+      `- ![cal](${url.replace(
+        "https://",
+        "webcal://"
+      )}) <!-- id:alice-feed -->`,
       "- ![event](#ical:sommerfest@scholarium.at) <!-- id:alice-event -->",
       "",
     ].join("\n")
