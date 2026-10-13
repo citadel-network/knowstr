@@ -1,6 +1,6 @@
 # Source <!-- id:s -->
 
-- [Inner](#t) <!-- id:st embed="true" -->
+- ![Inner](#t) <!-- id:st -->
 - Other <!-- id:b -->
 
 # Inner <!-- id:t -->

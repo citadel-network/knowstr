@@ -150,7 +150,7 @@ test("entity picker inserts a Wikidata link in an empty row", async () => {
   await expectMarkdown(
     workspace,
     "notes.md",
-    '# Notes <!-- id:... -->\n\n- [Barcelona](#wd:Q1492) <!-- id:... embed="true" -->\n'
+    "# Notes <!-- id:... -->\n\n- ![Barcelona](#wd:Q1492) <!-- id:... -->\n"
   );
 });
 
@@ -237,7 +237,7 @@ test("entity picker stays open across multi-word local queries", async () => {
   await expectMarkdown(
     workspace,
     "notes.md",
-    "# Notes <!-- id:... -->\n\n- [Ludwig von Mises](#wd:Q7243) <!-- id:... -->\n"
+    "# Notes <!-- id:... -->\n\n- ![Ludwig von Mises](#wd:Q7243) <!-- id:... -->\n"
   );
 });
 

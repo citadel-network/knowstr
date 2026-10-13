@@ -22,7 +22,7 @@ export function feedUrlInSpans(spans: InlineSpan[]): string | undefined {
     : undefined;
 }
 
-// The projecting form: only a feed link carrying the explicit embed attr
+// The projecting form: only a feed link written as an embed, `![…](feed:…)`,
 // is a machine embed. A plain feed link keeps its calendar dress but
 // projects nothing.
 export function embeddedFeedUrl(node: GraphNode): string | undefined {

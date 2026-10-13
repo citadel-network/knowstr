@@ -1,4 +1,4 @@
 # Diamond <!-- id:root -->
 
-- [X](#x) <!-- id:ox embed="true" -->
-- [Y](#y) <!-- id:oy embed="true" -->
+- ![X](#x) <!-- id:ox -->
+- ![Y](#y) <!-- id:oy -->

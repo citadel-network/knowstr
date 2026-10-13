@@ -1,1 +1,1 @@
-# [Source](#s) <!-- id:o0 embed="true" -->
+# ![Source](#s) <!-- id:o0 -->

@@ -387,7 +387,7 @@ Favorite Authors
       "utf8"
     );
     expect(target).toMatch(
-      new RegExp(`- \\(!\\) \\[Book Club\\]\\(#${bookClubID}\\)`)
+      new RegExp(`- \\(!\\) !\\[Book Club\\]\\(#${bookClubID}\\)`)
     );
   });
   await expectTree(`
@@ -413,10 +413,10 @@ Favorite Authors
     path.join(workspacePath, "favorite-authors.md"),
     "utf8"
   );
-  expect(
-    favoriteAuthors.match(/<!-- id:(?!\.\.\.)[^ ]+(?: embed="true")? -->/gu)
-  ).toHaveLength(2);
-  expect(favoriteAuthors).toContain('embed="true"');
+  expect(favoriteAuthors.match(/<!-- id:(?!\.\.\.)[^ ]+ -->/gu)).toHaveLength(
+    2
+  );
+  expect(favoriteAuthors).toContain("![");
 
   await userEvent.click(
     screen.getByRole("treeitem", {
@@ -493,7 +493,7 @@ Favorite Authors
     );
     expect(target).toMatch(
       new RegExp(
-        `- Other[^\\n]*\\n  - \\(!\\) \\[Book Club\\]\\(#${bookClubID}\\)`
+        `- Other[^\\n]*\\n  - \\(!\\) !\\[Book Club\\]\\(#${bookClubID}\\)`
       )
     );
   });

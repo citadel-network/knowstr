@@ -86,7 +86,7 @@ test("a user's own line below an embed stays on the embed line, not in the sourc
       {
         name: "diff.md",
         content: [
-          '# [Source](#src) <!-- id:o0 embed="true" -->',
+          "# ![Source](#src) <!-- id:o0 -->",
           "",
           "- My own note <!-- id:own -->",
           "",
@@ -115,7 +115,7 @@ test("expected.tree text is accessible display text", () => {
       },
       {
         name: "diff.md",
-        content: '# [Source](#root) <!-- id:o0 embed="true" -->\n',
+        content: "# ![Source](#root) <!-- id:o0 -->\n",
       },
     ],
     "diff.md"
@@ -152,16 +152,16 @@ test("a long embed chain composes every layer in order", () => {
   const chain = Array.from({ length: depth }, (_, index) =>
     index === depth - 1
       ? `# Terminal <!-- id:c${index} -->\n\n- Leaf <!-- id:leaf -->\n`
-      : `# [step](#c${
+      : `# ![step](#c${
           index + 1
-        }) <!-- id:c${index} embed="true" -->\n\n- note ${index} <!-- id:m${index} -->\n`
+        }) <!-- id:c${index} -->\n\n- note ${index} <!-- id:m${index} -->\n`
   ).join("\n");
   const tree = composeFixtureTree(
     [
       { name: "source.md", content: chain },
       {
         name: "diff.md",
-        content: '# [Outer](#c0) <!-- id:o0 embed="true" -->\n',
+        content: "# ![Outer](#c0) <!-- id:o0 -->\n",
       },
     ],
     "diff.md"
@@ -190,7 +190,7 @@ test("deep nesting composes line for line", () => {
       { name: "source.md", content: `# Deep <!-- id:root -->\n\n${lines}\n` },
       {
         name: "diff.md",
-        content: '# [Outer](#root) <!-- id:o0 embed="true" -->\n',
+        content: "# ![Outer](#root) <!-- id:o0 -->\n",
       },
     ],
     "diff.md"
@@ -289,7 +289,7 @@ test("a loaded feed never shadows an authored node with the same id", () => {
           "",
           "- Dunbar <!-- id:ical:dunbar@example.org -->",
           "  - Detail <!-- id:d1 -->",
-          '- [cal](feed:https://example.org/cal.ics) <!-- id:f1 embed="true" -->',
+          "- ![cal](feed:https://example.org/cal.ics) <!-- id:f1 -->",
           "",
         ].join("\n"),
       },
@@ -319,7 +319,7 @@ test("a plain feed link projects nothing even when the feed is loaded", () => {
         content: [
           "# Notes <!-- id:n1 -->",
           "",
-          '- [cal](feed:https://example.org/cal.ics) <!-- id:f1 embed="true" -->',
+          "- ![cal](feed:https://example.org/cal.ics) <!-- id:f1 -->",
           "- [cal](feed:https://example.org/cal.ics) <!-- id:p1 -->",
           "",
         ].join("\n"),
@@ -382,7 +382,7 @@ test("a mounted line stays projected when a placement child shares its id", () =
       {
         name: "diff.md",
         content: [
-          '# [Source](#src) <!-- id:o0 embed="true" -->',
+          "# ![Source](#src) <!-- id:o0 -->",
           "",
           "- Alpha <!-- id:a -->",
           "",
@@ -411,7 +411,7 @@ test("a plain duplicate line is demoted without carrying a link", () => {
       {
         name: "diff.md",
         content: [
-          '# [Source](#s) <!-- id:o0 embed="true" -->',
+          "# ![Source](#s) <!-- id:o0 -->",
           "",
           "- Twin <!-- id:b -->",
           "",
@@ -431,7 +431,7 @@ test("an empty calendar mounts with no entries", () => {
         content: [
           "# Notes <!-- id:n1 -->",
           "",
-          '- [cal](feed:https://example.org/cal.ics) <!-- id:f1 embed="true" -->',
+          "- ![cal](feed:https://example.org/cal.ics) <!-- id:f1 -->",
           "",
         ].join("\n"),
       },
@@ -602,7 +602,7 @@ test("an authored node whose id starts with feed: stays an ordinary node", () =>
       },
       {
         name: "diff.md",
-        content: '# [Notes](#feed:notes) <!-- id:o0 embed="true" -->\n',
+        content: "# ![Notes](#feed:notes) <!-- id:o0 -->\n",
       },
     ],
     "diff.md"
@@ -619,11 +619,11 @@ test("a cycle attaches to the embed line that reopens an open source", () => {
     [
       {
         name: "source.md",
-        content: '# [Diff](#o0) <!-- id:inner embed="true" -->\n',
+        content: "# ![Diff](#o0) <!-- id:inner -->\n",
       },
       {
         name: "diff.md",
-        content: '# [Source](#inner) <!-- id:o0 embed="true" -->\n',
+        content: "# ![Source](#inner) <!-- id:o0 -->\n",
       },
     ],
     "diff.md"

@@ -47,13 +47,14 @@ test("plain block links stay links; embeds project live text and children recurs
       "",
       "- Prose with an inline [Other](#oth) mention <!-- id:mix -->",
       "- [Other Label](#oth) <!-- id:plain -->",
-      '- [Old Label](#src) <!-- id:emb embed="true" -->',
+      '- [Attr Label](#oth) <!-- id:attr embed="true" -->',
+      "- ![Old Label](#src) <!-- id:emb -->",
     ].join("\n"),
     "source.md": [
       "# Source <!-- id:src -->",
       "",
       "- Argument A <!-- id:a -->",
-      '  - [Detail](#det) <!-- id:demb embed="true" -->',
+      "  - ![Detail](#det) <!-- id:demb -->",
     ].join("\n"),
     "detail.md": [
       "# Detail Document <!-- id:det -->",
@@ -79,6 +80,7 @@ test("plain block links stay links; embeds project live text and children recurs
 Note
   Prose with an inline Other mention
   Other Label
+  Attr Label
   Source
     Argument A
       Detail Document
@@ -91,7 +93,7 @@ test("a user's own line below an embed appears after the projected rows", async 
     "note.md": [
       "# Note <!-- id:note -->",
       "",
-      '- [Old Label](#src) <!-- id:emb embed="true" -->',
+      "- ![Old Label](#src) <!-- id:emb -->",
       "  - My own note <!-- id:own -->",
     ].join("\n"),
     "source.md": [
@@ -122,9 +124,9 @@ Note
 test("a line below an embed cannot reopen the source the embed shows", async () => {
   const workspacePath = writeWorkspace({
     "note.md": [
-      '# [Source](#src) <!-- id:emb embed="true" -->',
+      "# ![Source](#src) <!-- id:emb -->",
       "",
-      '- [Source again](#src) <!-- id:again embed="true" -->',
+      "- ![Source again](#src) <!-- id:again -->",
     ].join("\n"),
     "source.md": [
       "# Source <!-- id:src -->",
@@ -153,8 +155,8 @@ test("the second placement of a source is a childless link", async () => {
     "note.md": [
       "# Note <!-- id:note -->",
       "",
-      '- [First](#src) <!-- id:e1 embed="true" -->',
-      '- [Second](#src) <!-- id:e2 embed="true" -->',
+      "- ![First](#src) <!-- id:e1 -->",
+      "- ![Second](#src) <!-- id:e2 -->",
     ].join("\n"),
     "source.md": [
       "# Source <!-- id:src -->",
@@ -190,9 +192,9 @@ Note
 
 test("incoming references reach a chain embed's footer", async () => {
   const workspacePath = writeWorkspace({
-    "note.md": '# [Outer](#head) <!-- id:o embed="true" -->',
+    "note.md": "# ![Outer](#head) <!-- id:o -->",
     "source.md": [
-      '# [Head](#src) <!-- id:head embed="true" -->',
+      "# ![Head](#src) <!-- id:head -->",
       "",
       "# Source <!-- id:src -->",
       "",
@@ -225,7 +227,7 @@ test("the in-progress editor row appears below an embed", async () => {
     "note.md": [
       "# Note <!-- id:note -->",
       "",
-      '- [Old Label](#src) <!-- id:emb embed="true" -->',
+      "- ![Old Label](#src) <!-- id:emb -->",
       "  - My own note <!-- id:own -->",
     ].join("\n"),
     "source.md": [
@@ -284,7 +286,7 @@ test("Log entries are plain links and stay flat", async () => {
       throw new Error("Missing log document event");
     }
     expect(logDoc).toContain("[My Notes](#");
-    expect(logDoc).not.toContain('embed="true"');
+    expect(logDoc).not.toContain("![");
   });
 });
 
@@ -465,16 +467,12 @@ const CONTEXT_FILES = {
   "shared.md": ["# Shared <!-- id:sh -->", "", "- Insight <!-- id:i1 -->"].join(
     "\n"
   ),
-  "b.md": [
-    "# B <!-- id:b -->",
-    "",
-    '- [Shared](#sh) <!-- id:bs embed="true" -->',
-  ].join("\n"),
-  "c.md": [
-    "# C <!-- id:c -->",
-    "",
-    '- [Shared](#sh) <!-- id:cs embed="true" -->',
-  ].join("\n"),
+  "b.md": ["# B <!-- id:b -->", "", "- ![Shared](#sh) <!-- id:bs -->"].join(
+    "\n"
+  ),
+  "c.md": ["# C <!-- id:c -->", "", "- ![Shared](#sh) <!-- id:cs -->"].join(
+    "\n"
+  ),
 };
 
 test("which copy shows whole depends on the composed view", async () => {
@@ -483,8 +481,8 @@ test("which copy shows whole depends on the composed view", async () => {
     "a.md": [
       "# A <!-- id:a -->",
       "",
-      '- [B](#b) <!-- id:ab embed="true" -->',
-      '- [C](#c) <!-- id:ac embed="true" -->',
+      "- ![B](#b) <!-- id:ab -->",
+      "- ![C](#c) <!-- id:ac -->",
     ].join("\n"),
   });
 
@@ -530,14 +528,14 @@ test("opening a demoted link shows its target whole with that placement's diff",
     "c.md": [
       "# C <!-- id:c -->",
       "",
-      '- [Shared](#sh) <!-- id:cs embed="true" -->',
+      "- ![Shared](#sh) <!-- id:cs -->",
       "  - My note <!-- id:cn -->",
     ].join("\n"),
     "a.md": [
       "# A <!-- id:a -->",
       "",
-      '- [B](#b) <!-- id:ab embed="true" -->',
-      '- [C](#c) <!-- id:ac embed="true" -->',
+      "- ![B](#b) <!-- id:ab -->",
+      "- ![C](#c) <!-- id:ac -->",
     ].join("\n"),
   });
 
@@ -582,15 +580,11 @@ Shared
 
 test("opening a cycle link shows its target whole with that placement's diff", async () => {
   const workspacePath = writeWorkspace({
-    "a.md": [
-      "# A <!-- id:a -->",
-      "",
-      '- [B](#b) <!-- id:ab embed="true" -->',
-    ].join("\n"),
+    "a.md": ["# A <!-- id:a -->", "", "- ![B](#b) <!-- id:ab -->"].join("\n"),
     "b.md": [
       "# B <!-- id:b -->",
       "",
-      '- [Back to A](#a) <!-- id:x embed="true" -->',
+      "- ![Back to A](#a) <!-- id:x -->",
       "  - Kept below the loop <!-- id:k -->",
     ].join("\n"),
   });
@@ -636,10 +630,10 @@ test("each demoted placement drills down to its own diff", async () => {
     "doc.md": [
       "# Doc <!-- id:doc -->",
       "",
-      '- [Winner](#s) <!-- id:p1 embed="true" -->',
-      '- [Second](#s) <!-- id:p2 embed="true" -->',
+      "- ![Winner](#s) <!-- id:p1 -->",
+      "- ![Second](#s) <!-- id:p2 -->",
       "  - Note two <!-- id:n2 -->",
-      '- [Third](#s) <!-- id:p3 embed="true" -->',
+      "- ![Third](#s) <!-- id:p3 -->",
       "  - Note three <!-- id:n3 -->",
     ].join("\n"),
   };
@@ -686,8 +680,8 @@ test("reordering the routes flips which copy shows whole", async () => {
     "a.md": [
       "# A <!-- id:a -->",
       "",
-      '- [B](#b) <!-- id:ab embed="true" -->',
-      '- [C](#c) <!-- id:ac embed="true" -->',
+      "- ![B](#b) <!-- id:ab -->",
+      "- ![C](#c) <!-- id:ac -->",
     ].join("\n"),
   });
 
@@ -714,8 +708,8 @@ A
     [
       "# A <!-- id:a -->",
       "",
-      '- [C](#c) <!-- id:ac embed="true" -->',
-      '- [B](#b) <!-- id:ab embed="true" -->',
+      "- ![C](#c) <!-- id:ac -->",
+      "- ![B](#b) <!-- id:ab -->",
     ].join("\n")
   );
 

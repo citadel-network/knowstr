@@ -1,4 +1,4 @@
-# [Source Doc](#root) <!-- id:o0 embed="true" -->
+# ![Source Doc](#root) <!-- id:o0 -->
 
-- [Again](#root) <!-- id:x embed="true" -->
+- ![Again](#root) <!-- id:x -->
   - Kept below the loop <!-- id:k -->

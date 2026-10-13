@@ -104,7 +104,7 @@ export function planUpdateNodeSpans(
   ) {
     return plan;
   }
-  // The embed attr is written when a sole link is created or retargeted —
+  // A sole link becomes an embed, `![…](…)`, when it is created or retargeted —
   // a first-party gesture. Touching the label of an existing plain block
   // link (the Log's form) never converts it into an embed.
   const nextEmbedHref = soleEmbedLinkHref(nextSpans);

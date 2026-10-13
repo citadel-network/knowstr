@@ -63,7 +63,7 @@ test("shared save reports document-shape lints without rejecting", async () => {
       "---",
       "knowstr_doc_id: arr:source",
       "---",
-      '- [Wrong](#other) <!-- id:a1 embed="true" -->',
+      "- ![Wrong](#other) <!-- id:a1 -->",
       "",
     ].join("\n")
   );
