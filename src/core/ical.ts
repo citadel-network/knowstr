@@ -2,7 +2,7 @@
 import { List, Map } from "immutable";
 import { allKnownNodes } from "./graphLookup";
 import { icalEntryId } from "./icalId";
-import { classifyLinkHref } from "./linkPath";
+import { classifyLinkHref, feedHttpsUrl } from "./linkPath";
 import { plainSpans, spansText } from "./nodeSpans";
 
 // Write-time recognition only: a pasted or typed bare feed URL gets
@@ -18,12 +18,12 @@ export function feedUrlInSpans(spans: InlineSpan[]): string | undefined {
   if (spans.length !== 1) return undefined;
   const span = spans[0];
   return span.kind === "link" && classifyLinkHref(span.href) === "feed"
-    ? span.href.slice("feed:".length)
+    ? feedHttpsUrl(span.href)
     : undefined;
 }
 
-// The projecting form: only a feed link written as an embed, `![…](feed:…)`,
-// is a machine embed. A plain feed link keeps its calendar dress but
+// The projecting form: only a calendar link written as an embed,
+// `![…](webcal://…)`, is a machine embed. A plain feed link keeps its calendar dress but
 // projects nothing.
 export function embeddedFeedUrl(node: GraphNode): string | undefined {
   return node.extraAttrs?.embed === "true"
@@ -89,10 +89,7 @@ export function assertFetchableFeedUrl(url: string): void {
 }
 
 export function calendarFeedHref(url: string): string {
-  return `feed:${url
-    .trim()
-    .replace(/^webcal:\/\//iu, "https://")
-    .replace(/^https?:\/\//iu, (scheme) => scheme.toLowerCase())}`;
+  return `webcal://${url.trim().replace(/^(webcal|https?):\/\//iu, "")}`;
 }
 
 export function feedLinkSpans(url: string): InlineSpan[] {
@@ -296,7 +293,7 @@ function calendarNode(url: string, entries: IcalEntry[]): GraphNode {
   return {
     children: List<ID>(entries.map((entry) => entry.id)),
     id,
-    spans: [{ kind: "link", href: id, text: url }],
+    spans: feedLinkSpans(url),
     updated: 0,
     root: id,
     relevance: undefined,

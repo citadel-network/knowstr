@@ -1,3 +1,3 @@
 # Salon <!-- id:salon -->
 
-- ![Termine](feed:https://example.org/salon.ics) <!-- id:f1 -->
+- ![Termine](webcal://example.org/salon.ics) <!-- id:f1 -->

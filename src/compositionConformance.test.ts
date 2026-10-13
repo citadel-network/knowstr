@@ -289,7 +289,7 @@ test("a loaded feed never shadows an authored node with the same id", () => {
           "",
           "- Dunbar <!-- id:ical:dunbar@example.org -->",
           "  - Detail <!-- id:d1 -->",
-          "- ![cal](feed:https://example.org/cal.ics) <!-- id:f1 -->",
+          "- ![cal](webcal://example.org/cal.ics) <!-- id:f1 -->",
           "",
         ].join("\n"),
       },
@@ -319,8 +319,8 @@ test("a plain feed link projects nothing even when the feed is loaded", () => {
         content: [
           "# Notes <!-- id:n1 -->",
           "",
-          "- ![cal](feed:https://example.org/cal.ics) <!-- id:f1 -->",
-          "- [cal](feed:https://example.org/cal.ics) <!-- id:p1 -->",
+          "- ![cal](webcal://example.org/cal.ics) <!-- id:f1 -->",
+          "- [cal](webcal://example.org/cal.ics) <!-- id:p1 -->",
           "",
         ].join("\n"),
       },
@@ -431,7 +431,7 @@ test("an empty calendar mounts with no entries", () => {
         content: [
           "# Notes <!-- id:n1 -->",
           "",
-          "- ![cal](feed:https://example.org/cal.ics) <!-- id:f1 -->",
+          "- ![cal](webcal://example.org/cal.ics) <!-- id:f1 -->",
           "",
         ].join("\n"),
       },
@@ -452,7 +452,7 @@ test("a foreign authored node shadows a computed event", () => {
     children: List<ID>(),
     id: "f1",
     spans: [
-      { kind: "link", href: "feed:https://example.org/cal.ics", text: "cal" },
+      { kind: "link", href: "webcal://example.org/cal.ics", text: "cal" },
     ],
     updated: 0,
     root: "f1",
