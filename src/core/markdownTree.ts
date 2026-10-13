@@ -3,7 +3,7 @@ import markdownItFrontMatter from "markdown-it-front-matter";
 // eslint-disable-next-line import/no-unresolved
 import Token from "markdown-it/lib/token";
 import { plainSpans, spansText } from "./nodeSpans";
-import { classifyLinkHref } from "./linkPath";
+import { classifyLinkHref, isEmbeddableHref } from "./linkPath";
 import { parseFrontMatter } from "./knowstrFrontmatter";
 import { isSafeMarkdownNodeId } from "./graphLookup";
 
@@ -256,7 +256,9 @@ function embedSpan(children: readonly Token[]): InlineSpan | undefined {
   if (image?.type !== "image") return undefined;
   const href = image.attrGet("src") ?? "";
   const text = image.content.trim();
-  return supportedHref(href) && image.attrGet("title") === null && text !== ""
+  return isEmbeddableHref(href) &&
+    image.attrGet("title") === null &&
+    text !== ""
     ? { kind: "link", href, text }
     : undefined;
 }

@@ -49,6 +49,7 @@ test("plain block links stay links; embeds project live text and children recurs
       "- [Other Label](#oth) <!-- id:plain -->",
       '- [Attr Label](#oth) <!-- id:attr embed="true" -->',
       "- ![Old Label](#src) <!-- id:emb -->",
+      "- ![Our oven](https://example.org/oven.jpg) <!-- id:pic -->",
     ].join("\n"),
     "source.md": [
       "# Source <!-- id:src -->",
@@ -85,6 +86,7 @@ Note
     Argument A
       Detail Document
         Deep leaf
+  ![Our oven](https://example.org/oven.jpg)
   `);
 });
 
