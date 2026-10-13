@@ -322,7 +322,7 @@ test("web saves route storage and canonical deposits independently", async () =>
   expect(deposit.tags.some((tag) => tag[0] === "ms")).toBe(true);
   expect(deposit.tags).toContainEqual([
     "S",
-    "asset:rgb:cdtFZh2Q-YTY1rYW-yBdMlZb-GbkThw~-ArYpJ72-eXiti5Y",
+    "rgb:cdtFZh2Q-YTY1rYW-yBdMlZb-GbkThw~-ArYpJ72-eXiti5Y",
   ]);
 });
 

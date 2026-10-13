@@ -19,7 +19,7 @@ export function isCanonicalId(id: string): boolean {
 export function entityIdForText(text: string): string | undefined {
   const marker = text.trim();
   if (RGB_CONTRACT_ID_RE.test(marker)) {
-    return `asset:${marker}`;
+    return marker;
   }
   const wikidata = marker.match(WIKIDATA_URL_RE);
   if (wikidata) {

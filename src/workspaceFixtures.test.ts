@@ -183,7 +183,7 @@ test("deposit construction derives every ordered S tag from the workspace graph"
       "",
       "# First <!-- id:a-root -->",
       "",
-      "- See [target](#target) and [asset](#asset:contract) <!-- id:links -->",
+      "- See [target](#target) and [asset](#rgb:contract) <!-- id:links -->",
       "- [Target](#target) <!-- id:block -->",
       "- ![Target](#target) <!-- id:embed -->",
       "- My target ~~[Target](#target)~~ <!-- id:reword -->",
@@ -218,7 +218,7 @@ test("deposit construction derives every ordered S tag from the workspace graph"
     tags: [
       ["d", "multi-root"],
       ["S", "a-root"],
-      ["S", "asset:contract"],
+      ["S", "rgb:contract"],
       ["S", ""],
       ["S", "😀"],
       ["ms", "1234000"],

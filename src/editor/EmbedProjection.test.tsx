@@ -47,6 +47,7 @@ test("plain block links stay links; embeds project live text and children recurs
       "",
       "- Prose with an inline [Other](#oth) mention <!-- id:mix -->",
       "- [Other Label](#oth) <!-- id:plain -->",
+      "- [Scholarium Salon](rgb:yqfLWnLr-9iJZlLy-NOw0b2M) <!-- id:thing -->",
       '- [Attr Label](#oth) <!-- id:attr embed="true" -->',
       "- ![Old Label](#src) <!-- id:emb -->",
       "- ![Our oven](https://example.org/oven.jpg) <!-- id:pic -->",
@@ -81,6 +82,7 @@ test("plain block links stay links; embeds project live text and children recurs
 Note
   Prose with an inline Other mention
   Other Label
+  Scholarium Salon
   Attr Label
   Source
     Argument A

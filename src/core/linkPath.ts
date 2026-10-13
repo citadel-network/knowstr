@@ -1,4 +1,4 @@
-export const ENTITY_SCHEME_RE = /^(asset:|wd:|isbn:|doi:)/u;
+export const ENTITY_SCHEME_RE = /^(rgb:|wd:|isbn:|doi:)/u;
 
 const WEBCAL_RE = /^webcal:\/\//iu;
 
@@ -26,6 +26,7 @@ export function classifyLinkHref(
   href: string
 ):
   | "entity"
+  | "thing"
   | "calendar"
   | "node"
   | "feed"
@@ -34,6 +35,7 @@ export function classifyLinkHref(
   | "file"
   | "unsupported" {
   if (isEntityLinkHref(href)) return "entity";
+  if (isEntityId(href)) return "thing";
   if (href.startsWith("#ical:")) return "calendar";
   if (href.startsWith("#") && href.length > 1) return "node";
   if (WEBCAL_RE.test(href)) return "feed";
