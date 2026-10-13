@@ -71,7 +71,7 @@ test("document writes emit storage events only", () => {
 const CONTRACT_ID = "rgb:cdtFZh2Q-YTY1rYW-yBdMlZb-GbkThw~-ArYpJ72-eXiti5Y";
 
 test("entity recognizers: rgb markers and wikidata urls", () => {
-  expect(entityIdForText(`  ${CONTRACT_ID}\n`)).toBe(`asset:${CONTRACT_ID}`);
+  expect(entityIdForText(`  ${CONTRACT_ID}\n`)).toBe(`${CONTRACT_ID}`);
   expect(entityIdForText("https://www.wikidata.org/wiki/Q1492")).toBe(
     "wd:Q1492"
   );
@@ -112,13 +112,13 @@ test("clipboard Markdown survives empty-row materialization and document renderi
 test("marker as new document root mints the entity node, idempotently", () => {
   const { plan } = planWithEssay();
   const first = planCreateNoteAtRoot(plan, plainSpans(CONTRACT_ID), 0);
-  expect(first.node.id).toBe(`asset:${CONTRACT_ID}`);
+  expect(first.node.id).toBe(`${CONTRACT_ID}`);
   const countAfterFirst = first.plan.knowledgeDBs.get(LOCAL)?.nodes.size;
 
   const second = planCreateNoteAtRoot(first.plan, plainSpans(CONTRACT_ID), 0);
-  expect(second.node.id).toBe(`asset:${CONTRACT_ID}`);
+  expect(second.node.id).toBe(`${CONTRACT_ID}`);
   expect(second.plan.knowledgeDBs.get(LOCAL)?.nodes.size).toBe(countAfterFirst);
-  expect(second.plan.panes[0].rootNodeId).toBe(`asset:${CONTRACT_ID}`);
+  expect(second.plan.panes[0].rootNodeId).toBe(`${CONTRACT_ID}`);
 });
 
 test("marker created under a parent becomes a link row, never a duplicate", () => {
@@ -136,14 +136,14 @@ test("marker created under a parent becomes a link row, never a duplicate", () =
   );
   // No entity node is minted under a parent…
   expect(
-    pasted.knowledgeDBs.get(LOCAL)?.nodes.get(`asset:${CONTRACT_ID}`)
+    pasted.knowledgeDBs.get(LOCAL)?.nodes.get(`${CONTRACT_ID}`)
   ).toBeUndefined();
   // …the created row is a link targeting the entity (dangling allowed).
   const linkRow = pasted.knowledgeDBs
     .get(LOCAL)
     ?.nodes.valueSeq()
     .find((node) =>
-      getAllLinks(node).some((link) => link.targetID === `asset:${CONTRACT_ID}`)
+      getAllLinks(node).some((link) => link.targetID === `${CONTRACT_ID}`)
     );
   expect(linkRow).toBeDefined();
   expect(linkRow?.parent).toBe(rootId);
@@ -154,12 +154,12 @@ test("marker created under a parent becomes a link row, never a duplicate", () =
     .get(LOCAL)
     ?.nodes.valueSeq()
     .filter((node) =>
-      getAllLinks(node).some((link) => link.targetID === `asset:${CONTRACT_ID}`)
+      getAllLinks(node).some((link) => link.targetID === `${CONTRACT_ID}`)
     )
     .toArray();
   expect(links?.length).toBe(2);
   expect(
-    typed.knowledgeDBs.get(LOCAL)?.nodes.get(`asset:${CONTRACT_ID}`)
+    typed.knowledgeDBs.get(LOCAL)?.nodes.get(`${CONTRACT_ID}`)
   ).toBeUndefined();
 });
 
@@ -213,7 +213,7 @@ test("link placements contribute real-world entities", () => {
   if (!document) {
     throw new Error("document missing");
   }
-  expect(realWorldEntities(pasted, document)).toContain(`asset:${CONTRACT_ID}`);
+  expect(realWorldEntities(pasted, document)).toContain(`${CONTRACT_ID}`);
 });
 
 test("real-world entities derive through link targets", () => {

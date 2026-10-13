@@ -51,7 +51,7 @@ test("shared save reports document-shape lints without rejecting", async () => {
       "---",
       "knowstr_doc_id: asset-entry",
       "---",
-      "# Asset <!-- id:asset:contract -->",
+      "# Asset <!-- id:rgb:contract -->",
       "# Extra <!-- id:extra -->",
       "",
     ].join("\n")

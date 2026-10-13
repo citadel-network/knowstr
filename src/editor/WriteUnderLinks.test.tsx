@@ -213,7 +213,7 @@ test("mixed external and entity links keep independent presentation and activati
   const { path: workspacePath } = knowstrInit();
   const website = "https://example.com/articles/one#details";
   const feed = "webcal://example.com/calendar.ics?team=one#events";
-  const asset = "asset:rgb:AAAABBBBCCCCDDDDEEEE12345";
+  const asset = "rgb:AAAABBBBCCCCDDDDEEEE12345";
   write(
     workspacePath,
     "notes.md",

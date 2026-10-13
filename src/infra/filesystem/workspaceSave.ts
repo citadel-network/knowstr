@@ -55,9 +55,9 @@ function documentWarnings(
     roots.length === 0
       ? [`${document.relativePath}: shared documents need a root`]
       : [];
-  const assetRoots = roots.filter((root) => root?.id.startsWith("asset:"));
+  const assetRoots = roots.filter((root) => root?.id.startsWith("rgb:"));
   const validAssetRoots = assetRoots.filter(
-    (root) => root && /^asset:.+/u.test(root.id)
+    (root) => root && /^rgb:.+/u.test(root.id)
   );
   const assetWarnings =
     assetRoots.length > 0 &&

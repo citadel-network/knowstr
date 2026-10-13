@@ -111,8 +111,12 @@ export function inlineLinkToHref(
   fallbackLabel?: string
 ): string | undefined {
   const targetClass = classifyLinkHref(href);
-  if (targetClass === "entity" || targetClass === "calendar") {
-    const targetID = href.slice(1);
+  if (
+    targetClass === "entity" ||
+    targetClass === "calendar" ||
+    targetClass === "thing"
+  ) {
+    const targetID = targetClass === "thing" ? href : href.slice(1);
     return sourceId === LOCAL
       ? localTargetToHref(data, targetID) ??
           buildNodeRouteUrl(targetID, LOCAL, {

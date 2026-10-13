@@ -282,7 +282,7 @@ Madrid
 
   test("First write on a dangling entity surface creates one canonical root", async () => {
     const [alice] = setup([ALICE]);
-    const asset = "asset:rgb:AAAABBBBCCCCDDDDEEEE12345";
+    const asset = "rgb:AAAABBBBCCCCDDDDEEEE12345";
     const { relayPool } = renderApp({
       ...alice(),
       initialRoute: `/local/n/${encodeURIComponent(asset)}?label=Asset%20Label`,
