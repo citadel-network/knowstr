@@ -20,14 +20,25 @@ type SerializeReduceState = SerializeResult & {
   promoteToHeadingLevel?: number;
 };
 
+function isEmbedRow(node: GraphNode): boolean {
+  return (
+    node.extraAttrs?.embed === "true" &&
+    node.spans.length === 1 &&
+    node.spans[0]?.kind === "link"
+  );
+}
+
 function getSerializableNodeBody(node: GraphNode): string | undefined {
   const body = spansToMarkdown(node.spans);
-  return body === "" ? undefined : body;
+  if (body === "") return undefined;
+  return isEmbedRow(node) ? `!${body}` : body;
 }
 
 function getSerializableNodeAttrs(node: GraphNode): string {
   return formatNodeAttrs(node.id, {
-    ...(node.extraAttrs ? { extraAttrs: node.extraAttrs } : {}),
+    extraAttrs: Object.fromEntries(
+      Object.entries(node.extraAttrs ?? {}).filter(([key]) => key !== "embed")
+    ),
   });
 }
 

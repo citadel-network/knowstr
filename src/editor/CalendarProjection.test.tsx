@@ -166,9 +166,7 @@ test("feed fetches are bounded to a few at a time", async () => {
     [
       "# Salon <!-- id:salon -->",
       "",
-      ...urls.map(
-        (url, i) => `- [${url}](feed:${url}) <!-- id:f${i} embed="true" -->`
-      ),
+      ...urls.map((url, i) => `- ![${url}](feed:${url}) <!-- id:f${i} -->`),
       "",
     ].join("\n")
   );
@@ -313,8 +311,8 @@ test("feed loading follows embeds in loaded documents, not drawn rows", async ()
       "# Salon <!-- id:salon -->",
       "",
       "- Deep <!-- id:deep -->",
-      "  - [https://example.org/hidden.ics](feed:https://example.org/hidden.ics)" +
-        ' <!-- id:f1 embed="true" -->',
+      "  - ![https://example.org/hidden.ics](feed:https://example.org/hidden.ics)" +
+        " <!-- id:f1 -->",
       "- [plain](feed:https://example.org/plain.ics) <!-- id:p1 -->",
       "",
     ].join("\n")
@@ -376,8 +374,8 @@ test("feed snapshots do not cross filesystem workspace boundaries", async () => 
   const feedDocument = [
     "# Salon <!-- id:salon -->",
     "",
-    "- [https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
-      ' <!-- id:f1 embed="true" -->',
+    "- ![https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
+      " <!-- id:f1 -->",
     "",
   ].join("\n");
   const first = knowstrInit().path;
@@ -439,8 +437,8 @@ test("a typed feed url persists a feed link with the embed attr", async () => {
   await expectMarkdown(
     workspace,
     "salon.md",
-    "# Salon <!-- id:... -->\n\n- [https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
-      ' <!-- id:... embed="true" -->\n'
+    "# Salon <!-- id:... -->\n\n- ![https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
+      " <!-- id:... -->\n"
   );
 });
 
@@ -458,8 +456,8 @@ test("a bare feed url as a document root persists the feed link", async () => {
   await expectMarkdown(
     path,
     "httpsscholariumatsalonics.md",
-    "- [https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
-      ' <!-- id:... embed="true" -->\n'
+    "- ![https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
+      " <!-- id:... -->\n"
   );
 });
 
@@ -612,9 +610,9 @@ test("an explicit event embed shows the live event and keeps no editor", async (
     [
       "# Salon <!-- id:salon -->",
       "",
-      '- [Frozen label](#ical:dunbar@scholarium.at) <!-- id:l1 embed="true" -->',
-      "- [https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
-        ' <!-- id:f1 embed="true" -->',
+      "- ![Frozen label](#ical:dunbar@scholarium.at) <!-- id:l1 -->",
+      "- ![https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
+        " <!-- id:f1 -->",
       "",
     ].join("\n")
   );
@@ -643,8 +641,8 @@ test("a direct feed embed carries the calendar icon", async () => {
     [
       "# Salon <!-- id:salon -->",
       "",
-      "- [https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
-        ' <!-- id:f1 embed="true" -->',
+      "- ![https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
+        " <!-- id:f1 -->",
       "",
     ].join("\n")
   );
@@ -654,7 +652,7 @@ test("a direct feed embed carries the calendar icon", async () => {
     [
       "# Agenda <!-- id:agenda -->",
       "",
-      '- [Salon feed](#f1) <!-- id:a1 embed="true" -->',
+      "- ![Salon feed](#f1) <!-- id:a1 -->",
       "",
     ].join("\n")
   );
@@ -687,11 +685,11 @@ test("two feeds load side by side and resolve their own events", async () => {
     [
       "# Salon <!-- id:salon -->",
       "",
-      '- [Retreat](#ical:retreat@example.org) <!-- id:l1 embed="true" -->',
-      "- [https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
-        ' <!-- id:f1 embed="true" -->',
-      "- [https://example.org/retreats.ics](feed:https://example.org/retreats.ics)" +
-        ' <!-- id:f2 embed="true" -->',
+      "- ![Retreat](#ical:retreat@example.org) <!-- id:l1 -->",
+      "- ![https://scholarium.at/salon.ics](feed:https://scholarium.at/salon.ics)" +
+        " <!-- id:f1 -->",
+      "- ![https://example.org/retreats.ics](feed:https://example.org/retreats.ics)" +
+        " <!-- id:f2 -->",
       "",
     ].join("\n")
   );

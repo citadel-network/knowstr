@@ -1,1 +1,1 @@
-# [Outer](#inner) <!-- id:o0 embed="true" -->
+# ![Outer](#inner) <!-- id:o0 -->

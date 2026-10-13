@@ -42,7 +42,7 @@ import {
 } from "./rowModel";
 import { plainSpans, spansText, spansToMarkdown } from "./core/nodeSpans";
 import { bareFeedUrlIn, feedLinkSpans } from "./core/ical";
-import { classifyLinkHref } from "./core/linkPath";
+import { isEmbeddableHref } from "./core/linkPath";
 import { LOCAL } from "./core/nodeRef";
 import { entityIdForText } from "./core/entityRecognition";
 import { getWorkspaceNode } from "./core/knowledge";
@@ -76,10 +76,7 @@ export type Plan = WorkspacePlan;
 function soleEmbedLinkHref(spans: InlineSpan[]): string | undefined {
   const span =
     spans.length === 1 && spans[0]?.kind === "link" ? spans[0] : undefined;
-  return span &&
-    (span.href.startsWith("#") || classifyLinkHref(span.href) === "feed")
-    ? span.href
-    : undefined;
+  return span && isEmbeddableHref(span.href) ? span.href : undefined;
 }
 
 function isStandaloneEmbedLink(spans: InlineSpan[]): boolean {
@@ -104,7 +101,7 @@ export function planUpdateNodeSpans(
   ) {
     return plan;
   }
-  // The embed attr is written when a sole link is created or retargeted —
+  // A sole link becomes an embed, `![…](…)`, when it is created or retargeted —
   // a first-party gesture. Touching the label of an existing plain block
   // link (the Log's form) never converts it into an embed.
   const nextEmbedHref = soleEmbedLinkHref(nextSpans);

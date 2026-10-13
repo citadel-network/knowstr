@@ -1104,7 +1104,7 @@ Links
 
 Spain <!-- id:... -->
 
-- (!) [Links](#${sourceRowId}) <!-- id:... -->
+- (!) ![Links](#${sourceRowId}) <!-- id:... -->
 
 # Pack List <!-- id:... -->
 
@@ -1170,7 +1170,7 @@ Links
     `
 - Holiday Destinations <!-- id:... -->
   - Spain <!-- id:... -->
-  - (!) [Links](#${sourceRowId}) <!-- id:... -->
+  - (!) ![Links](#${sourceRowId}) <!-- id:... -->
 - Pack List <!-- id:... -->
   - Charger <!-- id:... -->
 `

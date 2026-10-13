@@ -370,7 +370,7 @@ test("publish leaves documents with save warnings unpublished", async () => {
       "---",
       "knowstr_doc_id: arr:source",
       "---",
-      '- [Wrong](#other) <!-- id:a1 embed="true" -->',
+      "- ![Wrong](#other) <!-- id:a1 -->",
       "",
     ].join("\n")
   );

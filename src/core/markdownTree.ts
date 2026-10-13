@@ -3,7 +3,7 @@ import markdownItFrontMatter from "markdown-it-front-matter";
 // eslint-disable-next-line import/no-unresolved
 import Token from "markdown-it/lib/token";
 import { plainSpans, spansText } from "./nodeSpans";
-import { classifyLinkHref } from "./linkPath";
+import { classifyLinkHref, isEmbeddableHref } from "./linkPath";
 import { parseFrontMatter } from "./knowstrFrontmatter";
 import { isSafeMarkdownNodeId } from "./graphLookup";
 
@@ -46,10 +46,12 @@ function parseIdComment(content: string): ParsedComment | undefined {
   }
   const rest = match[2];
 
-  const extraAttrs = [...rest.matchAll(ATTR_RE)].reduce<Record<string, string>>(
-    (attrs, [, key, value]) => ({ ...attrs, [key]: value }),
-    {}
-  );
+  const extraAttrs = [...rest.matchAll(ATTR_RE)]
+    .filter(([, key]) => key !== "embed")
+    .reduce<Record<string, string>>(
+      (attrs, [, key, value]) => ({ ...attrs, [key]: value }),
+      {}
+    );
 
   return {
     uuid,
@@ -96,6 +98,9 @@ function tokenSource(token: Token): string {
   }
   if (token.type.endsWith("_open") || token.type.endsWith("_close")) {
     return token.markup;
+  }
+  if (token.type === "image") {
+    return `![${token.content}](${token.attrGet("src") ?? ""})`;
   }
   return token.content;
 }
@@ -235,6 +240,29 @@ function extractPrefixMarkers(text: string): {
   return { cleanText, relevance, argument };
 }
 
+function embedSpan(children: readonly Token[]): InlineSpan | undefined {
+  const tokens = children.filter(
+    (token) =>
+      !isIdComment(token) &&
+      !(token.type === "text" && token.content.trim() === "")
+  );
+  const [first, ...rest] = tokens;
+  const content =
+    first?.type === "text" &&
+    extractPrefixMarkers(first.content.trim()).cleanText === ""
+      ? rest
+      : tokens;
+  const image = content.length === 1 ? content[0] : undefined;
+  if (image?.type !== "image") return undefined;
+  const href = image.attrGet("src") ?? "";
+  const text = image.content.trim();
+  return isEmbeddableHref(href) &&
+    image.attrGet("title") === null &&
+    text !== ""
+    ? { kind: "link", href, text }
+    : undefined;
+}
+
 function trimParsedSpans(spans: InlineSpan[]): InlineSpan[] {
   const lastIndex = spans.length - 1;
   return spans
@@ -253,6 +281,7 @@ function extractInlineContent(inline: Token): {
   spans: InlineSpan[];
   relevance?: Relevance;
   argument?: Argument;
+  embed: boolean;
 } {
   if (!inline.children) {
     const raw = inline.content.trim();
@@ -261,11 +290,13 @@ function extractInlineContent(inline: Token): {
       spans: plainSpans(cleanText),
       relevance,
       argument,
+      embed: false,
     };
   }
   const parsedSpans = trimParsedSpans(extractSpans(inline.children));
   const first = parsedSpans[0];
   const prefix = extractPrefixMarkers(first?.kind === "text" ? first.text : "");
+  const embed = embedSpan(inline.children);
   const spans =
     first?.kind === "text"
       ? [
@@ -274,9 +305,10 @@ function extractInlineContent(inline: Token): {
         ]
       : parsedSpans;
   return {
-    spans,
+    spans: embed !== undefined ? [embed] : spans,
     relevance: prefix.relevance,
     argument: prefix.argument,
+    embed: embed !== undefined,
   };
 }
 
@@ -343,13 +375,16 @@ function getLastDefinedPath(
 type ListKind = { ordered: boolean; start: number };
 
 function commentNodeAttrs(
-  commentAttrs: ParsedComment | undefined
+  commentAttrs: ParsedComment | undefined,
+  embed: boolean
 ): Partial<MarkdownTreeNode> {
+  const extraAttrs = {
+    ...commentAttrs?.extraAttrs,
+    ...(embed && { embed: "true" }),
+  };
   return {
     ...(commentAttrs?.uuid !== undefined && { uuid: commentAttrs.uuid }),
-    ...(commentAttrs?.extraAttrs !== undefined && {
-      extraAttrs: commentAttrs.extraAttrs,
-    }),
+    ...(Object.keys(extraAttrs).length > 0 && { extraAttrs }),
     ...(commentAttrs?.systemRole !== undefined && {
       systemRole: commentAttrs.systemRole,
     }),
@@ -395,7 +430,8 @@ function buildTreeFromTokens(tokens: Token[]): MarkdownTreeNode[] {
         const headingLevel = Number(token.tag.replace("h", ""));
         const inline = tokens[index + 1];
         if (!inline || inline.type !== "inline") return state;
-        const { spans, relevance, argument } = extractInlineContent(inline);
+        const { spans, relevance, argument, embed } =
+          extractInlineContent(inline);
         if (spansText(spans) === "") return state;
         const headingStack = state.headingStack.filter(
           (heading) => heading.level < headingLevel
@@ -409,7 +445,7 @@ function buildTreeFromTokens(tokens: Token[]): MarkdownTreeNode[] {
           children: [],
           blockKind: "heading",
           headingLevel,
-          ...commentNodeAttrs(extractCommentAttrs(inline)),
+          ...commentNodeAttrs(extractCommentAttrs(inline), embed),
           ...(relevance !== undefined && { relevance }),
           ...(argument !== undefined && { argument }),
         };
@@ -438,9 +474,10 @@ function buildTreeFromTokens(tokens: Token[]): MarkdownTreeNode[] {
       if (token.type !== "paragraph_open") return state;
       const inline = tokens[index + 1];
       if (!inline || inline.type !== "inline") return state;
-      const { spans, relevance, argument } = extractInlineContent(inline);
+      const { spans, relevance, argument, embed } =
+        extractInlineContent(inline);
       if (spansText(spans) === "") return state;
-      const attrs = commentNodeAttrs(extractCommentAttrs(inline));
+      const attrs = commentNodeAttrs(extractCommentAttrs(inline), embed);
       if (state.listItemStack.length > 0) {
         const currentItemIndex = state.listItemStack.length - 1;
         const currentItemPath = state.listItemStack[currentItemIndex];

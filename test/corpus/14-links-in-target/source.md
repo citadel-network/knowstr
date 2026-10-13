@@ -1,4 +1,4 @@
-# [Chain head](#mid) <!-- id:head embed="true" -->
+# ![Chain head](#mid) <!-- id:head -->
 
 # Mid Doc <!-- id:mid -->
 

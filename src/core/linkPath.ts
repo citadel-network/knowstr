@@ -43,6 +43,16 @@ export function classifyLinkHref(
   return "unsupported";
 }
 
+export function isEmbeddableHref(href: string): boolean {
+  const targetClass = classifyLinkHref(href);
+  return (
+    targetClass === "node" ||
+    targetClass === "entity" ||
+    targetClass === "calendar" ||
+    targetClass === "feed"
+  );
+}
+
 export function externalLinkUrl(href: string): string | undefined {
   const targetClass = classifyLinkHref(href);
   if (targetClass === "website") return href;

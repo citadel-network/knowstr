@@ -1,4 +1,4 @@
-# [Inner frozen](#terminal) <!-- id:inner embed="true" -->
+# ![Inner frozen](#terminal) <!-- id:inner -->
 
 # Inner live <!-- id:terminal -->
 

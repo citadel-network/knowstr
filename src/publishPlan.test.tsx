@@ -105,7 +105,7 @@ test("clipboard Markdown survives empty-row materialization and document renderi
   if (!document) throw new Error("Missing document");
 
   expect(renderDocumentMarkdown(result.plan.knowledgeDBs, document)).toContain(
-    `- ${markdown}`
+    `- !${markdown}`
   );
 });
 

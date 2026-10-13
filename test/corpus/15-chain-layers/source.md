@@ -1,8 +1,8 @@
-# [Head label](#mid) <!-- id:head embed="true" -->
+# ![Head label](#mid) <!-- id:head -->
 
 - (!) Head note <!-- id:hn -->
 
-# [Mid label](#term) <!-- id:mid embed="true" -->
+# ![Mid label](#term) <!-- id:mid -->
 
 - (?) Mid note <!-- id:mn -->
 

@@ -1,3 +1,3 @@
-# [First](#s) <!-- id:r1 embed="true" -->
+# ![First](#s) <!-- id:r1 -->
 
-# [Second](#s) <!-- id:r2 embed="true" -->
+# ![Second](#s) <!-- id:r2 -->

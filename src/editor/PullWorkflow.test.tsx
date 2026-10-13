@@ -296,7 +296,7 @@ test("a feed present only in a pulled document projects its entries", async () =
       "---",
       "# Alice Salon <!-- id:alice-root -->",
       "- [Barcelona](#wd:Q1492) <!-- id:alice-link -->",
-      `- [${url}](feed:${url}) <!-- id:alice-feed embed="true" -->`,
+      `- ![${url}](feed:${url}) <!-- id:alice-feed -->`,
       "",
     ].join("\n")
   );
@@ -429,8 +429,8 @@ test("a direct embed in a pulled document yields to the reader's authored node",
       "---",
       "# Alice Salon <!-- id:alice-root -->",
       "- [Barcelona](#wd:Q1492) <!-- id:alice-link -->",
-      `- [cal](feed:${url}) <!-- id:alice-feed embed="true" -->`,
-      '- [event](#ical:sommerfest@scholarium.at) <!-- id:alice-event embed="true" -->',
+      `- ![cal](feed:${url}) <!-- id:alice-feed -->`,
+      "- ![event](#ical:sommerfest@scholarium.at) <!-- id:alice-event -->",
       "",
     ].join("\n")
   );
@@ -745,7 +745,7 @@ Austria
     [
       "# Austria <!-- id:... -->",
       "",
-      "- (!) [Ferguson](#isbn:ferguson-book) <!-- id:... -->",
+      "- (!) ![Ferguson](#isbn:ferguson-book) <!-- id:... -->",
     ].join("\n")
   );
 });
@@ -777,7 +777,7 @@ Austria
     [
       "# Austria <!-- id:... -->",
       "",
-      "- (!) [Quote 1](#ferguson-quote-1) <!-- id:... -->",
+      "- (!) ![Quote 1](#ferguson-quote-1) <!-- id:... -->",
     ].join("\n")
   );
 });
@@ -1077,7 +1077,7 @@ test("a demoted link in a pulled document drills down on the exact route", async
       "# Alice Doc <!-- id:dup-root -->",
       "- Shared <!-- id:shared -->",
       "  - Insight <!-- id:shared-i -->",
-      '- [Again](#shared) <!-- id:dup-second embed="true" -->',
+      "- ![Again](#shared) <!-- id:dup-second -->",
       "",
     ].join("\n")
   );

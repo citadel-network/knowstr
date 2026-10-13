@@ -1,4 +1,4 @@
-# [Source Doc](#root) <!-- id:o0 embed="true" -->
+# ![Source Doc](#root) <!-- id:o0 -->
 
-- [Missing](#nowhere) <!-- id:m embed="true" -->
+- ![Missing](#nowhere) <!-- id:m -->
   - Kept note <!-- id:k -->

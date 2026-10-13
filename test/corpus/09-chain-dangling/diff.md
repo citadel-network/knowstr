@@ -1,1 +1,1 @@
-# [Source Doc](#root) <!-- id:o0 embed="true" -->
+# ![Source Doc](#root) <!-- id:o0 -->

@@ -1,6 +1,6 @@
-# [Middle frozen](#missing) <!-- id:mid embed="true" -->
+# ![Middle frozen](#missing) <!-- id:mid -->
 
 # Source Doc <!-- id:root -->
 
 - Argument A <!-- id:a -->
-- [To middle](#mid) <!-- id:m embed="true" -->
+- ![To middle](#mid) <!-- id:m -->
